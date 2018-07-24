@@ -215,3 +215,15 @@ FakesAssemblies/
 **/*.Server/GeneratedArtifacts
 **/*.Server/ModelManifest.xml
 _Pvt_Extensions
+
+*.sln
+
+*.vcxproj
+
+*.filters
+
+*.dll
+
+concept/01-dark-purple-music-player-gui\.jpg
+
+concept/music-player_1x\.png
