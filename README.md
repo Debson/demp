@@ -1,1 +1,2 @@
-demp
+# damp
+Simplistic music player.
