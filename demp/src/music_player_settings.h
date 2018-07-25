@@ -11,9 +11,11 @@ namespace MP
 namespace Settings
 {
 
-	const u16 VolumeMultiplier = 100;
+	const f32 VolumeKeyMultiplier = 0.8;
 
-	const u16 VolumeFade = 300;
+	const f32 VolumeScrollStep = 2.f;
+
+	const u16 VolumeFadeTime = 500;
 
 }
 }

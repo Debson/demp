@@ -2,20 +2,20 @@
 #ifndef MD_SYSTEM_MUSIC_PLAYER_H
 #define MD_SYSTEM_MUSIC_PLAYER_H
 
+#include <vector>
+
 #include "music_player.h"
+#include "system_application_input.h"
+
 
 namespace mdEngine
 {
 namespace MP
 {
+	extern PathContainer mdPathContainer;
+
 	namespace Playlist
 	{
-		void InitializePlaylist();
-
-		void UpdatePlaylist();
-
-		void UpdateMusic();
-
 		void NextMusic();
 
 		void PreviousMusic();
@@ -26,18 +26,11 @@ namespace MP
 
 		void HaltMusic();
 
-		void IncreaseVolume();
+		void IncreaseVolume(Application::InputEvent event);
 
-		void LowerVolume(); 
+		void LowerVolume(Application::InputEvent event);
 
-		void VolumeFadeIn(); // shouldnt be here
-
-		void VolumeFadeOut(); // shouldnt be here
-
-		void SetMusicVolume(s8 vol); // shouldnt be here
-
-
-
+		void RewindMusic(s32 pos);
 	}
 
 	void OpenMusicPlayer(void);

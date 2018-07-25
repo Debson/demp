@@ -1,7 +1,6 @@
-#include "music_player.h"
 #include "system_music_player.h"
 
-#include <stdio.h>
+#include <fstream>
 #include "md_util.h"
 
 namespace mdEngine
@@ -10,49 +9,63 @@ namespace mdEngine
 	{
 		mMusic = NULL;
 		mPath = NULL;
-		mSelected = false;
-		id = 0;
 	}
 
 	Application::SongObject::~SongObject()
 	{
-		//Mix_FreeMusic(mMusic);
 		mMusic = NULL;
 		mPath = NULL;
 	}
 
-	b8 Application::SongObject::selected()
+	b8 Application::SongObject::load(const char* songPath, u32 id)
 	{
-		return mSelected;
-	}
+		std::ifstream file(songPath, std::ios::binary | std::ios::ate);
 
-	void Application::SongObject::select()
-	{
-		mSelected = true;
-	}
-
-	void Application::SongObject::unselect()
-	{
-		mSelected = false;
-	}
-
-
-	b8 Application::SongObject::load(const char* songPath)
-	{
-		mPath = songPath;
-		mMusic = Mix_LoadMUS(songPath);
-		char buffer[128];
-		sprintf(buffer, "ERROR: At path: %s", songPath);
-		if (mMusic == NULL)
+		if (!file)
 		{
-			MD_SDL_ERROR(buffer);
+			std::cerr << "ERROR: file " << songPath << " could not be opened!\n";
+			std::cerr << "Errr code: " << strerror(errno);
 			return false;
+		}
+		else
+		{
+			mPath = songPath;
+			mID = id;
+			std::streamsize size = file.tellg(); // size of opened file
+			mSize = size;
+			file.seekg(0, std::ios::beg); // set cursor at the beginning
+
+			if(mData != NULL)
+				delete[] mData;
+
+			if(mMusic != NULL)
+				BASS_StreamFree(mMusic);
+
+			mData = new char[size]; // 
+			if (file.read(mData, size))
+			{
+				mMusic = BASS_StreamCreateFile(TRUE, mData, 0, size, BASS_STREAM_AUTOFREE);
+			}
+			else
+			{
+				std::cerr << "ERROR: file could not be copied into buffer!\n";
+				std::cerr << "Errr code: " << strerror(errno);
+				return false;
+			}
+
+			file.close();
 		}
 
 		return true;
 	}
 
-	Mix_Music* Application::SongObject::get()
+	b8 Application::SongObject::update(const char* songPath)
+	{
+
+		return true;
+	}
+
+	HMUSIC& Application::SongObject::get()
 	{
 		return mMusic;
 	}

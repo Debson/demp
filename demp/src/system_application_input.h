@@ -12,7 +12,9 @@ namespace mdEngine
 
 	void StartNewFrame(void);
 
-	void UpdateMousePosition(int mouseX, int mouseY);
+	void UpdateMousePosition(s32 mouseX, s32 mouseY);
+
+	void UpdateScrollPosition(s32 scrollX, s32 scrollY);
 
 	void UpdateKeyState(const u8* state);
 }

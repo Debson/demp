@@ -2,7 +2,8 @@
 #ifndef MD_MUSIC_PLAYER_H
 #define MD_MUSIC_PLAYER_H
 
-#include <SDL_mixer.h>
+//#include <SDL_mixer.h>
+#include <bass.h>
 #include <SDL.h>
 
 #include "md_types.h"
@@ -14,19 +15,18 @@ namespace Application
 	struct SongObject
 	{
 		const char* mPath;
-		Mix_Music* mMusic;
-		b8 mSelected;
-		s64 id;
+		char* mData;
+		u32 mSize;
+		HSTREAM mMusic;
+		s64 mID;
 
 		SongObject();
 		~SongObject();
 
-		b8 selected();
-		void select();
-		void unselect();
+		b8 load(const char* songPath, u32 id);
+		b8 update(const char* songPath);
 
-		b8 load(const char* path);
-		Mix_Music* get();
+		HMUSIC& get();
 	};
 	
 

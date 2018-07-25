@@ -10,3 +10,7 @@
 
 
 #define MD_SDL_ERROR(x) (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, x, SDL_GetError(), nullptr))
+
+#define MD_BASS_ERROR(x) (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", x, nullptr))
+
+#define MD_ERROR(x) (std::cout << x << std::endl)

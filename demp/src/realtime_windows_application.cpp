@@ -1,10 +1,13 @@
 #include "realtime_system_application.h"
 #include "system_music_player.h"
 #include "md_time.h"
+#include "assert.h"
 
 #include <SDL.h>
 #undef main // SDL_main.h is included automatically from SDL.h, so you always get the nasty #define.
 #include <SDL_mixer.h>
+
+#include <bass.h>
 
 
 // TODO: create RealtimeApplication class that initializes all(sdl inits, input, main game loop) 
@@ -30,9 +33,17 @@ void mdEngine::OpenRealtimeApplication(mdEngine::Application::ApplicationHandler
 	mdHasApplication = true;
 	mdApplicationHandler = &applicationHandler;
 
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
 		MD_SDL_ERROR("ERROR: SDL error");
+		assert(SDL_Init(SDL_INIT_VIDEO) < 0);
+		return;
+	}
+
+	if (BASS_Init(-1, 44100, 0, 0, NULL) == false)
+	{
+		MD_BASS_ERROR("ERROR: Initialize BASS");
+		assert(SDL_Init(SDL_INIT_VIDEO) == false);
 		return;
 	}
 
@@ -44,15 +55,17 @@ void mdEngine::OpenRealtimeApplication(mdEngine::Application::ApplicationHandler
 	if (mdWindow == NULL)
 	{
 		MD_SDL_ERROR("ERROR: Failed to open SDL window");
+		assert(mdWindow == NULL);
+
 		return;
 	}
-
+	/*
 	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 16384) < 0)
 	{
 		MD_SDL_ERROR("ERROR: Failed to initialize SDL_mixer");
 		return;
 	}
-
+	*/
 	mdScreenSurface = SDL_GetWindowSurface(mdWindow);
 
 	/* create window */
@@ -93,6 +106,12 @@ void mdEngine::RunRealtimeApplication(mdEngine::Application::ApplicationHandlerI
 			case (SDL_DROPFILE):
 				MP::PushToPlaylist(event.drop.file);
 				break;
+			case (SDL_MOUSEWHEEL):
+				UpdateScrollPosition(event.wheel.x, event.wheel.y);
+				break;
+			case (SDL_MOUSEMOTION):
+				UpdateMousePosition(event.motion.x, event.motion.y);
+				break;
 			}
 		}
 
@@ -123,7 +142,7 @@ void mdEngine::CloseRealtimeApplication(mdEngine::Application::ApplicationHandle
 
 	SDL_DestroyWindow(mdWindow);
 
-	Mix_Quit();
+	BASS_Free();
 	SDL_Quit();
 
 	mdIsRunning = false;

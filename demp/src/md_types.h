@@ -1,4 +1,8 @@
 #pragma once
+#ifndef MD_TYPES_H
+#define MD_TYPES_H
+
+#include <vector>
 #include <stdint.h>
 
 namespace mdEngine
@@ -15,8 +19,8 @@ namespace mdEngine
 	typedef uint32_t	u32;
 	typedef uint64_t	u64;
 
-	typedef float f32;
-	typedef double f64;
+	typedef float		f32;
+	typedef double		f64;
 
 	typedef long unsigned int uint_64;
 
@@ -26,4 +30,7 @@ namespace mdEngine
 		f32 delta;
 	};
 
+	typedef std::vector<const char*> PathContainer;
 }
+
+#endif // !MD_TYPES_H

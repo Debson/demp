@@ -85,7 +85,7 @@ namespace Application
 		F11 = SDL_SCANCODE_F11,
 		F12 = SDL_SCANCODE_F12,
 
-		Printscreen = SDL_SCANCODE_PRINTSCREEN,
+		Prs32screen = SDL_SCANCODE_PRINTSCREEN,
 		Scrolllock = SDL_SCANCODE_SCROLLLOCK,
 		Pause = SDL_SCANCODE_PAUSE,
 		Insert = SDL_SCANCODE_INSERT,
@@ -261,7 +261,8 @@ namespace Application
 	{
 		kPressedEvent,
 		kReleasedEvent,
-		kMoveEvent
+		kMoveEvent,
+		kScrollEvent
 	};
 
 
@@ -274,11 +275,24 @@ namespace Input
 
 	b8 IsKeyDown(const KeyCode& key);
 
-	void GetMousePosition(int* mouseX, int* mouseY);
+	b8 IsMouseActive();
 
-	b8 GetMouseMovement(int* mouseX, int* mouseY);
+	b8 IsScrollForwardActive();
 
-	void SetMousePosition(int mouseX, int mouseY);
+	b8 IsScrollBackwardActive();
+
+	b8 IsScrollActive();
+
+	void GetMousePosition(s32* mouseX, s32* mouseY);
+
+	b8 GetMouseMovement(s32* mouseX, s32* mouseY);
+
+
+	void SetMousePosition(s32 mouseX, s32 mouseY);
+
+	void GetMouseScrollPosition(s32* scrollX, s32* scrollY);
+
+	b8 GetMouseScrollMovement(s32* scrollX, s32* scrollY);
 
 }
 }
