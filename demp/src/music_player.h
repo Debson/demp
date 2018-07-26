@@ -5,46 +5,24 @@
 //#include <SDL_mixer.h>
 #include <bass.h>
 #include <SDL.h>
-#include "music_player_settings.h"
 
-#include "system_music_player.h"
-
+#include "music_player_system.h"
 #include "md_types.h"
 
 namespace mdEngine
 {
-namespace Application
-{
-	struct SongObject
+	namespace MP
 	{
-		const char* mPath;
-		char* mData;
-		u32 mSize;
-		HSTREAM mMusic;
-		s64 mID;
-
-		SongObject();
-		~SongObject();
-
-		b8 init(const char* songPath);
-		b8 load(const char* songPath, u32 id, MP::Playlist::SongState state);
-		b8 update(const char* songPath);
-
-		HMUSIC& get();
-	};
-	
-	
-	class MusicPlayer
-	{
-	public:
-		virtual ~MusicPlayer();
-		
-
-		virtual void Start();
-		virtual void Update();
-		virtual void Close();
-	private:
-	};
+		class MusicPlayer
+		{
+		public:
+			virtual ~MusicPlayer();
+			
+			virtual void Start();
+			virtual void Update();
+			virtual void Close();
+		private:
+		};
 
 }
 }

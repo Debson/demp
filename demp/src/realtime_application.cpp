@@ -1,47 +1,52 @@
 #include "realtime_application.h"
+
 #include "realtime_system_application.h"
 #include "application_window.h"
 
 
 namespace mdEngine
 {
-	const mdEngine::Application::WindowProperties mdDefaultWindowProperties;
+	const MP::WindowProperties mdDefaultWindowProperties;
 	u16 mdActualWindowWidth(mdDefaultWindowProperties.mWindowWidth);
 	u16 mdActualWindowHeight(mdDefaultWindowProperties.mWindowHeight);
 
-	Application::RealtimeApplication::RealtimeApplication(Application::ApplicationHandlerInterface& applicationHandler) : mApplicationHandler(applicationHandler)
+	namespace MP
 	{
 
-		// add implementation??
-	}
-	
-	Application::RealtimeApplication::~RealtimeApplication()
-	{
+		RealtimeApplication::RealtimeApplication(MP::ApplicationHandlerInterface& applicationHandler) : mApplicationHandler(applicationHandler)
+		{
 
-	}
+			// add implementation??
+		}
 
-	void Application::RealtimeApplication::Open()
-	{
-		OpenRealtimeApplication(mApplicationHandler);
-	}
+		RealtimeApplication::~RealtimeApplication()
+		{
 
-	void Application::RealtimeApplication::Run()
-	{
-		RunRealtimeApplication(mApplicationHandler);
-	}
+		}
 
-	void Application::RealtimeApplication::Stop()
-	{
-		StopRealtimeApplication(mApplicationHandler);
-	}
+		void RealtimeApplication::Open()
+		{
+			OpenRealtimeApplication(mApplicationHandler);
+		}
 
-	void Application::RealtimeApplication::Close()
-	{
-		CloseRealtimeApplication(mApplicationHandler);
-	}
+		void RealtimeApplication::Run()
+		{
+			RunRealtimeApplication(mApplicationHandler);
+		}
 
-	void Application::RealtimeApplication::SetWindowTitle(const char* windowTitle)
-	{
-		SetWindowTitle(windowTitle);
+		void RealtimeApplication::Stop()
+		{
+			StopRealtimeApplication(mApplicationHandler);
+		}
+
+		void RealtimeApplication::Close()
+		{
+			CloseRealtimeApplication(mApplicationHandler);
+		}
+
+		void RealtimeApplication::SetWindowTitle(const char* windowTitle)
+		{
+			SetWindowTitle(windowTitle);
+		}
 	}
 }

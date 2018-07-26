@@ -1,14 +1,13 @@
 #pragma once
-#ifndef SDL_BACKEND_H
-#define SDL_BACKEND_h
-
+#ifndef DEMP_H
+#define DEMP_H
 
 #include "application_handler_interface.h"
 #include "system_application_input.h"
 #include "realtime_application.h"
 #include "music_player.h"
 
-class Demp : public mdEngine::Application::ApplicationHandlerInterface
+class Demp : public mdEngine::MP::ApplicationHandlerInterface
 {
 public:
 	Demp();
@@ -18,8 +17,8 @@ public:
 	virtual void OnRealtimeUpdate(void);
 
 private:
-	mdEngine::Application::MusicPlayer mMusicPlayer;
+	mdEngine::MP::MusicPlayer mMusicPlayer;
 
 };
 
-#endif // !SDL_BACKEND_H
+#endif // !DEMP_H

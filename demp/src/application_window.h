@@ -5,7 +5,7 @@
 
 namespace mdEngine
 {
-namespace Application
+namespace MP
 {
 	enum class WindowMode
 	{

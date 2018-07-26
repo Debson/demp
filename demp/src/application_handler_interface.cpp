@@ -1,26 +1,33 @@
 #include "application_handler_interface.h"
 
 
-mdEngine::Application::ApplicationHandlerInterface::~ApplicationHandlerInterface()
+namespace mdEngine
 {
-}
+	namespace MP
+	{
 
-void mdEngine::Application::ApplicationHandlerInterface::OnWindowOpen()
-{
-}
+		ApplicationHandlerInterface::~ApplicationHandlerInterface()
+		{
+		}
 
-void mdEngine::Application::ApplicationHandlerInterface::OnWindowClose()
-{
-}
+		void ApplicationHandlerInterface::OnWindowOpen()
+		{
+		}
 
-void mdEngine::Application::ApplicationHandlerInterface::OnBecomeActive()
-{
-}
+		void ApplicationHandlerInterface::OnWindowClose()
+		{
+		}
 
-void mdEngine::Application::ApplicationHandlerInterface::OnBecomeInactive()
-{
-}
+		void ApplicationHandlerInterface::OnBecomeActive()
+		{
+		}
 
-void mdEngine::Application::ApplicationHandlerInterface::OnRealtimeUpdate()
-{
+		void ApplicationHandlerInterface::OnBecomeInactive()
+		{
+		}
+
+		void ApplicationHandlerInterface::OnRealtimeUpdate()
+		{
+		}
+	}
 }

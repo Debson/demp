@@ -1,14 +1,15 @@
-#include "realtime_system_application.h"
-#include "system_music_player.h"
-#include "md_time.h"
-#include "assert.h"
+﻿#include "realtime_system_application.h"
 
 #include <SDL.h>
 #undef main // SDL_main.h is included automatically from SDL.h, so you always get the nasty #define.
 #include <SDL_mixer.h>
+#include <assert.h>
+#include <fstream>
 
 #include <bass.h>
 
+#include "music_player_system.h"
+#include "md_time.h"
 
 // TODO: create RealtimeApplication class that initializes all(sdl inits, input, main game loop) 
 	//and MyApplicationHandler that will be passed to the construct of RealtimeApplication
@@ -22,13 +23,13 @@ namespace mdEngine
 	b8 mdHasApplication(false);
 	b8 mdIsActiveWindow(false);
 
-	Application::ApplicationHandlerInterface* mdApplicationHandler(nullptr);
+	MP::ApplicationHandlerInterface* mdApplicationHandler(nullptr);
 
 	extern u16 mdActualWindowWidth;
 	extern u16 mdActualWindowHeight;
 }
 
-void mdEngine::OpenRealtimeApplication(mdEngine::Application::ApplicationHandlerInterface& applicationHandler)
+void mdEngine::OpenRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface& applicationHandler)
 {
 	mdHasApplication = true;
 	mdApplicationHandler = &applicationHandler;
@@ -59,13 +60,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::Application::ApplicationHandler
 
 		return;
 	}
-	/*
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 16384) < 0)
-	{
-		MD_SDL_ERROR("ERROR: Failed to initialize SDL_mixer");
-		return;
-	}
-	*/
+
 	mdScreenSurface = SDL_GetWindowSurface(mdWindow);
 
 	/* create window */
@@ -74,7 +69,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::Application::ApplicationHandler
 
 }
 
-void mdEngine::RunRealtimeApplication(mdEngine::Application::ApplicationHandlerInterface& applicationHandler)
+void mdEngine::RunRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface& applicationHandler)
 {
 	mdIsRunning = true;
 
@@ -104,8 +99,11 @@ void mdEngine::RunRealtimeApplication(mdEngine::Application::ApplicationHandlerI
 				mdIsRunning = false;
 				break;
 			case (SDL_DROPFILE):
+			{
 				MP::PushToPlaylist(event.drop.file);
+				SDL_free(SDL_GetClipboardText());
 				break;
+			}
 			case (SDL_MOUSEWHEEL):
 				UpdateScrollPosition(event.wheel.x, event.wheel.y);
 				break;
@@ -114,7 +112,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::Application::ApplicationHandlerI
 				break;
 			}
 		}
-
+		
 		const u8* current_keystate = SDL_GetKeyboardState(NULL);
 		mdEngine::UpdateKeyState(current_keystate);
 
@@ -129,12 +127,12 @@ void mdEngine::RunRealtimeApplication(mdEngine::Application::ApplicationHandlerI
 
 }
 
-void mdEngine::StopRealtimeApplication(mdEngine::Application::ApplicationHandlerInterface& applicationHandler)
+void mdEngine::StopRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface& applicationHandler)
 {
 	mdIsRunning = false;
 }
 
-void mdEngine::CloseRealtimeApplication(mdEngine::Application::ApplicationHandlerInterface& applicationHandler)
+void mdEngine::CloseRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface& applicationHandler)
 {
 	/* CLEAR AND DELETE EVERYTHING */
 
@@ -142,6 +140,7 @@ void mdEngine::CloseRealtimeApplication(mdEngine::Application::ApplicationHandle
 
 	SDL_DestroyWindow(mdWindow);
 
+	
 	BASS_Free();
 	SDL_Quit();
 

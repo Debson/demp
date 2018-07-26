@@ -8,10 +8,11 @@
 #include "md_types.h"
 #include "md_util.h"
 
+
 namespace mdEngine
 { 
 
-namespace Application
+namespace MP
 {
 	enum KeyCode : s16
 	{

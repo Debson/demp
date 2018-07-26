@@ -14,7 +14,7 @@ namespace MP
 namespace Settings
 {
 
-	const f32 VolumeKeyMultiplier = 0.8;
+	const f32 VolumeKeyMultiplier = 0.8f;
 
 	const f32 VolumeScrollStep = 2.f;
 

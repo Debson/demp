@@ -6,7 +6,7 @@
 
 namespace mdEngine
 {
-	namespace Application
+	namespace MP
 	{
 		class RealtimeApplication
 		{

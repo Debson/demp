@@ -4,7 +4,7 @@
 
 namespace mdEngine
 {
-	namespace Application
+	namespace MP
 	{
 
 		class ApplicationHandlerInterface

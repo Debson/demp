@@ -6,9 +6,9 @@
 
 namespace mdEngine
 {
-	void OnPressKey(const Application::KeyCode& key);
+	void OnPressKey(const MP::KeyCode& key);
 
-	void OnReleaseKey(const Application::KeyCode& key);
+	void OnReleaseKey(const MP::KeyCode& key);
 
 	void StartNewFrame(void);
 

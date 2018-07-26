@@ -8,7 +8,7 @@
 
 namespace mdEngine
 {
-	namespace Application
+	namespace MP
 	{
 		class ApplicationHandlerInterface;
 		struct WindowProporties;
@@ -17,10 +17,10 @@ namespace mdEngine
 
 namespace mdEngine
 {
-	void OpenRealtimeApplication(Application::ApplicationHandlerInterface& applicationHandler);
-	void RunRealtimeApplication(Application::ApplicationHandlerInterface& applicationHandler);
-	void StopRealtimeApplication(Application::ApplicationHandlerInterface& applicationHandler);
-	void CloseRealtimeApplication(Application::ApplicationHandlerInterface& applicationHandler);
+	void OpenRealtimeApplication(MP::ApplicationHandlerInterface& applicationHandler);
+	void RunRealtimeApplication(MP::ApplicationHandlerInterface& applicationHandler);
+	void StopRealtimeApplication(MP::ApplicationHandlerInterface& applicationHandler);
+	void CloseRealtimeApplication(MP::ApplicationHandlerInterface& applicationHandler);
 
 	void SetWindowTitle(const char& windowName);
 }

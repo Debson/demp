@@ -1,13 +1,8 @@
-#include <iostream>
-
 #include "demp.h"
-
-using namespace mdEngine;
-using namespace Application;
 
 Demp::Demp()
 {
-	
+
 }
 
 Demp::~Demp()
@@ -27,11 +22,12 @@ void Demp::OnRealtimeUpdate()
 	mMusicPlayer.Update();
 }
 
+
 int main(int argc, char** argv)
 {
 	setlocale(LC_ALL, "");
 	Demp demp;
-	Application::RealtimeApplication theApp(demp);
+	mdEngine::MP::RealtimeApplication theApp(demp);
 
 	theApp.Open();
 	theApp.Run();
