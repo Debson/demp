@@ -4,7 +4,6 @@
 
 #include <vector>
 
-#include "music_player.h"
 #include "system_application_input.h"
 
 
@@ -16,6 +15,13 @@ namespace MP
 
 	namespace Playlist
 	{
+		enum SongState
+		{
+			mNext,
+			mCurrent,
+			mPrevious
+		};
+
 		void NextMusic();
 
 		void PreviousMusic();
@@ -24,7 +30,7 @@ namespace MP
 
 		void PauseMusic();
 
-		void HaltMusic();
+		void StopMusic();
 
 		void IncreaseVolume(Application::InputEvent event);
 

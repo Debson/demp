@@ -29,6 +29,7 @@ void Demp::OnRealtimeUpdate()
 
 int main(int argc, char** argv)
 {
+	setlocale(LC_ALL, "");
 	Demp demp;
 	Application::RealtimeApplication theApp(demp);
 

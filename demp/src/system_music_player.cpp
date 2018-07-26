@@ -1,12 +1,20 @@
-#include <vector>
-#include <algorithm> // std::find
+﻿#include <vector>
 #include <string>
+#include <assert.h>
+#include <cstring>
+#include <sstream>
 
-#include "system_music_player.h"
+#include <iostream>
+
+#include <filesystem>
+#include <fcntl.h>
+#include <io.h>
+
 #include "music_player.h"
 #include "md_time.h"
-#include "music_player_settings.h"
-#include "md_types.h"
+#include "settings.h"
+
+namespace fs = std::experimental::filesystem::v1;
 
 namespace mdEngine
 {
@@ -14,6 +22,7 @@ namespace MP
 {
 	namespace Playlist
 	{
+
 		Application::SongObject mdPreviousMusic;
 		Application::SongObject mdCurrentMusic;
 		Application::SongObject mdNextMusic;
@@ -37,10 +46,30 @@ namespace MP
 
 		void SetMusicVolume(f64 vol);
 	}
+
+	std::string get_ext(char* path);
 }
 
 namespace MP
 {
+	struct PathObject
+	{
+		PathObject(char* path)
+		{
+			char s = '.';
+			char *ending = std::strrchr(path, s);
+			char buffer[8];
+			for (u8 i = 0; i < strlen(ending); i++)
+			{
+				buffer[i] = ending[i + 1];
+			}
+			ext = buffer;
+		}
+
+		std::string ext;
+	};
+
+
 	Application::SongObject RamLoadedSong;
 	PathContainer mdPathContainer;
 
@@ -60,7 +89,7 @@ namespace MP
 
 		if (mdNextRequest)
 		{
-			//HaltMusic();
+			PauseMusic();
 
 			PlayMusic();
 
@@ -69,7 +98,7 @@ namespace MP
 
 		if (mdPreviousRequest)
 		{
-			//HaltMusic();
+			PauseMusic();
 
 			PlayMusic();
 
@@ -106,6 +135,7 @@ namespace MP
 			std::cout << BASS_ChannelGetLength(RamLoadedSong.get(), BASS_POS_BYTE) << std::endl;
 		}
 
+		//std::cout << (BASS_ChannelIsActive(RamLoadedSong.get()) == (BASS_ACTIVE_STOPPED)) << std::endl;
 	}
 
 	void Playlist::PlayMusic()
@@ -114,22 +144,27 @@ namespace MP
 		mdVolumeFadeIn = false;
 		mdVolumeFadeOut = false;
 		mdMusicPaused = false;
-		BASS_ChannelPlay(RamLoadedSong.get(), true);
-		//Mix_PlayMusic(mdCurrentMusic.get(), -1);
+
+		if (RamLoadedSong.get() != NULL)
+		{
+			BASS_ChannelPlay(RamLoadedSong.get(), true);
+		}
 
 	}
 
-	void Playlist::HaltMusic()
+	void Playlist::StopMusic()
 	{
-		BASS_ChannelStop(RamLoadedSong.get());
-		//Mix_HaltMusic();
+		if (RamLoadedSong.get() != NULL)
+		{
+			BASS_ChannelPause(RamLoadedSong.get());
+			BASS_ChannelSetPosition(RamLoadedSong.get(), 0, BASS_POS_BYTE);
+		}
 	}
 
 	void Playlist::PauseMusic()
 	{
-		//BASS_ChannelSlideAttribute(mdCurrentMusic.get(), BASS_ATTRIB_VOL, 0, 1000);
 
-		if (BASS_ChannelIsActive(RamLoadedSong.get()) != BASS_ACTIVE_STOPPED)
+		if (BASS_ChannelIsActive(RamLoadedSong.get()) != BASS_ACTIVE_STOPPED && RamLoadedSong.get() != NULL)
 		{
 			mdMusicPaused == false ? (mdMusicPaused = true) : (mdMusicPaused = false);
 
@@ -151,63 +186,71 @@ namespace MP
 
 	void Playlist::NextMusic()
 	{
-		BASS_ChannelStop(RamLoadedSong.get());
-
-		/*	If song path exist on next position, load it to the ram,
-			else load song from path at position 0 in path's container.
-			
-			While loop:
-				While path in PathContainer at position (current_path_id + index) is not valid and
-				path on next position exist, try to open file at that path position.
-
-		*/
-		std::cout << RamLoadedSong.mID << std::endl;
-		if ((RamLoadedSong.mID + 1) < mdPathContainer.size())
+		if ((RamLoadedSong.get() != NULL) || (BASS_ErrorGetCode() == BASS_ERROR_FILEFORM))
 		{
-			int index = 1;
-			while ((RamLoadedSong.load(mdPathContainer[RamLoadedSong.mID + index], RamLoadedSong.mID + index) == false)
-				&& (RamLoadedSong.mID + 1 < mdPathContainer.size()))
+			BASS_ChannelStop(RamLoadedSong.get());
+
+			/*	If song path exist on next position, load it to the ram,
+				else load song from path at position 0 in path's container.
+
+				While loop:
+					While path in PathContainer at position (current_path_id + index) is not valid and
+					path on next position exist, try to open file at that path position.
+
+			*/
+			std::cout << RamLoadedSong.mID << std::endl;
+			if ((RamLoadedSong.mID + 1) < mdPathContainer.size())
 			{
-				index++;
-			}
+				int index = 1;
+				while ((RamLoadedSong.load(mdPathContainer[RamLoadedSong.mID + index], RamLoadedSong.mID + index, SongState::mNext) == false)
+					&& (RamLoadedSong.mID + 1 < mdPathContainer.size()))
+				{
+					index++;
+				}
+				//assert(RamLoadedSong.load(mdPathContainer[RamLoadedSong.mID + index], RamLoadedSong.mID + index));
 
-			mdNextRequest = true;
-		}
-		else
-		{
-			RamLoadedSong.load(mdPathContainer[0], 0);
-			mdNextRequest = true;
+				mdNextRequest = true;
+			}
+			else
+			{
+				RamLoadedSong.load(mdPathContainer[0], 0, SongState::mCurrent);
+				mdNextRequest = true;
+			}
 		}
 	}
 
 	void Playlist::PreviousMusic()
 	{
-		BASS_ChannelStop(RamLoadedSong.get());
-
-		/*	If song path exist on previous position, load it to the ram,
-			else load song from path at position `PathContainer.Size() - 1` 
-
-			While loop:
-				While path in PathContainer at position (current_path_id - index) is not valid and
-				path on previous position exist, try to open file at that path position
-
-		*/
-		std::cout << RamLoadedSong.mID << std::endl;
-		if ((RamLoadedSong.mID - 1) >= 0)
+		if (RamLoadedSong.get() != NULL)
 		{
-			int index = 1;
-			while ((RamLoadedSong.load(mdPathContainer[RamLoadedSong.mID - index], RamLoadedSong.mID - index) == false)
-				&& (RamLoadedSong.mID - index >= 0))
+			BASS_ChannelStop(RamLoadedSong.get());
+
+			/*	If song path exist on previous position, load it to the ram,
+				else load song from path at position `PathContainer.Size() - 1`
+
+				While loop:
+					While path in PathContainer at position (current_path_id - index) is not valid and
+					path on previous position exist, try to open file at that path position
+
+			*/
+			std::cout << RamLoadedSong.mID << std::endl;
+			if ((RamLoadedSong.mID - 1) >= 0)
 			{
-				index++;
-			}
+				int index = 1;
+				while ((RamLoadedSong.load(mdPathContainer[RamLoadedSong.mID - index], RamLoadedSong.mID - index, SongState::mPrevious) == false)
+					&& (RamLoadedSong.mID - index >= 0))
+				{
+					index++;
+				}
 
-			mdPreviousRequest = true;
-		}
-		else
-		{
-			RamLoadedSong.load(mdPathContainer[mdPathContainer.size() - 1], mdPathContainer.size() - 1);
-			mdPreviousRequest = true;
+				//assert(RamLoadedSong.load(mdPathContainer[RamLoadedSong.mID - index], RamLoadedSong.mID - index));
+				mdPreviousRequest = true;
+			}
+			else
+			{
+				RamLoadedSong.load(mdPathContainer[mdPathContainer.size() - 1], mdPathContainer.size() - 1, SongState::mCurrent);
+				mdPreviousRequest = true;
+			}
 		}
 	}
 
@@ -230,6 +273,8 @@ namespace MP
 				break;
 			}
 		}
+
+		std::cout << "Volume: " << mdVolume << std::endl;
 	}
 
 	void Playlist::LowerVolume(Application::InputEvent event)
@@ -250,6 +295,8 @@ namespace MP
 				break;
 			};
 		}
+
+		std::cout << "Volume: " << mdVolume << std::endl;
 	}
 
 	void Playlist::SetMusicVolume(f64 vol)
@@ -259,30 +306,33 @@ namespace MP
 
 	void Playlist::RewindMusic(s32 pos)
 	{
-		u64 currentPos = BASS_ChannelGetPosition(RamLoadedSong.get(), BASS_POS_BYTE);
-		u64 previousPos = currentPos;
-		u64 bytes;
-		if (pos < 0)
+		if (RamLoadedSong.get() != NULL)
 		{
-			bytes = BASS_ChannelSeconds2Bytes(RamLoadedSong.get(), -(pos));
-			currentPos -= bytes;
-			if (previousPos < currentPos)
-				currentPos = 0;
-		}
-		else
-		{
-			u64 length = BASS_ChannelGetLength(RamLoadedSong.get(), BASS_POS_BYTE);
-			bytes = BASS_ChannelSeconds2Bytes(RamLoadedSong.get(), pos);
-			currentPos += bytes;
-			if (previousPos >= length)
+			u64 currentPos = BASS_ChannelGetPosition(RamLoadedSong.get(), BASS_POS_BYTE);
+			u64 previousPos = currentPos;
+			u64 bytes;
+			if (pos < 0)
 			{
-				PlayMusic();
-				currentPos = 0;
+				bytes = BASS_ChannelSeconds2Bytes(RamLoadedSong.get(), -(pos));
+				currentPos -= bytes;
+				if (previousPos < currentPos)
+					currentPos = 0;
 			}
-		}
+			else
+			{
+				u64 length = BASS_ChannelGetLength(RamLoadedSong.get(), BASS_POS_BYTE);
+				bytes = BASS_ChannelSeconds2Bytes(RamLoadedSong.get(), pos);
+				currentPos += bytes;
+				if (previousPos >= length)
+				{
+					PlayMusic();
+					currentPos = 0;
+				}
+			}
 
-		std::cout << currentPos << std::endl;
-		BASS_ChannelSetPosition(RamLoadedSong.get(), currentPos, BASS_POS_BYTE);
+			std::cout << "Music pos: " << BASS_ChannelBytes2Seconds(RamLoadedSong.get(), currentPos) << std::endl;
+			BASS_ChannelSetPosition(RamLoadedSong.get(), currentPos, BASS_POS_BYTE);
+		}
 	}
 
 }
@@ -292,6 +342,34 @@ namespace MP
 namespace MP
 {
 
+	void Debug()
+	{
+		/*
+			Kepad7 = list all saved pathes
+			Keypad8 = show ram loaded song's id
+			Keypad9 = is ram loaded song stream property NULL?
+		*/
+		if (Application::Input::IsKeyPressed(Application::KeyCode::Keypad7))
+		{
+			std::cout << "Currently loaded paths:\n";
+			for (u32 i = 0; i < mdPathContainer.size(); i++)
+			{
+				std::cout << mdPathContainer[i] << std::endl;
+			}
+		}
+
+		if (Application::Input::IsKeyPressed(Application::KeyCode::Keypad8))
+		{
+			std::cout << "ID: " << RamLoadedSong.mID << std::endl;
+		}
+
+		if (Application::Input::IsKeyPressed(Application::KeyCode::Keypad9))
+		{
+			(RamLoadedSong.get() == NULL) ? (std::cout << "empty\n") : (std::cout << "not empty\n");
+		}
+	}
+
+
 	void OpenMusicPlayer(void)
 	{
 		
@@ -300,6 +378,7 @@ namespace MP
 
 	void UpdateMusicPlayerInput(void)
 	{
+		Debug();
 
 		/*	Temporary UI
 			P	= Play
@@ -327,7 +406,7 @@ namespace MP
 
 		if (Application::Input::IsKeyPressed(Application::KeyCode::J))
 		{
-			Playlist::HaltMusic();
+			Playlist::StopMusic();
 		}
 
 		if (Application::Input::IsKeyPressed(Application::KeyCode::H))
@@ -384,7 +463,6 @@ namespace MP
 			Playlist::RewindMusic(5);
 		}
 
-
 	}
 
 
@@ -402,39 +480,73 @@ namespace MP
 		//std::cout << Playlist::mdVolume * 100.f << std::endl;
 	}
 
+
 	void PushToPlaylist(const char* path)
 	{
+		std::string str = path;
+		char *updatedPath = new char[str.length() + 1];
+		strcpy(updatedPath, str.c_str());
+
 		b8 exist = false;
+		b8 valid = false;
+
+		fs::path pathToDisplay(path);
+		
+		std::string ext;
+
+		static int count = 0;
+		
+		if (pathToDisplay.extension().has_extension() &&
+			pathToDisplay.extension().string().length() <= MAX_PATH_LENGTH)
+		{
+			ext = pathToDisplay.extension().string();
+			count++;
+		}
+		else
+		{
+			for (auto & i : fs::directory_iterator(path))
+			{
+				char * dirPath = new char[i.path().string().length() + 1];
+				strcpy(dirPath, i.path().string().c_str());
+				PushToPlaylist(dirPath);
+			}
+		}
 	
 		/* Search for existing path in */
 		for (u32 i = 0; i < mdPathContainer.size(); i++)
 		{
-			if (!strcmp(path, mdPathContainer[i]))
+			if (strcmp(path, mdPathContainer[i]) == 0)
 				exist = true;
 		}
 
-		if (exist)
+		for (u8 i = 0; i < Data::SupportedFormats.size(); i++)
 		{
-			std::cout << "ERROR: "<<  path << " already loaded!\n";
+			if (ext.compare(Data::SupportedFormats[i]) == 0)
+				valid = true;
+		}
+
+
+		if (exist == true)
+		{
+			std::cout << "ERROR: \""<<  path << "\" already loaded!\n";
+		}
+		else if(valid == false)
+		{
+			std::cout << "ERROR: Invalid extension \"" << ext << "\"!\n";
 		}
 		else if(RamLoadedSong.mMusic == NULL)
 		{
-			/*	Load the currently played song in to the ram .
-				Second argument of "load" function is hardcoded 0, 
-				because it it initialization call
-			*/
-			if (RamLoadedSong.load(path, 0))
+			if (RamLoadedSong.init(path))
 			{
 				mdPathContainer.push_back(path);
 
 				std::cout << "Music at path: \"" << path << "\" loaded successfuly!\n";
+				std::cout << "Song loaded to the RAM succesfuly\n";
 			}
 			else
 			{
 				std::cout << "ERROR: " << path << " cannot be loaded!\n";
 			}
-
-			std::cout << "Song loaded to the RAM succesfuly\n";
 		}
 		else
 		{
@@ -444,5 +556,27 @@ namespace MP
 		}
 	}
 
+	std::string get_ext(char* path)
+	{
+		char s = '.';
+		char *ending = std::strrchr(path, s);
+		char buffer[8];
+
+		s8 length = (ending == NULL) ? -1 : strlen(ending);
+
+		if (length > 0 && length < 8)
+		{
+			for (u8 i = 0; i < strlen(ending); i++)
+			{
+				buffer[i] = ending[i + 1];
+			}
+		}
+		else
+			return path;
+
+		std::string ext = buffer;
+
+		return ext;
+	}
 }
 }

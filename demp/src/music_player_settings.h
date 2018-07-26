@@ -4,6 +4,9 @@
 
 #include "md_types.h"
 
+/* Max size of song that can be loaded into ram IN BYTES */
+#define _MAX_SIZE_RAM_LOADED 50000000
+
 namespace mdEngine
 {
 namespace MP
@@ -19,7 +22,6 @@ namespace Settings
 
 }
 }
-
 }
 
 

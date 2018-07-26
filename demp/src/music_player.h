@@ -5,6 +5,9 @@
 //#include <SDL_mixer.h>
 #include <bass.h>
 #include <SDL.h>
+#include "music_player_settings.h"
+
+#include "system_music_player.h"
 
 #include "md_types.h"
 
@@ -23,13 +26,13 @@ namespace Application
 		SongObject();
 		~SongObject();
 
-		b8 load(const char* songPath, u32 id);
+		b8 init(const char* songPath);
+		b8 load(const char* songPath, u32 id, MP::Playlist::SongState state);
 		b8 update(const char* songPath);
 
 		HMUSIC& get();
 	};
 	
-
 	
 	class MusicPlayer
 	{
