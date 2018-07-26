@@ -14,13 +14,15 @@ namespace mdEngine
 
 		void MusicPlayer::Start()
 		{
-			OpenMusicPlayer();
+			Open();
+
 		}
 
 		void MusicPlayer::Update()
 		{
-			UpdateMusicPlayerInput();
-			UpdateMusicPlayerLogic();
+			UpdateInput();
+			UpdateLogic();
+			Render();
 		}
 
 		void MP::MusicPlayer::Close()

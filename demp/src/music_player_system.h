@@ -12,11 +12,13 @@ namespace mdEngine
 {
 	namespace MP
 	{
-		void OpenMusicPlayer(void);
+		void Open(void);
 
-		void UpdateMusicPlayerInput(void);
+		void UpdateInput(void);
 
-		void UpdateMusicPlayerLogic(void);
+		void UpdateLogic(void);
+
+		void Render();
 
 		void PushToPlaylist(const char* path);
 

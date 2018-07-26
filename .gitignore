@@ -229,3 +229,41 @@ concept/01-dark-purple-music-player-gui\.jpg
 concept/music-player_1x\.png
 
 demp/bass\.lib
+
+demp/external/glad/include/glad/glad\.h
+
+demp/external/glad/include/KHR/khrplatform\.h
+
+demp/external/glad/src/glad\.c
+
+demp/external/glfw/gl3w/GL/gl3w\.c
+
+demp/external/glfw/gl3w/GL/gl3w\.h
+
+demp/external/glfw/gl3w/GL/glcorearb\.h
+
+demp/external/glfw/glfw/COPYING\.txt
+
+demp/external/glfw/glfw/include/GLFW/
+
+demp/external/glfw/glfw/lib-vc2010-32/glfw3\.lib
+
+demp/external/glfw/glfw/lib-vc2010-64/glfw3\.lib
+
+demp/external/glfw/usynergy/README\.txt
+
+demp/external/glfw/usynergy/uSynergy\.c
+
+demp/external/glfw/usynergy/uSynergy\.h
+
+demp/external/imgui/
+
+demp/external/SDL libs/include/
+
+demp/external/SDL libs/lib/
+
+demp/external/SDL libs/
+
+*.lib
+
+demp/imgui\.ini

@@ -11,6 +11,7 @@
 #include "md_time.h"
 #include "settings.h"
 #include "music_player_playlist.h"
+#include "music_player_ui.h"
 
 namespace fs = std::experimental::filesystem::v1;
 
@@ -52,13 +53,13 @@ namespace MP
 	}
 
 
-	void OpenMusicPlayer(void)
+	void Open(void)
 	{
-		
+		UI::Start();
 	}
 
 
-	void UpdateMusicPlayerInput(void)
+	void UpdateInput(void)
 	{
 		Debug();
 
@@ -147,7 +148,7 @@ namespace MP
 
 	}
 
-	void UpdateMusicPlayerLogic(void)
+	void UpdateLogic(void)
 	{
 		/* Update playlist state */
 		Playlist::UpdatePlaylist();
@@ -155,8 +156,15 @@ namespace MP
 		/* Update the volume */
 		Playlist::UpdateMusic();
 
+		UI::Update();
+
 		/* volume in % */
 		//std::cout << Playlist::mdVolume * 100.f << std::endl;
+	}
+
+	void Render()
+	{
+		UI::Render();
 	}
 
 
