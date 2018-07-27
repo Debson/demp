@@ -5,6 +5,7 @@
 #include "system_application_input.h"
 #include "md_types.h"
 #include "application_handler_interface.h"
+#include "utf8_to_utf16.h"
 
 namespace mdEngine
 {

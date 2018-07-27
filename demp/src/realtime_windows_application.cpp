@@ -2,6 +2,10 @@
 
 #include <assert.h>
 #include <fstream>
+#include <sstream>
+#include <iostream>
+#include <string>
+#include <codecvt>
 
 #include <SDL.h>
 #undef main // SDL_main.h is included automatically from SDL.h, so you always get the nasty #define.
@@ -42,8 +46,8 @@ void mdEngine::OpenRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface
 {
 	mdHasApplication = true;
 	mdApplicationHandler = &applicationHandler;
-	mdActualWindowWidth = 300;
-	mdActualWindowHeight = 500;
+	mdActualWindowWidth = 680;
+	mdActualWindowHeight = 720;
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
 	{
@@ -62,7 +66,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -139,8 +143,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface&
 				break;
 			case (SDL_DROPFILE):
 			{
-				MP::PushToPlaylist(event.drop.file);
-				SDL_free(SDL_GetClipboardText());
+				std::wstring path = utf8_to_utf16(event.drop.file);
+				MP::PushToPlaylist(path);
+				//SDL_free(SDL_GetClipboardText());
 				break;
 			}
 			case (SDL_MOUSEWHEEL):

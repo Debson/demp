@@ -1,6 +1,7 @@
 #include "music_player_playlist.h"
 
 #include <fstream>
+#include <Windows.h>
 #include <filesystem>
 
 #include "md_time.h"
@@ -68,29 +69,31 @@ namespace MP
 		SongObject::SongObject()
 		{
 			mMusic = NULL;
-			mPath = NULL;
+			mData = NULL;
+			mPath = std::wstring();
 		}
 
 		SongObject::~SongObject()
 		{
 			mMusic = NULL;
-			mPath = NULL;
+			mData = NULL;
+			mPath = std::wstring();
 		}
 
-		b8 SongObject::init(const char* songPath)
+		b8 SongObject::init(std::wstring songPath)
 		{
-			std::ifstream file(songPath, std::ios::binary | std::ios::ate);
-
-			if (!file)
+			//std::wifstream file(songPath, std::ios::binary | std::ios::ate);
+			FILE* file = NULL;
+			if (_wfopen_s(&file, songPath.c_str(), L"rb+") != 0)
 			{
-				std::cerr << "ERROR::FILE_LOAD: code: " << strerror(errno)
-					<< "\nPath: \"" << songPath << "\"\n!";
-				return false;
+				std::wcout << "ERROR: could not open file at path \"" << songPath << "\"\n";
+				std::cout << stderr << std::endl;;
 			}
 			else
 			{
-				std::streamsize size = file.tellg(); // size of opened file
-				file.seekg(0, std::ios::beg); // set cursor at the beginning
+				fseek(file, 0L, SEEK_END);
+				size_t size = ftell(file); // size of opened file
+				fseek(file, 0L, SEEK_SET); // set cursor at the beginning
 
 				mPath = songPath;
 				mID = 0;
@@ -106,9 +109,10 @@ namespace MP
 				if (check_size(mSize) == true)
 				{
 					mData = new char[size];
-					if (file.read(mData, mSize))
+					size_t newLen = fread(mData, sizeof(char), mSize, file);
+					if (ferror(file) == 0)
 					{
-						file.close();
+						fclose(file);
 						mMusic = BASS_StreamCreateFile(TRUE, mData, 0, size, BASS_STREAM_AUTOFREE);
 						if (check_file() == false)
 						{
@@ -117,9 +121,9 @@ namespace MP
 					}
 					else
 					{
-						file.close();
-						std::cerr << "ERROR::FILE_READ: code: " << strerror(errno)
-							<< "\nPath: \"" << songPath << "\"\n!";;
+						fclose(file);;
+						std::wcout << "ERROR: could not read file at path \"" << songPath << "\"\n";
+						std::cout << stderr << std::endl;;
 						return false;
 					}
 				}
@@ -127,7 +131,7 @@ namespace MP
 				{
 					delete[] mData;
 					mData = NULL;
-					mMusic = BASS_StreamCreateFile(FALSE, mPath, 0, 0, 0);
+					mMusic = BASS_StreamCreateFile(FALSE, mPath.c_str(), 0, 0, 0);
 
 					if (check_file() == false)
 					{
@@ -140,25 +144,23 @@ namespace MP
 
 		}
 
-		b8 SongObject::load(const char* songPath, u32 id, MP::Playlist::SongState state)
+		b8 SongObject::load(std::wstring songPath, u32 id, MP::Playlist::SongState state)
 		{
-			std::ifstream file(songPath, std::ios::binary | std::ios::ate);
-
-			if (!file)
+			FILE* file = NULL;
+			if (_wfopen_s(&file, songPath.c_str(), L"rb+") != 0)
 			{
-				std::cerr << "ERROR::FILE_LOAD: code: " << strerror(errno) << std::endl;
-				return false;
+				std::wcout << "ERROR: could not open file at path \"" << songPath << "\"\n";
+				std::cout << stderr;
 			}
 			else
 			{
-
-				std::streamsize size = file.tellg(); // size of opened file
-				file.seekg(0, std::ios::beg); // set cursor at the beginning
+				fseek(file, 0L, SEEK_END);
+				size_t size = ftell(file); // size of opened file
+				fseek(file, 0L, SEEK_SET); // set cursor at the beginning
 
 				mPath = songPath;
 				mID = id;
 				mSize = size;
-
 
 
 				delete[] mData;
@@ -166,17 +168,17 @@ namespace MP
 				mData = NULL;
 				mMusic = NULL;
 
-
 				if (check_size(mSize) == true)
 				{
 					mData = new char[size];
-					if (file.read(mData, mSize))
+					size_t newLen = fread(mData, sizeof(char), mSize, file);
+					if (ferror(file) == 0)
 					{
-						file.close();
+						fclose(file);
 						mMusic = BASS_StreamCreateFile(TRUE, mData, 0, size, BASS_STREAM_AUTOFREE);
 						if (check_file() == false)
 						{
-							delete mdPathContainer[mID];
+							//delete mdPathContainer[mID];
 							mdPathContainer.erase(mdPathContainer.begin() + mID);
 
 							if (state == MP::Playlist::SongState::mNext)
@@ -187,8 +189,9 @@ namespace MP
 					}
 					else
 					{
-						file.close();
-						std::cerr << "ERROR::FILE_READ: code: " << strerror(errno) << std::endl;
+						fclose(file);;
+						std::wcout << "ERROR: could not read file at path \"" << songPath << "\"\n";
+						std::cout << stderr << std::endl;
 						return false;
 					}
 				}
@@ -196,11 +199,11 @@ namespace MP
 				{
 					delete[] mData;
 					mData = NULL;
-					mMusic = BASS_StreamCreateFile(FALSE, mPath, 0, 0, 0);
+					mMusic = BASS_StreamCreateFile(FALSE, mPath.c_str(), 0, 0, 0);
 
 					if (check_file() == false)
 					{
-						delete mdPathContainer[mID];
+						//delete mdPathContainer[mID];
 						mdPathContainer.erase(mdPathContainer.begin() + mID);
 
 						if (state == MP::Playlist::SongState::mNext)
@@ -214,7 +217,7 @@ namespace MP
 			return true;
 		}
 
-		b8 SongObject::update(const char* songPath)
+		b8 SongObject::update(std::wstring songPath)
 		{
 
 			return true;

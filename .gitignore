@@ -267,3 +267,9 @@ demp/external/SDL libs/
 *.lib
 
 demp/imgui\.ini
+
+*.wav
+
+demp/external/utf8/
+
+demp/external/utf8\.h

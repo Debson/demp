@@ -30,7 +30,7 @@ namespace mdEngine
 		f32 delta;
 	};
 
-	typedef std::vector<const char*> PathContainer;
+	typedef std::vector<std::wstring> PathContainer;
 }
 
 #endif // !MD_TYPES_H

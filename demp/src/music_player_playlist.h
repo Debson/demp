@@ -5,6 +5,7 @@
 #include <vector>
 #include <bass.h>
 
+
 #include "music_player_settings.h"
 #include "system_application_input.h"
 #include "md_types.h"
@@ -25,8 +26,8 @@ namespace MP
 
 		struct SongObject
 		{
-			const char* mPath;
-			char* mData;
+			std::wstring mPath;
+			char *mData;
 			u32 mSize;
 			HSTREAM mMusic;
 			s64 mID;
@@ -34,9 +35,9 @@ namespace MP
 			SongObject();
 			~SongObject();
 
-			b8 init(const char* songPath);
-			b8 load(const char* songPath, u32 id, SongState state);
-			b8 update(const char* songPath);
+			b8 init(std::wstring songPath);
+			b8 load(std::wstring songPath, u32 id, SongState state);
+			b8 update(std::wstring songPath);
 
 			HMUSIC& get();
 		};

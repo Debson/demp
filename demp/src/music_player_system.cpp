@@ -37,7 +37,7 @@ namespace MP
 			std::cout << "Currently loaded paths:\n";
 			for (u32 i = 0; i < Playlist::mdPathContainer.size(); i++)
 			{
-				std::cout << Playlist::mdPathContainer[i] << std::endl;
+				std::wcout << Playlist::mdPathContainer[i] << std::endl;
 			}
 		}
 
@@ -168,40 +168,36 @@ namespace MP
 	}
 
 
-	void PushToPlaylist(const char* path)
+	void PushToPlaylist(std::wstring path)
 	{
-		std::string str = path;
-		char *updatedPath = new char[str.length() + 1];
-		strcpy(updatedPath, str.c_str());
 
 		b8 exist = false;
 		b8 valid = false;
 
 		fs::path pathToDisplay(path);
-
-		std::cout << path << std::endl;
 		
-		std::string ext;
+		std::wstring ext;
 		
 		if (pathToDisplay.extension().has_extension() &&
 			pathToDisplay.extension().string().length() <= MAX_PATH_LENGTH)
 		{
-			ext = pathToDisplay.extension().string();
+			ext = pathToDisplay.extension().wstring();
 		}
 		else
 		{
 			for (auto & i : fs::directory_iterator(path))
 			{
-				char * dirPath = new char[i.path().string().length() + 1];
-				strcpy(dirPath, i.path().string().c_str());
+				wchar_t * dirPath = new wchar_t[i.path().wstring().length() + 1];
+				wcscpy(dirPath, i.path().wstring().c_str());
 				PushToPlaylist(dirPath);
 			}
 		}
 	
+
 		/* Search for existing path in */
 		for (u32 i = 0; i < Playlist::mdPathContainer.size(); i++)
 		{
-			if (strcmp(path, Playlist::mdPathContainer[i]) == 0)
+			if (path.compare(Playlist::mdPathContainer[i]) == 0)
 				exist = true;
 		}
 
@@ -214,11 +210,11 @@ namespace MP
 
 		if (exist == true)
 		{
-			std::cout << "ERROR: \""<<  path << "\" already loaded!\n";
+			std::wcout << "ERROR: \""<<  path << "\" already loaded!\n";
 		}
 		else if(valid == false)
 		{
-			std::cout << "ERROR: Invalid extension \"" << ext << "\"!\n";
+			std::wcout << "ERROR: Invalid extension \"" << ext << "\"!\n";
 		}
 		else if(Playlist::RamLoadedSong.mMusic == NULL)
 		{
@@ -226,12 +222,12 @@ namespace MP
 			{
 				Playlist::mdPathContainer.push_back(path);
 
-				std::cout << "Music at path: \"" << path << "\" loaded successfuly!\n";
-				std::cout << "Song loaded to the RAM succesfuly\n";
+				std::wcout << "Music at path: \"" << path << "\" loaded successfuly!\n";
+				std::wcout << "Song loaded to the RAM succesfuly\n";
 			}
 			else
 			{
-				std::cout << "ERROR: " << path << " cannot be loaded!\n";
+				std::wcout << "ERROR: " << path << " cannot be loaded!\n";
 			}
 		}
 		else
@@ -241,7 +237,7 @@ namespace MP
 			std::cout << "Song's path saved succesfuly\n";
 		}
 	}
-
+	/*
 	std::string get_ext(char* path)
 	{
 		char s = '.';
@@ -263,6 +259,6 @@ namespace MP
 		std::string ext = buffer;
 
 		return ext;
-	}
+	}*/
 }
 }

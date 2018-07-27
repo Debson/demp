@@ -3,6 +3,7 @@
 #define SETTINGS_H
 
 #include <iostream>
+#include <fstream>
 
 #define MAX_PATH_LENGTH 4
 
@@ -10,11 +11,11 @@ namespace mdEngine
 {
 namespace Data
 {
-	std::vector<std::string> SupportedFormats =
+	std::vector<std::wstring> SupportedFormats =
 	{
-		".mp3", 
-		".MP3",
-		".wav"
+		L".mp3", 
+		L".MP3",
+		L".wav"
 	};
 
 }

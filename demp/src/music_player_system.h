@@ -4,6 +4,7 @@
 
 #include <vector>
 
+#include "utf8_to_utf16.h"
 #include "system_application_input.h"
 #include "music_player_playlist.h"
 
@@ -20,7 +21,7 @@ namespace mdEngine
 
 		void Render();
 
-		void PushToPlaylist(const char* path);
+		void PushToPlaylist(std::wstring path);
 
 	}
 }
