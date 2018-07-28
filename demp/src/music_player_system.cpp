@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <cstring>
 #include <sstream>
+#include <algorithm>
 #include <iostream>
 #include <filesystem>
 
@@ -167,6 +168,7 @@ namespace MP
 			pathToDisplay.extension().wstring().length() <= MAX_EXTENSION_LENGTH)
 		{
 			ext = pathToDisplay.extension().wstring();
+			std::transform(ext.begin(), ext.end(), ext.begin(), towlower);
 		}
 #else
 		std::string ext;

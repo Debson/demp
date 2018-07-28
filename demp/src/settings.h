@@ -14,15 +14,13 @@ namespace Data
 #ifdef _WIN32_
 	std::vector<std::wstring> SupportedFormats =
 	{
-		L".mp3", 
-		L".MP3",
+		L".mp3",
 		L".wav"
 	};
 #else
 	std::vector<const char*> SupportedFormats =
 	{
 		".mp3",
-		".MP3",
 		".wav"
 	};
 #endif

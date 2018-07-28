@@ -5,7 +5,6 @@
 #include <fstream>
 #include <Windows.h>
 #include <filesystem>
-#include <random>
 
 #include "md_time.h"
 
@@ -34,6 +33,8 @@ namespace MP
 
 		b8 mdMusicPaused(false);
 
+		b8 mdMPStarted(false);
+
 		b8 mdVolumeFadeIn(false);
 		b8 mdVolumeFadeOut(false);
 
@@ -49,15 +50,15 @@ namespace MP
 		std::vector<u32> mdShuffleMusicPosContainer;
 		static s32 mdCurrentShuffleMusicPos = 0;
 
-		/* random numbers (C++11 feature) */
-		std::mt19937 rng;
 
 
 		void RepeatMusic();
 
-		void ShuffleMusic();
+		//void ShuffleMusic();
 
 		void CheckVolumeBounds();
+
+		void CheckMPState();
 
 		b8 check_size(u32);
 
@@ -79,6 +80,7 @@ namespace MP
 			return true;
 		}
 
+		/* delete this */
 		b8 check_file()
 		{
 			if (BASS_ErrorGetCode() == BASS_ERROR_FILEFORM)
@@ -298,8 +300,7 @@ namespace MP
 
 		void Start()
 		{
-			/* Generate random numbers seed */
-			rng.seed(std::random_device()());
+
 		}
 
 		void UpdatePlaylist()
@@ -348,11 +349,13 @@ namespace MP
 				SetVolume(mdVolume);
 			}
 
+			CheckMPState();
+
 			CheckVolumeBounds();
 
 			RepeatMusic();
 
-			ShuffleMusic();
+			//ShuffleMusic();
 		}
 
 		void PlayMusic()
@@ -367,7 +370,7 @@ namespace MP
 				if(IsPlaying() == false)
 					RamLoadedMusic.load(mdPathContainer[RamLoadedMusic.mID], RamLoadedMusic.mID, SongState::mCurrent);
 			}
-
+			mdMPStarted = true;
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
 		}
 
@@ -377,6 +380,7 @@ namespace MP
 			{
 				BASS_ChannelPause(RamLoadedMusic.get());
 				BASS_ChannelSetPosition(RamLoadedMusic.get(), 0, BASS_POS_BYTE);
+				mdMPStarted = false;
 			}
 		}
 
@@ -409,7 +413,9 @@ namespace MP
 			{
 				BASS_ChannelStop(RamLoadedMusic.get());
 
-				/*	If song path exist on next position, load it to the ram,
+				/* If shuffle is enabled, try to load next song basing on shuffled positions container.
+
+				If song path exist on next position, load it to the ram,
 				else load song from path at position 0 in path's container.
 
 				While loop:
@@ -462,12 +468,14 @@ namespace MP
 			{
 				BASS_ChannelStop(RamLoadedMusic.get());
 
-				/*	If song path exist on previous position, load it to the ram,
+				/*	If shuffle is enabled, try to load next song basing on shuffled positions container.
+				
+				If song path exist on previous position, load it to the ram,
 				else load song from path at position `PathContainer.Size() - 1`
 
 				While loop:
 				While path in PathContainer at position (current_path_id - index) is not valid and
-				path on previous position exist, try to open file at that path position
+				path on previous position exist, try to open file at that path position.
 
 				*/
 				if (mdShuffleMusic == false)
@@ -584,34 +592,31 @@ namespace MP
 
 		void ShuffleMusic()
 		{
+			/* Fill vector with numbers from 0 to path container's size and then random shuffle 
+			   all the numbers, creating a playlist with shuffeled songs.
+			*/
 
-			srand(time(NULL));
+			if (mdShuffleMusicPosContainer.size() > 0)
+				mdShuffleMusicPosContainer.clear();
 
-			if (mdShuffleMusic == true && mdRepeatMusic == false)
+			mdShuffleMusicPosContainer.push_back(RamLoadedMusic.mID);
+			for (u32 i = 0; i < mdPathContainer.size(); i++)
 			{
-				if (!mdShuffleMusicSet)
-				{
-					rng.seed(std::random_device()());
-					std::uniform_int_distribution<std::mt19937::result_type> random(0, mdPathContainer.size());
-
-					mdShuffleMusicPosContainer.push_back(RamLoadedMusic.mID);
-					for (u32 i = 0; i < mdPathContainer.size(); i++)
-					{
-						if(i != RamLoadedMusic.mID)
-							mdShuffleMusicPosContainer.push_back(i);
-					}
-					std::random_shuffle(mdShuffleMusicPosContainer.begin() + 1, mdShuffleMusicPosContainer.end());
-
-					mdShuffleMusicSet = true;
-				}
-
-				/*if (IsPlaying() == false && mdShuffleMusicSet == true)
-				{
-					NextMusic();
-					mdShuffleMusicSet = false;
-				}*/
+				if(i != RamLoadedMusic.mID)
+					mdShuffleMusicPosContainer.push_back(i);
 			}
+			std::random_shuffle(mdShuffleMusicPosContainer.begin() + 1, mdShuffleMusicPosContainer.end());
+		}
 
+		void CheckMPState()
+		{
+			/* If Music Player has started his first song, next song(next on playlist) will be 
+			   played automatically. 
+			*/
+			if (mdMPStarted == true && IsPlaying() == false)
+			{
+				NextMusic();
+			}
 		}
 
 		void CheckVolumeBounds()
@@ -694,7 +699,7 @@ namespace MP
 			return id;
 		}
 
-		std::string GetPositionString()
+		std::string GetPositionInString()
 		{
 			std::string time;
 
@@ -786,6 +791,8 @@ namespace MP
 		{
 			if(mdPathContainer.size() > 0)
 				mdShuffleMusic = shuffle;
+
+			ShuffleMusic();
 		}
 
 		void SetScrollVolumeStep(s8 step)

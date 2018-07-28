@@ -84,12 +84,15 @@ namespace MP
 
 		s32 GetNextID();
 
-		std::string GetPositionString();
+		/* Returns current song position in proper format (mm:ss) */
+		std::string GetPositionInString();
 
+		/* Returns current song position in seconds*/
 		f32 GetPosition();
 
 		f32 GetVolume();
 
+		/* Returns music length in seconds*/
 		s32 GetMusicLength();
 
 #ifdef _DEBUG_

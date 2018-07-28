@@ -45,7 +45,7 @@ namespace MP
 			ImGui::Begin("_DEBUG_");
 			if (ImGui::TreeNode("Player") == true)
 			{
-				ImGui::Text(Playlist::GetPositionString().c_str());
+				ImGui::Text(Playlist::GetPositionInString().c_str());
 				ImGui::SameLine();
 				ImGui::Text("     Song ID: %d", Playlist::RamLoadedMusic.mID);
 				ImGui::SameLine();
@@ -65,8 +65,8 @@ namespace MP
 				ImGui::Checkbox("Repeat", &music_repeat);
 				Playlist::SetRepeatState(music_repeat);
 				ImGui::SameLine();
-				ImGui::Checkbox("Shuffle", &music_shuffle);
-				Playlist::SetShuffleState(music_shuffle);
+				if(ImGui::Checkbox("Shuffle", &music_shuffle))
+					Playlist::SetShuffleState(music_shuffle);
 
 				if (ImGui::Button("Play") == true)
 				{
