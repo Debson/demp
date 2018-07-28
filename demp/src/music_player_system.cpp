@@ -13,6 +13,13 @@
 #include "music_player_playlist.h"
 #include "music_player_ui.h"
 
+#ifdef _WIN32_
+#define OUTPUT std::wcout
+#else
+#define OUTPUT std::cout
+#endif
+
+
 namespace fs = std::experimental::filesystem::v1;
 
 namespace mdEngine
@@ -25,44 +32,16 @@ namespace mdEngine
 namespace MP
 {
 
-	void Debug()
-	{
-		/*
-			Kepad7 = list all saved pathes
-			Keypad8 = show ram loaded song's id
-			Keypad9 = is ram loaded song stream property NULL?
-		*/
-		if (Input::IsKeyPressed(MP::KeyCode::Keypad7))
-		{
-			std::cout << "Currently loaded paths:\n";
-			for (u32 i = 0; i < Playlist::mdPathContainer.size(); i++)
-			{
-				std::wcout << Playlist::mdPathContainer[i] << std::endl;
-			}
-		}
-
-		if (Input::IsKeyPressed(MP::KeyCode::Keypad8))
-		{
-			std::cout << "ID: " << Playlist::RamLoadedSong.mID << std::endl;
-		}
-
-		if (Input::IsKeyPressed(MP::KeyCode::Keypad9))
-		{
-			(Playlist::RamLoadedSong.get() == NULL) ? (std::cout << "empty\n") : (std::cout << "not empty\n");
-		}
-	}
-
-
 	void Open(void)
 	{
+		Playlist::Start();
+
 		UI::Start();
 	}
 
 
 	void UpdateInput(void)
 	{
-		Debug();
-
 		/*	Temporary UI
 			P	= Play
 			O	= Pause/Unause
@@ -145,7 +124,7 @@ namespace MP
 		{
 			Playlist::RewindMusic(5);
 		}
-
+		
 	}
 
 	void UpdateLogic(void)
@@ -167,67 +146,96 @@ namespace MP
 		UI::Render();
 	}
 
-
+#ifdef _WIN32_
 	void PushToPlaylist(std::wstring path)
+#else
+	void PushToPlaylist(const char* path)
+#endif
 	{
 
 		b8 exist = false;
 		b8 valid = false;
 
 		fs::path pathToDisplay(path);
-		
+#ifdef _WIN32_
 		std::wstring ext;
-		
+		/* Extract extension from file. If file doesn't have an extension or
+		extracted extension is longer than MAX_EXTENSION_LENGTH then it it
+		must be a folder. Open it and for all files in that folder save path
+		in memory and push it to playlist. */
 		if (pathToDisplay.extension().has_extension() &&
-			pathToDisplay.extension().string().length() <= MAX_PATH_LENGTH)
+			pathToDisplay.extension().wstring().length() <= MAX_EXTENSION_LENGTH)
 		{
 			ext = pathToDisplay.extension().wstring();
 		}
+#else
+		std::string ext;
+		/* Extract extension from file. If file doesn't have an extension or
+		extracted extension is longer than MAX_EXTENSION_LENGTH then it it
+		must be a folder. Open it and for all files in that folder save path
+		in memory and push it to playlist. */
+		if (pathToDisplay.extension().has_extension() &&
+			pathToDisplay.extension().string().length() <= MAX_EXTENSION_LENGTH)
+		{
+			ext = pathToDisplay.extension().string();
+		}
+
+#endif
 		else
 		{
 			for (auto & i : fs::directory_iterator(path))
 			{
+#ifdef _WIN32_
 				wchar_t * dirPath = new wchar_t[i.path().wstring().length() + 1];
 				wcscpy(dirPath, i.path().wstring().c_str());
+#else
+				char * dirPath = new char[i.path().string().length() + 1];
+				strcpy(dirPath, i.path().string().c_str());
+#endif
 				PushToPlaylist(dirPath);
 			}
 		}
 	
 
-		/* Search for existing path in */
+		/* Check if current path is already in Path Containter. */
 		for (u32 i = 0; i < Playlist::mdPathContainer.size(); i++)
 		{
+#ifdef _WIN32_
 			if (path.compare(Playlist::mdPathContainer[i]) == 0)
+#else
+			if (strcmp(path, Playlist::mdPathContainer[i]) == 0)
+#endif
 				exist = true;
+		
 		}
-
+		/* Check if current's file extension is a valid music format */
 		for (u8 i = 0; i < Data::SupportedFormats.size(); i++)
 		{
 			if (ext.compare(Data::SupportedFormats[i]) == 0)
 				valid = true;
 		}
 
-
+		/* Proceed the path */
 		if (exist == true)
 		{
-			std::wcout << "ERROR: \""<<  path << "\" already loaded!\n";
+			OUTPUT << "ERROR: \""<<  path << "\" already loaded!\n";
 		}
 		else if(valid == false)
 		{
-			std::wcout << "ERROR: Invalid extension \"" << ext << "\"!\n";
+			OUTPUT << "ERROR: Invalid extension \"" << ext << "\"!\n";
 		}
-		else if(Playlist::RamLoadedSong.mMusic == NULL)
+		else if(Playlist::RamLoadedMusic.mMusic == NULL)
 		{
-			if (Playlist::RamLoadedSong.init(path))
+			if (Playlist::RamLoadedMusic.init(path))
 			{
 				Playlist::mdPathContainer.push_back(path);
 
-				std::wcout << "Music at path: \"" << path << "\" loaded successfuly!\n";
-				std::wcout << "Song loaded to the RAM succesfuly\n";
+				OUTPUT << "Music at path: \"" << path << "\" loaded successfuly!\n";
+				std::cout << "Song loaded to the RAM succesfuly\n";
 			}
 			else
 			{
-				std::wcout << "ERROR: " << path << " cannot be loaded!\n";
+				OUTPUT << "ERROR: " << path << " cannot be loaded!\n";
 			}
 		}
 		else

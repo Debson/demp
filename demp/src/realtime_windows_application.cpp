@@ -14,9 +14,11 @@
 #include <bass.h>
 #include <GL/gl3w.h>
 
+#ifdef _DEBUG_
 #include "../external/imgui/imgui.h"
 #include "../external/imgui/imgui_impl_sdl.h"
 #include "../external/imgui/imgui_impl_opengl3.h">
+#endif // DEBUG
 
 #include "music_player_system.h"
 #include "music_player_ui.h"
@@ -30,7 +32,10 @@ namespace mdEngine
 	SDL_Window* mdWindow = NULL;
 	SDL_DisplayMode current;
 	SDL_GLContext gl_context;
+#ifdef _DEBUG_
+	ImGuiIO io;
 	const char* glsl_version = "#version 130";
+#endif
 
 	b8 mdIsRunning(false);
 	b8 mdHasApplication(false);
@@ -40,6 +45,7 @@ namespace mdEngine
 
 	extern u16 mdActualWindowWidth;
 	extern u16 mdActualWindowHeight;
+	float clean_color = 0.5f;
 }
 
 void mdEngine::OpenRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface& applicationHandler)
@@ -86,6 +92,18 @@ void mdEngine::OpenRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface
 	SDL_GL_SetSwapInterval(1); // Enable vsync
 	gl3wInit();
 
+#ifdef _DEBUG_
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+
+	io = ImGui::GetIO(); (void)io;
+	ImGui_ImplSDL2_InitForOpenGL(mdWindow, gl_context);
+	ImGui_ImplOpenGL3_Init(glsl_version);
+
+	// Setup style
+	ImGui::StyleColorsDark();
+#endif
 
 	/* create window */
 
@@ -95,17 +113,6 @@ void mdEngine::OpenRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface
 
 void mdEngine::RunRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface& applicationHandler)
 {
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-
-	ImGui_ImplSDL2_InitForOpenGL(mdWindow, gl_context);
-	ImGui_ImplOpenGL3_Init(glsl_version);
-
-	// Setup style
-	ImGui::StyleColorsDark();
-
 	mdIsRunning = true;
 
 	SDL_Event event;
@@ -119,14 +126,13 @@ void mdEngine::RunRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface&
 	{
 		/* main loop */
 		mdEngine::StartNewFrame();
-
+#ifdef _DEBUG_
 		/* imgui */
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame(mdWindow);
 		ImGui::NewFrame();
+#endif
 
-		
-		
 		/* Calcualte delta time */
 		currentFrame = Time::time();
 		Time::deltaTime = currentFrame - previousFrame;
@@ -135,7 +141,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface&
 
 		while (SDL_PollEvent(&event))
 		{
+#ifdef _DEBUG_
 			ImGui_ImplSDL2_ProcessEvent(&event);
+#endif
 			switch (event.type)
 			{
 			case (SDL_QUIT):
@@ -143,9 +151,13 @@ void mdEngine::RunRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface&
 				break;
 			case (SDL_DROPFILE):
 			{
+#ifdef _WIN32_
 				std::wstring path = utf8_to_utf16(event.drop.file);
 				MP::PushToPlaylist(path);
-				//SDL_free(SDL_GetClipboardText());
+#else
+				MP::PushToPlaylist(event.drop.file);
+#endif
+				SDL_free(SDL_GetClipboardText());
 				break;
 			}
 			case (SDL_MOUSEWHEEL):
@@ -158,6 +170,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface&
 		}
 		
 		const u8* current_keystate = SDL_GetKeyboardState(NULL);
+
 		mdEngine::UpdateKeyState(current_keystate);
 
 		if (mdIsRunning == true)
@@ -167,13 +180,18 @@ void mdEngine::RunRealtimeApplication(mdEngine::MP::ApplicationHandlerInterface&
 			SDL_UpdateWindowSurface(mdWindow);
 		}
 
-
-		ImGui::Render();
 		SDL_GL_MakeCurrent(mdWindow, gl_context);
+#ifdef _DEBUG_
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 		glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT);
+		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#else
+		glViewport(0, 0, (int)mdActualWindowWidth, (int)mdActualWindowHeight);
+		glClearColor(clean_color, clean_color, clean_color, clean_color);
+		glClear(GL_COLOR_BUFFER_BIT);
+#endif
 		SDL_GL_SwapWindow(mdWindow);
 	}
 
@@ -190,10 +208,11 @@ void mdEngine::CloseRealtimeApplication(mdEngine::MP::ApplicationHandlerInterfac
 
 	mdApplicationHandler->OnWindowClose();
 
-
+#ifdef _DEBUG_
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();
+#endif
 
 	SDL_GL_DeleteContext(gl_context);
 	SDL_DestroyWindow(mdWindow);

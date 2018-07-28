@@ -6,6 +6,7 @@
 #include <bass.h>
 
 
+#include "configuration.h"
 #include "music_player_settings.h"
 #include "system_application_input.h"
 #include "md_types.h"
@@ -26,7 +27,6 @@ namespace MP
 
 		struct SongObject
 		{
-			std::wstring mPath;
 			char *mData;
 			u32 mSize;
 			HSTREAM mMusic;
@@ -35,15 +35,24 @@ namespace MP
 			SongObject();
 			~SongObject();
 
+#ifdef _WIN32_
 			b8 init(std::wstring songPath);
 			b8 load(std::wstring songPath, u32 id, SongState state);
-			b8 update(std::wstring songPath);
+			std::wstring mPath;
+#else
+			b8 init(const char* songPath);
+			b8 load(const char* songPath, u32 id, SongState state);
+			const char* mPath;
+#endif
+
 
 			HMUSIC& get();
 		};
 
-		extern SongObject RamLoadedSong;
+		extern SongObject RamLoadedMusic;
 		extern PathContainer mdPathContainer;
+
+		void Start();
 
 		void NextMusic();
 
@@ -65,7 +74,43 @@ namespace MP
 
 		void UpdateMusic();
 
-		void SetMusicVolume(f32 vol);
+		void SetVolume(f32 vol);
+
+		b8 IsPlaying();
+
+		std::string GetTitle(s32 id);
+
+		s32 GetPreviousID();
+
+		s32 GetNextID();
+
+		std::string GetPositionString();
+
+		f32 GetPosition();
+
+		f32 GetVolume();
+
+		s32 GetMusicLength();
+
+#ifdef _DEBUG_
+		s32 GetCurrentShufflePos();
+
+		s32 GetShuffleContainerSize();
+
+		void PrintShuffledPositions();
+
+		void PrintLoadedPaths();
+#endif
+
+		void SetPosition(s32 pos);
+
+		void SetRepeatState(b8 repeat);
+
+		void SetShuffleState(b8 shuffle);
+
+		void SetScrollVolumeStep(s8 step);
+
+		void SetVolumeFadeTime(s32 vol);
 	}
 }
 }

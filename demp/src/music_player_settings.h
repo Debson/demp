@@ -16,10 +16,6 @@ namespace Settings
 
 	const f32 VolumeKeyMultiplier = 0.8f;
 
-	const f32 VolumeScrollStep = 2.f;
-
-	const u16 VolumeFadeTime = 500;
-
 }
 }
 }

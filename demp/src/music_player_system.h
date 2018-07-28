@@ -21,7 +21,11 @@ namespace mdEngine
 
 		void Render();
 
+#ifdef _WIN32_
 		void PushToPlaylist(std::wstring path);
+#else
+		void PushToPlaylist(const char* path);
+#endif
 
 	}
 }

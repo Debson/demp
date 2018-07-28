@@ -5,6 +5,8 @@
 #include <vector>
 #include <stdint.h>
 
+#include "configuration.h"
+
 namespace mdEngine
 {
 	typedef bool b8;
@@ -29,8 +31,11 @@ namespace mdEngine
 		f32 total;
 		f32 delta;
 	};
-
+#ifdef _WIN32_
 	typedef std::vector<std::wstring> PathContainer;
+#else
+	typedef std::vector<const char*> PathContainer;
+#endif
 }
 
 #endif // !MD_TYPES_H
