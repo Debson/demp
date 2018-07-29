@@ -3,7 +3,7 @@
 
 namespace mdEngine
 {
-	namespace MP
+	namespace App
 	{
 
 		ApplicationHandlerInterface::~ApplicationHandlerInterface()
@@ -28,6 +28,11 @@ namespace mdEngine
 
 		void ApplicationHandlerInterface::OnRealtimeUpdate()
 		{
+		}
+
+		void ApplicationHandlerInterface::CollectWindowProperties(WindowProperties& windowProperties)
+		{
+			
 		}
 	}
 }

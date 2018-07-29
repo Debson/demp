@@ -1,11 +1,13 @@
 #include "music_player_ui.h"
 
 #include <iostream>
+#include <vector>
+#include <map>
 
 #include "../external/imgui/imgui.h"
 #include "music_player_playlist.h"
-#include "md_types.h"
-
+#include "realtime_system_application.h"
+#include "application_window.h"
 
 
 namespace mdEngine
@@ -14,6 +16,13 @@ namespace MP
 {
 	namespace UI
 	{
+		std::vector<Movable> mdMovableContainer;
+		std::vector<std::pair<ButtonType, Button*>> mdButtonContainer;
+
+		Button exit(ButtonType::Exit, 480, 0, 500, 20);
+
+		Movable mainBar(0, 0, 480, 20);
+
 		b8 music_repeat = false;
 		b8 music_shuffle = false;
 		s32 music_position = 0;
@@ -25,23 +34,34 @@ namespace MP
 
 		ImVec4 ClearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+		void HandleInput();
+
+		void Debug();
+
+	}
+
+	UI::Movable::Movable(s32 xL, s32 yU, s32 xR, s32 yD) : xL(xL), yU(yU), xR(xR), yD(yD) 
+	{
+	}
+
+	UI::Movable::Movable()
+	{
+	}
+
+	UI::Button::Button(ButtonType type, s32 xL, s32 yU, s32 xR, s32 yD) : xL(xL), yU(yU), xR(xR), yD(yD)
+	{
+		mdButtonContainer.push_back(std::make_pair(type, this));
+	}
+
+	UI::Button::Button()
+	{
 	}
 
 	namespace UI
 	{
-		void Start()
-		{
-			
-		}
-
-		void Update()
-		{
-
-		}
-
-		void Render()
-		{
 #ifdef _DEBUG_
+		void Debug()
+		{
 			ImGui::Begin("_DEBUG_");
 			if (ImGui::TreeNode("Player") == true)
 			{
@@ -65,7 +85,7 @@ namespace MP
 				ImGui::Checkbox("Repeat", &music_repeat);
 				Playlist::SetRepeatState(music_repeat);
 				ImGui::SameLine();
-				if(ImGui::Checkbox("Shuffle", &music_shuffle))
+				if (ImGui::Checkbox("Shuffle", &music_shuffle))
 					Playlist::SetShuffleState(music_shuffle);
 
 				if (ImGui::Button("Play") == true)
@@ -104,8 +124,8 @@ namespace MP
 
 				ImGui::InputInt("Volume fade time", &volume_fade_time, 20, 100);
 				Playlist::SetVolumeFadeTime(volume_fade_time);
-				
-				
+
+
 
 				ImGui::TreePop();
 			}
@@ -135,9 +155,41 @@ namespace MP
 
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::End();
+		}
 #endif
+
+		void Start()
+		{
+			mdMovableContainer.push_back(mainBar);
 		}
 
+		void Update()
+		{
+			for(u16 i = 0; i < mdMovableContainer.size(); i++)
+				App::WindowMovableBar(mdMovableContainer[i]);
+
+			for (u16 i = 0; i < mdButtonContainer.size(); i++)
+				App::ProcessButtons(mdButtonContainer[i].second);
+
+			HandleInput();
+		}
+
+		void Render()
+		{
+
+			Debug();
+
+
+		}
+
+		void HandleInput()
+		{
+			if (exit.isPressed == true)
+			{
+				mdEngine::AppExit();
+			}
+		}
 	}
+
 }
 }

@@ -5,6 +5,7 @@
 
 #include "md_util.h"
 
+#include "music_player_system.h"
 
 namespace mdEngine
 {

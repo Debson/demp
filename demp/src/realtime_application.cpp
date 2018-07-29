@@ -6,14 +6,14 @@
 
 namespace mdEngine
 {
-	const MP::WindowProperties mdDefaultWindowProperties;
+	const App::WindowProperties mdDefaultWindowProperties;
 	u16 mdActualWindowWidth(mdDefaultWindowProperties.mWindowWidth);
 	u16 mdActualWindowHeight(mdDefaultWindowProperties.mWindowHeight);
 
-	namespace MP
+	namespace App
 	{
 
-		RealtimeApplication::RealtimeApplication(MP::ApplicationHandlerInterface& applicationHandler) : mApplicationHandler(applicationHandler)
+		RealtimeApplication::RealtimeApplication(App::ApplicationHandlerInterface& applicationHandler) : mApplicationHandler(applicationHandler)
 		{
 
 			// add implementation??
@@ -46,7 +46,12 @@ namespace mdEngine
 
 		void RealtimeApplication::SetWindowTitle(const char* windowTitle)
 		{
-			SetWindowTitle(windowTitle);
+			mdEngine::SetWindowTitle(windowTitle);
+		}
+
+		void RealtimeApplication::SetWindowProperties(const WindowProperties& windowProperties)
+		{
+			mdEngine::SetWindowProperties(windowProperties);
 		}
 	}
 }

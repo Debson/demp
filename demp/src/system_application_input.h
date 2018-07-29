@@ -6,9 +6,9 @@
 
 namespace mdEngine
 {
-	void OnPressKey(const MP::KeyCode& key);
+	void OnPressKey(const App::KeyCode& key);
 
-	void OnReleaseKey(const MP::KeyCode& key);
+	void OnReleaseKey(const App::KeyCode& key);
 
 	void StartNewFrame(void);
 
@@ -17,6 +17,8 @@ namespace mdEngine
 	void UpdateScrollPosition(s32 scrollX, s32 scrollY);
 
 	void UpdateKeyState(const u8* state);
+
+	void UpdateMouseState(const u32 state);
 }
 
 #endif // !MD_SYSTEM_APPLICATION_INPUT_H

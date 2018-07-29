@@ -2,9 +2,11 @@
 #ifndef MD_APPLICATION_HANDLER_INTERFACE_H
 #define MD_APPLICATION_HANDLER_INTERFACE_H
 
+#include "application_window.h"
+
 namespace mdEngine
 {
-	namespace MP
+	namespace App
 	{
 
 		class ApplicationHandlerInterface
@@ -22,6 +24,8 @@ namespace mdEngine
 			virtual void OnBecomeInactive(void);
 
 			virtual void OnRealtimeUpdate(void);
+
+			virtual void CollectWindowProperties(WindowProperties& windowProperties);
 
 		private:
 		};

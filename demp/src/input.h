@@ -12,7 +12,7 @@
 namespace mdEngine
 { 
 
-namespace MP
+namespace App
 {
 	enum KeyCode : s16
 	{
@@ -210,7 +210,14 @@ namespace MP
 		KeypadDecimal = SDL_SCANCODE_KP_DECIMAL,
 		KeypadHexadecimal = SDL_SCANCODE_KP_HEXADECIMAL,
 
-		/*LCtrl = SDL_SCANCODE_LCTRL,
+		MouseLeft,
+		MouseRight,
+		MouseMiddle,
+
+		/*MouseWheelUp,
+		MouseWheelDown,
+
+		LCtrl = SDL_SCANCODE_LCTRL,
 		LShift = SDL_SCANCODE_LSHIFT,
 		LAlt = SDL_SCANCODE_LALT,
 		LGui = SDL_SCANCODE_LGUI,
@@ -247,13 +254,7 @@ namespace MP
 		KbDillumUp = SDL_SCANCODE_KBDILLUMUP,
 		Eject = SDL_SCANCODE_EJECT,
 		Sleep = SDL_SCANCODE_SLEEP,
-
-		MouseLeft,
-		MouseRight,
-		MouseMiddle,
-
-		MouseWheelUp,
-		MouseWheelDown,*/
+			,*/
 
 		count,
 	};
@@ -285,6 +286,8 @@ namespace Input
 	b8 IsScrollActive();
 
 	void GetMousePosition(s32* mouseX, s32* mouseY);
+	
+	void GetGlobalMousePosition(s32* mouseX, s32* mouseY);
 
 	b8 GetMouseMovement(s32* mouseX, s32* mouseY);
 

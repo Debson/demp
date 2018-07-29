@@ -25,7 +25,7 @@ namespace fs = std::experimental::filesystem::v1;
 
 namespace mdEngine
 {
-	namespace MP
+	namespace App
 	{
 		std::string get_ext(char* path);
 	}
@@ -56,72 +56,72 @@ namespace MP
 		*/
 
 
-		if (Input::IsKeyPressed(MP::KeyCode::P))
+		if (App::Input::IsKeyPressed(App::KeyCode::P))
 		{
 			Playlist::PlayMusic();
 		}
 
-		if (Input::IsKeyPressed(MP::KeyCode::O))
+		if (App::Input::IsKeyPressed(App::KeyCode::O))
 		{
 			Playlist::PauseMusic();
 		}
 
 
-		if (Input::IsKeyPressed(MP::KeyCode::J))
+		if (App::Input::IsKeyPressed(App::KeyCode::J))
 		{
 			Playlist::StopMusic();
 		}
 
-		if (Input::IsKeyPressed(MP::KeyCode::H))
+		if (App::Input::IsKeyPressed(App::KeyCode::H))
 		{
 			Playlist::NextMusic();
 		}
 
-		if (Input::IsKeyPressed(MP::KeyCode::G))
+		if (App::Input::IsKeyPressed(App::KeyCode::G))
 		{
 			Playlist::PreviousMusic();
 		}
 
 		
 		/* Volume */
-		if (Input::IsKeyDown(MP::KeyCode::Up))
+		if (App::Input::IsKeyDown(App::KeyCode::Up))
 		{
-			Playlist::IncreaseVolume(MP::InputEvent::kPressedEvent);
+			Playlist::IncreaseVolume(App::InputEvent::kPressedEvent);
 		}
 
-		if (Input::IsKeyDown(MP::KeyCode::Down))
+		if (App::Input::IsKeyDown(App::KeyCode::Down))
 		{
-			Playlist::LowerVolume(MP::InputEvent::kPressedEvent);
+			Playlist::LowerVolume(App::InputEvent::kPressedEvent);
 		}
 
 		/* Volume */
-		if (Input::IsKeyDown(MP::KeyCode::Up))
+		if (App::Input::IsKeyDown(App::KeyCode::Up))
 		{
-			Playlist::IncreaseVolume(MP::InputEvent::kPressedEvent);
+			Playlist::IncreaseVolume(App::InputEvent::kPressedEvent);
 		}
 
-		if (Input::IsKeyDown(MP::KeyCode::Down))
+		if (App::Input::IsKeyDown(App::KeyCode::Down))
 		{
-			Playlist::LowerVolume(MP::InputEvent::kPressedEvent);
+			Playlist::LowerVolume(App::InputEvent::kPressedEvent);
 		}
 
-		if (Input::IsScrollForwardActive())
+		if (App::Input::IsScrollForwardActive())
 		{
-			Playlist::IncreaseVolume(MP::InputEvent::kScrollEvent);
+			Playlist::IncreaseVolume(App::InputEvent::kScrollEvent);
 		}
 
-		if (Input::IsScrollBackwardActive())
+		if (App::Input::IsScrollBackwardActive())
 		{
-			Playlist::LowerVolume(MP::InputEvent::kScrollEvent);
+			Playlist::LowerVolume(App::InputEvent::kScrollEvent);
 		}
 
 		/* REWIND */
-		if (Input::IsKeyPressed(MP::KeyCode::Left))
+		if (App::Input::IsKeyPressed(App::KeyCode::Left))
 		{
 			Playlist::RewindMusic(-5);
 		}
 
-		if (Input::IsKeyPressed(MP::KeyCode::Right))
+		if (App::Input::IsKeyPressed(App::KeyCode::Right))
 		{
 			Playlist::RewindMusic(5);
 		}

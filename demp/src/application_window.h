@@ -2,10 +2,12 @@
 #ifndef MD_APPLICATION_WINDOW_H
 
 #include "md_types.h"
+#include "system_application_input.h"
+#include "music_player_ui.h"
 
 namespace mdEngine
 {
-namespace MP
+namespace App
 {
 	enum class WindowMode
 	{
@@ -24,9 +26,13 @@ namespace MP
 
 		WindowProperties(void);
 
-		WindowProperties(const WindowMode& windowMode);
+		//WindowProperties(const WindowMode& windowMode);
 
 	};
+
+	void WindowMovableBar(MP::UI::Movable& bar);
+
+	void ProcessButtons(MP::UI::Button* button);
 }
 }
 

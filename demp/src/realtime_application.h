@@ -3,10 +3,11 @@
 #define MD_REALTIME_APPLICATION_H
 
 #include "application_handler_interface.h"
+#include "application_window.h"
 
 namespace mdEngine
 {
-	namespace MP
+	namespace App
 	{
 		class RealtimeApplication
 		{
@@ -24,6 +25,8 @@ namespace mdEngine
 			void Close();
 
 			void SetWindowTitle(const char* windowTitle);
+
+			void SetWindowProperties(const WindowProperties& windowProperties);
 
 		private:
 			ApplicationHandlerInterface& mApplicationHandler;

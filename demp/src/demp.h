@@ -7,7 +7,7 @@
 #include "realtime_application.h"
 #include "music_player.h"
 
-class Demp : public mdEngine::MP::ApplicationHandlerInterface
+class Demp : public mdEngine::App::ApplicationHandlerInterface
 {
 public:
 	Demp();

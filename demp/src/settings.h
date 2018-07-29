@@ -5,6 +5,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "application_window.h"
+
 #define MAX_EXTENSION_LENGTH 4
 
 namespace mdEngine

@@ -6,7 +6,6 @@
 #include <bass.h>
 #include <SDL.h>
 
-#include "music_player_system.h"
 #include "md_types.h"
 
 namespace mdEngine

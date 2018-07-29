@@ -369,8 +369,8 @@ namespace MP
 			{
 				if(IsPlaying() == false)
 					RamLoadedMusic.load(mdPathContainer[RamLoadedMusic.mID], RamLoadedMusic.mID, SongState::mCurrent);
+				mdMPStarted = true;
 			}
-			mdMPStarted = true;
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
 		}
 
@@ -518,27 +518,27 @@ namespace MP
 		}
 
 
-		void IncreaseVolume(MP::InputEvent event)
+		void IncreaseVolume(App::InputEvent event)
 		{
 			switch (event)
 			{
-			case MP::InputEvent::kPressedEvent:
+			case App::InputEvent::kPressedEvent:
 				mdVolume += (Settings::VolumeKeyMultiplier * Time::deltaTime);
 				break;
-			case MP::InputEvent::kScrollEvent:
+			case App::InputEvent::kScrollEvent:
 				mdVolume += (mdVolumeScrollStep / 100.f);
 				break;
 			}
 		}
 
-		void LowerVolume(MP::InputEvent event)
+		void LowerVolume(App::InputEvent event)
 		{
 			switch (event)
 			{
-			case MP::InputEvent::kPressedEvent:
+			case App::InputEvent::kPressedEvent:
 				mdVolume -= (Settings::VolumeKeyMultiplier * Time::deltaTime);
 				break;
-			case MP::InputEvent::kScrollEvent:
+			case App::InputEvent::kScrollEvent:
 				mdVolume -= (mdVolumeScrollStep / 100.f);
 				break;
 			};

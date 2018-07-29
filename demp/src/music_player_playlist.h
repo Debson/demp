@@ -64,9 +64,9 @@ namespace MP
 
 		void StopMusic();
 
-		void IncreaseVolume(MP::InputEvent event);
+		void IncreaseVolume(App::InputEvent event);
 
-		void LowerVolume(MP::InputEvent event);
+		void LowerVolume(App::InputEvent event);
 
 		void RewindMusic(s32 pos);
 
