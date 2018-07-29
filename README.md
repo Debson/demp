@@ -1,2 +1,2 @@
 # damp
-Simplistic music player.
+Cross platform music player.
