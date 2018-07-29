@@ -32,7 +32,7 @@ namespace MP
 
 		std::string title = "none";
 
-		ImVec4 ClearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+		ImVec4 ClearColor = ImVec4(1.f, 254.f/255.f, 1.f, 1.f);
 
 		void HandleInput();
 

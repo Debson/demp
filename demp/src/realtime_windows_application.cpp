@@ -5,11 +5,12 @@
 #include <sstream>
 #include <iostream>
 #include <string>
-#include <codecvt>
+#include <Windows.h>
 
 #include <SDL.h>
 #undef main // SDL_main.h is included automatically from SDL.h, so you always get the nasty #define.
 #include <SDL_mixer.h>
+#include <SDL_syswm.h>
 
 #include <bass.h>
 #include <GL/gl3w.h>
@@ -32,9 +33,10 @@
 namespace mdEngine
 {
 	SDL_Window* mdWindow = NULL;
-	SDL_Window* mdWindowOpenGL = NULL;
 	SDL_DisplayMode current;
 	SDL_GLContext gl_context;
+	SDL_SysWMinfo wmInfo;
+	HWND hwnd;
 #ifdef _DEBUG_
 	ImGuiIO io;
 	const char* glsl_version = "#version 130";
@@ -50,7 +52,7 @@ namespace mdEngine
 	s32 mdActualWindowHeight;
 	s32 mdCurrentWindowWidth;
 	s32 mdCurrentWindowHeight;
-	float clean_color = 0.5f;
+	float clean_color = 1.0f;
 
 	void SetupSDL();
 
@@ -72,10 +74,6 @@ void mdEngine::SetupSDL()
 		mdActualWindowWidth, mdActualWindowHeight,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
 
-	mdWindowOpenGL = SDL_CreateWindow("demp", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		mdActualWindowWidth, mdActualWindowHeight,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
-
 	if (mdWindow == NULL)
 	{
 		MD_SDL_ERROR("ERROR: Failed to open SDL window");
@@ -84,11 +82,16 @@ void mdEngine::SetupSDL()
 		return;
 	}
 
+	SDL_GetWindowWMInfo(mdWindow, &wmInfo);
+	hwnd = wmInfo.info.win.window;
 
-	SDL_SetWindowModalFor(mdWindowOpenGL, mdWindow);
+	SetWindowLong(hwnd, GWL_EXSTYLE,
+		GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
 
-	SDL_SetWindowOpacity(mdWindow, 1.f);
-	SDL_SetWindowOpacity(mdWindowOpenGL, 0.5f);
+	SetLayeredWindowAttributes(hwnd, RGB(255, 254, 255), 90, LWA_COLORKEY);
+
+
+	//SDL_SetWindowOpacity(mdWindow, 1.f);
 }
 
 void mdEngine::SetupOpenGL()
