@@ -7,6 +7,11 @@
 
 namespace mdEngine
 {
+	const App::WindowProperties mdDefaultWindowProperties;
+
+	extern s32 mdActualWindowWidth;
+	extern s32 mdActualWindowHeight;
+
 	namespace App
 	{
 		class RealtimeApplication

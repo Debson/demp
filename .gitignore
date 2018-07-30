@@ -275,3 +275,7 @@ demp/external/utf8/
 demp/external/utf8\.h
 
 demp/external/glm/
+
+demp/assets/
+
+demp/external/stb_image\.h

@@ -30,9 +30,13 @@ namespace mdEngine
 		{
 		}
 
+		void ApplicationHandlerInterface::OnRealtimeRender()
+		{
+		}
+
+
 		void ApplicationHandlerInterface::CollectWindowProperties(WindowProperties& windowProperties)
 		{
-			
 		}
 	}
 }

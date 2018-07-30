@@ -1,14 +1,15 @@
 #include "realtime_application.h"
 
 #include "realtime_system_application.h"
-#include "application_window.h"
+
 
 
 namespace mdEngine
 {
-	const App::WindowProperties mdDefaultWindowProperties;
-	u16 mdActualWindowWidth(mdDefaultWindowProperties.mWindowWidth);
-	u16 mdActualWindowHeight(mdDefaultWindowProperties.mWindowHeight);
+	//const App::WindowProperties mdDefaultWindowProperties;
+
+	s32 mdActualWindowWidth(mdDefaultWindowProperties.mWindowWidth);
+	s32 mdActualWindowHeight(mdDefaultWindowProperties.mWindowHeight);
 
 	namespace App
 	{

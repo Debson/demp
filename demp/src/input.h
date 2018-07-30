@@ -291,7 +291,6 @@ namespace Input
 
 	b8 GetMouseMovement(s32* mouseX, s32* mouseY);
 
-
 	void SetMousePosition(s32 mouseX, s32 mouseY);
 
 	void GetMouseScrollPosition(s32* scrollX, s32* scrollY);

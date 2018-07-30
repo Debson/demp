@@ -19,7 +19,7 @@ namespace mdEngine
 
 		void UpdateLogic(void);
 
-		void Render();
+		void RenderMusicPlayer();
 
 #ifdef _WIN32_
 		void PushToPlaylist(std::wstring path);

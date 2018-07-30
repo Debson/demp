@@ -26,6 +26,7 @@
 #include "md_time.h"
 #include "application_window.h"
 #include "graphics.h"
+#include "realtime_application.h"
 
 // TODO: create RealtimeApplication class that initializes all(sdl inits, input, main game loop) 
 	//and MyApplicationHandler that will be passed to the construct of RealtimeApplication
@@ -48,8 +49,8 @@ namespace mdEngine
 
 	App::ApplicationHandlerInterface* mdApplicationHandler(nullptr);
 
-	s32 mdActualWindowWidth;
-	s32 mdActualWindowHeight;
+	//s32 mdActualWindowWidth;
+	//s32 mdActualWindowHeight;
 	s32 mdCurrentWindowWidth;
 	s32 mdCurrentWindowHeight;
 	float clean_color = 1.0f;
@@ -59,6 +60,8 @@ namespace mdEngine
 	void SetupOpenGL();
 
 	void SetupImGui();
+
+	void RenderOnScreen();
 }
 
 void mdEngine::SetupSDL()
@@ -69,10 +72,11 @@ void mdEngine::SetupSDL()
 		assert(SDL_Init(SDL_INIT_VIDEO) < 0);
 		return;
 	}
-
+	
 	mdWindow = SDL_CreateWindow("demp", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		mdActualWindowWidth, mdActualWindowHeight,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
+
 
 	if (mdWindow == NULL)
 	{
@@ -82,26 +86,33 @@ void mdEngine::SetupSDL()
 		return;
 	}
 
+	/* Retrieve hwnd window info and set transparecny for specific color.
+	   Works only on Windows. 
+	   TODO: implement that on linux later on.
+	*/
+#ifdef _WIN32_
 	SDL_GetWindowWMInfo(mdWindow, &wmInfo);
 	hwnd = wmInfo.info.win.window;
-
 	SetWindowLong(hwnd, GWL_EXSTYLE,
 		GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
 
-	SetLayeredWindowAttributes(hwnd, RGB(255, 254, 255), 90, LWA_COLORKEY);
+
+	SetLayeredWindowAttributes(hwnd, RGB(0xFF, 0xFE, 0xFF), 0, LWA_COLORKEY);
 
 
-	//SDL_SetWindowOpacity(mdWindow, 1.f);
+
+#endif
+
 }
 
 void mdEngine::SetupOpenGL()
 {
 	gl_context = SDL_GL_CreateContext(mdWindow);
+
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -109,19 +120,19 @@ void mdEngine::SetupOpenGL()
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
-	SDL_GetCurrentDisplayMode(0, &current);
 
+	SDL_GetCurrentDisplayMode(0, &current);
 
 }
 
 void mdEngine::SetupImGui()
 {
 
-	gl_context = SDL_GL_CreateContext(mdWindow);
 	SDL_GL_SetSwapInterval(1); // Enable vsync
 	gl3wInit();
-
-	glViewport(0, 0, 500, 800);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 #ifdef _DEBUG_
 	IMGUI_CHECKVERSION();
@@ -142,7 +153,6 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	mdHasApplication = true;
 	mdApplicationHandler = &applicationHandler;
 	App::WindowProperties windowProperties;
-	//App::WinProperties = windowProperties;
 	mdApplicationHandler->CollectWindowProperties(windowProperties);
 	mdActualWindowWidth = mdCurrentWindowWidth = windowProperties.mWindowWidth;
 	mdActualWindowHeight = mdCurrentWindowHeight = windowProperties.mWindowHeight;
@@ -246,21 +256,27 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		SDL_GL_MakeCurrent(mdWindow, gl_context);
 #ifdef _DEBUG_
 		glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		/* TODO: Call viewport only when res changes */
+		//glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
+		
 		Graphics::Render();
+		mdApplicationHandler->OnRealtimeRender();
+
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 #else
+		glClearColor(1.f, 254.f/255.f, 1.f, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, (int)mdActualWindowWidth, (int)mdActualWindowHeight);
-		glClearColor(clean_color, clean_color, clean_color, clean_color);
-		glClear(GL_COLOR_BUFFER_BIT);
+		Graphics::Render();
 #endif
 		SDL_GL_SwapWindow(mdWindow);
 	}
 
 }
+
 
 void mdEngine::StopRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {

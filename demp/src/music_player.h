@@ -19,6 +19,7 @@ namespace mdEngine
 			
 			virtual void Start();
 			virtual void Update();
+			virtual void Render();
 			virtual void Close();
 		private:
 		};

@@ -3,11 +3,20 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#ifdef _DEBUG_
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include "md_load_texture.h"
+#include "md_shape.h"
+#endif
+
 
 #include "../external/imgui/imgui.h"
 #include "music_player_playlist.h"
 #include "realtime_system_application.h"
 #include "application_window.h"
+#include "realtime_application.h"
+#include "md_shader.h"
 
 
 namespace mdEngine
@@ -16,13 +25,19 @@ namespace MP
 {
 	namespace UI
 	{
-		std::vector<Movable> mdMovableContainer;
-		std::vector<std::pair<ButtonType, Button*>> mdButtonContainer;
+		static std::vector<Movable*> mdMovableContainer;
+		std::vector<std::pair<Input::ButtonType, Button*>> mdButtonContainer;
 
-		Button exit(ButtonType::Exit, 480, 0, 500, 20);
+#ifdef _DEBUG_
+		Shader mdDebugShader;
+		Shape * mdQuad = NULL;
+		GLuint mdDebugTex;
+#endif
 
-		Movable mainBar(0, 0, 480, 20);
+		Movable * mainBar;
 
+		Button * exit;
+		
 		b8 music_repeat = false;
 		b8 music_shuffle = false;
 		s32 music_position = 0;
@@ -36,32 +51,51 @@ namespace MP
 
 		void HandleInput();
 
-		void Debug();
+		void DebugStart();
+
+		void DebugRender();
 
 	}
 
-	UI::Movable::Movable(s32 xL, s32 yU, s32 xR, s32 yD) : xL(xL), yU(yU), xR(xR), yD(yD) 
-	{
+	UI::Movable::Movable(s32 xL, s32 yU, s32 xR, s32 yD) : 
+						 xL(xL), yU(yU), xR(xR), yD(yD)  
+	{ 
+		mdMovableContainer.push_back(this);
 	}
 
-	UI::Movable::Movable()
-	{
-	}
+	UI::Movable::Movable() { }
 
-	UI::Button::Button(ButtonType type, s32 xL, s32 yU, s32 xR, s32 yD) : xL(xL), yU(yU), xR(xR), yD(yD)
+	UI::Movable::~Movable() { delete this; }
+
+	UI::Button::Button(Input::ButtonType type, s32 xL, s32 yU, s32 xR, s32 yD) :
+					   xL(xL), yU(yU), xR(xR), yD(yD), isPressed(false), isDown(false), hasFocus(false), isReleased(false)
 	{
 		mdButtonContainer.push_back(std::make_pair(type, this));
 	}
 
-	UI::Button::Button()
-	{
-	}
+	UI::Button::Button() { }
+
+	UI::Button::~Button() { delete this;  }
+
 
 	namespace UI
 	{
-#ifdef _DEBUG_
-		void Debug()
+		void DebugStart()
 		{
+#ifdef _DEBUG_
+			mdDebugShader = Shader("shaders/window.vert", "shaders/window.frag", nullptr);
+			mdQuad = Shape::QUAD();
+
+			mdDebugShader.use();
+			mdDebugShader.setInt("image", 0);
+
+			mdDebugTex = mdLoadTexture("assets/debug.png");
+#endif
+		}
+
+		void DebugRender()
+		{
+#ifdef _DEBUG_
 			ImGui::Begin("_DEBUG_");
 			if (ImGui::TreeNode("Player") == true)
 			{
@@ -151,16 +185,29 @@ namespace MP
 				ImGui::TreePop();
 			}
 
-
-
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::End();
-		}
+
+			glm::mat4 model;
+			mdDebugShader.use();
+			model = glm::translate(model, glm::vec3(1.f - (130.f/360.f) * 2.f, 1.f - (40.f / 360.f) * 2.f, 0.5f));
+			model = glm::scale(model, glm::vec3((15.f/360.f) * 2.f, (20.f/360.f) * 2.f, 1.f));;
+			mdDebugShader.setMat4("model", model);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, mdDebugTex);
+			mdQuad->Draw(mdDebugShader);
+
 #endif
+		}
 
 		void Start()
 		{
-			mdMovableContainer.push_back(mainBar);
+			mainBar = new Movable(0, 0, mdDefaultWindowProperties.mWindowWidth - 20, 20);
+
+			exit = new Button(Input::ButtonType::Exit, mdDefaultWindowProperties.mWindowWidth - 130,
+						  40, mdDefaultWindowProperties.mWindowWidth - 150, 60);
+
+			DebugStart();
 		}
 
 		void Update()
@@ -177,14 +224,14 @@ namespace MP
 		void Render()
 		{
 
-			Debug();
+			DebugRender();
 
 
 		}
 
 		void HandleInput()
 		{
-			if (exit.isPressed == true)
+			if (exit->isPressed == true)
 			{
 				mdEngine::AppExit();
 			}

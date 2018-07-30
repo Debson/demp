@@ -31,6 +31,8 @@ namespace mdEngine
 		f32 total;
 		f32 delta;
 	};
+
+
 #ifdef _WIN32_
 	typedef std::vector<std::wstring> PathContainer;
 #else

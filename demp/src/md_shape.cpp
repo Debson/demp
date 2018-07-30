@@ -26,21 +26,16 @@ namespace mdEngine
 			glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 			glEnableVertexAttribArray(0);
 			glBindVertexArray(0);
-
-			std::cout << s->vao << std::endl;
 		}
 		return s;
 	}
 
 	Shape::~Shape()
 	{
-		/*switch (currentShape)
-		{
-		case SHAPE::CUBE: case SHAPE::CUBEMAP: case SHAPE::QUAD: case SHAPE::PLANE:
-			glDeleteBuffers(1, &vbo);
-			glDeleteVertexArrays(1, &vao);
-			break;
-		}*/
+		glDeleteBuffers(1, &vbo);
+		glDeleteVertexArrays(1, &vao);
+
+		delete this;
 	}
 
 	void Shape::Draw(Shader shader)

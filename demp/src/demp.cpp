@@ -23,6 +23,12 @@ void Demp::OnRealtimeUpdate()
 	mMusicPlayer.Update();
 }
 
+void Demp::OnRealtimeRender()
+{
+	/* Render music player */
+	mMusicPlayer.Render();
+}
+
 
 int main(int argc, char** argv)
 {

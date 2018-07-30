@@ -23,7 +23,11 @@ namespace mdEngine
 		{
 			UpdateInput();
 			UpdateLogic();
-			Render();
+		}
+
+		void MusicPlayer::Render()
+		{
+			RenderMusicPlayer();
 		}
 
 		void MP::MusicPlayer::Close()

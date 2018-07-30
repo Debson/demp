@@ -25,6 +25,8 @@ namespace mdEngine
 
 			virtual void OnRealtimeUpdate(void);
 
+			virtual void OnRealtimeRender();
+
 			virtual void CollectWindowProperties(WindowProperties& windowProperties);
 
 		private:

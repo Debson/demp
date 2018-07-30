@@ -142,7 +142,7 @@ namespace MP
 		//std::cout << Playlist::mdVolume * 100.f << std::endl;
 	}
 
-	void Render()
+	void RenderMusicPlayer()
 	{
 		UI::Render();
 	}

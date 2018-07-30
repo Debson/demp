@@ -30,7 +30,8 @@ namespace App
 
 	};
 
-	void WindowMovableBar(MP::UI::Movable& bar);
+
+	void WindowMovableBar(MP::UI::Movable* bar);
 
 	void ProcessButtons(MP::UI::Button* button);
 }
