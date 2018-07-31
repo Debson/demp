@@ -48,11 +48,15 @@ namespace mdEngine
 	b8 mdIsActiveWindow(false);
 
 	App::ApplicationHandlerInterface* mdApplicationHandler(nullptr);
+	App::WindowProperties windowProperties;
 
-	//s32 mdActualWindowWidth;
-	//s32 mdActualWindowHeight;
+	s32 mdActualWindowWidth;
+	s32 mdActualWindowHeight;
+
+	/* Used when window is resizable */
 	s32 mdCurrentWindowWidth;
 	s32 mdCurrentWindowHeight;
+
 	float clean_color = 1.0f;
 
 	void SetupSDL();
@@ -61,7 +65,6 @@ namespace mdEngine
 
 	void SetupImGui();
 
-	void RenderOnScreen();
 }
 
 void mdEngine::SetupSDL()
@@ -152,10 +155,11 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 {
 	mdHasApplication = true;
 	mdApplicationHandler = &applicationHandler;
-	App::WindowProperties windowProperties;
 	mdApplicationHandler->CollectWindowProperties(windowProperties);
 	mdActualWindowWidth = mdCurrentWindowWidth = windowProperties.mWindowWidth;
 	mdActualWindowHeight = mdCurrentWindowHeight = windowProperties.mWindowHeight;
+
+
 
 
 	if (BASS_Init(-1, 44100, 0, 0, NULL) == false)

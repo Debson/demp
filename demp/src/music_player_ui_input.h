@@ -18,6 +18,7 @@ namespace UI
 			Minimize,
 			StayOnTop,
 			Play,
+			Stop,
 			Next,
 			Previous,
 			Shuffle,

@@ -2,7 +2,7 @@
 
 GLuint mdLoadTexture(std::string path)
 {
-	stbi_set_flip_vertically_on_load(true);
+	//stbi_set_flip_vertically_on_load(true);
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 

@@ -8,8 +8,8 @@ namespace mdEngine
 {
 	//const App::WindowProperties mdDefaultWindowProperties;
 
-	s32 mdActualWindowWidth(mdDefaultWindowProperties.mWindowWidth);
-	s32 mdActualWindowHeight(mdDefaultWindowProperties.mWindowHeight);
+	//s32 mdActualWindowWidth(mdDefaultWindowProperties.mWindowWidth);
+	//s32 mdActualWindowHeight(mdDefaultWindowProperties.mWindowHeight);
 
 	namespace App
 	{

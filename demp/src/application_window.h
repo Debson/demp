@@ -17,10 +17,10 @@ namespace App
 
 	struct WindowProperties
 	{
-		s16 mWindowWidth;
-		s16 mWindowHeight;
-		s16 mWindowPositionX;
-		s16 mWindowPositionY;
+		s32 mWindowWidth;
+		s32 mWindowHeight;
+		s32 mWindowPositionX;
+		s32 mWindowPositionY;
 		WindowMode mWindowMode;
 		bool mVerticalSync;
 
@@ -31,7 +31,7 @@ namespace App
 	};
 
 
-	void WindowMovableBar(MP::UI::Movable* bar);
+	void ProcessMovable(MP::UI::Movable* bar);
 
 	void ProcessButtons(MP::UI::Button* button);
 }

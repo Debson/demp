@@ -7,6 +7,7 @@
 #include "application_handler_interface.h"
 #include "utf8_to_utf16.h"
 
+
 namespace mdEngine
 {
 	namespace App
@@ -15,6 +16,8 @@ namespace mdEngine
 		struct WindowProperties;
 
 	}
+
+	extern App::WindowProperties windowProperties;
 }
 
 namespace mdEngine

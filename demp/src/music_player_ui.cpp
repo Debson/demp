@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <vector>
-#include <map>
+#include <algorithm>
 #ifdef _DEBUG_
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
@@ -17,6 +17,8 @@
 #include "application_window.h"
 #include "realtime_application.h"
 #include "md_shader.h"
+#include "input.h"
+
 
 
 namespace mdEngine
@@ -32,12 +34,10 @@ namespace MP
 		Shader mdDebugShader;
 		Shape * mdQuad = NULL;
 		GLuint mdDebugTex;
+		b8 renderDebug = false;
+		glm::vec3 rectColor(1.f);
 #endif
 
-		Movable * mainBar;
-
-		Button * exit;
-		
 		b8 music_repeat = false;
 		b8 music_shuffle = false;
 		s32 music_position = 0;
@@ -45,9 +45,13 @@ namespace MP
 		s32 volume_scroll_step = 2;
 		s32 volume_fade_time = 500;
 
+		f32 mdCurrentWidth;
+		f32 mdCurrentHeight;
+
 		std::string title = "none";
 
 		ImVec4 ClearColor = ImVec4(1.f, 254.f/255.f, 1.f, 1.f);
+
 
 		void HandleInput();
 
@@ -55,10 +59,55 @@ namespace MP
 
 		void DebugRender();
 
+		namespace Data
+		{
+			glm::vec2 _MAIN_BACKGROUND_POS;
+			glm::vec2 _MAIN_BACKGROUND_SIZE;
+
+			glm::vec2 _MAIN_FOREGROUND_POS;
+			glm::vec2 _MAIN_FOREGROUND_SIZE;
+
+			glm::vec2 _VOLUME_BAR_BOUNDS_POS;
+			glm::vec2 _VOLUME_BAR_BOUNDS_SIZE;
+
+			glm::vec2 _VOLUME_BAR_MIDDLE_POS;
+			glm::vec2 _VOLUME_BAR_MIDDLE_SIZE;
+
+			glm::vec2 _UI_WINDOW_BAR_POS;
+			glm::vec2 _UI_WINDOW_BAR_SIZE;
+
+			glm::vec2 _EXIT_BUTTON_POS;
+			glm::vec2 _EXIT_BUTTON_SIZE;
+
+			glm::vec2 _MINIMIZE_BUTTON_POS;
+			glm::vec2 _MINIMIZE_BUTTON_SIZE;
+
+			glm::vec2 _STAY_ON_TOP_BUTTON_POS;
+			glm::vec2 _STAY_ON_TOP_BUTTON_SIZE;
+
+			glm::vec2 _PLAY_BUTTON_POS;
+			glm::vec2 _PLAY_BUTTON_SIZE;
+
+			glm::vec2 _NEXT_BUTTON_POS;
+			glm::vec2 _NEXT_BUTTON_SIZE;
+
+			glm::vec2 _PREVIOUS_BUTTON_POS;
+			glm::vec2 _PREVIOUS_BUTTON_SIZE;
+
+			glm::vec2 _SHUFFLE_BUTTON_POS;
+			glm::vec2 _SHUFFLE_BUTTON_SIZE;
+
+			glm::vec2 _REPEAT_BUTTON_POS;
+			glm::vec2 _REPEAT_BUTTON_SIZE;
+
+			glm::vec2 _DOT_BUTTON_STATE_SIZE;
+
+			void InitializeData();
+		}
+
 	}
 
-	UI::Movable::Movable(s32 xL, s32 yU, s32 xR, s32 yD) : 
-						 xL(xL), yU(yU), xR(xR), yD(yD)  
+	UI::Movable::Movable(glm::vec2 size, glm::vec2 pos) : size(size), pos(pos)
 	{ 
 		mdMovableContainer.push_back(this);
 	}
@@ -67,8 +116,7 @@ namespace MP
 
 	UI::Movable::~Movable() { delete this; }
 
-	UI::Button::Button(Input::ButtonType type, s32 xL, s32 yU, s32 xR, s32 yD) :
-					   xL(xL), yU(yU), xR(xR), yD(yD), isPressed(false), isDown(false), hasFocus(false), isReleased(false)
+	UI::Button::Button(Input::ButtonType type, glm::vec2 size, glm::vec2 pos) : size(size), pos(pos)
 	{
 		mdButtonContainer.push_back(std::make_pair(type, this));
 	}
@@ -86,8 +134,11 @@ namespace MP
 			mdDebugShader = Shader("shaders/window.vert", "shaders/window.frag", nullptr);
 			mdQuad = Shape::QUAD();
 
+			glm::mat4 projection = glm::ortho(0.f, mdCurrentWidth, mdCurrentHeight, 0.f, -1.0f, 1.f);
+
 			mdDebugShader.use();
 			mdDebugShader.setInt("image", 0);
+			mdDebugShader.setMat4("projection", projection);
 
 			mdDebugTex = mdLoadTexture("assets/debug.png");
 #endif
@@ -190,30 +241,110 @@ namespace MP
 
 			glm::mat4 model;
 			mdDebugShader.use();
-			model = glm::translate(model, glm::vec3(1.f - (130.f/360.f) * 2.f, 1.f - (40.f / 360.f) * 2.f, 0.5f));
-			model = glm::scale(model, glm::vec3((15.f/360.f) * 2.f, (20.f/360.f) * 2.f, 1.f));;
-			mdDebugShader.setMat4("model", model);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, mdDebugTex);
-			mdQuad->Draw(mdDebugShader);
+			mdDebugShader.setVec3("color", rectColor);
+			if (App::Input::IsKeyPressed(App::KeyCode::Tab))
+			{
+				renderDebug = !renderDebug;
+			}
+
+			if (renderDebug)
+			{
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, mdDebugTex);
+				for (u16 i = 0; i < mdButtonContainer.size(); i++)
+				{
+					model = glm::mat4();
+					model = glm::translate(model, glm::vec3(mdButtonContainer[i].second->pos, 1.f));
+					model = glm::scale(model, glm::vec3(mdButtonContainer[i].second->size, 1.f));;
+					mdDebugShader.setMat4("model", model);
+					mdQuad->Draw(mdDebugShader);
+
+				}
+			}
+
+
 
 #endif
 		}
 
+		void Data::InitializeData()
+		{
+			_MAIN_BACKGROUND_POS = glm::vec2(0.f, 0.f);
+			_MAIN_BACKGROUND_SIZE = glm::vec2(mdCurrentWidth, mdCurrentHeight);
+
+
+			_EXIT_BUTTON_POS = glm::vec2(mdCurrentWidth - 50.f, 5.f);
+			_EXIT_BUTTON_SIZE = glm::vec2(15.f, 15.f);
+
+			
+			/* Initialize later */
+			_MAIN_FOREGROUND_POS;
+			_MAIN_FOREGROUND_SIZE;
+
+			_VOLUME_BAR_BOUNDS_POS = glm::vec2(mdCurrentWidth - 130.f, mdCurrentHeight - 40.f);
+			_VOLUME_BAR_BOUNDS_SIZE = glm::vec2(100.f, 10.f);
+
+			_VOLUME_BAR_MIDDLE_POS = glm::vec2(mdCurrentWidth - 130.f, mdCurrentHeight - 40.f);
+			_VOLUME_BAR_MIDDLE_SIZE = glm::vec2(100.f, 10.f);
+
+			_UI_WINDOW_BAR_POS;
+			_UI_WINDOW_BAR_SIZE;
+
+			_MINIMIZE_BUTTON_POS;
+			_MINIMIZE_BUTTON_SIZE;
+
+			_STAY_ON_TOP_BUTTON_POS;
+			_STAY_ON_TOP_BUTTON_SIZE;	
+
+			_SHUFFLE_BUTTON_POS = glm::vec2(mdCurrentWidth / 2.f - 110.f, mdCurrentHeight - 65.f);
+			_SHUFFLE_BUTTON_SIZE = glm::vec2(20.f, 12.f);
+
+			_PREVIOUS_BUTTON_POS = glm::vec2(mdCurrentWidth / 2.f - 60.f, mdCurrentHeight - 67.f);;
+			_PREVIOUS_BUTTON_SIZE = glm::vec2(15.f, 15.f);
+
+			_PLAY_BUTTON_POS = glm::vec2(mdCurrentWidth / 2.f - 20.f, mdCurrentHeight - 80.f);
+			_PLAY_BUTTON_SIZE = glm::vec2(40.f, 40.f);
+
+			_NEXT_BUTTON_POS = glm::vec2(mdCurrentWidth / 2.f + 40.f, mdCurrentHeight - 67.f);
+			_NEXT_BUTTON_SIZE = glm::vec2(15.f, 15.f);
+
+			_REPEAT_BUTTON_POS = glm::vec2(mdCurrentWidth / 2.f + 90.f, mdCurrentHeight - 65.f);;
+			_REPEAT_BUTTON_SIZE = glm::vec2(20.f, 12.f);
+
+			_DOT_BUTTON_STATE_SIZE = glm::vec2(5.f);
+		}
+
 		void Start()
 		{
-			mainBar = new Movable(0, 0, mdDefaultWindowProperties.mWindowWidth - 20, 20);
+			mdCurrentWidth = (float)mdEngine::windowProperties.mWindowWidth;
+			mdCurrentHeight = (float)mdEngine::windowProperties.mWindowHeight;
 
-			exit = new Button(Input::ButtonType::Exit, mdDefaultWindowProperties.mWindowWidth - 130,
-						  40, mdDefaultWindowProperties.mWindowWidth - 150, 60);
+			Data::InitializeData();
+
+			new Movable(glm::vec2(mdCurrentWidth, 20), glm::vec2(0.f, 0.f));
+
+			new Button(Input::ButtonType::Exit, Data::_EXIT_BUTTON_SIZE, Data::_EXIT_BUTTON_POS);
+
+			new Button(Input::ButtonType::Shuffle, Data::_SHUFFLE_BUTTON_SIZE, Data::_SHUFFLE_BUTTON_POS);
+
+			new Button(Input::ButtonType::Previous, Data::_PREVIOUS_BUTTON_SIZE, Data::_PREVIOUS_BUTTON_POS);
+
+			new Button(Input::ButtonType::Play, Data::_PLAY_BUTTON_SIZE, Data::_PLAY_BUTTON_POS);
+
+			new Button(Input::ButtonType::Stop, Data::_PLAY_BUTTON_SIZE, Data::_PLAY_BUTTON_POS);
+
+			new Button(Input::ButtonType::Next, Data::_NEXT_BUTTON_SIZE, Data::_NEXT_BUTTON_POS);
+
+			new Button(Input::ButtonType::Repeat, Data::_REPEAT_BUTTON_SIZE, Data::_REPEAT_BUTTON_POS);
 
 			DebugStart();
 		}
 
 		void Update()
 		{
+			/* Collect user input for buttons and movable */
 			for(u16 i = 0; i < mdMovableContainer.size(); i++)
-				App::WindowMovableBar(mdMovableContainer[i]);
+				App::ProcessMovable(mdMovableContainer[i]);
 
 			for (u16 i = 0; i < mdButtonContainer.size(); i++)
 				App::ProcessButtons(mdButtonContainer[i].second);
@@ -229,9 +360,13 @@ namespace MP
 
 		}
 
+		/* Find Exit button and check if is pressed */
 		void HandleInput()
 		{
-			if (exit->isPressed == true)
+			
+			auto item = std::find_if(mdButtonContainer.begin(), mdButtonContainer.end(),
+				[&](std::pair<Input::ButtonType, Button*> const& ref) {return ref.first == Input::ButtonType::Exit; });
+			if (item->second->isPressed == true)
 			{
 				mdEngine::AppExit();
 			}

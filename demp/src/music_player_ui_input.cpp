@@ -18,7 +18,7 @@ namespace MP
 			auto item = std::find_if(mdButtonContainer.begin(), mdButtonContainer.end(),
 				[&](std::pair<ButtonType, Button*> const & ref) { return ref.first == code; });
 
-			return item->second->isPressed;
+			return item == mdButtonContainer.end() ? false : item->second->isPressed;
 		}
 
 		b8 Input::isButtonReleased(ButtonType code)
@@ -26,7 +26,7 @@ namespace MP
 			auto item = std::find_if(mdButtonContainer.begin(), mdButtonContainer.end(),
 				[&](std::pair<ButtonType, Button*> const & ref) { return ref.first == code; });
 
-			return item->second->isReleased;
+			return item == mdButtonContainer.end() ? false : item->second->isReleased;
 		}
 
 		b8 Input::isButtonDown(ButtonType code)
@@ -34,15 +34,16 @@ namespace MP
 			auto item = std::find_if(mdButtonContainer.begin(), mdButtonContainer.end(),
 				[&](std::pair<ButtonType, Button*> const & ref) { return ref.first == code; });
 
-			return item->second->isDown;
+			return item == mdButtonContainer.end() ? false : item->second->isDown;
 		}
 
 		b8 Input::hasFocus(ButtonType code)
 		{
+
 			auto item = std::find_if(mdButtonContainer.begin(), mdButtonContainer.end(),
 				[&](std::pair<ButtonType, Button*> const & ref) { return ref.first == code; });
 
-			return item->second->hasFocus;
+			return  item == mdButtonContainer.end() ? false : item->second->hasFocus;
 		}
 	}
 
