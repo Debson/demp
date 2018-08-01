@@ -17,6 +17,7 @@ namespace mdEngine
 	void Graphics::Render()
 	{
 		MP::RenderMainWindow();
+		//MP::RenderTest();
 	}
 	void Graphics::Close()
 	{

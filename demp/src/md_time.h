@@ -10,6 +10,23 @@ namespace mdEngine
 {
 namespace Time
 {
+	struct Timer
+	{
+		Timer(f32 time);
+		~Timer();
+
+		f32 targetTime;
+		f32 startTime;
+		f32 currentTime;
+
+		b8 started;
+		b8 finished;
+
+		f32 progress();
+		void reset();
+		void start();
+	};
+
 	extern f64 deltaTime;
 
 	f64 time();

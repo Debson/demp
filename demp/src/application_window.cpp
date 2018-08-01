@@ -13,8 +13,8 @@ namespace mdEngine
 	}
 
 	App::WindowProperties::WindowProperties() :
-						mWindowWidth(400), // 400
-						mWindowHeight(300), // 300
+						mWindowWidth(500), // 400
+						mWindowHeight(700), // 300
 						mWindowPositionX(100),
 						mWindowPositionY(100),
 						mWindowMode(WindowMode::Windowed),
@@ -60,7 +60,8 @@ namespace mdEngine
 		}
 	}
 
-	void App::ProcessButtons(MP::UI::Button* button)
+
+	void App::ProcessButton(MP::UI::Button* button)
 	{
 		int mouseX, mouseY;
 		Input::GetMousePosition(&mouseX, &mouseY);
@@ -78,20 +79,32 @@ namespace mdEngine
 		bool inside = mouseX > button->pos.x && mouseX < (button->pos.x + button->size.x) &&
 					  mouseY > button->pos.y && mouseY < (button->pos.y + button->size.y); 
 
+		if (inside)
+			button->hasFocus = true;
+		else
+			button->hasFocus = false;
+
+		if (inside)
+			button->hasFocusTillRelease = true;
+		else if(!Input::IsKeyDown(KeyCode::MouseLeft))
+			button->hasFocusTillRelease = false;
+
 		if (inside && Input::IsKeyPressed(KeyCode::MouseLeft))
 			button->isPressed = true;
 		else
 			button->isPressed = false;
 
 		if (inside && Input::IsKeyDown(KeyCode::MouseLeft))
+		{
 			button->isDown = true;
+			button->mousePos.x = mouseX;
+		}
 		else
+		{
 			button->isDown = false;
+			button->mousePos.y = mouseY;
+		}
 
-		if (inside)
-			button->hasFocus = true;
-		else
-			button->hasFocus = false;
 
 		button->isReleased = !(button->isPressed || button->isDown);
 	}

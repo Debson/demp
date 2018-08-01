@@ -3,12 +3,19 @@ out vec4 FragColor;
 
 in vec2 TexCoords;
 
+
 uniform sampler2D image;
 uniform vec3 color;
 uniform bool cut;
 
+uniform float maxPos;
+uniform float currentPos;
+
+
+
 void main()
 {
+
 	vec4 texColor = texture(image, TexCoords);
 	if(cut)
 	{
@@ -20,6 +27,8 @@ void main()
 	if(texColor.a < 0.2)
 		discard;
 	}
+
+	
 
 	FragColor = texColor * vec4(color, 1.0);
 }

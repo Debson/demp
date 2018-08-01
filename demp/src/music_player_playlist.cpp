@@ -26,12 +26,13 @@ namespace MP
 		b8 mdNextRequest(false);
 		b8 mdPreviousRequest(false);
 
-		f32 mdVolume = 0.5;
+		f32 mdVolume = 0.5f;
 
 		f32 mdVolumeFadeInValue = 0;
 		f32 mdVolumeFadeOutValue = 0;
 
 		b8 mdMusicPaused(false);
+		b8 mdVolumeMuted(false);
 
 		b8 mdMPStarted(false);
 
@@ -51,10 +52,11 @@ namespace MP
 		static s32 mdCurrentShuffleMusicPos = 0;
 
 
+		void SetActualVolume();
 
-		void RepeatMusic();
+		void RepeatMusicProcedure();
 
-		//void ShuffleMusic();
+		void ShuffleMusicProcedure();
 
 		void CheckVolumeBounds();
 
@@ -328,10 +330,10 @@ namespace MP
 		void UpdateMusic()
 		{
 			float vol = 0;
-			BASS_ChannelGetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, &vol);
 
 			if (mdVolumeFadeOut)
 			{
+				BASS_ChannelGetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, &vol);
 				if (vol <= 0)
 				{
 					BASS_ChannelPause(RamLoadedMusic.get());
@@ -339,6 +341,7 @@ namespace MP
 			}
 			else if (mdVolumeFadeIn)
 			{
+				BASS_ChannelGetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, &vol);
 				if (vol >= mdVolume)
 				{
 					mdVolumeFadeIn = false;
@@ -346,16 +349,15 @@ namespace MP
 			}
 			else
 			{
-				SetVolume(mdVolume);
+				SetActualVolume();
 			}
 
 			CheckMPState();
 
 			CheckVolumeBounds();
 
-			RepeatMusic();
+			RepeatMusicProcedure();
 
-			//ShuffleMusic();
 		}
 
 		void PlayMusic()
@@ -544,10 +546,6 @@ namespace MP
 			};
 		}
 
-		void SetVolume(f32 vol)
-		{
-			BASS_ChannelSetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, vol);
-		}
 
 		void RewindMusic(s32 pos)
 		{
@@ -579,7 +577,7 @@ namespace MP
 			}
 		}
 
-		void RepeatMusic()
+		void RepeatMusicProcedure()
 		{
 			if (mdRepeatMusic == true)
 			{
@@ -590,7 +588,7 @@ namespace MP
 			}
 		}
 
-		void ShuffleMusic()
+		void ShuffleMusicProcedure()
 		{
 			/* Fill vector with numbers from 0 to path container's size and then random shuffle 
 			   all the numbers, creating a playlist with shuffeled songs.
@@ -613,7 +611,7 @@ namespace MP
 			/* If Music Player has started his first song, next song(next on playlist) will be 
 			   played automatically. 
 			*/
-			if (mdMPStarted == true && IsPlaying() == false)
+			if (mdMPStarted == true && IsPlaying() == false && mdRepeatMusic == false)
 			{
 				NextMusic();
 			}
@@ -628,11 +626,21 @@ namespace MP
 				mdVolume = 0.0;
 		}
 
+		b8 IsLoaded()
+		{
+			return RamLoadedMusic.get() != NULL;
+		}
+
+		b8 isPaused()
+		{
+			return BASS_ChannelIsActive(RamLoadedMusic.get()) == BASS_ACTIVE_PAUSED;
+		}
 
 		b8 IsPlaying()
 		{
 			return BASS_ChannelIsActive(RamLoadedMusic.get());
 		}
+
 
 		std::string GetTitle(s32 id)
 		{
@@ -731,22 +739,43 @@ namespace MP
 
 		f32 GetPosition()
 		{
-			return BASS_ChannelBytes2Seconds(RamLoadedMusic.get(),
-				BASS_ChannelGetPosition(RamLoadedMusic.get(), BASS_POS_BYTE));
+			if (RamLoadedMusic.get() != NULL)
+				return BASS_ChannelBytes2Seconds(RamLoadedMusic.get(),
+												 BASS_ChannelGetPosition(RamLoadedMusic.get(), BASS_POS_BYTE));
+
+			return -1;
 		}
 
+		void SetActualVolume()
+		{
+			if(mdVolumeMuted == false)
+				BASS_ChannelSetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, mdVolume);
+			else
+				BASS_ChannelSetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, 0.f);
+		}
+
+		void SetVolume(f32 vol)
+		{
+			mdVolumeMuted = false;
+			mdVolume = vol;
+		}
 
 		f32 GetVolume()
 		{
 			return mdVolume;
 		}
 
-		s32 GetMusicLength()
+		void MuteVolume(b8 param)
+		{
+			mdVolumeMuted = param;
+		}
+
+		f32 GetMusicLength()
 		{
 			if(RamLoadedMusic.get() != NULL)
 				return BASS_ChannelBytes2Seconds(RamLoadedMusic.get(),
-											BASS_ChannelGetLength(RamLoadedMusic.get(), BASS_POS_BYTE));
-			return 0;
+												 BASS_ChannelGetLength(RamLoadedMusic.get(), BASS_POS_BYTE));
+			return -1;
 		}
 #ifdef _DEBUG_
 		s32 GetCurrentShufflePos()
@@ -781,18 +810,18 @@ namespace MP
 				BASS_POS_BYTE);
 		}
 
-		void SetRepeatState(b8 repeat)
+		void RepeatMusic()
 		{
 			if(IsPlaying() == true)
-				mdRepeatMusic = repeat;
+				mdRepeatMusic = !mdRepeatMusic;
 		}
 
-		void SetShuffleState(b8 shuffle)
+		void ShuffleMusic()
 		{
 			if(mdPathContainer.size() > 0)
-				mdShuffleMusic = shuffle;
+				mdShuffleMusic = !mdShuffleMusic;
 
-			ShuffleMusic();
+			ShuffleMusicProcedure();
 		}
 
 		void SetScrollVolumeStep(s8 step)

@@ -22,11 +22,21 @@ namespace MP
 			extern glm::vec2 _MAIN_FOREGROUND_POS;
 			extern glm::vec2 _MAIN_FOREGROUND_SIZE;
 
-			extern glm::vec2 _VOLUME_BAR_BOUNDS_POS;
-			extern glm::vec2 _VOLUME_BAR_BOUNDS_SIZE;
+			extern glm::vec2 _PLAYLIST_FOREGROUND_POS;
+			extern glm::vec2 _PLAYLIST_FOREGROUND_SIZE;
 
-			extern glm::vec2 _VOLUME_BAR_MIDDLE_POS;
-			extern glm::vec2 _VOLUME_BAR_MIDDLE_SIZE;
+			extern glm::vec2 _VOLUME_BAR_POS;
+			extern glm::vec2 _VOLUME_BAR_SIZE;
+
+			extern glm::vec2 _MUSIC_PROGRESS_BAR_POS;
+			extern glm::vec2 _MUSIC_PROGRESS_BAR_SIZE;
+
+			extern glm::vec2 _VOLUME_SPEAKER_POS;
+			extern glm::vec2 _VOLUME_SPEAKER_SIZE;
+
+			extern glm::vec2 _MUSIC_PROGRESS_BAR_DOT_POS;
+			extern glm::vec2 _VOLUME_BAR_DOT_POS;
+			extern glm::vec2 _SLIDER_DOT_SIZE;
 
 			extern glm::vec2 _UI_WINDOW_BAR_POS;
 			extern glm::vec2 _UI_WINDOW_BAR_SIZE;
@@ -56,6 +66,9 @@ namespace MP
 			extern glm::vec2 _REPEAT_BUTTON_SIZE;
 
 			extern glm::vec2 _DOT_BUTTON_STATE_SIZE;
+
+			extern glm::vec2 _PLAYLIST_BUTTON_POS;
+			extern glm::vec2 _PLAYLIST_BUTTON_SIZE;
 		
 		}
 
@@ -79,15 +92,17 @@ namespace MP
 			glm::vec2 size;
 			glm::vec2 pos;
 
+			glm::vec2 mousePos;
+
 			b8 isPressed;
 			b8 isReleased;
 			b8 isDown;
 			b8 hasFocus;
+			b8 hasFocusTillRelease;
 
 		};
 
-
-		extern std::vector<std::pair<Input::ButtonType, Button*>> mdButtonContainer;
+		extern std::vector<std::pair<Input::ButtonType, Button*>> mdButtonsContainer;
 
 		/* useless */
 		extern ImVec4 ClearColor;

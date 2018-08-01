@@ -28,8 +28,6 @@
 #include "graphics.h"
 #include "realtime_application.h"
 
-// TODO: create RealtimeApplication class that initializes all(sdl inits, input, main game loop) 
-	//and MyApplicationHandler that will be passed to the construct of RealtimeApplication
 
 namespace mdEngine
 {
@@ -160,8 +158,6 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	mdActualWindowHeight = mdCurrentWindowHeight = windowProperties.mWindowHeight;
 
 
-
-
 	if (BASS_Init(-1, 44100, 0, 0, NULL) == false)
 	{
 		MD_BASS_ERROR("ERROR: Initialize BASS");
@@ -262,7 +258,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		/* TODO: Call viewport only when res changes */
-		//glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
+		glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 		
 		Graphics::Render();
 		mdApplicationHandler->OnRealtimeRender();
@@ -279,6 +275,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		SDL_GL_SwapWindow(mdWindow);
 	}
 
+	CloseRealtimeApplication(*mdApplicationHandler);
 }
 
 
@@ -340,8 +337,6 @@ void mdEngine::GetWindowSize(s32* w, s32* h)
 
 void mdEngine::GetWindowScale(f32* scaleX, f32* scaleY)
 {
-	//std::cout << mdCurrentWindowWidth << "   " << mdActualWindowWidth << std::endl;
-
 	*scaleX = (float)mdCurrentWindowWidth / (float)mdActualWindowWidth;
 	*scaleY = (float)mdCurrentWindowHeight / (float)mdActualWindowHeight;
 }
@@ -349,4 +344,11 @@ void mdEngine::GetWindowScale(f32* scaleX, f32* scaleY)
 void mdEngine::GetWindowPos(s32* x, s32* y)
 {
 	SDL_GetWindowPosition(mdWindow, x, y);
+}
+
+void mdEngine::UpdateViewport(s32 w, s32 h)
+{
+	windowProperties.mWindowWidth= w;
+	windowProperties.mWindowHeight = h;
+	glViewport(0, 0, w, h);
 }

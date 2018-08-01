@@ -74,7 +74,9 @@ namespace MP
 
 		void UpdateMusic();
 
-		void SetVolume(f32 vol);
+		b8 IsLoaded();
+
+		b8 isPaused();
 
 		b8 IsPlaying();
 
@@ -88,12 +90,17 @@ namespace MP
 		std::string GetPositionInString();
 
 		/* Returns current song position in seconds*/
+
+		void SetVolume(f32 vol);
+
 		f32 GetPosition();
 
 		f32 GetVolume();
 
+		void MuteVolume(b8 param);
+
 		/* Returns music length in seconds*/
-		s32 GetMusicLength();
+		f32 GetMusicLength();
 
 #ifdef _DEBUG_
 		s32 GetCurrentShufflePos();
@@ -107,9 +114,9 @@ namespace MP
 
 		void SetPosition(s32 pos);
 
-		void SetRepeatState(b8 repeat);
+		void RepeatMusic();
 
-		void SetShuffleState(b8 shuffle);
+		void ShuffleMusic();
 
 		void SetScrollVolumeStep(s8 step);
 

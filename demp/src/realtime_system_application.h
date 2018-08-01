@@ -35,6 +35,7 @@ namespace mdEngine
 	void GetWindowSize(s32* w, s32* h);
 	void GetWindowScale(f32* scaleX, f32* scaleY);
 	void GetWindowPos(s32* x, s32* y);
+	void UpdateViewport(s32 w, s32 h);
 }
 
 #endif // !REALTIME_SYSTEM_APPLICATION_H

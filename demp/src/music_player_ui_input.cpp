@@ -15,35 +15,59 @@ namespace MP
 
 		b8 Input::isButtonPressed(ButtonType code)
 		{
-			auto item = std::find_if(mdButtonContainer.begin(), mdButtonContainer.end(),
+			auto item = std::find_if(mdButtonsContainer.begin(), mdButtonsContainer.end(),
 				[&](std::pair<ButtonType, Button*> const & ref) { return ref.first == code; });
 
-			return item == mdButtonContainer.end() ? false : item->second->isPressed;
+			return item == mdButtonsContainer.end() ? false : item->second->isPressed;
 		}
 
 		b8 Input::isButtonReleased(ButtonType code)
 		{
-			auto item = std::find_if(mdButtonContainer.begin(), mdButtonContainer.end(),
+			auto item = std::find_if(mdButtonsContainer.begin(), mdButtonsContainer.end(),
 				[&](std::pair<ButtonType, Button*> const & ref) { return ref.first == code; });
 
-			return item == mdButtonContainer.end() ? false : item->second->isReleased;
+			return item == mdButtonsContainer.end() ? false : item->second->isReleased;
 		}
 
 		b8 Input::isButtonDown(ButtonType code)
 		{
-			auto item = std::find_if(mdButtonContainer.begin(), mdButtonContainer.end(),
+			auto item = std::find_if(mdButtonsContainer.begin(), mdButtonsContainer.end(),
 				[&](std::pair<ButtonType, Button*> const & ref) { return ref.first == code; });
 
-			return item == mdButtonContainer.end() ? false : item->second->isDown;
+			return item == mdButtonsContainer.end() ? false : item->second->isDown;
 		}
 
 		b8 Input::hasFocus(ButtonType code)
 		{
 
-			auto item = std::find_if(mdButtonContainer.begin(), mdButtonContainer.end(),
+			auto item = std::find_if(mdButtonsContainer.begin(), mdButtonsContainer.end(),
 				[&](std::pair<ButtonType, Button*> const & ref) { return ref.first == code; });
 
-			return  item == mdButtonContainer.end() ? false : item->second->hasFocus;
+			return item == mdButtonsContainer.end() ? false : item->second->hasFocus;
+		}
+
+		b8 Input::hasFocusTillRelease(ButtonType code)
+		{
+			auto item = std::find_if(mdButtonsContainer.begin(), mdButtonsContainer.end(),
+				[&](std::pair<ButtonType, Button*> const & ref) { return ref.first == code; });
+
+			return item == mdButtonsContainer.end() ? false : item->second->hasFocusTillRelease;
+		}
+
+		glm::vec2 Input::GetButtonMousePos(ButtonType code)
+		{
+			auto item = std::find_if(mdButtonsContainer.begin(), mdButtonsContainer.end(),
+				[&](std::pair<ButtonType, Button*> const & ref) { return ref.first == code; });
+
+			glm::vec2 mousePos(-1.f);
+			if (item != mdButtonsContainer.end())
+			{
+				mousePos = item->second->mousePos;
+				if (mousePos.x < item->second->pos.x)
+					mousePos.x = item->second->pos.x;
+			}
+
+			return mousePos;
 		}
 	}
 

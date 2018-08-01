@@ -33,7 +33,7 @@ namespace App
 
 	void ProcessMovable(MP::UI::Movable* bar);
 
-	void ProcessButtons(MP::UI::Button* button);
+	void ProcessButton(MP::UI::Button* button);
 }
 }
 
