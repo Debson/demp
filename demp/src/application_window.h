@@ -15,13 +15,22 @@ namespace App
 		FullScreen
 	};
 
+	enum WindowEvent
+	{
+		kFocus,
+		kResize,
+	};
+
 	struct WindowProperties
 	{
 		s32 mWindowWidth;
 		s32 mWindowHeight;
+		s32 mApplicationHeight;
 		s32 mWindowPositionX;
 		s32 mWindowPositionY;
 		WindowMode mWindowMode;
+		WindowEvent mWindowEvent;
+		
 		bool mVerticalSync;
 
 		WindowProperties(void);
@@ -31,9 +40,12 @@ namespace App
 	};
 
 
+
 	void ProcessMovable(MP::UI::Movable* bar);
 
 	void ProcessButton(MP::UI::Button* button);
+
+	void ProcessResizable(MP::UI::Resizable* bar);
 }
 }
 

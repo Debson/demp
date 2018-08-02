@@ -105,7 +105,7 @@ namespace MP
 			Playlist::LowerVolume(App::InputEvent::kPressedEvent);
 		}
 
-		if (App::Input::IsScrollForwardActive())
+		/*if (App::Input::IsScrollForwardActive())
 		{
 			Playlist::IncreaseVolume(App::InputEvent::kScrollEvent);
 		}
@@ -113,7 +113,7 @@ namespace MP
 		if (App::Input::IsScrollBackwardActive())
 		{
 			Playlist::LowerVolume(App::InputEvent::kScrollEvent);
-		}
+		}*/
 
 		/* REWIND */
 		if (App::Input::IsKeyPressed(App::KeyCode::Left))

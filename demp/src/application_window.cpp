@@ -7,17 +7,28 @@ namespace mdEngine
 	namespace App
 	{
 
-		s32 x, y;
+		s32 globalMouseX, globalMouseY;
+		s32 currentMouseX = 0, currentMouseY = 0;
+		s32 prevMouseX = 0, prevMouseY = 0;
 		s32 startX, startY;
+		s32 winSizeBeforeResize = 0;
+		s32 prevWinSize = 0;
+		s32 currWinSize = 0;
+
+		b8 wasInsideMovable(false);
+		b8 wasInsideResizable(false);
+		b8 firstMove(false);
 
 	}
 
 	App::WindowProperties::WindowProperties() :
 						mWindowWidth(500), // 400
 						mWindowHeight(700), // 300
-						mWindowPositionX(100),
+						mApplicationHeight(700),
+						mWindowPositionX(600),
 						mWindowPositionY(100),
 						mWindowMode(WindowMode::Windowed),
+						mWindowEvent(WindowEvent::kFocus),
 						mVerticalSync(true)
 	{ }
 
@@ -29,15 +40,14 @@ namespace mdEngine
 			Input::GetGlobalMousePosition(&currentMouseX, &currentMouseY);
 
 			int currentWinX, currentWinY;
-			GetWindowPos(&currentWinX, &currentWinY);
+			Window::GetWindowPos(&currentWinX, &currentWinY);
 
 			int insideX, insideY;
 			Input::GetMousePosition(&insideX, &insideY);
 
-			int deltaX = x - currentMouseX;
-			int deltaY = y - currentMouseY;
+			int deltaX = globalMouseX - currentMouseX;
+			int deltaY = globalMouseY - currentMouseY;
 
-			//std::cout << "DeltaX: " << deltaX << "DeltaT: " << deltaY << std::endl;
 			int newWX = startX - deltaX;
 			int newWY = startY - deltaY;
 
@@ -49,14 +59,20 @@ namespace mdEngine
 			f32 yU = bar->pos.y;
 			f32 yD = bar->pos.y + bar->size.y;
 
-			if(insideX > xL && insideX < xR && 
-			   insideY > yU && insideY < yD)
-				SetWindowPos(newWX, newWY);
+			bool inside = insideX > xL && insideX < xR && insideY > yU && insideY < yD;
+
+			if (inside)
+				wasInsideMovable = true;
+
+			if(wasInsideMovable && Window::windowProperties.mWindowEvent != App::WindowEvent::kResize)
+				Window::SetWindowPos(newWX, newWY);
 		}
 		else
 		{
-			Input::GetGlobalMousePosition(&x, &y);
-			GetWindowPos(&startX, &startY);
+			// TODO: dont call it every frame?
+			wasInsideMovable = false;
+			Input::GetGlobalMousePosition(&globalMouseX, &globalMouseY);
+			Window::GetWindowPos(&startX, &startY);
 		}
 	}
 
@@ -107,6 +123,67 @@ namespace mdEngine
 
 
 		button->isReleased = !(button->isPressed || button->isDown);
+	}
+
+
+	void App::ProcessResizable(MP::UI::Resizable* bar)
+	{
+		//std::cout << winSizeBeforeResize << std::endl;
+		if (Input::IsKeyDown(KeyCode::MouseLeft))
+		{
+			prevWinSize = currWinSize;
+			currWinSize = winSizeBeforeResize;
+
+
+			prevMouseY = currentMouseY;
+			Input::GetGlobalMousePosition(&currentMouseX, &currentMouseY);
+
+			s32 mouseX, mouseY;
+
+			Input::GetMousePosition(&mouseX, &mouseY);
+
+			s32 deltaY = 0;
+			if (firstMove == true)
+				deltaY = currentMouseY - prevMouseY;
+
+
+			b8 inside = mouseX > bar->pos.x && mouseX < (bar->pos.x + bar->size.x) &&
+				mouseY > bar->pos.y && mouseY < (bar->pos.y + bar->size.y);
+
+			if (inside)
+			{
+				wasInsideResizable = true;
+
+			}
+			//std::cout << bar->pos.y << std::endl;
+
+			if (wasInsideResizable)
+			{
+				if (MP::UI::Data::_MIN_PLAYER_SIZE.y < winSizeBeforeResize + deltaY &&
+					MP::UI::Data::_MIN_PLAYER_SIZE.y < mouseY)
+				{
+					Window::windowProperties.mWindowEvent = WindowEvent::kResize;
+
+					Window::windowProperties.mApplicationHeight = winSizeBeforeResize + deltaY;
+					winSizeBeforeResize += deltaY;
+
+					firstMove = true;
+					bar->pos = glm::vec2(0, winSizeBeforeResize + deltaY - bar->size.y);
+					//Window::SetWindowSize(Window::windowProperties.mWindowWidth, winSizeBeforeResize + deltaY);
+				}
+			}
+		}
+		else
+		{
+			Window::windowProperties.mWindowEvent = WindowEvent::kFocus;
+
+			winSizeBeforeResize = Window::windowProperties.mApplicationHeight; 
+			//std::cout << winSizeBeforeResize << std::endl;
+			wasInsideResizable = false;
+			firstMove = false;
+			Input::GetGlobalMousePosition(&globalMouseX, &globalMouseY);
+		}
+
 	}
 	
 }

@@ -16,6 +16,14 @@ namespace MP
 	{
 		namespace Data
 		{
+			extern glm::vec2 _MIN_PLAYER_SIZE;
+
+			extern glm::vec2 _DEFAULT_PLAYER_POS;
+			extern glm::vec2 _DEFAULT_PLAYER_SIZE;
+
+			extern glm::vec2 _DEFAULT_WINDOW_POS;
+			extern glm::vec2 _DEFAULT_WINDOW_SIZE;
+
 			extern glm::vec2 _MAIN_BACKGROUND_POS;
 			extern glm::vec2 _MAIN_BACKGROUND_SIZE;
 
@@ -69,6 +77,9 @@ namespace MP
 
 			extern glm::vec2 _PLAYLIST_BUTTON_POS;
 			extern glm::vec2 _PLAYLIST_BUTTON_SIZE;
+
+			extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_POS;
+			extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 		
 		}
 
@@ -81,6 +92,16 @@ namespace MP
 			glm::vec2 size;
 			glm::vec2 pos;
 
+		};
+
+		struct Resizable
+		{
+			Resizable();
+			Resizable(glm::vec2 size, glm::vec2 pos);
+			~Resizable();
+
+			glm::vec2 size;
+			glm::vec2 pos;
 		};
 
 		struct Button
@@ -102,7 +123,27 @@ namespace MP
 
 		};
 
+		struct PlaylistItem
+		{
+			PlaylistItem();
+			~PlaylistItem();
+
+
+			void Render();
+			glm::vec3 color;
+			glm::vec2 pos;
+			std::string title;
+			std::string info;
+			std::string length;
+
+			static glm::vec2 startPos;
+			static s32 offsetY;
+			static s32 count;
+			static glm::vec2 size;
+		};
+
 		extern std::vector<std::pair<Input::ButtonType, Button*>> mdButtonsContainer;
+		extern std::vector<PlaylistItem*> mdItemContainer;
 
 		/* useless */
 		extern ImVec4 ClearColor;

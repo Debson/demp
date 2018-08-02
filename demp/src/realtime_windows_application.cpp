@@ -46,7 +46,7 @@ namespace mdEngine
 	b8 mdIsActiveWindow(false);
 
 	App::ApplicationHandlerInterface* mdApplicationHandler(nullptr);
-	App::WindowProperties windowProperties;
+	App::WindowProperties Window::windowProperties;
 
 	s32 mdActualWindowWidth;
 	s32 mdActualWindowHeight;
@@ -63,6 +63,8 @@ namespace mdEngine
 
 	void SetupImGui();
 
+	void UpdateWindowSize();
+
 }
 
 void mdEngine::SetupSDL()
@@ -73,9 +75,11 @@ void mdEngine::SetupSDL()
 		assert(SDL_Init(SDL_INIT_VIDEO) < 0);
 		return;
 	}
-	
-	mdWindow = SDL_CreateWindow("demp", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		mdActualWindowWidth, mdActualWindowHeight,
+
+	SDL_GetCurrentDisplayMode(0, &current);
+
+	mdWindow = SDL_CreateWindow("demp", Window::windowProperties.mWindowPositionX, Window::windowProperties.mWindowPositionY,
+		Window::windowProperties.mWindowWidth, current.h,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
 
 
@@ -120,16 +124,15 @@ void mdEngine::SetupOpenGL()
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-
-
-	SDL_GetCurrentDisplayMode(0, &current);
+	
+	
 
 }
 
 void mdEngine::SetupImGui()
 {
 
-	SDL_GL_SetSwapInterval(1); // Enable vsync
+	SDL_GL_SetSwapInterval(0); // Enable vsync
 	gl3wInit();
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
@@ -149,13 +152,20 @@ void mdEngine::SetupImGui()
 #endif
 }
 
+void mdEngine::UpdateWindowSize()
+{
+	if (App::Input::IsKeyDown(App::KeyCode::MouseLeft) == false)
+	{
+		//std::cout << "mouse left not pressed\n";
+		SDL_GetWindowSize(mdWindow, &Window::windowProperties.mWindowWidth, &Window::windowProperties.mWindowHeight);
+	}
+}
+
 void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
 	mdHasApplication = true;
 	mdApplicationHandler = &applicationHandler;
-	mdApplicationHandler->CollectWindowProperties(windowProperties);
-	mdActualWindowWidth = mdCurrentWindowWidth = windowProperties.mWindowWidth;
-	mdActualWindowHeight = mdCurrentWindowHeight = windowProperties.mWindowHeight;
+	mdApplicationHandler->CollectWindowProperties(Window::windowProperties);
 
 
 	if (BASS_Init(-1, 44100, 0, 0, NULL) == false)
@@ -167,6 +177,12 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 	SetupSDL();
 
+	/* Get max display height and update window's size structure */
+	Window::windowProperties.mWindowHeight = current.h;
+	mdActualWindowWidth = mdCurrentWindowWidth = Window::windowProperties.mWindowWidth;
+	mdActualWindowHeight = mdCurrentWindowHeight = Window::windowProperties.mWindowHeight;
+	
+
 	SetupOpenGL();
 
 	SetupImGui();
@@ -175,6 +191,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 	mdApplicationHandler->OnWindowOpen();
 	Graphics::Start();
+	glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 
 }
 
@@ -236,7 +253,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			}
 		}
 
-		GetWindowSize(&mdCurrentWindowWidth, &mdCurrentWindowHeight);
+		//Window::GetWindowSize(&mdCurrentWindowWidth, &mdCurrentWindowHeight);
+
 		
 		const u8* current_keystate = SDL_GetKeyboardState(NULL);
 		mdEngine::UpdateKeyState(current_keystate);
@@ -248,7 +266,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		if (mdIsRunning == true)
 		{
 			/* graphics render */
-
+			UpdateWindowSize();
 			mdApplicationHandler->OnRealtimeUpdate();
 			Graphics::Update();
 		}
@@ -257,9 +275,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 #ifdef _DEBUG_
 		glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		/* TODO: Call viewport only when res changes */
-		glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
-		
+
+
 		Graphics::Render();
 		mdApplicationHandler->OnRealtimeRender();
 
@@ -320,35 +337,40 @@ void mdEngine::SetWindowProperties(const App::WindowProperties& windowProperties
 	mdActualWindowHeight = windowProperties.mWindowHeight;
 }
 
-void mdEngine::SetWindowTitle(const b8& windowTitle)
+void mdEngine::Window::SetWindowTitle(const b8& windowTitle)
 {
 	/* set window title sdl */
 }
 
-void mdEngine::SetWindowPos(s32 x, s32 y)
+void mdEngine::Window::SetWindowPos(s32 x, s32 y)
 {
 	SDL_SetWindowPosition(mdWindow, x, y);
 }
 
-void mdEngine::GetWindowSize(s32* w, s32* h)
+void mdEngine::Window::SetWindowSize(s32 w, s32 h)
+{
+	SDL_SetWindowSize(mdWindow, w, h);
+}
+
+void mdEngine::Window::GetWindowSize(s32* w, s32* h)
 {
 	SDL_GetWindowSize(mdWindow, w, h);
 }
 
-void mdEngine::GetWindowScale(f32* scaleX, f32* scaleY)
+void mdEngine::Window::GetWindowScale(f32* scaleX, f32* scaleY)
 {
 	*scaleX = (float)mdCurrentWindowWidth / (float)mdActualWindowWidth;
 	*scaleY = (float)mdCurrentWindowHeight / (float)mdActualWindowHeight;
 }
 
-void mdEngine::GetWindowPos(s32* x, s32* y)
+void mdEngine::Window::GetWindowPos(s32* x, s32* y)
 {
 	SDL_GetWindowPosition(mdWindow, x, y);
 }
 
-void mdEngine::UpdateViewport(s32 w, s32 h)
+void mdEngine::Window::UpdateViewport(s32 w, s32 h)
 {
-	windowProperties.mWindowWidth= w;
-	windowProperties.mWindowHeight = h;
+	Window::windowProperties.mWindowWidth= w;
+	Window::windowProperties.mWindowHeight = h;
 	glViewport(0, 0, w, h);
 }

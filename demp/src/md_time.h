@@ -12,6 +12,7 @@ namespace Time
 {
 	struct Timer
 	{
+		Timer();
 		Timer(f32 time);
 		~Timer();
 
@@ -25,6 +26,7 @@ namespace Time
 		f32 progress();
 		void reset();
 		void start();
+		void update();
 	};
 
 	extern f64 deltaTime;

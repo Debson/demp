@@ -47,7 +47,7 @@ namespace mdEngine
 
 		void RealtimeApplication::SetWindowTitle(const char* windowTitle)
 		{
-			mdEngine::SetWindowTitle(windowTitle);
+			mdEngine::Window::SetWindowTitle(windowTitle);
 		}
 
 		void RealtimeApplication::SetWindowProperties(const WindowProperties& windowProperties)

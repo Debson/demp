@@ -4,7 +4,17 @@ namespace mdEngine
 {
 	namespace Time
 	{
-		Timer::Timer(f32 time) : targetTime(time) { }
+		Timer::Timer() 
+		{ 
+			finished = false;
+			started = false;
+		}
+
+		Timer::Timer(f32 time) : targetTime(time) 
+		{
+			finished = false;
+			started = false;
+		}
 
 		Timer::~Timer() { }
 
@@ -12,7 +22,6 @@ namespace mdEngine
 		void Timer::reset()
 		{
 			finished = false;
-			currentTime = 0.f;
 		}
 
 		f32 Timer::progress()
@@ -22,14 +31,15 @@ namespace mdEngine
 
 		void Timer::start()
 		{
-			if (finished == false)
-			{
-				if (started == false)
-				{
-					startTime = getTicks();
-					started = true;
-				}
+			startTime = getTicks();
+			started = true;
+			finished = false;
+		}
 
+		void Timer::update()
+		{
+			if (started == true)
+			{
 				if (getTicks() - startTime > targetTime)
 				{
 					finished = true;

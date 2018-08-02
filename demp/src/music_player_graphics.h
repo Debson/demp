@@ -3,22 +3,42 @@
 #define MUSIC_PLAYER_GRAPHICS_H
 #include <glm.hpp>
 
+#include "md_types.h"
+#include "md_time.h"
+
 namespace mdEngine
 {
 namespace Graphics
 {
 	namespace MP
 	{
-		struct PlaylistItem
+		class PlaylistObject
 		{
-			PlaylistItem();
+		public:
+			PlaylistObject();
 
-			//void Render();
-			static int count;
-			glm::vec3 color;
-			glm::vec2 pos;
-			static glm::vec2 size;
+			void Enable();
+			void Disable();
+			void Update();
+
+		
+			b8 IsEnabled();
+			b8 IsToggled();
+			b8 IsRolling();
+			void SetRollTime(s16 time);
+			// Returns float value from 0 to 1 signifying current roll state
+			f32 GetRollProgress();
+		private:
+			Time::Timer timer;
+			f32 currTime;
+			f32 prevTime;
+			s16 unwindTime;
+			b8 enabled;
+			b8 toggled;
+
 		};
+
+		extern PlaylistObject playlist;
 
 		void StartMainWindow();
 
