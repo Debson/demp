@@ -62,9 +62,9 @@ namespace MP
 			glm::vec2 mousePos(-1.f);
 			if (item != mdButtonsContainer.end())
 			{
-				mousePos = item->second->mousePos;
-				if (mousePos.x < item->second->pos.x)
-					mousePos.x = item->second->pos.x;
+				mousePos = item->second->mMousePos;
+				if (mousePos.x < item->second->mPos.x)
+					mousePos.x = item->second->mPos.x;
 			}
 
 			return mousePos;

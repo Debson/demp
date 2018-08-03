@@ -2,9 +2,11 @@
 #ifndef MUSIC_PLAYER_UI_H
 #define MUSIC_PLAYER_UI_H
 
+#include <glm.hpp>
+#include <SDL_ttf.h>
+#include <GL/gl3w.h>
 #include "../external/imgui/imgui.h"
 #include "md_types.h"
-#include <glm.hpp>
 
 #include "music_player_ui_input.h"
 
@@ -16,6 +18,7 @@ namespace MP
 	{
 		namespace Data
 		{
+
 			extern glm::vec2 _MIN_PLAYER_SIZE;
 
 			extern glm::vec2 _DEFAULT_PLAYER_POS;
@@ -81,6 +84,7 @@ namespace MP
 			extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_POS;
 			extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 		
+			extern glm::vec2 _PLAYLIST_ITEM_SIZE;
 		}
 
 		struct Movable
@@ -89,8 +93,8 @@ namespace MP
 			Movable(glm::vec2 size, glm::vec2 pos);
 			~Movable();
 
-			glm::vec2 size;
-			glm::vec2 pos;
+			glm::vec2 mSize;
+			glm::vec2 mPos;
 
 		};
 
@@ -110,10 +114,10 @@ namespace MP
 			Button(Input::ButtonType type, glm::vec2 size, glm::vec2 pos);
 			~Button();
 			
-			glm::vec2 size;
-			glm::vec2 pos;
+			glm::vec2 mSize;
+			glm::vec2 mPos;
 
-			glm::vec2 mousePos;
+			glm::vec2 mMousePos;
 
 			b8 isPressed;
 			b8 isReleased;
@@ -123,23 +127,46 @@ namespace MP
 
 		};
 
-		struct PlaylistItem
+		class PlaylistItem : public Button
 		{
+		public:
 			PlaylistItem();
 			~PlaylistItem();
 
+			
+			glm::vec3 mColor;
+			glm::vec2 mStartPos;
+			SDL_Color mTextColor;
 
-			void Render();
-			glm::vec3 color;
-			glm::vec2 pos;
-			std::string title;
-			std::string info;
-			std::string length;
 
-			static glm::vec2 startPos;
-			static s32 offsetY;
-			static s32 count;
-			static glm::vec2 size;
+
+			static s32 mOffsetY;
+			static s32 mCount;
+			static s32 mOffsetIndex;
+
+			void InitFont();
+			void InitItem();
+			void UpdateItem();
+			void SetColor(glm::vec3 color);
+
+			b8 IsPlaying();
+
+			std::wstring GetTitle();
+
+			s32 mID;
+			TTF_Font * mFont;
+			glm::ivec2 mTextSize;
+			f32 mTextScale;
+		private:
+
+			char* mTitleC;
+			GLuint mTitleTexture;
+			std::wstring mTitle;
+			std::string mInfo;
+			std::wstring mPath;
+			std::string mLength;
+			u16 mFontSize;
+
 		};
 
 		extern std::vector<std::pair<Input::ButtonType, Button*>> mdButtonsContainer;

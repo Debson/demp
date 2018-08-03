@@ -9,7 +9,7 @@
 
 #include <SDL.h>
 #undef main // SDL_main.h is included automatically from SDL.h, so you always get the nasty #define.
-#include <SDL_mixer.h>
+#include <SDL_ttf.h>
 #include <SDL_syswm.h>
 
 #include <bass.h>
@@ -91,6 +91,12 @@ void mdEngine::SetupSDL()
 		return;
 	}
 
+	if (TTF_Init() == -1)
+	{
+		std::cout << "ERROR: TTF not initialized!\n";
+		return;
+	}
+
 	/* Retrieve hwnd window info and set transparecny for specific color.
 	   Works only on Windows. 
 	   TODO: implement that on linux later on.
@@ -133,8 +139,11 @@ void mdEngine::SetupImGui()
 {
 
 	SDL_GL_SetSwapInterval(0); // Enable vsync
+	
 	gl3wInit();
+
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -190,9 +199,9 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	/* create window */
 
 	mdApplicationHandler->OnWindowOpen();
-	Graphics::Start();
-	glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
+	Graphics::StartGraphics();
 
+	glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 }
 
 void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
@@ -268,7 +277,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			/* graphics render */
 			UpdateWindowSize();
 			mdApplicationHandler->OnRealtimeUpdate();
-			Graphics::Update();
+			Graphics::UpdateGraphics();
 		}
 
 		SDL_GL_MakeCurrent(mdWindow, gl_context);
@@ -277,7 +286,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-		Graphics::Render();
+		Graphics::RenderGraphics();
 		mdApplicationHandler->OnRealtimeRender();
 
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
@@ -307,7 +316,7 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 
 
 	mdApplicationHandler->OnWindowClose();
-	Graphics::Close();
+	Graphics::CloseGraphics();
 
 #ifdef _DEBUG_
 	ImGui_ImplOpenGL3_Shutdown();
@@ -318,6 +327,7 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 	SDL_GL_DeleteContext(gl_context);
 	SDL_DestroyWindow(mdWindow);
 
+	TTF_Quit();
 	BASS_Free();
 	SDL_Quit();
 

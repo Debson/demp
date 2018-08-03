@@ -279,3 +279,9 @@ demp/external/glm/
 demp/assets/
 
 demp/external/stb_image\.h
+
+demp/external/freetype/include/freetype/config/
+
+demp/external/freetype/include/freetype/
+
+demp/external/freetype/include/ft2build\.h

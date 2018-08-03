@@ -7,6 +7,8 @@
 #include <filesystem>
 
 #include "md_time.h"
+#include "music_player_ui.h"
+#include "music_player.h"
 
 #ifdef _WIN32_
 #define OUTPUT std::wcout
@@ -168,6 +170,12 @@ namespace MP
 					if (ferror(file) == 0)
 					{
 						fclose(file);
+						Playlist::mdPathContainer.push_back(songPath);
+						UI::PlaylistItem * item = new UI::PlaylistItem();
+						item->InitFont();
+						item->InitItem();
+
+
 						mMusic = BASS_StreamCreateFile(TRUE, mData, 0, size, BASS_STREAM_AUTOFREE);
 						if (check_file() == false)
 						{
@@ -248,6 +256,8 @@ namespace MP
 					if (ferror(file) == 0)
 					{
 						fclose(file);
+						
+
 						mMusic = BASS_StreamCreateFile(TRUE, mData, 0, size, BASS_STREAM_AUTOFREE);
 						if (check_file() == false)
 						{
@@ -603,7 +613,17 @@ namespace MP
 				if(i != RamLoadedMusic.mID)
 					mdShuffleMusicPosContainer.push_back(i);
 			}
+
 			std::random_shuffle(mdShuffleMusicPosContainer.begin() + 1, mdShuffleMusicPosContainer.end());
+			
+		}
+
+		void ReloadMusic(std::wstring path)
+		{
+			PauseMusic();
+
+
+			// TODO
 		}
 
 		void CheckMPState()
@@ -642,23 +662,24 @@ namespace MP
 		}
 
 
-		std::string GetTitle(s32 id)
+		std::wstring GetTitle(s32 id)
 		{
-			std::string path;
+			std::wstring path;
+
 			if (mdPathContainer.size() > 0 && id >= 0)
 			{
 #ifdef _WIN32_
-				path = std::string(mdPathContainer[id].begin(), mdPathContainer[id].end());
+				path = std::wstring(mdPathContainer[id].begin(), mdPathContainer[id].end());
 #else
 				path = mdPathContainer[id];
 #endif
-				const char slash = '\\';
-				const char *title = NULL;
+				const wchar_t slash = '\\';
+				const wchar_t *title = NULL;
 
-				title = strrchr(path.c_str(), slash);
+				title = wcsrchr(path.c_str(), slash);
 
-				path = std::string(title, 1, strlen(title));
-				std::size_t extPos = path.find_last_of(".");
+				path = std::wstring(title, 1, wcslen(title));
+				std::size_t extPos = path.find_last_of(L".");
 				path = path.substr(0, extPos);
 			}
 

@@ -1,12 +1,12 @@
 #include "application_window.h"
 
 #include "realtime_system_application.h"
+#include "music_player.h"
 
 namespace mdEngine
 {
 	namespace App
 	{
-
 		s32 globalMouseX, globalMouseY;
 		s32 currentMouseX = 0, currentMouseY = 0;
 		s32 prevMouseX = 0, prevMouseY = 0;
@@ -54,10 +54,10 @@ namespace mdEngine
 			//f32 scaleX, scaleY;
 			//GetWindowScale(&scaleX, &scaleY);
 
-			f32 xL = bar->pos.x;
-			f32 xR = bar->pos.x + bar->size.x;
-			f32 yU = bar->pos.y;
-			f32 yD = bar->pos.y + bar->size.y;
+			f32 xL = bar->mPos.x;
+			f32 xR = bar->mPos.x + bar->mSize.x;
+			f32 yU = bar->mPos.y;
+			f32 yD = bar->mPos.y + bar->mSize.y;
 
 			bool inside = insideX > xL && insideX < xR && insideY > yU && insideY < yD;
 
@@ -92,8 +92,8 @@ namespace mdEngine
 		bool inside = mouseX > xL && mouseX < xR &&
 			mouseY > yU && mouseY < yD;*/
 
-		bool inside = mouseX > button->pos.x && mouseX < (button->pos.x + button->size.x) &&
-					  mouseY > button->pos.y && mouseY < (button->pos.y + button->size.y); 
+		bool inside = mouseX > button->mPos.x && mouseX < (button->mPos.x + button->mSize.x) &&
+					  mouseY > button->mPos.y && mouseY < (button->mPos.y + button->mSize.y); 
 
 		if (inside)
 			button->hasFocus = true;
@@ -113,12 +113,12 @@ namespace mdEngine
 		if (inside && Input::IsKeyDown(KeyCode::MouseLeft))
 		{
 			button->isDown = true;
-			button->mousePos.x = mouseX;
+			button->mMousePos.x = mouseX;
 		}
 		else
 		{
 			button->isDown = false;
-			button->mousePos.y = mouseY;
+			button->mMousePos.y = mouseY;
 		}
 
 
@@ -163,6 +163,7 @@ namespace mdEngine
 					MP::UI::Data::_MIN_PLAYER_SIZE.y < mouseY)
 				{
 					Window::windowProperties.mWindowEvent = WindowEvent::kResize;
+					MP::musicPlayerState = MP::MusicPlayerState::kChanged;
 
 					Window::windowProperties.mApplicationHeight = winSizeBeforeResize + deltaY;
 					winSizeBeforeResize += deltaY;

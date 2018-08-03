@@ -12,6 +12,14 @@ namespace mdEngine
 {
 	namespace MP
 	{
+		enum MusicPlayerState
+		{
+			kStatic,
+			kChanged
+		};
+
+		extern MusicPlayerState musicPlayerState;
+
 		class MusicPlayer
 		{
 		public:

@@ -1,17 +1,28 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include "md_shader.h"
+
 namespace mdEngine
 {
 	namespace Graphics
 	{
-		void Start();
+		namespace Shader
+		{
+			extern mdShader* shaderDefault;
+			extern mdShader* shaderText;
 
-		void Update();
+			void InitShader();
+			void Draw();
+		}
 
-		void Render();
+		void StartGraphics();
 
-		void Close();
+		void UpdateGraphics();
+
+		void RenderGraphics();
+
+		void CloseGraphics();
 
 	}
 }

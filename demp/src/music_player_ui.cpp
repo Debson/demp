@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <vector>
-#include <algorithm>
+#include <locale.h>
+
+
 #ifdef _DEBUG_
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
@@ -18,8 +20,12 @@
 #include "realtime_application.h"
 #include "md_shader.h"
 #include "input.h"
+#include "graphics.h"
+#include "md_text.h"
+#include "music_player_string.h"
 
 
+using namespace mdEngine::Graphics;
 
 namespace mdEngine
 {
@@ -33,14 +39,11 @@ namespace MP
 		std::vector<std::pair<Input::ButtonType, Button*>> mdButtonsContainer;
 
 #ifdef _DEBUG_
-		Shader mdDebugShader;
-		Shape * mdQuad = NULL;
 		GLuint mdDebugTex;
 		b8 renderDebug = false;
 		glm::vec3 buttonColor(0.f, 1.f, 0.f);
-		glm::vec3 movableColor(0.f, 1.f, 0.f);
 #endif
-
+		
 		b8 music_repeat = false;
 		b8 music_shuffle = false;
 		s32 music_position = 0;
@@ -58,7 +61,7 @@ namespace MP
 
 		ImVec4 ClearColor = ImVec4(1.f, 254.f/255.f, 1.f, 1.f);
 
-
+		std::locale l("");
 		void HandleInput();
 
 		void DebugStart();
@@ -67,6 +70,7 @@ namespace MP
 
 		namespace Data
 		{
+			TTF_Font* _MUSIC_PLAYER_FONT;
 
 			glm::vec2 _MIN_PLAYER_SIZE;
 
@@ -133,6 +137,8 @@ namespace MP
 			glm::vec2 _PLAYLIST_ITEMS_SURFACE_POS;
 			glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 
+			glm::vec2 _PLAYLIST_ITEM_SIZE;
+
 			void InitializeData();
 
 			void UpdateData();
@@ -140,7 +146,7 @@ namespace MP
 
 	}
 
-	UI::Movable::Movable(glm::vec2 size, glm::vec2 pos) : size(size), pos(pos)
+	UI::Movable::Movable(glm::vec2 size, glm::vec2 pos) : mSize(size), mPos(pos)
 	{ 
 		mdMovableContainer.push_back(this);
 	}
@@ -158,7 +164,7 @@ namespace MP
 
 	UI::Resizable::~Resizable() { }
 
-	UI::Button::Button(Input::ButtonType type, glm::vec2 size, glm::vec2 pos) : size(size), pos(pos)
+	UI::Button::Button(Input::ButtonType type, glm::vec2 size, glm::vec2 pos) : mSize(size), mPos(pos)
 	{
 		mdButtonsContainer.push_back(std::make_pair(type, this));
 	}
@@ -167,36 +173,107 @@ namespace MP
 
 	UI::Button::~Button() { delete this; }
 
-	UI::PlaylistItem::PlaylistItem()
-	{
-		float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-		float g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-		float b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-		pos = glm::vec2(startPos.x, startPos.y + count * (size.y + offsetY));
-		color = glm::vec3(r, g, b);
-		count++;
-		mdItemContainer.push_back(this);
-	}
+	UI::PlaylistItem::PlaylistItem() { }
 
 	UI::PlaylistItem::~PlaylistItem() { delete this; }
 
-	glm::vec2 UI::PlaylistItem::size = glm::vec2(300.f, 30.f);
-	s32 UI::PlaylistItem::offsetY = 5;
-	s32 UI::PlaylistItem::count = 0;
-	glm::vec2 UI::PlaylistItem::startPos = glm::vec2(0.f);
+	void UI::PlaylistItem::InitFont()
+	{
+		mFont = Data::_MUSIC_PLAYER_FONT;
+		if (mFont == NULL)
+		{
+			std::cout << "ERROR: initfont!\n";
+		}
+
+		mTextScale = 1.0f;
+
+	}
+
+	void UI::PlaylistItem::InitItem()
+	{
+		mColor = glm::vec3(1.f);
+
+		mStartPos = Data::_PLAYLIST_ITEMS_SURFACE_POS;
+		mSize = Data::_PLAYLIST_ITEM_SIZE;
+
+		mPos = glm::vec2(mStartPos.x, mStartPos.y + mCount * (mSize.y + mOffsetY));
+
+		mTextColor = { 255, 255, 255 };
+
+		mID = mCount;
+		mTitle = Playlist::GetTitle(mID);
+
+		u16 len = wcslen(mTitle.c_str());
+		mTitleC = new char[len + 1];
+		mTitleC[len] = '\0';
+		wcstombs(mTitleC, mTitle.c_str(), len);
+
+		TTF_SizeText(mFont, mTitleC, &mTextSize.x, &mTextSize.y);
+
+		mdItemContainer.push_back(this);
+		mdButtonsContainer.push_back(std::make_pair(Input::ButtonType::None, this));
+
+		mCount++;
+	}
+
+	void UI::PlaylistItem::UpdateItem()
+	{
+		mTitle = Playlist::GetTitle(mID);
+		u16 len = wcslen(mTitle.c_str());
+		mTitleC = new char[len + 1];
+		mTitleC[len] = '\0';
+		wcstombs(mTitleC, mTitle.c_str(), len);
+
+		TTF_SizeText(mFont, mTitleC, &mTextSize.x, &mTextSize.y);
+
+	}
+
+	void UI::PlaylistItem::SetColor(glm::vec3 color)
+	{
+		mTextColor = { u8(color.x * 255.f), u8(color.y * 255.f), u8(color.z * 255.f) };
+	}
+
+	std::wstring UI::PlaylistItem::GetTitle()
+	{
+		std::wstring title = Playlist::GetTitle(mID);
+		s16 len = wcslen(title.c_str());
+		f32 textSize = mTextSize.x * mTextScale;
+		if (textSize > this->mSize.x)
+		{
+			float charSize = textSize / (float)len;
+			u16 i = 0;
+			u16 pos = 0;
+			while (i * charSize < this->mSize.x)
+				i++;
+
+			title = title.substr(0, i - 1);
+			title += L"...";
+
+			len = wcslen(title.c_str());
+			mTitleC = new char[len + 1];
+			mTitleC[len] = '\0';
+			wcstombs(mTitleC, title.c_str(), len);
+			TTF_SizeText(mFont, mTitleC, &mTextSize.x, &mTextSize.y);
+		}
+		
+
+		return title;
+	}
+
+	b8 UI::PlaylistItem::IsPlaying()
+	{
+		return MP::Playlist::RamLoadedMusic.mID == mID;
+	}
+
+	s32 UI::PlaylistItem::mOffsetY = 0;
+	s32 UI::PlaylistItem::mCount = 0;
+	s32 UI::PlaylistItem::mOffsetIndex = 0;
 
 	namespace UI
 	{
 		void DebugStart()
 		{
 #ifdef _DEBUG_
-			mdDebugShader = Shader("shaders/window.vert", "shaders/window.frag", nullptr);
-			mdQuad = Shape::QUAD();
-
-
-			mdDebugShader.use();
-			mdDebugShader.setInt("image", 0);
-
 			mdDebugTex = mdLoadTexture("assets/debug.png");
 #endif
 		}
@@ -297,9 +374,7 @@ namespace MP
 			ImGui::End();
 
 			glm::mat4 model;
-			mdDebugShader.use();
-			glm::mat4 projection = glm::ortho(0.f, mdCurrentWidth, (float)Window::windowProperties.mWindowHeight, 0.f, -1.0f, 1.f);
-			mdDebugShader.setMat4("projection", projection);
+			Shader::shaderDefault->use();
 
 			if (App::Input::IsKeyPressed(App::KeyCode::Tab))
 			{
@@ -312,22 +387,22 @@ namespace MP
 				//glViewport(0, mdCurrentHeight, mdCurrentWidth, mdCurrentHeight);
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, mdDebugTex);
-				mdDebugShader.setVec3("color", buttonColor);
+				Shader::shaderDefault->setVec3("color", buttonColor);
 				for (u16 i = 0; i < mdButtonsContainer.size(); i++)
 				{
 					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(mdButtonsContainer[i].second->pos, 1.f));
-					model = glm::scale(model, glm::vec3(mdButtonsContainer[i].second->size, 1.f));;
-					mdDebugShader.setMat4("model", model);
-					mdQuad->Draw(mdDebugShader);
+					model = glm::translate(model, glm::vec3(mdButtonsContainer[i].second->mPos, 1.f));
+					model = glm::scale(model, glm::vec3(mdButtonsContainer[i].second->mSize, 1.f));;
+					Shader::shaderDefault->setMat4("model", model);
+					Shader::Draw();
 				}
 				for (u16 i = 0; i < mdMovableContainer.size(); i++)
 				{
 					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(mdMovableContainer[i]->pos, 1.f));
-					model = glm::scale(model, glm::vec3(mdMovableContainer[i]->size, 1.f));;
-					mdDebugShader.setMat4("model", model);
-					mdQuad->Draw(mdDebugShader);
+					model = glm::translate(model, glm::vec3(mdMovableContainer[i]->mPos, 1.f));
+					model = glm::scale(model, glm::vec3(mdMovableContainer[i]->mSize, 1.f));;
+					Shader::shaderDefault->setMat4("model", model);
+					Shader::Draw();
 				}
 
 				for (u16 i = 0; i < mdResizableContainer.size(); i++)
@@ -335,10 +410,11 @@ namespace MP
 					model = glm::mat4();
 					model = glm::translate(model, glm::vec3(mdResizableContainer[i]->pos, 1.f));
 					model = glm::scale(model, glm::vec3(mdResizableContainer[i]->size, 1.f));;
-					mdDebugShader.setMat4("model", model);
-					mdQuad->Draw(mdDebugShader);
+					Shader::shaderDefault->setMat4("model", model);
+					Shader::Draw();
 				}
-
+				glm::vec3 white(1.f);
+				Shader::shaderDefault->setVec3("color", white);
 			}
 
 
@@ -351,6 +427,9 @@ namespace MP
 			s16 musicUIOffsetX = -60;
 			s16 musicUIOffsetY = 35;
 			s16 musicProgressBarOffsetY = 10;
+
+			_MUSIC_PLAYER_FONT = TTF_OpenFont("assets/font/Raleway-Regular.ttf", 14);
+
 
 			_MIN_PLAYER_SIZE = glm::vec2(500.f, 500.f);
 
@@ -420,6 +499,8 @@ namespace MP
 
 			_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
 			_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 100.f);
+
+			_PLAYLIST_ITEM_SIZE = glm::vec2(300.f, 30.f);
 		}
 
 		void Data::UpdateData()
@@ -441,6 +522,9 @@ namespace MP
 
 		void Start()
 		{
+			std::string locale = setlocale(LC_ALL, "");//this function sets applications locale to current system locale
+			//std::cout << "default locale:" << locale;
+
 			mdCurrentWidth = mdEngine::Window::windowProperties.mWindowWidth;
 			mdCurrentHeight = mdEngine::Window::windowProperties.mApplicationHeight;
 
@@ -485,11 +569,22 @@ namespace MP
 			new Button(Input::ButtonType::Playlist, Data::_PLAYLIST_BUTTON_SIZE, Data::_PLAYLIST_BUTTON_POS);
 
 
+			/*PlaylistItem * item = NULL;
+			for (int i = 0; i < 100; i++)
+			{
+				item = new PlaylistItem();
+				item->InitFont();
+				item->InitItem();
+			}*/
+
+
+
 			DebugStart();
 		}
 
 		void Update()
 		{
+
 			/* Collect user input for buttons and movable */
 			for(u16 i = 0; i < mdMovableContainer.size(); i++)
 				App::ProcessMovable(mdMovableContainer[i]);
@@ -549,6 +644,17 @@ namespace MP
 			{
 				Playlist::RepeatMusic();
 			}
+
+
+
+			for (s32 i = 0; i < mdItemContainer.size(); i++)
+			{
+				if (mdItemContainer[i]->hasFocus == true)
+				{
+					//std::wcout << mdItemContainer[i + PlaylistItem::mOffsetIndex]->GetTitle() << std::endl;
+				}
+			}
+
 
 
 		}

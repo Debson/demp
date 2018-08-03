@@ -230,8 +230,6 @@ namespace MP
 		{
 			if (Playlist::RamLoadedMusic.init(path))
 			{
-				Playlist::mdPathContainer.push_back(path);
-
 				OUTPUT << "Music at path: \"" << path << "\" loaded successfuly!\n";
 				std::cout << "Song loaded to the RAM succesfuly\n";
 			}
@@ -245,6 +243,10 @@ namespace MP
 			/* If song is already loaded to ram, save others's songs paths in vector */
 			Playlist::mdPathContainer.push_back(path);
 			std::cout << "Song's path saved succesfuly\n";
+			UI::PlaylistItem * item = new UI::PlaylistItem();
+			item->InitFont();
+			item->InitItem();
+
 		}
 	}
 	/*

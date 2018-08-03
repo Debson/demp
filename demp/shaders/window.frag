@@ -19,13 +19,13 @@ void main()
 	vec4 texColor = texture(image, TexCoords);
 	if(cut)
 	{
-	if(texColor.a < 0.9)
-		discard;
+		if(texColor.a < 0.9)
+			discard;
 	}
 	else
 	{
-	if(texColor.a < 0.2)
-		discard;
+		if(texColor.a < 0.2)
+			discard;
 	}
 
 	

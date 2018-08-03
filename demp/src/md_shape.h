@@ -10,22 +10,20 @@ enum SHAPE
 	QUAD,
 };
 
-namespace mdEngine
+class mdShape
 {
-	class Shape
-	{
-	public:
-		Shape();
-		~Shape();
+public:
+	mdShape();
+	~mdShape();
 
-		static Shape* QUAD();
+	static mdShape* QUAD();
 
-		virtual void Draw(Shader shader);
+	virtual void Draw(mdShader shader);
 
-	private:
-		GLuint vbo = 0;
-		GLuint vao = 0;
-		SHAPE currentShape;
-	};
-}
+private:
+	GLuint vbo = 0;
+	GLuint vao = 0;
+	SHAPE currentShape;
+};
+
 #endif // !MD_SHAPE_H

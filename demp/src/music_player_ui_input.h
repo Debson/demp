@@ -16,6 +16,7 @@ namespace UI
 
 		enum ButtonType
 		{
+			None,
 			Exit,
 			Minimize,
 			StayOnTop,

@@ -74,13 +74,15 @@ namespace MP
 
 		void UpdateMusic();
 
+		void ReloadMusic(std::wstring path);
+
 		b8 IsLoaded();
 
 		b8 isPaused();
 
 		b8 IsPlaying();
 
-		std::string GetTitle(s32 id);
+		std::wstring GetTitle(s32 id);
 
 		s32 GetPreviousID();
 

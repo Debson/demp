@@ -11,28 +11,33 @@ namespace mdEngine
 {
 	namespace MP
 	{
-		MusicPlayer::~MusicPlayer() { }
-
-		void MusicPlayer::Start()
-		{
-			Open();
-
-		}
-
-		void MusicPlayer::Update()
-		{
-			UpdateInput();
-			UpdateLogic();
-		}
-
-		void MusicPlayer::Render()
-		{
-			RenderMusicPlayer();
-		}
-
-		void MP::MusicPlayer::Close()
-		{
-
-		}
+		MusicPlayerState musicPlayerState;
 	}
+
+	MP::MusicPlayer::~MusicPlayer() 
+	{ 
+		musicPlayerState = MusicPlayerState::kStatic; 
+	}
+
+	void MP::MusicPlayer::Start()
+	{
+		Open();
+	}
+
+	void MP::MusicPlayer::Update()
+	{
+		UpdateInput();
+		UpdateLogic();
+	}
+
+	void MP::MusicPlayer::Render()
+	{
+		RenderMusicPlayer();
+	}
+
+	void MP::MusicPlayer::Close()
+	{
+
+	}
+	
 }

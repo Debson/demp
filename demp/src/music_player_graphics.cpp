@@ -11,7 +11,11 @@
 #include "md_shape.h"
 #include "music_player_ui_input.h"
 #include "music_player_playlist.h"
+#include "graphics.h"
+#include "md_text.h"
+#include "music_player.h"
 
+using namespace mdEngine::Graphics;
 using namespace mdEngine::MP;
 using namespace mdEngine::MP::UI;
 using namespace mdEngine::MP::UI::Data;
@@ -24,15 +28,14 @@ namespace Graphics
 	{
 		PlaylistObject playlist;
 
-		Shader mdWindowShader;
-		Shape * mdQuad = NULL;
-		glm::mat4 projection;
-
-		GLuint main_background, main_foreground;
+		GLuint main_background = 0, main_foreground = 0;
 		GLuint exit_background, exit_icon, minimize_icon, stay_on_top_icon;
 		GLuint volume_bar, volume_speaker, volume_speaker_muted;
 		GLuint play_button, stop_button, next_button, previous_button, shuffle_button, repeat_button, dot_icon, playlist_button;
 		GLuint music_progress_bar;
+
+		b8 texturesLoaded = false;
+		GLuint * textTexture;
 
 		b8 shuffleActive(false);
 		b8 repeatActive(false);
@@ -65,7 +68,8 @@ namespace Graphics
 		/* TEST */
 
 		GLuint test;
-		
+
+		void LoadTextTexture();
 			
 		void RenderPlaylistWindow();
 
@@ -148,56 +152,8 @@ namespace Graphics
 		return timer.progress();
 	}
 
-
-	int i = 0;
-	int pos = 0;
-	void MP::RenderTest()
+	void MP::LoadTextTexture()
 	{
-		glm::vec3 color(1.f);
-		glm::mat4 model;
-		mdWindowShader.use();
-		mdWindowShader.setVec3("color", color);
-
-		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(0, 0, 0.1f));
-		//model = glm::scale(model, glm::vec3(mdCurrentWidth, mdCurrentHeight, 1.0f));
-		mdWindowShader.setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, main_foreground);
-		mdQuad->Draw(mdWindowShader);
-		
-
-		if (mdEngine::App::Input::IsScrollForwardActive())
-			pos--;
-		if (mdEngine::App::Input::IsScrollBackwardActive())
-			pos++;
-
-		if (pos < 0)
-			pos = 0;
-
-		i = pos;
-
-		while (i < 10 + pos)
-		{
-				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(mdItemContainer[i]->pos.x, mdItemContainer[i]->pos.y - pos * 25.f, 0.5f));
-				model = glm::scale(model, glm::vec3(mdItemContainer[i]->size, 1.0f));
-				mdWindowShader.setMat4("model", model);
-				mdWindowShader.setVec3("color", mdItemContainer[i]->color);
-				glBindTexture(GL_TEXTURE_2D, main_foreground);
-				mdQuad->Draw(mdWindowShader);
-				i++;
-		
-		}
-
-		glm::vec3 white(1.f);
-		mdWindowShader.setVec3("color", white);
-		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(120, 210, 0.6f));
-//		model = glm::scale(model, glm::vec3(mdCurrentWidth - 200.f, mdCurrentHeight - 400.f, 1.0f));
-		mdWindowShader.setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, main_foreground);
-		mdQuad->Draw(mdWindowShader);
-
 
 	}
 
@@ -221,7 +177,7 @@ namespace Graphics
 		if (playlist.IsToggled() && playlist.IsEnabled())
 		{
 			stretchMultiplier = 2.f * scaleY;
-			stretchPlaylistMultplier = scaleY;
+			stretchPlaylistMultplier = 2.f * scaleY - 1.f;;
 		}
 
 
@@ -229,21 +185,21 @@ namespace Graphics
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(_MAIN_BACKGROUND_POS.x, _MAIN_BACKGROUND_POS.y, 0.f));
 		model = glm::scale(model, glm::vec3(_MAIN_BACKGROUND_SIZE.x, _MAIN_BACKGROUND_SIZE.y * stretchMultiplier, 1.f));;
-		mdWindowShader.setMat4("model", model);
-		mdWindowShader.setBool("cut", true);
+		Shader::shaderDefault->setMat4("model", model);
+		Shader::shaderDefault->setBool("cut", true);
 		glBindTexture(GL_TEXTURE_2D, main_background);
-		mdQuad->Draw(mdWindowShader);
-		mdWindowShader.setBool("cut", false);
+		Shader::Draw();
+		Shader::shaderDefault->setBool("cut", false);
 
 		// Main foreground
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(_MAIN_FOREGROUND_POS, 0.1f));
 		model = glm::scale(model, glm::vec3(_MAIN_FOREGROUND_SIZE, 1.f));
-		mdWindowShader.setMat4("model", model);
-		mdWindowShader.setBool("cut", true);
+		Shader::shaderDefault->setMat4("model", model);
+		Shader::shaderDefault->setBool("cut", true);
 		glBindTexture(GL_TEXTURE_2D, main_foreground);
-		mdQuad->Draw(mdWindowShader);
-		mdWindowShader.setBool("cut", false);
+		Shader::Draw();;
+		Shader::shaderDefault->setBool("cut", false);
 
 		// Playlist foreground
 
@@ -252,11 +208,11 @@ namespace Graphics
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(_PLAYLIST_FOREGROUND_POS, 0.4f));
 			model = glm::scale(model, glm::vec3(_PLAYLIST_FOREGROUND_SIZE.x, _PLAYLIST_FOREGROUND_SIZE.y * stretchPlaylistMultplier, 1.f));
-			mdWindowShader.setMat4("model", model);
-			mdWindowShader.setBool("cut", true);
+			Shader::shaderDefault->setMat4("model", model);
+			Shader::shaderDefault->setBool("cut", true);
 			glBindTexture(GL_TEXTURE_2D, main_foreground);
-			mdQuad->Draw(mdWindowShader);
-			mdWindowShader.setBool("cut", false);
+			Shader::Draw();
+			Shader::shaderDefault->setBool("cut", false);
 		}
 
 		if (Input::isButtonPressed(Input::ButtonType::Playlist) && playlist.IsRolling() == false)
@@ -276,23 +232,23 @@ namespace Graphics
 			model = glm::translate(model, glm::vec3(_PLAYLIST_BUTTON_POS, 0.4));
 			lastMousePos = deltaVolumePos;
 			model = glm::scale(model, glm::vec3(_PLAYLIST_BUTTON_SIZE, 1.f));
-			mdWindowShader.setMat4("model", model);
+			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, playlist_button);
-			mdQuad->Draw(mdWindowShader);
+			Shader::Draw();
 		}
 		else
 		{
 			color = grey;
-			mdWindowShader.setVec3("color", color);
+			Shader::shaderDefault->setVec3("color", color);
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(_PLAYLIST_BUTTON_POS, 0.4));
 			lastMousePos = deltaVolumePos;
 			model = glm::scale(model, glm::vec3(_PLAYLIST_BUTTON_SIZE, 1.f));
-			mdWindowShader.setMat4("model", model);
+			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, playlist_button);
-			mdQuad->Draw(mdWindowShader);
+			Shader::Draw();
 			color = white;
-			mdWindowShader.setVec3("color", color);
+			Shader::shaderDefault->setVec3("color", color);
 
 		}
 	}
@@ -339,23 +295,23 @@ namespace Graphics
 				model = glm::mat4();
 				model = glm::translate(model, glm::vec3(_VOLUME_SPEAKER_POS, 0.3f));
 				model = glm::scale(model, glm::vec3(_VOLUME_SPEAKER_SIZE, 1.f));
-				mdWindowShader.setMat4("model", model);
+				Shader::shaderDefault->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, volume_speaker_muted);
-				mdQuad->Draw(mdWindowShader);
+				Shader::Draw();
 			}
 			else if (volumeMuted || deltaVolumePos <= 0)
 			{
 				color = grey;
-				mdWindowShader.setVec3("color", color);
+				Shader::shaderDefault->setVec3("color", color);
 				mdEngine::MP::Playlist::MuteVolume(true);
 				model = glm::mat4();
 				model = glm::translate(model, glm::vec3(_VOLUME_SPEAKER_POS, 0.3f));
 				model = glm::scale(model, glm::vec3(_VOLUME_SPEAKER_SIZE, 1.f));
-				mdWindowShader.setMat4("model", model);
+				Shader::shaderDefault->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, volume_speaker_muted);
-				mdQuad->Draw(mdWindowShader);
+				Shader::Draw();
 				color = white;
-				mdWindowShader.setVec3("color", color);
+				Shader::shaderDefault->setVec3("color", color);
 			}
 			else if (volumeMuted == false && Input::hasFocus(Input::ButtonType::Volume))
 			{
@@ -363,23 +319,23 @@ namespace Graphics
 				model = glm::mat4();
 				model = glm::translate(model, glm::vec3(_VOLUME_SPEAKER_POS, 0.3f));
 				model = glm::scale(model, glm::vec3(_VOLUME_SPEAKER_SIZE, 1.f));
-				mdWindowShader.setMat4("model", model);
+				Shader::shaderDefault->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, volume_speaker);
-				mdQuad->Draw(mdWindowShader);
+				Shader::Draw();
 			}
 			else if (volumeMuted == false)
 			{
 				color = grey;
-				mdWindowShader.setVec3("color", color);
+				Shader::shaderDefault->setVec3("color", color);
 				mdEngine::MP::Playlist::MuteVolume(false);
 				model = glm::mat4();
 				model = glm::translate(model, glm::vec3(_VOLUME_SPEAKER_POS, 0.3f));
 				model = glm::scale(model, glm::vec3(_VOLUME_SPEAKER_SIZE, 1.f));
-				mdWindowShader.setMat4("model", model);
+				Shader::shaderDefault->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, volume_speaker);
-				mdQuad->Draw(mdWindowShader);
+				Shader::Draw();
 				color = white;
-				mdWindowShader.setVec3("color", color);
+				Shader::shaderDefault->setVec3("color", color);
 			}
 
 
@@ -388,12 +344,12 @@ namespace Graphics
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(_VOLUME_BAR_POS, 0.3f));
 			model = glm::scale(model, glm::vec3(_VOLUME_BAR_SIZE, 1.f));
-			mdWindowShader.setMat4("model", model);
-			mdWindowShader.setVec3("color", color);
+			Shader::shaderDefault->setMat4("model", model);
+			Shader::shaderDefault->setVec3("color", color);
 			glBindTexture(GL_TEXTURE_2D, volume_bar);
-			mdQuad->Draw(mdWindowShader);
+			Shader::Draw();
 			color = white;
-			mdWindowShader.setVec3("color", color);
+			Shader::shaderDefault->setVec3("color", color);
 
 
 			if (Input::hasFocus(Input::ButtonType::SliderVolume) || volumeSliderActive == true)
@@ -413,20 +369,20 @@ namespace Graphics
 				}
 
 				model = glm::scale(model, glm::vec3(_SLIDER_DOT_SIZE, 1.f));
-				mdWindowShader.setMat4("model", model);
+				Shader::shaderDefault->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, dot_icon);
-				mdQuad->Draw(mdWindowShader);
+				Shader::Draw();
 
 				color = green;
 				model = glm::mat4();
 				model = glm::translate(model, glm::vec3(_VOLUME_BAR_POS, 0.35f));
 				model = glm::scale(model, glm::vec3(deltaVolumePos, _VOLUME_BAR_SIZE.y, 1.f));
-				mdWindowShader.setMat4("model", model);
-				mdWindowShader.setVec3("color", color);
+				Shader::shaderDefault->setMat4("model", model);
+				Shader::shaderDefault->setVec3("color", color);
 				glBindTexture(GL_TEXTURE_2D, volume_bar);
-				mdQuad->Draw(mdWindowShader);
+				Shader::Draw();
 				color = white;
-				mdWindowShader.setVec3("color", color);
+				Shader::shaderDefault->setVec3("color", color);
 			}
 			else if (volumeMuted == false)
 			{
@@ -434,12 +390,12 @@ namespace Graphics
 				model = glm::mat4();
 				model = glm::translate(model, glm::vec3(_VOLUME_BAR_POS, 0.35f));
 				model = glm::scale(model, glm::vec3(deltaVolumePos, _VOLUME_BAR_SIZE.y, 1.f));
-				mdWindowShader.setMat4("model", model);
-				mdWindowShader.setVec3("color", color);
+				Shader::shaderDefault->setMat4("model", model);
+				Shader::shaderDefault->setVec3("color", color);
 				glBindTexture(GL_TEXTURE_2D, volume_bar);
-				mdQuad->Draw(mdWindowShader);
+				Shader::Draw();
 				color = white;
-				mdWindowShader.setVec3("color", color);
+				Shader::shaderDefault->setVec3("color", color);
 			}
 		}
 	}
@@ -479,34 +435,34 @@ namespace Graphics
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(_MUSIC_PROGRESS_BAR_POS, 0.3f));
 		model = glm::scale(model, glm::vec3(_MUSIC_PROGRESS_BAR_SIZE, 1.f));
-		mdWindowShader.setMat4("model", model);
-		mdWindowShader.setVec3("color", color);
+		Shader::shaderDefault->setMat4("model", model);
+		Shader::shaderDefault->setVec3("color", color);
 		glBindTexture(GL_TEXTURE_2D, music_progress_bar);
-		mdQuad->Draw(mdWindowShader);
+		Shader::Draw();
 		color = white;
-		mdWindowShader.setVec3("color", color);
+		Shader::shaderDefault->setVec3("color", color);
 
 		if (Input::hasFocus(Input::ButtonType::SliderMusic) || musicSliderActive)
 		{
 			color = green;
-			mdWindowShader.setVec3("color", color);
+			Shader::shaderDefault->setVec3("color", color);
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(_MUSIC_PROGRESS_BAR_POS, 0.35f));
 			model = glm::scale(model, glm::vec3(deltaMusicPos, _MUSIC_PROGRESS_BAR_SIZE.y, 1.f));
-			mdWindowShader.setMat4("model", model);
+			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, music_progress_bar);
-			mdQuad->Draw(mdWindowShader);
+			Shader::Draw();
 			color = white;
-			mdWindowShader.setVec3("color", color);
+			Shader::shaderDefault->setVec3("color", color);
 
 
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(_MUSIC_PROGRESS_BAR_POS.x + deltaMusicPos - _SLIDER_DOT_SIZE.x / 2.f, _MUSIC_PROGRESS_BAR_DOT_POS.y, 0.4));
 			lastMousePos = deltaVolumePos;
 			model = glm::scale(model, glm::vec3(_SLIDER_DOT_SIZE, 1.f));
-			mdWindowShader.setMat4("model", model);
+			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, dot_icon);
-			mdQuad->Draw(mdWindowShader);
+			Shader::Draw();
 
 
 		}
@@ -515,9 +471,9 @@ namespace Graphics
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(_MUSIC_PROGRESS_BAR_POS, 0.35f));
 			model = glm::scale(model, glm::vec3(deltaMusicPos, _MUSIC_PROGRESS_BAR_SIZE.y, 1.f));
-			mdWindowShader.setMat4("model", model);
+			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, music_progress_bar);
-			mdQuad->Draw(mdWindowShader);
+			Shader::Draw();
 		}
 	}
 
@@ -560,16 +516,16 @@ namespace Graphics
 
 			dotModel = glm::translate(dotModel, glm::vec3(_SHUFFLE_BUTTON_POS.x + _SHUFFLE_BUTTON_SIZE.x / 2.f - _DOT_BUTTON_STATE_SIZE.x / 2.f - dotOffsetXShuffle, _SHUFFLE_BUTTON_POS.y + 18.f, 0.3f));
 			dotModel = glm::scale(dotModel, glm::vec3(_DOT_BUTTON_STATE_SIZE, 1.f));
-			mdWindowShader.setVec3("color", color);
-			mdWindowShader.setMat4("model", dotModel);
+			Shader::shaderDefault->setVec3("color", color);
+			Shader::shaderDefault->setMat4("model", dotModel);
 			glBindTexture(GL_TEXTURE_2D, dot_icon);
-			mdQuad->Draw(mdWindowShader);
+			Shader::Draw();
 
 		}
-		mdWindowShader.setVec3("color", color);
-		mdWindowShader.setMat4("model", model);
+		Shader::shaderDefault->setVec3("color", color);
+		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, shuffle_button);
-		mdQuad->Draw(mdWindowShader);
+		Shader::Draw();
 
 
 		// Previous
@@ -589,16 +545,19 @@ namespace Graphics
 			model = glm::translate(model, glm::vec3(_PREVIOUS_BUTTON_POS, 0.3f));
 			model = glm::scale(model, glm::vec3(_PREVIOUS_BUTTON_SIZE, 1.f));;
 		}
-		mdWindowShader.setVec3("color", color);
-		mdWindowShader.setMat4("model", model);
+		Shader::shaderDefault->setVec3("color", color);
+		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, previous_button);
-		mdQuad->Draw(mdWindowShader);
+		Shader::Draw();
 
 
 		// Play
-
 		if (Input::isButtonPressed(Input::ButtonType::Play) && Playlist::IsLoaded() == true)
 			playActive = !playActive;
+
+		if (Input::isButtonPressed(Input::ButtonType::Previous) || Input::isButtonPressed(Input::ButtonType::Next) &&
+			playActive == false)
+			playActive = true;
 
 		model = glm::mat4();
 		if (Input::hasFocus(Input::ButtonType::Play) && playActive == false)
@@ -619,11 +578,11 @@ namespace Graphics
 
 		if (playActive == false)
 		{
-			mdWindowShader.setVec3("color", color);
+			Shader::shaderDefault->setVec3("color", color);
 
-			mdWindowShader.setMat4("model", model);
+			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, play_button);
-			mdQuad->Draw(mdWindowShader);
+			Shader::Draw();
 		}
 
 		// Stop
@@ -649,11 +608,11 @@ namespace Graphics
 
 		if (playActive)
 		{
-			mdWindowShader.setVec3("color", color);
+			Shader::shaderDefault->setVec3("color", color);
 
-			mdWindowShader.setMat4("model", model);
+			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, stop_button);
-			mdQuad->Draw(mdWindowShader);
+			Shader::Draw();
 		}
 
 
@@ -674,10 +633,10 @@ namespace Graphics
 			model = glm::translate(model, glm::vec3(_NEXT_BUTTON_POS, 0.3f));
 			model = glm::scale(model, glm::vec3(_NEXT_BUTTON_SIZE, 1.f));;
 		}
-		mdWindowShader.setVec3("color", color);
-		mdWindowShader.setMat4("model", model);
+		Shader::shaderDefault->setVec3("color", color);
+		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, next_button);
-		mdQuad->Draw(mdWindowShader);
+		Shader::Draw();
 
 
 		// Repeat
@@ -709,18 +668,18 @@ namespace Graphics
 			dotModel = glm::mat4();
 			dotModel = glm::translate(dotModel, glm::vec3(_REPEAT_BUTTON_POS.x + _REPEAT_BUTTON_SIZE.x / 2.f - _DOT_BUTTON_STATE_SIZE.x / 2.f - dotOffsetXRepeat, _REPEAT_BUTTON_POS.y + 18.f, 0.3f));
 			dotModel = glm::scale(dotModel, glm::vec3(_DOT_BUTTON_STATE_SIZE, 1.f));
-			mdWindowShader.setVec3("color", color);
-			mdWindowShader.setMat4("model", dotModel);
+			Shader::shaderDefault->setVec3("color", color);
+			Shader::shaderDefault->setMat4("model", dotModel);
 			glBindTexture(GL_TEXTURE_2D, dot_icon);
-			mdQuad->Draw(mdWindowShader);
+			Shader::Draw();
 		}
-		mdWindowShader.setVec3("color", color);
-		mdWindowShader.setMat4("model", model);
+		Shader::shaderDefault->setVec3("color", color);
+		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, repeat_button);
-		mdQuad->Draw(mdWindowShader);
+		Shader::Draw();
 
 		color = white;
-		mdWindowShader.setVec3("color", color);
+		Shader::shaderDefault->setVec3("color", color);
 
 		
 	}
@@ -729,37 +688,142 @@ namespace Graphics
 	{
 		glm::mat4 model;
 
-		if (playlist.IsToggled())
+		if (playlist.IsToggled() && mdItemContainer.size() > 0)
 		{
-			if (mdEngine::App::Input::IsScrollForwardActive())
-				playlistCurrentPos--;
-			if (mdEngine::App::Input::IsScrollBackwardActive())
-				playlistCurrentPos++;
 
+
+			if (mdEngine::App::Input::IsScrollForwardActive())
+			{
+				playlistCurrentPos--;
+				texturesLoaded = false;
+			}
+			if (mdEngine::App::Input::IsScrollBackwardActive())
+			{
+				playlistCurrentPos++;
+				texturesLoaded = false;
+			}
+
+
+
+
+			s32 maxItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / mdItemContainer[0]->mSize.y;
+
+			s32 currentSongID = mdEngine::MP::Playlist::RamLoadedMusic.mID;
+
+
+			
+			if ((currentSongID > maxItems + playlistCurrentPos - 2) && currentSongID < mdItemContainer.size() - 1)
+			{
+				/* Basically If current song id is greater than playlist current pos, jump to penultimate
+					pos in playlist. Also had to consider case, when playlist size is small */
+				playlistCurrentPos = currentSongID - maxItems + 2;
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kChanged;
+			}
+			else if(playlistCurrentPos != 0 && playlistCurrentPos >= currentSongID)
+			{
+				/* If current song ID is less than current playlist pos, jump to second pos in playlist */
+				playlistCurrentPos = currentSongID - 1;
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kChanged;
+			}
+			else if (currentSongID >= mdItemContainer.size() - 1 && 
+					 currentSongID - maxItems >= playlistCurrentPos)
+			{
+				/* When current song position is the last in playlist */
+				playlistCurrentPos = mdItemContainer.size() - maxItems;;
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kChanged;
+			}
+
+			/* Check out of bounds */
 			if (playlistCurrentPos < 0)
 				playlistCurrentPos = 0;
 
+			if (playlistCurrentPos > mdItemContainer.size() - 1)
+				playlistCurrentPos = mdItemContainer.size() - 2;
+
+
 			playlistIndex = playlistCurrentPos;
+			
 
-			s32 maxItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y ) / PlaylistItem::size.y;
+			/* Check if there is less items in container than current playlist size can display.
+			   If yes, make sure that only items in container will be displayed. */
+			if (mdItemContainer.size() < maxItems)
+				maxItems = mdItemContainer.size();
 
-
-			while (playlistIndex < maxItems + playlistCurrentPos)
+			/* Don't go over mdItemContainer size*/
+			if (maxItems + playlistCurrentPos > mdItemContainer.size())
 			{
+				playlistCurrentPos--;
+			}
+
+			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kStatic)
+			{
+				texturesLoaded = false;
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kStatic;
+			}
+
+
+
+			if (texturesLoaded == false)
+			{
+				/* Load all textures that are in in display range */
+				if(textTexture != NULL)
+					glDeleteTextures(maxItems, textTexture);
+
+				textTexture = new GLuint[maxItems];
+
+				for (u16 i = playlistIndex, t = 0; i < maxItems + playlistCurrentPos; i++, t++)
+				{
+					textTexture[t] = Text::LoadText(mdItemContainer[i]->mFont,
+													mdItemContainer[i]->GetTitle(),
+													mdItemContainer[i]->mTextColor);
+				}
+				texturesLoaded = true;
+			}
+
+
+
+
+			u16 texIndex = 0;
+			while (playlistIndex < maxItems  + playlistCurrentPos)
+			{
+				/* Playlist items are rendered on the same positions as positions of the first(0 - maxItems), 
+				   they are only transformed by matrix, so when you want to check if specific item has focus, 
+				   it will check the focus on the wrong item(0 - maxItems). To prevent that, always add mOffsetIndex,
+				   do checked positions, so you will get index of actuall rendered item. */
+				PlaylistItem::mOffsetIndex = playlistCurrentPos;
+				PlaylistItem * item = mdItemContainer[playlistIndex];
+
+				glm::vec3 itemColor;
+				if (item->IsPlaying() == true)
+					itemColor = glm::vec3(1.f, 0.f, 0.f);
+				else
+					itemColor = item->mColor;
 
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(mdItemContainer[playlistIndex]->pos.x,
-					mdItemContainer[playlistIndex]->pos.y - playlistCurrentPos * (mdItemContainer[i]->size.y + mdItemContainer[i]->offsetY), 0.5f));
-				model = glm::scale(model, glm::vec3(mdItemContainer[playlistIndex]->size, 1.0f));
-				mdWindowShader.setMat4("model", model);
-				mdWindowShader.setVec3("color", mdItemContainer[playlistIndex]->color);
+				model = glm::translate(model, glm::vec3(item->mPos.x, item->mPos.y - playlistCurrentPos * (item->mSize.y + item->mOffsetY), 0.5f));
+				model = glm::scale(model, glm::vec3(item->mSize, 1.0f));
+				Shader::shaderDefault->setMat4("model", model);
+				Shader::shaderDefault->setVec3("color", itemColor);
 				glBindTexture(GL_TEXTURE_2D, main_foreground);
-				mdQuad->Draw(mdWindowShader);
+				Shader::Draw();
+
+				glm::vec3 color(1.f);
+				model = glm::mat4();
+				model = glm::translate(model, glm::vec3(item->mPos.x + 5.f, item->mPos.y - playlistCurrentPos * (item->mSize.y + item->mOffsetY) + item->mSize.y / 4.f, 0.8f));
+				model = glm::scale(model, glm::vec3((float)item->mTextSize.x * item->mTextScale,
+													(float)item->mTextSize.y * item->mTextScale, 1.0f));
+				Shader::shaderDefault->setMat4("model", model);
+				Shader::shaderDefault->setVec3("color", color);
+				glBindTexture(GL_TEXTURE_2D, textTexture[texIndex]);
+				Shader::Draw();
+
+
+				texIndex++;
 				playlistIndex++;
 
 			}
 
-			mdWindowShader.setVec3("color", white);
+			Shader::shaderDefault->setVec3("color", white);
 		}
 	}
 
@@ -770,29 +834,26 @@ namespace Graphics
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(500.f - 70.f, 5.f, 0.2f));
 		model = glm::scale(model, glm::vec3(40.f, 15.0f, 1.f));;
-		mdWindowShader.setMat4("model", model);
+		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, exit_background);
-		mdQuad->Draw(mdWindowShader);
+		Shader::Draw();
 
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(Data::_EXIT_BUTTON_POS, 0.3f));
 		model = glm::scale(model, glm::vec3(Data::_EXIT_BUTTON_SIZE, 1.f));;
-		mdWindowShader.setMat4("model", model);
+		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, exit_icon);
-		mdQuad->Draw(mdWindowShader);
+		Shader::Draw();
 	}
 
 	void MP::StartTest()
 	{
-		PlaylistItem::startPos = Data::_PLAYLIST_ITEMS_SURFACE_POS;
-		for(int i = 0; i < 100; i++)
-			new PlaylistItem();
+		
 	}
 
 	void MP::StartMainWindow()
 	{
-		mdQuad			= Shape::QUAD();
-		mdWindowShader	= Shader("shaders/window.vert", "shaders/window.frag", nullptr);
+
 
 		playlist.SetRollTime(200);
 
@@ -817,17 +878,9 @@ namespace Graphics
 
 		music_progress_bar		= mdLoadTexture("assets/music_progress_bar.png");
 
-		test = mdLoadTexture("assets/test.jpg");
-
 		deltaVolumePos = (s32)(mdEngine::MP::Playlist::GetVolume() * 100.f * 0.9f);
 
 
-		mdWindowShader.use();
-		mdWindowShader.setInt("image", 0);
-		mdWindowShader.setMat4("projection", projection);
-
-		//mdEngine::UpdateViewport(500, 700);
-		StartTest();
 	}
 
 	void MP::UpdateMainWindow()
@@ -843,15 +896,9 @@ namespace Graphics
 		glm::mat4 dotModel;
 		f32 dotOffsetXShuffle = 0.4f;
 		f32 dotOffsetXRepeat = -0.2f;
-		//std::cout << mdProjectionHeight << std::endl;
-		projection = glm::ortho(0.f, static_cast<float>(Window::windowProperties.mWindowWidth),
-									 static_cast<float>(Window::windowProperties.mWindowHeight), 0.f, -1.0f, 1.f);
 
-		mdWindowShader.use();
-		mdWindowShader.setMat4("projection", projection);
-		mdWindowShader.setVec3("color", color);
+		Shader::shaderDefault->setVec3("color", white);
 		glActiveTexture(GL_TEXTURE0);
-
 
 		RenderPlaylistWindow();
 
