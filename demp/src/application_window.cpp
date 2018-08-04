@@ -3,6 +3,7 @@
 #include "realtime_system_application.h"
 #include "music_player.h"
 
+
 namespace mdEngine
 {
 	namespace App
@@ -28,57 +29,64 @@ namespace mdEngine
 						mWindowPositionX(600),
 						mWindowPositionY(100),
 						mWindowMode(WindowMode::Windowed),
-						mWindowEvent(WindowEvent::kFocus),
+						mActualWindowEvent(WindowEvent::kFocus),
 						mVerticalSync(true)
 	{ }
 
 	void App::ProcessMovable(MP::UI::Movable* bar)
 	{
-		if (Input::IsKeyDown(KeyCode::MouseLeft))
-		{
-			int currentMouseX = 0, currentMouseY = 0;
-			Input::GetGlobalMousePosition(&currentMouseX, &currentMouseY);
+		
+			if (Input::IsKeyDown(KeyCode::MouseLeft))
+			{
+				int currentMouseX = 0, currentMouseY = 0;
+				Input::GetGlobalMousePosition(&currentMouseX, &currentMouseY);
 
-			int currentWinX, currentWinY;
-			Window::GetWindowPos(&currentWinX, &currentWinY);
+				int currentWinX, currentWinY;
+				Window::GetWindowPos(&currentWinX, &currentWinY);
 
-			int insideX, insideY;
-			Input::GetMousePosition(&insideX, &insideY);
+				int insideX, insideY;
+				Input::GetMousePosition(&insideX, &insideY);
 
-			int deltaX = globalMouseX - currentMouseX;
-			int deltaY = globalMouseY - currentMouseY;
+				int deltaX = globalMouseX - currentMouseX;
+				int deltaY = globalMouseY - currentMouseY;
 
-			int newWX = startX - deltaX;
-			int newWY = startY - deltaY;
+				int newWX = startX - deltaX;
+				int newWY = startY - deltaY;
 
-			//f32 scaleX, scaleY;
-			//GetWindowScale(&scaleX, &scaleY);
+				//f32 scaleX, scaleY;
+				//GetWindowScale(&scaleX, &scaleY);
 
-			f32 xL = bar->mPos.x;
-			f32 xR = bar->mPos.x + bar->mSize.x;
-			f32 yU = bar->mPos.y;
-			f32 yD = bar->mPos.y + bar->mSize.y;
+				f32 xL = bar->mPos.x;
+				f32 xR = bar->mPos.x + bar->mSize.x;
+				f32 yU = bar->mPos.y;
+				f32 yD = bar->mPos.y + bar->mSize.y;
 
-			bool inside = insideX > xL && insideX < xR && insideY > yU && insideY < yD;
+				bool inside = insideX > xL && insideX < xR && insideY > yU && insideY < yD;
 
-			if (inside)
-				wasInsideMovable = true;
+				if (inside)
+					wasInsideMovable = true;
 
-			if(wasInsideMovable && Window::windowProperties.mWindowEvent != App::WindowEvent::kResize)
-				Window::SetWindowPos(newWX, newWY);
-		}
-		else
-		{
-			// TODO: dont call it every frame?
-			wasInsideMovable = false;
-			Input::GetGlobalMousePosition(&globalMouseX, &globalMouseY);
-			Window::GetWindowPos(&startX, &startY);
-		}
+				if (wasInsideMovable && Window::windowProperties.mActualWindowEvent != App::WindowEvent::kResize)
+					Window::SetWindowPos(newWX, newWY);
+			}
+			else
+			{
+				// TODO: dont call it every frame?
+				wasInsideMovable = false;
+				Input::GetGlobalMousePosition(&globalMouseX, &globalMouseY);
+				Window::GetWindowPos(&startX, &startY);
+			}
+		
 	}
 
 
 	void App::ProcessButton(MP::UI::Button* button)
 	{
+		if (button->mPos == glm::vec2(NULL_POSITION))
+		{
+			return;
+		}
+
 		int mouseX, mouseY;
 		Input::GetMousePosition(&mouseX, &mouseY);
 		/*f32 scaleX, scaleY;
@@ -93,7 +101,7 @@ namespace mdEngine
 			mouseY > yU && mouseY < yD;*/
 
 		bool inside = mouseX > button->mPos.x && mouseX < (button->mPos.x + button->mSize.x) &&
-					  mouseY > button->mPos.y && mouseY < (button->mPos.y + button->mSize.y); 
+			mouseY > button->mPos.y && mouseY < (button->mPos.y + button->mSize.y);
 
 		if (inside)
 			button->hasFocus = true;
@@ -102,7 +110,7 @@ namespace mdEngine
 
 		if (inside)
 			button->hasFocusTillRelease = true;
-		else if(!Input::IsKeyDown(KeyCode::MouseLeft))
+		else if (!Input::IsKeyDown(KeyCode::MouseLeft))
 			button->hasFocusTillRelease = false;
 
 		if (inside && Input::IsKeyPressed(KeyCode::MouseLeft))
@@ -123,11 +131,13 @@ namespace mdEngine
 
 
 		button->isReleased = !(button->isPressed || button->isDown);
+		
 	}
 
 
 	void App::ProcessResizable(MP::UI::Resizable* bar)
 	{
+	
 		//std::cout << winSizeBeforeResize << std::endl;
 		if (Input::IsKeyDown(KeyCode::MouseLeft))
 		{
@@ -162,7 +172,7 @@ namespace mdEngine
 				if (MP::UI::Data::_MIN_PLAYER_SIZE.y < winSizeBeforeResize + deltaY &&
 					MP::UI::Data::_MIN_PLAYER_SIZE.y < mouseY)
 				{
-					Window::windowProperties.mWindowEvent = WindowEvent::kResize;
+					Window::windowProperties.mActualWindowEvent = WindowEvent::kResize;
 					MP::musicPlayerState = MP::MusicPlayerState::kChanged;
 
 					Window::windowProperties.mApplicationHeight = winSizeBeforeResize + deltaY;
@@ -170,15 +180,13 @@ namespace mdEngine
 
 					firstMove = true;
 					bar->pos = glm::vec2(0, winSizeBeforeResize + deltaY - bar->size.y);
-					//Window::SetWindowSize(Window::windowProperties.mWindowWidth, winSizeBeforeResize + deltaY);
 				}
 			}
 		}
 		else
 		{
-			Window::windowProperties.mWindowEvent = WindowEvent::kFocus;
-
-			winSizeBeforeResize = Window::windowProperties.mApplicationHeight; 
+			Window::windowProperties.mActualWindowEvent = WindowEvent::kNone;
+			winSizeBeforeResize = Window::windowProperties.mApplicationHeight;
 			//std::cout << winSizeBeforeResize << std::endl;
 			wasInsideResizable = false;
 			firstMove = false;

@@ -12,13 +12,18 @@ namespace App
 	enum class WindowMode
 	{
 		Windowed,
-		FullScreen
+		FullScreen,
 	};
 
 	enum WindowEvent
 	{
+		kNone,
 		kFocus,
 		kResize,
+		kMinimized,
+		kExposed,
+		kEnter,
+		kLeave
 	};
 
 	struct WindowProperties
@@ -29,7 +34,8 @@ namespace App
 		s32 mWindowPositionX;
 		s32 mWindowPositionY;
 		WindowMode mWindowMode;
-		WindowEvent mWindowEvent;
+		WindowEvent mActualWindowEvent;
+		WindowEvent mPlayerWindowEvent;
 		
 		bool mVerticalSync;
 

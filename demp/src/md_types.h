@@ -4,8 +4,11 @@
 
 #include <vector>
 #include <stdint.h>
+#include <glm.hpp>
 
 #include "configuration.h"
+
+#define NULL_POSITION (-1)
 
 namespace mdEngine
 {
@@ -38,6 +41,16 @@ namespace mdEngine
 #else
 	typedef std::vector<const char*> PathContainer;
 #endif
+
+	namespace Color
+	{
+		extern glm::vec3 White;
+		extern glm::vec3 Grey;
+		extern glm::vec3 DarkGrey;
+		extern glm::vec3 Red;
+		extern glm::vec3 Green;
+		extern glm::vec3 Blue;
+	}
 }
 
 #endif // !MD_TYPES_H

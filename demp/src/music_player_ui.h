@@ -148,6 +148,7 @@ namespace MP
 			void InitItem();
 			void UpdateItem();
 			void SetColor(glm::vec3 color);
+			void DrawDottedBorder(s16 playpos);
 
 			b8 IsPlaying();
 
@@ -157,6 +158,7 @@ namespace MP
 			TTF_Font * mFont;
 			glm::ivec2 mTextSize;
 			f32 mTextScale;
+			u8 clickCount;
 		private:
 
 			char* mTitleC;

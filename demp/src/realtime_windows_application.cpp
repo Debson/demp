@@ -143,9 +143,9 @@ void mdEngine::SetupImGui()
 	gl3wInit();
 
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_PROGRAM_POINT_SIZE);
 
 #ifdef _DEBUG_
 	IMGUI_CHECKVERSION();
@@ -163,9 +163,8 @@ void mdEngine::SetupImGui()
 
 void mdEngine::UpdateWindowSize()
 {
-	if (App::Input::IsKeyDown(App::KeyCode::MouseLeft) == false)
+	if (Window::windowProperties.mActualWindowEvent == App::WindowEvent::kResize)
 	{
-		//std::cout << "mouse left not pressed\n";
 		SDL_GetWindowSize(mdWindow, &Window::windowProperties.mWindowWidth, &Window::windowProperties.mWindowHeight);
 	}
 }
@@ -231,6 +230,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		Time::deltaTime = currentFrame - previousFrame;
 		previousFrame = currentFrame;
 
+		//Window::windowProperties.mActualWindowEvent = App::WindowEvent::kNone;
+		//Window::windowProperties.mPlayerWindowEvent = App::WindowEvent::kNone;
+
 
 		if (SDL_PollEvent(&event))
 		{
@@ -259,7 +261,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			case (SDL_MOUSEMOTION):
 				UpdateMousePosition(event.motion.x, event.motion.y);
 				break;
+
 			}
+
 		}
 
 		//Window::GetWindowSize(&mdCurrentWindowWidth, &mdCurrentWindowHeight);
@@ -378,9 +382,3 @@ void mdEngine::Window::GetWindowPos(s32* x, s32* y)
 	SDL_GetWindowPosition(mdWindow, x, y);
 }
 
-void mdEngine::Window::UpdateViewport(s32 w, s32 h)
-{
-	Window::windowProperties.mWindowWidth= w;
-	Window::windowProperties.mWindowHeight = h;
-	glViewport(0, 0, w, h);
-}

@@ -425,6 +425,8 @@ namespace MP
 			{
 				BASS_ChannelStop(RamLoadedMusic.get());
 
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kChanged;
+
 				/* If shuffle is enabled, try to load next song basing on shuffled positions container.
 
 				If song path exist on next position, load it to the ram,
@@ -479,6 +481,8 @@ namespace MP
 			if (RamLoadedMusic.get() != NULL)
 			{
 				BASS_ChannelStop(RamLoadedMusic.get());
+
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kChanged;
 
 				/*	If shuffle is enabled, try to load next song basing on shuffled positions container.
 				

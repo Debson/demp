@@ -5,9 +5,10 @@
 
 #include "md_shader.h"
 
-enum SHAPE
+enum Shape
 {
 	QUAD,
+	DOT
 };
 
 class mdShape
@@ -17,13 +18,14 @@ public:
 	~mdShape();
 
 	static mdShape* QUAD();
+	static mdShape* DOT();
 
 	virtual void Draw(mdShader shader);
 
 private:
 	GLuint vbo = 0;
 	GLuint vao = 0;
-	SHAPE currentShape;
+	Shape currentShape;
 };
 
 #endif // !MD_SHAPE_H

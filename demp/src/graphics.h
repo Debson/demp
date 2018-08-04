@@ -9,11 +9,12 @@ namespace mdEngine
 	{
 		namespace Shader
 		{
-			extern mdShader* shaderDefault;
-			extern mdShader* shaderText;
+			extern mdShader* shaderDefault;;
+			extern mdShader* shaderBorder;
 
 			void InitShader();
 			void Draw();
+			void DrawDot();
 		}
 
 		void StartGraphics();

@@ -23,6 +23,7 @@
 #include "graphics.h"
 #include "md_text.h"
 #include "music_player_string.h"
+#include "md_time.h"
 
 
 using namespace mdEngine::Graphics;
@@ -39,14 +40,14 @@ namespace MP
 		std::vector<std::pair<Input::ButtonType, Button*>> mdButtonsContainer;
 
 #ifdef _DEBUG_
-		GLuint mdDebugTex;
 		b8 renderDebug = false;
-		glm::vec3 buttonColor(0.f, 1.f, 0.f);
+		glm::vec3 borderColor(0.f, 1.f, 0.f);
 #endif
 		
 		b8 music_repeat = false;
 		b8 music_shuffle = false;
 		s32 music_position = 0;
+		Time::Timer clickDelayTimer;
 		
 		s32 volume_scroll_step = 2;
 		s32 volume_fade_time = 500;
@@ -233,6 +234,21 @@ namespace MP
 		mTextColor = { u8(color.x * 255.f), u8(color.y * 255.f), u8(color.z * 255.f) };
 	}
 
+	void UI::PlaylistItem::DrawDottedBorder(s16 playPos)
+	{
+		glm::mat4 model;
+		Shader::shaderBorder->use();
+		Shader::shaderBorder->setVec3("color", Color::Grey);
+		f32 dotXOffset = 0.01;
+		f32 dotYOffset = 0.1;
+		Shader::shaderBorder->setFloat("xOffset", dotXOffset);
+		Shader::shaderBorder->setFloat("yOffset", dotYOffset);
+		model = glm::translate(model, glm::vec3(this->mPos.x, this->mPos.y - playPos * this->mSize.y, 0.9));
+		model = glm::scale(model, glm::vec3(this->mSize.x, this->mSize.y, 1.f));
+		Shader::shaderBorder->setMat4("model", model);
+		Shader::DrawDot();
+	}
+	
 	std::wstring UI::PlaylistItem::GetTitle()
 	{
 		std::wstring title = Playlist::GetTitle(mID);
@@ -266,7 +282,9 @@ namespace MP
 	}
 
 	s32 UI::PlaylistItem::mOffsetY = 0;
+
 	s32 UI::PlaylistItem::mCount = 0;
+
 	s32 UI::PlaylistItem::mOffsetIndex = 0;
 
 	namespace UI
@@ -274,7 +292,7 @@ namespace MP
 		void DebugStart()
 		{
 #ifdef _DEBUG_
-			mdDebugTex = mdLoadTexture("assets/debug.png");
+			
 #endif
 		}
 
@@ -386,13 +404,17 @@ namespace MP
 				// TODO: shits broken
 				//glViewport(0, mdCurrentHeight, mdCurrentWidth, mdCurrentHeight);
 				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, mdDebugTex);
-				Shader::shaderDefault->setVec3("color", buttonColor);
+				glBindTexture(GL_TEXTURE_2D, 0);
+				Shader::shaderDefault->setVec3("color", borderColor);
+				Shader::shaderDefault->setBool("border", true);
+				Shader::shaderDefault->setFloat("border_width", 0.08);
+
 				for (u16 i = 0; i < mdButtonsContainer.size(); i++)
 				{
 					model = glm::mat4();
 					model = glm::translate(model, glm::vec3(mdButtonsContainer[i].second->mPos, 1.f));
 					model = glm::scale(model, glm::vec3(mdButtonsContainer[i].second->mSize, 1.f));;
+					Shader::shaderDefault->setFloat("aspect", mdButtonsContainer[i].second->mSize.x / mdButtonsContainer[i].second->mSize.y	);
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::Draw();
 				}
@@ -401,6 +423,7 @@ namespace MP
 					model = glm::mat4();
 					model = glm::translate(model, glm::vec3(mdMovableContainer[i]->mPos, 1.f));
 					model = glm::scale(model, glm::vec3(mdMovableContainer[i]->mSize, 1.f));;
+					Shader::shaderDefault->setFloat("aspect", mdMovableContainer[i]->mSize.x / mdMovableContainer[i]->mSize.y);
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::Draw();
 				}
@@ -410,11 +433,13 @@ namespace MP
 					model = glm::mat4();
 					model = glm::translate(model, glm::vec3(mdResizableContainer[i]->pos, 1.f));
 					model = glm::scale(model, glm::vec3(mdResizableContainer[i]->size, 1.f));;
+					Shader::shaderDefault->setFloat("aspect", mdResizableContainer[i]->size.x / mdResizableContainer[i]->size.y);
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::Draw();
 				}
 				glm::vec3 white(1.f);
 				Shader::shaderDefault->setVec3("color", white);
+				Shader::shaderDefault->setBool("border", false);
 			}
 
 
@@ -522,7 +547,7 @@ namespace MP
 
 		void Start()
 		{
-			std::string locale = setlocale(LC_ALL, "");//this function sets applications locale to current system locale
+			//std::string locale = setlocale(LC_ALL, "");
 			//std::cout << "default locale:" << locale;
 
 			mdCurrentWidth = mdEngine::Window::windowProperties.mWindowWidth;
@@ -568,15 +593,7 @@ namespace MP
 
 			new Button(Input::ButtonType::Playlist, Data::_PLAYLIST_BUTTON_SIZE, Data::_PLAYLIST_BUTTON_POS);
 
-
-			/*PlaylistItem * item = NULL;
-			for (int i = 0; i < 100; i++)
-			{
-				item = new PlaylistItem();
-				item->InitFont();
-				item->InitItem();
-			}*/
-
+			clickDelayTimer = Time::Timer(500);
 
 
 			DebugStart();
@@ -605,12 +622,12 @@ namespace MP
 
 			DebugRender();
 
-
 		}
 
 		/* Find Exit button and check if is pressed */
 		void HandleInput()
 		{
+			
 			if (Input::isButtonPressed(Input::ButtonType::Exit))
 			{
 				mdEngine::AppExit();
@@ -630,7 +647,7 @@ namespace MP
 			{
 				Playlist::PlayMusic();
 			}
-			else if(Input::isButtonPressed(Input::ButtonType::Play))
+			else if (Input::isButtonPressed(Input::ButtonType::Play))
 			{
 				Playlist::PauseMusic();
 			}
@@ -645,18 +662,26 @@ namespace MP
 				Playlist::RepeatMusic();
 			}
 
-
-
 			for (s32 i = 0; i < mdItemContainer.size(); i++)
 			{
-				if (mdItemContainer[i]->hasFocus == true)
+				if (mdItemContainer[i]->isPressed == true)
 				{
-					//std::wcout << mdItemContainer[i + PlaylistItem::mOffsetIndex]->GetTitle() << std::endl;
+					std::wcout << mdItemContainer[i]->GetTitle() << std::endl;
+					clickDelayTimer.start();
+					mdItemContainer[i]->clickCount++;
+					if (mdItemContainer[i]->clickCount > 1)
+						Playlist::RamLoadedMusic.load(Playlist::mdPathContainer[mdItemContainer[i]->mID],
+													  mdItemContainer[i]->mID - 1,
+													  Playlist::SongState::mNext);
+
 				}
+
+				if (clickDelayTimer.finished == true)
+					mdItemContainer[i]->clickCount = 0;
 			}
 
-
-
+			clickDelayTimer.update();
+		
 		}
 	}
 
