@@ -65,9 +65,6 @@ namespace Graphics
 		s32 playlistFirst = 0;
 		f32 playlistPos = 0;
 
-		s32 playlistCurrentPos2 = 0;
-		s32 playlistIndex2 = 0;
-
 		s32 playlistCurrentPos = 0;
 		s32 playlistIndex = 0;
 		f32 stretchPlaylistMultplier = 0.f;
@@ -733,109 +730,61 @@ namespace Graphics
 			s32 displayedItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / mdItemContainer[0]->mSize.y;
 			s32 maxItems = mdItemContainer.size();
 
-			/* Check if there is less items in container than current playlist size can display.
-			If yes, make sure that only items in container will be displayed. */
-			if (mdItemContainer.size() < maxItems)
-				maxItems = mdItemContainer.size();
+			if (displayedItems > maxItems)
+				displayedItems = maxItems;
 
 			s32 currentSongID = mdEngine::MP::Playlist::RamLoadedMusic.mID;
 			s32 itemH = mdItemContainer[0]->mSize.y;
-			s32 startPos = Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f;
 
-			playlistPos = currentSongID * itemH + startPos;
-
-			/*if (currentSongID > displayedItems - playlistCurrentPos)
-			{
-				playlistCurrentPos++;
-			}*/
-
-
-			playlistFirst = (s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y * (-1.f);
-
-			//std::cout << playlistFirst << std::endl;
 			
+			f32 top = testOffsetY;
+			f32 low = top - displayedItems * itemH;
+			f32 currentPos = 0;
+
+			currentPos = currentSongID * itemH * -1;
 			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicChanged)
 			{
-				if ((currentSongID > displayedItems + playlistCurrentPos2 - 2) && currentSongID < mdItemContainer.size() - 1)
-				{
-					// Basically If current song id is greater than playlist current pos, jump to penultimate
-					//	pos in playlist. Also had to consider case, when playlist size is small
-					playlistCurrentPos2 = currentSongID - displayedItems + 2;
-				}
-				else if (playlistCurrentPos2 != 0 && playlistCurrentPos2 >= currentSongID)
-				{
-					// If current song ID is less than current playlist pos, jump to second pos in playlist
-					playlistCurrentPos2 = currentSongID - 1;
-				}
-				else if (currentSongID >= mdItemContainer.size() - 1 &&
-					currentSongID - displayedItems >= playlistCurrentPos2)
-				{
-					// When current song position is the last in playlist 
-					playlistCurrentPos2 = mdItemContainer.size() - displayedItems;
-
-				}
-
-				if (playlistCurrentPos2 + displayedItems > mdItemContainer.size())
-				{
-					playlistCurrentPos2 = mdItemContainer.size() - maxItems - 1;
-					texturesLoaded = true;
-				}
-
-				if (playlistCurrentPos2 < 0)
-				{
-					playlistCurrentPos2 = 0;
-					texturesLoaded = true;
-				}
-
 				
-
-				//f32 offset = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - 20.f - ((currentSongID - playlistCurrentPos2) * itemH + Data::_PLAYLIST_ITEMS_SURFACE_POS.y + 20.f);
-				//testOffsetY -= offset;
+				while (currentPos + itemH > top)
+				{
+					top += itemH;
+					testOffsetY += itemH;
+				}
+				
+				while (currentPos - itemH < low)
+				{
+					low -= itemH;
+					testOffsetY -= itemH;
+				}
+				
+				if (currentPos >= 0)
+					testOffsetY -= itemH;
+				/*if(currentPos <= (maxItems - 1) * itemH * -1)
+					testOffsetY += itemH;*/
 			}
-			f32 offset = Window::windowProperties.mApplicationHeight - 20.f - 
-						 Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f - playlistCurrentPos2 * itemH - Data::_PLAYLIST_ITEM_SIZE.y;
 
-			//offset = fmod(offset, Data::_PLAYLIST_ITEM_SIZE.y);
-
+			
 
 			if (testOffsetY > 0)
 				testOffsetY = 0;
 
-			if (testOffsetY < (maxItems - displayedItems) * itemH * -1)
-				testOffsetY = (maxItems - displayedItems) * itemH * -1;
-
-
-			// 680  
-			std::cout << "CurrentSong: " << currentSongID << "  Playlist Pos: " <<playlistCurrentPos2 
-				<< " Playlist Index: "<< playlistIndex2 << " First: " << playlistFirst << 
-				"  Offsety: " << testOffsetY << "  Displayed: " << displayedItems << " offset: "
-				<< fmod(testOffsetY, Data::_PLAYLIST_ITEM_SIZE.y) << std::endl;
-
-
-			/*if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicChanged)
+			/* When playlist pos is different than top and low, resize till reach low then change offset to reach top */
+			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kResized &&
+				Window::windowProperties.mDeltaHeightResize > 0 &&
+				testOffsetY <= (maxItems - displayedItems) * itemH * -1)
 			{
-				if ((currentSongID > maxItems + playlistCurrentPos - 2) && currentSongID < mdItemContainer.size() - 1)
-				{
-					// Basically If current song id is greater than playlist current pos, jump to penultimate
-					//	pos in playlist. Also had to consider case, when playlist size is small
-					playlistCurrentPos = currentSongID - maxItems + 2;
-				}
-				else if (playlistCurrentPos != 0 && playlistCurrentPos >= currentSongID)
-				{
-					// If current song ID is less than current playlist pos, jump to second pos in playlist
-					playlistCurrentPos = currentSongID - 1;
-				}
-				else if (currentSongID >= mdItemContainer.size() - 1 &&
-					currentSongID - maxItems >= playlistCurrentPos)
-				{
-					// When current song position is the last in playlist 
-					playlistCurrentPos = mdItemContainer.size() - maxItems;;
-				}
-			}*/
+				testOffsetY += Window::windowProperties.mDeltaHeightResize;
+			}
+			else if(mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kResized)
+			{
+				if (testOffsetY < (maxItems - displayedItems) * itemH * -1)
+					testOffsetY = (maxItems - displayedItems) * itemH * -1;
+			}
+			
+			
 
-			//std::cout << (s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y << std::endl;
 
-			if (playlistPosPrevious != (s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y)
+			/*if (playlistPosPrevious != (s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y)
 				playlistPosChanged = true;
 
 			if (playlistPosChanged == true)
@@ -846,13 +795,17 @@ namespace Graphics
 					playlistCurrentPos += ((s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y);
 				playlistPosPrevious = (s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y;
 				playlistPosChanged = false;
-			}
+			}*/
+			
+			playlistCurrentPos = (s32)(testOffsetY / Data::_PLAYLIST_ITEM_SIZE.y) * -1;
+
 
 			
-			// Check out of bounds. If first or last texture is on screen, don't reload textures 
-			if (playlistCurrentPos + maxItems > mdItemContainer.size())
+			s32 maxRenderItems = displayedItems;
+
+			if (playlistCurrentPos + displayedItems > maxItems)
 			{
-				playlistCurrentPos = mdItemContainer.size() - maxItems;
+				playlistCurrentPos = maxItems - displayedItems;
 				texturesLoaded = true;
 			}
 
@@ -862,10 +815,11 @@ namespace Graphics
 				texturesLoaded = true;
 			}
 			
-			
 			playlistIndex = playlistCurrentPos;
 
-			
+			//std::cout << playlistCurrentPos << std::endl;
+
+
 			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kIdle)
 			{
 				texturesLoaded = false;
@@ -876,30 +830,32 @@ namespace Graphics
 			}
 			
 
-			//std::cout << playlistCurrentPos2 << std::endl;
-
+			//std::cout << testOffsetY << std::endl;
 
 			if (texturesLoaded == false)
 			{
 				// Load all textures that are in in display range 
 				if (textTexture != NULL)
 				{
-					glDeleteTextures(maxItems, textTexture);
+					glDeleteTextures(maxRenderItems, textTexture);
 					delete[] textTexture;
 				}
 
 				if (predefinedPos != NULL)
 					delete[] predefinedPos;
 
-				textTexture = new GLuint[maxItems];
-				predefinedPos = new glm::vec2[maxItems];
+				textTexture = new GLuint[maxRenderItems];
+				predefinedPos = new glm::vec2[maxRenderItems];
 
 
 				// Predefine positions user can actually see
 				PlaylistItem* item = NULL;
+				s32 itemsOffset = 0;
 				glm::vec2 itemStartPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f);
+
 				predefinedPos[0] = glm::vec2(itemStartPos.x, itemStartPos.y);
-				for (u16 i = playlistIndex, t = 0; i < maxItems + playlistCurrentPos; i++, t++)
+				int x = 0;
+				for (u16 i = playlistIndex, t = 0; i < maxRenderItems + playlistCurrentPos; i++, t++)
 				{
 					item = mdItemContainer[i];
 					textTexture[t] = Text::LoadText(item->mFont,
@@ -908,33 +864,21 @@ namespace Graphics
 
 					if (t != 0)
 					{
+						
 						predefinedPos[t] = glm::vec2(itemStartPos.x, itemStartPos.y + Data::_PLAYLIST_ITEM_SIZE.y - item->mOffsetY);
 						itemStartPos = predefinedPos[t];
+						x++;
 					}
-					//std::cout << "X: " << predefinedPos[t].x << "Y: " << predefinedPos[t].y << std::endl;
 					
 				}
-
-				for (u16 i = 0; i < maxItems; i++)
-				{
-					predefinedPos[i].y += testOffsetY;
-					if ((predefinedPos[i].y + mdItemContainer[0]->mSize.y < Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f)  ||
-						(predefinedPos[i].y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y))
-					{
-						//std::cout << "xd\n";
-						predefinedPos[i] = glm::vec2(INVALID);
-					}
-
-				}
-
 
 
 				// Write predefined positions to playlist items that are currently displayed
 				for (u32 i = 0, t = 0; i < mdItemContainer.size(); i++)
 				{
-					if (i >= playlistIndex && i < maxItems + playlistCurrentPos)
+					if (i >= playlistIndex && i < maxRenderItems + playlistCurrentPos)
 					{
-						mdItemContainer[i]->mPos = predefinedPos[t];
+						mdItemContainer[i]->mPos = glm::vec2(predefinedPos[t].x, predefinedPos[t].y);
 						t++;
 					}
 					else
@@ -947,6 +891,7 @@ namespace Graphics
 			}
 
 
+			// SCROLL BAR
 			if (maxItems < mdItemContainer.size())
 			{
 
@@ -982,7 +927,7 @@ namespace Graphics
 			Shader::shaderDefault->setFloat("playlistMinY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f);
 
 			u16 texIndex = 0;
-			while (playlistIndex < maxItems + playlistCurrentPos)
+			while (playlistIndex < maxRenderItems + playlistCurrentPos)
 			{
 				/* Playlist items are rendered on the same positions as positions of the first(0 - maxItems), 
 				   they are only transformed by matrix, so when you want to check if specific item has focus, 

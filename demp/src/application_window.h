@@ -33,6 +33,7 @@ namespace App
 		s32 mApplicationHeight;
 		s32 mWindowPositionX;
 		s32 mWindowPositionY;
+		s32 mDeltaHeightResize;
 		WindowMode mWindowMode;
 		WindowEvent mActualWindowEvent;
 		WindowEvent mPlayerWindowEvent;

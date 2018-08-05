@@ -16,6 +16,8 @@ namespace mdEngine
 		s32 prevWinSize = 0;
 		s32 currWinSize = 0;
 
+		s32 deltaResize = 0;
+
 		b8 wasInsideMovable(false);
 		b8 wasInsideResizable(false);
 		b8 firstMove(false);
@@ -175,6 +177,7 @@ namespace mdEngine
 				{
 					Window::windowProperties.mActualWindowEvent = WindowEvent::kResize;
 					MP::musicPlayerState = MP::MusicPlayerState::kResized;
+					Window::windowProperties.mDeltaHeightResize = deltaY;
 
 					Window::windowProperties.mApplicationHeight = winSizeBeforeResize + deltaY;
 					winSizeBeforeResize += deltaY;
@@ -185,7 +188,7 @@ namespace mdEngine
 			}
 		}
 		else
-		{
+		{	
 			Window::windowProperties.mActualWindowEvent = WindowEvent::kNone;
 			winSizeBeforeResize = Window::windowProperties.mApplicationHeight;
 			//std::cout << winSizeBeforeResize << std::endl;
