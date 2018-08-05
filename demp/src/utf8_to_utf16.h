@@ -6,6 +6,6 @@
 #include <vector>
 #include <fstream>
 
-std::wstring utf8_to_utf16(const std::string& utf8);
+std::wstring* utf8_to_utf16(const std::string& utf8);
 
 #endif // !UTF8_TO_UTF16_H

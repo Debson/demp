@@ -1,6 +1,6 @@
 #include "utf8_to_utf16.h"
 
-std::wstring utf8_to_utf16(const std::string& utf8)
+std::wstring* utf8_to_utf16(const std::string& utf8)
 {
 	std::vector<unsigned long> unicode;
 	size_t i = 0;
@@ -54,19 +54,19 @@ std::wstring utf8_to_utf16(const std::string& utf8)
 			throw std::logic_error("not a UTF-8 string");
 		unicode.push_back(uni);
 	}
-	std::wstring utf16;
+	std::wstring* utf16 = new std::wstring();
 	for (size_t i = 0; i < unicode.size(); ++i)
 	{
 		unsigned long uni = unicode[i];
 		if (uni <= 0xFFFF)
 		{
-			utf16 += (wchar_t)uni;
+			*utf16 += (wchar_t)uni;
 		}
 		else
 		{
 			uni -= 0x10000;
-			utf16 += (wchar_t)((uni >> 10) + 0xD800);
-			utf16 += (wchar_t)((uni & 0x3FF) + 0xDC00);
+			*utf16 += (wchar_t)((uni >> 10) + 0xD800);
+			*utf16 += (wchar_t)((uni & 0x3FF) + 0xDC00);
 		}
 	}
 	return utf16;

@@ -214,7 +214,7 @@ namespace App
 		MouseRight,
 		MouseMiddle,
 
-		/*MouseWheelUp,
+		MouseWheelUp,
 		MouseWheelDown,
 
 		LCtrl = SDL_SCANCODE_LCTRL,
@@ -225,9 +225,9 @@ namespace App
 		RShift = SDL_SCANCODE_RSHIFT,
 		RAlt = SDL_SCANCODE_RALT,
 		RGui = SDL_SCANCODE_RGUI,
-
-		Mode = SDL_SCANCODE_MODE,
-
+	
+		/*Mode = SDL_SCANCODE_MODE,
+		
 		AudioNext = SDL_SCANCODE_AUDIONEXT,
 		AudioPrev = SDL_SCANCODE_AUDIOPREV,
 		AudioStop = SDL_SCANCODE_AUDIOSTOP,

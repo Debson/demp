@@ -37,8 +37,9 @@ namespace Graphics
 		GLuint music_progress_bar;
 
 		b8 texturesLoaded = false;
-		GLuint* textTexture;
-		glm::vec2* predefinedPos;
+		GLuint* textTexture = NULL;
+		glm::vec2* predefinedPos = NULL;
+		b8 predefinedPosLoaded(false);
 
 		b8 shuffleActive(false);
 		b8 repeatActive(false);
@@ -50,6 +51,17 @@ namespace Graphics
 
 		b8 playlistToggled(false);
 
+		b8 playlistPosChanged(true);
+		s32 playlistPosPrevious = 0;
+
+		PlaylistMovement playlistMovement;
+
+
+
+		b8 updatePlaylistPos(false);
+
+		s32 playlistLast = 0;
+		s32 playlistFirst = 0;
 
 		s32 playlistCurrentPos = 0;
 		s32 playlistIndex = 0;
@@ -62,6 +74,9 @@ namespace Graphics
 		s32 deltaVolumePos = 0;
 		s32 deltaMusicPos = 0;
 		/* TEST */
+
+		f32 testOffsetY = 0;
+		f32 testScrollStep = 1.f;
 			
 		void RenderPlaylistWindow();
 
@@ -72,6 +87,8 @@ namespace Graphics
 		void RenderMusicUI();
 
 		void RenderPlaylistItems();
+
+		void RenderPlaylistScrollBar();
 
 		void RenderWindowControlButtons();
 
@@ -86,6 +103,8 @@ namespace Graphics
 		enabled = false;
 		toggled = false;
 		unwindTime = 0;
+		selectedID = -1;
+		playingID = -1;
 	}
 
 	void MP::PlaylistObject::Enable()
@@ -135,6 +154,26 @@ namespace Graphics
 		return prevTime != currTime;
 	}
 
+	void MP::PlaylistObject::SetSelectedID(s32 id)
+	{
+		selectedID = id;
+	}
+
+	void MP::PlaylistObject::SetPlayingID(s32 id)
+	{
+		playingID = id;
+	}
+
+	s32 MP::PlaylistObject::GetSelectedID()
+	{
+		return selectedID;
+	}
+
+	s32 MP::PlaylistObject::GetPlayingID()
+	{
+		return playingID;
+	}
+
 	void MP::PlaylistObject::SetRollTime(s16 time)
 	{
 		timer.targetTime = time;
@@ -167,6 +206,7 @@ namespace Graphics
 			stretchMultiplier = 2.f * scaleY;
 			stretchPlaylistMultplier = 2.f * scaleY - 1.f;;
 		}
+
 
 
 		/* Main background*/
@@ -660,7 +700,7 @@ namespace Graphics
 		if (playlist.IsToggled() && mdItemContainer.size() > 0)
 		{
 
-
+			//std::cout << mdItemContainer.size() << std::endl;
 			if (mdEngine::App::Input::IsScrollForwardActive())
 			{
 				playlistCurrentPos--;
@@ -672,82 +712,139 @@ namespace Graphics
 				texturesLoaded = false;
 			}
 
+			if (App::Input::IsKeyDown(App::KeyCode::Keypad8))
+			{
+				playlistMovement = PlaylistMovement::Up;
+				testOffsetY += testScrollStep;
+				texturesLoaded = false;
+			}
+			if (App::Input::IsKeyDown(App::KeyCode::Keypad2))
+			{
+				playlistMovement = PlaylistMovement::Down;
+				testOffsetY -= testScrollStep;
+				texturesLoaded = false;
+			}
 
-			s32 maxItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / mdItemContainer[0]->mSize.y;
+			s32 displayedItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / mdItemContainer[0]->mSize.y;
+			s32 maxItems = mdItemContainer.size();
+
+			/* Check if there is less items in container than current playlist size can display.
+			If yes, make sure that only items in container will be displayed. */
+			if (mdItemContainer.size() < maxItems)
+				maxItems = mdItemContainer.size();
 
 			s32 currentSongID = mdEngine::MP::Playlist::RamLoadedMusic.mID;
 
+			if (currentSongID > displayedItems + playlistLast)
+			{
+				playlistLast = currentSongID - displayedItems;
+				updatePlaylistPos = true;
+			}
 
-			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kStatic)
+			if ((currentSongID < displayedItems - playlistLast) && (displayedItems - playlistLast >= 0))
+			{
+				playlistLast = displayedItems - playlistLast;
+				updatePlaylistPos = true;
+			}
+
+
+			if (updatePlaylistPos == true)
+			{
+				testOffsetY -= mdItemContainer[0]->mSize.y;
+				updatePlaylistPos = false;
+			}
+			
+
+
+			/*if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicChanged)
 			{
 				if ((currentSongID > maxItems + playlistCurrentPos - 2) && currentSongID < mdItemContainer.size() - 1)
 				{
-					/* Basically If current song id is greater than playlist current pos, jump to penultimate
-						pos in playlist. Also had to consider case, when playlist size is small */
+					// Basically If current song id is greater than playlist current pos, jump to penultimate
+					//	pos in playlist. Also had to consider case, when playlist size is small
 					playlistCurrentPos = currentSongID - maxItems + 2;
 				}
 				else if (playlistCurrentPos != 0 && playlistCurrentPos >= currentSongID)
 				{
-					/* If current song ID is less than current playlist pos, jump to second pos in playlist */
+					// If current song ID is less than current playlist pos, jump to second pos in playlist
 					playlistCurrentPos = currentSongID - 1;
 				}
 				else if (currentSongID >= mdItemContainer.size() - 1 &&
 					currentSongID - maxItems >= playlistCurrentPos)
 				{
-					/* When current song position is the last in playlist */
+					// When current song position is the last in playlist 
 					playlistCurrentPos = mdItemContainer.size() - maxItems;;
 				}
+			}*/
+
+
+			//std::cout << (s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y << std::endl;
+
+			if (playlistPosPrevious != (s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y)
+				playlistPosChanged = true;
+
+			if (playlistPosChanged == true)
+			{
+				if(playlistMovement == PlaylistMovement::Down)
+					playlistCurrentPos -= ((s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y);
+				else
+					playlistCurrentPos += ((s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y);
+				playlistPosPrevious = (s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y;
+				playlistPosChanged = false;
 			}
 
+
 			/* Check out of bounds. If first or last texture is on screen, don't reload textures */
+			if (playlistCurrentPos + maxItems > mdItemContainer.size())
+			{
+				playlistCurrentPos = mdItemContainer.size() - maxItems;
+				texturesLoaded = true;
+			}
+
 			if (playlistCurrentPos < 0)
 			{
 				playlistCurrentPos = 0;
 				texturesLoaded = true;
 			}
 
-			if (playlistCurrentPos + maxItems > mdItemContainer.size())
-			{
-				playlistCurrentPos = 0;
-				texturesLoaded = true;
-			}
-
-
 			
 			playlistIndex = playlistCurrentPos;
 
-			/* Check if there is less items in container than current playlist size can display.
-			   If yes, make sure that only items in container will be displayed. */
-			if (mdItemContainer.size() < maxItems)
-				maxItems = mdItemContainer.size();
 
-			/* Don't go over mdItemContainer size*/
-			if (maxItems + playlistCurrentPos > mdItemContainer.size())
-			{
-				playlistCurrentPos--;
-			}
-
-			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kStatic)
+			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kIdle)
 			{
 				texturesLoaded = false;
-				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kStatic;
+				
+				if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kMusicDeleted)
+					mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kIdle;
+						
 			}
 
+
+
+			//std::cout << testOffsetY << std::endl;
 
 
 			if (texturesLoaded == false)
 			{
-				/* Load all textures that are in in display range */
-				if(textTexture != NULL)
+				// Load all textures that are in in display range 
+				if (textTexture != NULL)
+				{
 					glDeleteTextures(maxItems, textTexture);
+					delete[] textTexture;
+				}
 
-				/*if (predefinedPos != NULL)
-					delete[] predefinedPos;*/
+				if (predefinedPos != NULL)
+					delete[] predefinedPos;
 
 				textTexture = new GLuint[maxItems];
 				predefinedPos = new glm::vec2[maxItems];
 
-				PlaylistItem* item;
+
+				// Predefine positions user can actually see
+				PlaylistItem* item = NULL;
+				glm::vec2 itemStartPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f);
+				predefinedPos[0] = glm::vec2(itemStartPos.x, itemStartPos.y);
 				for (u16 i = playlistIndex, t = 0; i < maxItems + playlistCurrentPos; i++, t++)
 				{
 					item = mdItemContainer[i];
@@ -755,11 +852,30 @@ namespace Graphics
 													item->GetTitle(),
 													item->mTextColor);
 
-					predefinedPos[t] = glm::vec2(item->mPos.x, item->mPos.y - playlistCurrentPos * (item->mSize.y + item->mOffsetY));
-					std::cout << "X: " << predefinedPos[t].x << "Y: " << predefinedPos[t].y << std::endl;
+					if (t != 0)
+					{
+						predefinedPos[t] = glm::vec2(itemStartPos.x, itemStartPos.y + Data::_PLAYLIST_ITEM_SIZE.y - item->mOffsetY);
+						itemStartPos = predefinedPos[t];
+					}
+					//std::cout << "X: " << predefinedPos[t].x << "Y: " << predefinedPos[t].y << std::endl;
+					
 				}
 
-				
+				for (u16 i = 0; i < maxItems; i++)
+				{
+					predefinedPos[i].y += testOffsetY;
+					if ((predefinedPos[i].y + mdItemContainer[0]->mSize.y < Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f)  ||
+						(predefinedPos[i].y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y))
+					{
+						//std::cout << "xd\n";
+						predefinedPos[i] = glm::vec2(INVALID);
+					}
+
+				}
+
+
+
+				// Write predefined positions to playlist items that are currently displayed
 				for (u32 i = 0, t = 0; i < mdItemContainer.size(); i++)
 				{
 					if (i >= playlistIndex && i < maxItems + playlistCurrentPos)
@@ -769,7 +885,7 @@ namespace Graphics
 					}
 					else
 					{
-						mdItemContainer[i]->mPos = glm::vec2(NULL_POSITION);
+						mdItemContainer[i]->mPos = glm::vec2(INVALID);
 					}
 				}
 
@@ -778,6 +894,38 @@ namespace Graphics
 
 
 
+			if (maxItems < mdItemContainer.size())
+			{
+
+				s32 newPosY = Data::_PLAYLIST_SCROLL_BAR_POS.y - testOffsetY;
+				s32 scaleY = Data::_PLAYLIST_SCROLL_BAR_SIZE.y * stretchPlaylistMultplier / mdItemContainer.size() * maxItems;
+
+				if (newPosY + scaleY > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+				{
+					testOffsetY += testScrollStep;
+					newPosY = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - scaleY;
+				}
+
+				if (newPosY < Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
+				{
+					testOffsetY -= testScrollStep;
+					newPosY = Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
+				}
+
+				model = glm::mat4();
+				model = glm::translate(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_POS.x, newPosY, 0.9f));
+				model = glm::scale(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_SIZE.x, scaleY, 1.f));
+				Shader::shaderDefault->setVec3("color", Color::Black);
+				Shader::shaderDefault->setMat4("model", model);
+				glBindTexture(GL_TEXTURE_2D, 0);
+				Shader::Draw();
+			}
+
+
+
+			Shader::shaderDefault->setBool("playlistCut", true);
+			Shader::shaderDefault->setFloat("playlistMaxY", Window::windowProperties.mApplicationHeight - 20.f);
+			Shader::shaderDefault->setFloat("playlistMinY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f);
 
 			u16 texIndex = 0;
 			while (playlistIndex < maxItems + playlistCurrentPos)
@@ -787,11 +935,26 @@ namespace Graphics
 				   it will check the focus on the wrong item(0 - maxItems). To prevent that, always add mOffsetIndex,
 				   do checked positions, so you will get index of actuall rendered item. */
 				PlaylistItem::mOffsetIndex = playlistCurrentPos;
-				PlaylistItem * item = mdItemContainer[playlistIndex];
+				PlaylistItem* item = mdItemContainer[playlistIndex];
 				glm::vec3 itemColor;
-				if (item->IsPlaying() == true)
+
+				// Fint in vector with selected positions if current's id is inside
+				auto it = std::find(playlist.multipleSelect.begin(),
+									playlist.multipleSelect.end(),
+									&item->mID);
+
+				if (item->mID == playlist.GetPlayingID() && it != playlist.multipleSelect.end())
 				{
-					itemColor = Color::Red;
+					itemColor *= Color::Red * Color::Grey;
+					item->DrawDottedBorder(playlistCurrentPos);
+				}
+				else if (item->mID == playlist.GetPlayingID())
+				{
+					itemColor = Color::Red * Color::Grey;
+				}
+				else if (it != playlist.multipleSelect.end())
+				{
+					itemColor = Color::Grey;
 					item->DrawDottedBorder(playlistCurrentPos);
 				}
 				else
@@ -799,9 +962,24 @@ namespace Graphics
 					itemColor = item->mColor;
 				}
 
+				// Draw border for every selected item
+				if (it != playlist.multipleSelect.end())
+				{
+					if (item->mID == playlist.GetPlayingID())
+					{
+						itemColor = Color::Red * Color::Grey;
+						item->DrawDottedBorder(playlistCurrentPos);
+					}
+					else
+					{
+						itemColor = Color::Grey;
+						item->DrawDottedBorder(playlistCurrentPos);
+					}
+				}
+			
 				Shader::shaderDefault->use();
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(item->mPos.x, item->mPos.y - playlistCurrentPos * (item->mSize.y + item->mOffsetY), 0.5f));
+				model = glm::translate(model, glm::vec3(item->mPos.x, item->mPos.y, 0.5f));
 				model = glm::scale(model, glm::vec3(item->mSize, 1.0f));
 				Shader::shaderDefault->setMat4("model", model);
 				Shader::shaderDefault->setVec3("color", itemColor);
@@ -810,7 +988,7 @@ namespace Graphics
 
 				glm::vec3 color(1.f);
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(item->mPos.x + 5.f, item->mPos.y - playlistCurrentPos * (item->mSize.y + item->mOffsetY) + item->mSize.y / 4.f, 0.8f));
+				model = glm::translate(model, glm::vec3(item->mPos.x + 5.f, item->mPos.y + item->mSize.y / 4.f, 0.8f));
 				model = glm::scale(model, glm::vec3((float)item->mTextSize.x * item->mTextScale,
 													(float)item->mTextSize.y * item->mTextScale, 1.0f));
 				Shader::shaderDefault->setMat4("model", model);
@@ -823,8 +1001,32 @@ namespace Graphics
 				playlistIndex++;
 			}
 
+			Shader::shaderDefault->setBool("playlistCut", false);
+
 			Shader::shaderDefault->setVec3("color", Color::White);
 		}
+	}
+
+	void MP::RenderPlaylistScrollBar()
+	{
+		if (playlist.IsToggled() && mdItemContainer.size() > 0)
+		{
+			s32 maxItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / mdItemContainer[0]->mSize.y;
+
+			if (maxItems > mdItemContainer.size())
+				return;
+
+			glm::mat4 model;
+			model = glm::translate(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_POS, 0.9f));
+			model = glm::scale(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_SIZE.x,
+												Data::_PLAYLIST_SCROLL_BAR_SIZE.y * stretchPlaylistMultplier / mdItemContainer.size() * maxItems, 
+												1.f));
+			Shader::shaderDefault->setVec3("color", Color::Black);
+			Shader::shaderDefault->setMat4("model", model);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			Shader::Draw();
+		}
+		Shader::shaderDefault->setVec3("color", Color::White);
 	}
 
 	void MP::RenderWindowControlButtons()
@@ -896,7 +1098,8 @@ namespace Graphics
 		glm::mat4 dotModel;
 		f32 dotOffsetXShuffle = 0.4f;
 		f32 dotOffsetXRepeat = -0.2f;
-
+		
+		Shader::shaderDefault->use();
 		Shader::shaderDefault->setVec3("color", Color::White);
 		glActiveTexture(GL_TEXTURE0);
 
@@ -909,6 +1112,8 @@ namespace Graphics
 		RenderMusicUI();
 
 		RenderPlaylistItems();
+
+		//RenderPlaylistScrollBar();
 
 		RenderWindowControlButtons();
 

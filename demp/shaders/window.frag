@@ -1,7 +1,7 @@
 #version 330 core
 
 in vec2 TexCoords;
-
+in vec4 pos;
 
 vec4 FragColor;
 
@@ -9,10 +9,14 @@ uniform sampler2D image;
 uniform vec3 color;
 uniform bool cut;
 uniform bool border;
+uniform bool playlistCut;
+uniform mat4 projection;
+uniform mat4 model;
 
 uniform float aspect;
 uniform float border_width;
-uniform float time;
+uniform float playlistMinY;
+uniform float playlistMaxY;
 
 float maxX = 1.0 - border_width / aspect;;
 float minX = border_width / aspect;;
@@ -53,6 +57,24 @@ void main()
 	{
 		FragColor = texColor * vec4(color, 1.0);
 	}
+
+
+	vec2 texCords = TexCoords;
+	
+	if(playlistCut)
+	{
+		if(pos.y > playlistMaxY || pos.y < playlistMinY)
+		{
+			FragColor = vec4(1.0, 1.0, 1.0, 0.0); 
+		}
+		else
+		{
+			FragColor = texColor * vec4(color, 1.0);
+		}
+	}
+
+
+
 
 	gl_FragColor = FragColor;
 }

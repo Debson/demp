@@ -14,8 +14,12 @@ namespace mdEngine
 	{
 		enum MusicPlayerState
 		{
-			kStatic,
-			kChanged
+			kIdle,
+			kMusicChanged,
+			kResized,
+			kMusicChosen,
+			kMusicDeleted,
+			kMusicAdded
 		};
 
 		extern MusicPlayerState musicPlayerState;

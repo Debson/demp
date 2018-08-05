@@ -82,7 +82,8 @@ namespace mdEngine
 
 	void App::ProcessButton(MP::UI::Button* button)
 	{
-		if (button->mPos == glm::vec2(NULL_POSITION))
+		// Check if button positions is valid
+		if (button->mPos == glm::vec2(INVALID))
 		{
 			return;
 		}
@@ -173,7 +174,7 @@ namespace mdEngine
 					MP::UI::Data::_MIN_PLAYER_SIZE.y < mouseY)
 				{
 					Window::windowProperties.mActualWindowEvent = WindowEvent::kResize;
-					MP::musicPlayerState = MP::MusicPlayerState::kChanged;
+					MP::musicPlayerState = MP::MusicPlayerState::kResized;
 
 					Window::windowProperties.mApplicationHeight = winSizeBeforeResize + deltaY;
 					winSizeBeforeResize += deltaY;

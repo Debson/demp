@@ -12,6 +12,12 @@ namespace Graphics
 {
 	namespace MP
 	{
+		enum class PlaylistMovement
+		{
+			Up,
+			Down
+		};
+
 		class PlaylistObject
 		{
 		public:
@@ -26,9 +32,16 @@ namespace Graphics
 			b8 IsToggled();
 			b8 IsRolling();
 			void SetRollTime(s16 time);
+			void SetSelectedID(s32 id);
+			void SetPlayingID(s32 id);
+			s32 GetSelectedID();
+			s32 GetPlayingID();
 			// Returns float value from 0 to 1 signifying current roll state
 			f32 GetRollProgress();
+			std::vector<s32*> multipleSelect;
 		private:
+			s32 selectedID;
+			s32 playingID;
 			Time::Timer timer;
 			f32 currTime;
 			f32 prevTime;
@@ -45,8 +58,6 @@ namespace Graphics
 		void UpdateMainWindow();
 
 		void RenderMainWindow();
-
-		void RenderTest();
 
 		void CloseMainWindow();
 

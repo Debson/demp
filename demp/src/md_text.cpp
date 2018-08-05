@@ -47,7 +47,7 @@ namespace mdEngine
 
 		GLuint colors;
 		GLuint textTexture;
-		SDL_Surface* textSurface = new SDL_Surface();
+		SDL_Surface* textSurface;
 		GLenum format;
 
 		textSurface = TTF_RenderUNICODE_Blended(font, text, color);

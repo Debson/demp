@@ -4,11 +4,13 @@
 
 #include <fstream>
 #include <Windows.h>
+#include <algorithm>
 #include <filesystem>
 
 #include "md_time.h"
 #include "music_player_ui.h"
 #include "music_player.h"
+#include "music_player_graphics.h"
 
 #ifdef _WIN32_
 #define OUTPUT std::wcout
@@ -106,7 +108,7 @@ namespace MP
 			mMusic = NULL;
 			mData = NULL;
 #ifdef _WIN32_
-			mPath = std::wstring();
+			mPath = NULL;
 #else
 			mPath = NULL;
 #endif
@@ -114,21 +116,22 @@ namespace MP
 
 		SongObject::~SongObject()
 		{
+			BASS_StreamFree(mMusic);
 			mMusic = NULL;
 			mData = NULL;
 #ifdef _WIN32_
-			mPath = std::wstring();
+			mPath = NULL;
 #else
 			mPath = NULL;
 #endif
 		}
 
 #ifdef _WIN32_
-		b8 SongObject::init(std::wstring songPath)
+		b8 SongObject::init(std::wstring* songPath)
 		{
 			//std::wifstream file(songPath, std::ios::binary | std::ios::ate);
 			FILE* file = NULL;
-			if (_wfopen_s(&file, songPath.c_str(), L"rb+") != 0)
+			if (_wfopen_s(&file, songPath->c_str(), L"rb+") != 0)
 			{
 				OUTPUT << "ERROR: could not open file at path \"" << songPath << "\"\n";
 				std::cout << stderr << std::endl;;
@@ -174,7 +177,7 @@ namespace MP
 						UI::PlaylistItem * item = new UI::PlaylistItem();
 						item->InitFont();
 						item->InitItem();
-
+						Graphics::MP::playlist.SetSelectedID(mID);
 
 						mMusic = BASS_StreamCreateFile(TRUE, mData, 0, size, BASS_STREAM_AUTOFREE);
 						if (check_file() == false)
@@ -195,7 +198,7 @@ namespace MP
 					delete[] mData;
 					mData = NULL;
 #ifdef _WIN32_
-					mMusic = BASS_StreamCreateFile(FALSE, mPath.c_str(), 0, 0, 0);
+					mMusic = BASS_StreamCreateFile(FALSE, mPath->c_str(), 0, 0, 0);
 #else
 					mMusic = BASS_StreamCreateFile(FALSE, mPath, 0, 0, 0);
 #endif
@@ -213,10 +216,10 @@ namespace MP
 #ifdef _WIN32_
 
 
-		b8 SongObject::load(std::wstring songPath, u32 id, MP::Playlist::SongState state)
+		b8 SongObject::load(std::wstring* songPath, u32 id)
 		{
 			FILE* file = NULL;
-			if (_wfopen_s(&file, songPath.c_str(), L"rb+") != 0)
+			if (_wfopen_s(&file, songPath->c_str(), L"rb+") != 0)
 			{
 				OUTPUT << "ERROR: could not open file at path \"" << songPath << "\"\n";
 				std::cout << stderr;
@@ -264,10 +267,7 @@ namespace MP
 							//delete mdPathContainer[mID];
 							mdPathContainer.erase(mdPathContainer.begin() + mID);
 
-							if (state == MP::Playlist::SongState::mNext)
-								return load(mdPathContainer[mID - 1], mID - 1, MP::Playlist::SongState::mNext);
-
-							return load(mdPathContainer[mID + 1], mID + 1, MP::Playlist::SongState::mPrevious);
+							return load(mdPathContainer[mID + 1], mID + 1);
 						}
 					}
 					else
@@ -283,7 +283,7 @@ namespace MP
 					delete[] mData;
 					mData = NULL;
 #ifdef _WIN32_
-					mMusic = BASS_StreamCreateFile(FALSE, mPath.c_str(), 0, 0, 0);
+					mMusic = BASS_StreamCreateFile(FALSE, mPath->c_str(), 0, 0, 0);
 #else
 					mMusic = BASS_StreamCreateFile(FALSE, mPath, 0, 0, 0);
 #endif
@@ -293,10 +293,7 @@ namespace MP
 						//delete mdPathContainer[mID];
 						mdPathContainer.erase(mdPathContainer.begin() + mID);
 
-						if (state == MP::Playlist::SongState::mNext)
-							return load(mdPathContainer[mID - 1], mID - 1, MP::Playlist::SongState::mNext);
-
-						return load(mdPathContainer[mID + 1], mID + 1, MP::Playlist::SongState::mPrevious);;
+						return load(mdPathContainer[mID + 1], mID + 1);;
 					}
 				}
 			}
@@ -334,6 +331,12 @@ namespace MP
 				PlayMusic();
 
 				mdPreviousRequest = false;
+			}
+
+			if (MP::musicPlayerState == MP::MusicPlayerState::kMusicDeleted)
+			{
+				ShuffleMusic();
+				MP::musicPlayerState = MP::MusicPlayerState::kIdle;
 			}
 		}
 
@@ -376,13 +379,17 @@ namespace MP
 			mdVolumeFadeIn = false;
 			mdVolumeFadeOut = false;
 			mdMusicPaused = false;
+			if (mdPathContainer.size() < 1)
+				return;
 
 			if (RamLoadedMusic.get() != NULL)
 			{
 				if(IsPlaying() == false)
-					RamLoadedMusic.load(mdPathContainer[RamLoadedMusic.mID], RamLoadedMusic.mID, SongState::mCurrent);
+					RamLoadedMusic.load(mdPathContainer[RamLoadedMusic.mID], RamLoadedMusic.mID);
 				mdMPStarted = true;
 			}
+			Graphics::MP::playlist.SetPlayingID(RamLoadedMusic.mID);
+			Graphics::MP::playlist.SetSelectedID(RamLoadedMusic.mID);
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
 		}
 
@@ -421,11 +428,12 @@ namespace MP
 
 		void NextMusic()
 		{
-			if ((RamLoadedMusic.get() != NULL) || (BASS_ErrorGetCode() == BASS_ERROR_FILEFORM))
+			if ((RamLoadedMusic.get() != NULL || BASS_ErrorGetCode() == BASS_ERROR_FILEFORM) &&
+				mdPathContainer.size() > 0)
 			{
 				BASS_ChannelStop(RamLoadedMusic.get());
 
-				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kChanged;
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicChanged;
 
 				/* If shuffle is enabled, try to load next song basing on shuffled positions container.
 
@@ -442,7 +450,7 @@ namespace MP
 					if ((RamLoadedMusic.mID + 1) < mdPathContainer.size())
 					{
 						s32 index = 1;
-						while ((RamLoadedMusic.load(mdPathContainer[RamLoadedMusic.mID + index], RamLoadedMusic.mID + index, SongState::mNext) == false)
+						while ((RamLoadedMusic.load(mdPathContainer[RamLoadedMusic.mID + index], RamLoadedMusic.mID + index) == false)
 							&& (RamLoadedMusic.mID + 1 < mdPathContainer.size()))
 						{
 							index++;
@@ -453,7 +461,7 @@ namespace MP
 					}
 					else
 					{
-						RamLoadedMusic.load(mdPathContainer[0], 0, SongState::mCurrent);
+						RamLoadedMusic.load(mdPathContainer[0], 0);
 						mdNextRequest = true;
 					}
 				}
@@ -463,7 +471,7 @@ namespace MP
 					if (mdCurrentShuffleMusicPos > mdShuffleMusicPosContainer.size() - 1)
 						mdCurrentShuffleMusicPos = 0;
 					while (RamLoadedMusic.load(mdPathContainer[mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos]], 
-											   mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos], SongState::mNext) == false)
+											   mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos]) == false)
 					{
 						mdCurrentShuffleMusicPos++;
 						if (mdCurrentShuffleMusicPos > mdShuffleMusicPosContainer.size() - 1)
@@ -478,11 +486,12 @@ namespace MP
 
 		void PreviousMusic()
 		{
-			if (RamLoadedMusic.get() != NULL)
+			if ((RamLoadedMusic.get() != NULL || BASS_ErrorGetCode() == BASS_ERROR_FILEFORM) &&
+				mdPathContainer.size() > 0)
 			{
 				BASS_ChannelStop(RamLoadedMusic.get());
 
-				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kChanged;
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicChanged;
 
 				/*	If shuffle is enabled, try to load next song basing on shuffled positions container.
 				
@@ -499,7 +508,7 @@ namespace MP
 					if ((RamLoadedMusic.mID - 1) >= 0)
 					{
 						int index = 1;
-						while ((RamLoadedMusic.load(mdPathContainer[RamLoadedMusic.mID - index], RamLoadedMusic.mID - index, SongState::mPrevious) == false)
+						while ((RamLoadedMusic.load(mdPathContainer[RamLoadedMusic.mID - index], RamLoadedMusic.mID - index) == false)
 							&& (RamLoadedMusic.mID - index >= 0))
 						{
 							index++;
@@ -510,7 +519,7 @@ namespace MP
 					}
 					else
 					{
-						RamLoadedMusic.load(mdPathContainer[mdPathContainer.size() - 1], mdPathContainer.size() - 1, SongState::mCurrent);
+						RamLoadedMusic.load(mdPathContainer[mdPathContainer.size() - 1], mdPathContainer.size() - 1);
 						mdPreviousRequest = true;
 					}
 				}
@@ -520,7 +529,7 @@ namespace MP
 					if (mdCurrentShuffleMusicPos < 0)
 						mdCurrentShuffleMusicPos = mdPathContainer.size() - 1;
 					while (RamLoadedMusic.load(mdPathContainer[mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos]], 
-											   mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos], SongState::mPrevious) == false)
+											   mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos]) == false)
 					{
 						mdCurrentShuffleMusicPos--;
 						if (mdCurrentShuffleMusicPos < 0)
@@ -633,9 +642,10 @@ namespace MP
 		void CheckMPState()
 		{
 			/* If Music Player has started his first song, next song(next on playlist) will be 
-			   played automatically. 
+			   played automatically. Check if next music was selected by user 
 			*/
-			if (mdMPStarted == true && IsPlaying() == false && mdRepeatMusic == false)
+			if (mdMPStarted == true && IsPlaying() == false && mdRepeatMusic == false && 
+				MP::musicPlayerState != MP::MusicPlayerState::kMusicChosen)
 			{
 				NextMusic();
 			}
@@ -648,6 +658,36 @@ namespace MP
 
 			if (mdVolume < 0.0)
 				mdVolume = 0.0;
+		}
+
+		void DeleteMusic(s32 pos)
+		{
+			//std::wcout << UI::mdItemContainer[pos]->GetTitle() << std::endl;
+
+			if (pos < 0)
+				return;
+		
+			delete mdPathContainer[pos];
+			delete UI::mdItemContainer[pos];
+
+			mdPathContainer.erase(mdPathContainer.begin() + pos);
+			UI::mdItemContainer.erase(UI::mdItemContainer.begin() + pos);
+			UI::mdPlaylistButtonsContainer.erase(UI::mdPlaylistButtonsContainer.begin() + pos);
+			UI::PlaylistItem::mCount--;
+
+			if (Graphics::MP::playlist.GetPlayingID() == pos)
+				Graphics::MP::playlist.SetPlayingID(-1);
+
+			if (Graphics::MP::playlist.GetSelectedID() > UI::mdItemContainer.size() - 1)
+				Graphics::MP::playlist.SetSelectedID(UI::mdItemContainer.size() - 1);
+
+
+			for (s32 i = pos; i < UI::mdItemContainer.size(); i++)
+			{
+				UI::mdItemContainer[i]->mID--;
+			}
+
+			MP::musicPlayerState = MP::MusicPlayerState::kMusicDeleted;
 		}
 
 		b8 IsLoaded()
@@ -673,7 +713,7 @@ namespace MP
 			if (mdPathContainer.size() > 0 && id >= 0)
 			{
 #ifdef _WIN32_
-				path = std::wstring(mdPathContainer[id].begin(), mdPathContainer[id].end());
+				path = std::wstring(mdPathContainer[id]->begin(), mdPathContainer[id]->end());
 #else
 				path = mdPathContainer[id];
 #endif

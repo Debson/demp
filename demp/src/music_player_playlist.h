@@ -36,9 +36,9 @@ namespace MP
 			~SongObject();
 
 #ifdef _WIN32_
-			b8 init(std::wstring songPath);
-			b8 load(std::wstring songPath, u32 id, SongState state);
-			std::wstring mPath;
+			b8 init(std::wstring* songPath);
+			b8 load(std::wstring* songPath, u32 id);
+			std::wstring* mPath;
 #else
 			b8 init(const char* songPath);
 			b8 load(const char* songPath, u32 id, SongState state);
@@ -75,6 +75,8 @@ namespace MP
 		void UpdateMusic();
 
 		void ReloadMusic(std::wstring path);
+
+		void DeleteMusic(s32 pos);
 
 		b8 IsLoaded();
 

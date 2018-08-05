@@ -8,7 +8,7 @@
 
 #include "configuration.h"
 
-#define NULL_POSITION (-1)
+#define INVALID (-1)
 
 namespace mdEngine
 {
@@ -37,7 +37,7 @@ namespace mdEngine
 
 
 #ifdef _WIN32_
-	typedef std::vector<std::wstring> PathContainer;
+	typedef std::vector<std::wstring*> PathContainer;
 #else
 	typedef std::vector<const char*> PathContainer;
 #endif
@@ -45,6 +45,7 @@ namespace mdEngine
 	namespace Color
 	{
 		extern glm::vec3 White;
+		extern glm::vec3 Black;
 		extern glm::vec3 Grey;
 		extern glm::vec3 DarkGrey;
 		extern glm::vec3 Red;

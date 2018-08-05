@@ -30,6 +30,8 @@ namespace UI
 			Playlist,
 			SliderVolume,
 			SliderMusic,
+			SliderPlaylist,
+			PlaylistItem,
 
 			count
 		};

@@ -16,7 +16,7 @@ namespace mdEngine
 
 	MP::MusicPlayer::~MusicPlayer() 
 	{ 
-		musicPlayerState = MusicPlayerState::kStatic; 
+		musicPlayerState = MusicPlayerState::kIdle; 
 	}
 
 	void MP::MusicPlayer::Start()

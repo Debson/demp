@@ -24,6 +24,8 @@
 #include "md_text.h"
 #include "music_player_string.h"
 #include "md_time.h"
+#include "music_player.h"
+#include "music_player_graphics.h"
 
 
 using namespace mdEngine::Graphics;
@@ -38,6 +40,7 @@ namespace MP
 		std::vector<PlaylistItem*> mdItemContainer;
 		std::vector<Resizable*> mdResizableContainer;
 		std::vector<std::pair<Input::ButtonType, Button*>> mdButtonsContainer;
+		std::vector<std::pair<Input::ButtonType, Button*>> mdPlaylistButtonsContainer;
 
 #ifdef _DEBUG_
 		b8 renderDebug = false;
@@ -71,6 +74,8 @@ namespace MP
 
 		namespace Data
 		{
+			u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
+
 			TTF_Font* _MUSIC_PLAYER_FONT;
 
 			glm::vec2 _MIN_PLAYER_SIZE;
@@ -140,6 +145,9 @@ namespace MP
 
 			glm::vec2 _PLAYLIST_ITEM_SIZE;
 
+			glm::vec2 _PLAYLIST_SCROLL_BAR_POS;
+			glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE;
+
 			void InitializeData();
 
 			void UpdateData();
@@ -152,31 +160,23 @@ namespace MP
 		mdMovableContainer.push_back(this);
 	}
 
-	UI::Movable::Movable() { }
-
-	UI::Movable::~Movable() { delete this; }
-
 	UI::Resizable::Resizable(glm::vec2 size, glm::vec2 pos) : size(size), pos(pos) 
 	{ 
 		mdResizableContainer.push_back(this);
 	}
 
-	UI::Resizable::Resizable () { }
-
-	UI::Resizable::~Resizable() { }
+	UI::Button::Button() { }
 
 	UI::Button::Button(Input::ButtonType type, glm::vec2 size, glm::vec2 pos) : mSize(size), mPos(pos)
 	{
 		mdButtonsContainer.push_back(std::make_pair(type, this));
 	}
 
-	UI::Button::Button() { }
-
-	UI::Button::~Button() { delete this; }
-
-	UI::PlaylistItem::PlaylistItem() { }
-
-	UI::PlaylistItem::~PlaylistItem() { delete this; }
+	UI::PlaylistItem::~PlaylistItem()
+	{
+		delete mTitleC;
+		mTitleC = NULL;
+	}
 
 	void UI::PlaylistItem::InitFont()
 	{
@@ -212,7 +212,7 @@ namespace MP
 		TTF_SizeText(mFont, mTitleC, &mTextSize.x, &mTextSize.y);
 
 		mdItemContainer.push_back(this);
-		mdButtonsContainer.push_back(std::make_pair(Input::ButtonType::None, this));
+		mdPlaylistButtonsContainer.push_back(std::make_pair(Input::ButtonType::None, this));
 
 		mCount++;
 	}
@@ -236,6 +236,9 @@ namespace MP
 
 	void UI::PlaylistItem::DrawDottedBorder(s16 playPos)
 	{
+		if (this->mPos == glm::vec2(INVALID))
+			return;
+
 		glm::mat4 model;
 		Shader::shaderBorder->use();
 		Shader::shaderBorder->setVec3("color", Color::Grey);
@@ -243,8 +246,8 @@ namespace MP
 		f32 dotYOffset = 0.1;
 		Shader::shaderBorder->setFloat("xOffset", dotXOffset);
 		Shader::shaderBorder->setFloat("yOffset", dotYOffset);
-		model = glm::translate(model, glm::vec3(this->mPos.x, this->mPos.y - playPos * this->mSize.y, 0.9));
-		model = glm::scale(model, glm::vec3(this->mSize.x, this->mSize.y, 1.f));
+		model = glm::translate(model, glm::vec3(this->mPos, 0.9));
+		model = glm::scale(model, glm::vec3(this->mSize, 1.f));
 		Shader::shaderBorder->setMat4("model", model);
 		Shader::DrawDot();
 	}
@@ -385,6 +388,14 @@ namespace MP
 					Playlist::PrintLoadedPaths();
 				}
 
+				if (ImGui::Button("Print selected IDs") == true)
+				{
+					for (u16 i = 0; i < Graphics::MP::playlist.multipleSelect.size(); i++)
+					{
+						std::cout << *Graphics::MP::playlist.multipleSelect[i] << std::endl;
+					}
+				}
+
 				ImGui::TreePop();
 			}
 
@@ -437,6 +448,19 @@ namespace MP
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::Draw();
 				}
+
+				for (u16 i = 0; i < mdPlaylistButtonsContainer.size(); i++)
+				{
+					if (mdPlaylistButtonsContainer[i].second->mPos != glm::vec2(INVALID))
+					{
+						model = glm::mat4();
+						model = glm::translate(model, glm::vec3(mdPlaylistButtonsContainer[i].second->mPos, 1.f));
+						model = glm::scale(model, glm::vec3(mdPlaylistButtonsContainer[i].second->mSize, 1.f));;
+						Shader::shaderDefault->setFloat("aspect", mdPlaylistButtonsContainer[i].second->mSize.x / mdPlaylistButtonsContainer[i].second->mSize.y);
+						Shader::shaderDefault->setMat4("model", model);
+						Shader::Draw();;
+					}
+				}
 				glm::vec3 white(1.f);
 				Shader::shaderDefault->setVec3("color", white);
 				Shader::shaderDefault->setBool("border", false);
@@ -453,8 +477,9 @@ namespace MP
 			s16 musicUIOffsetY = 35;
 			s16 musicProgressBarOffsetY = 10;
 
-			_MUSIC_PLAYER_FONT = TTF_OpenFont("assets/font/Raleway-Regular.ttf", 14);
+			_PLAYLIST_CHOOSE_ITEM_DELAY = 400;
 
+			_MUSIC_PLAYER_FONT = TTF_OpenFont("assets/font/Raleway-Regular.ttf", 14);
 
 			_MIN_PLAYER_SIZE = glm::vec2(500.f, 500.f);
 
@@ -523,9 +548,12 @@ namespace MP
 			_PLAYLIST_BUTTON_SIZE = glm::vec2(15.f, 15.f);
 
 			_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
-			_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 100.f);
+			_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight);
 
 			_PLAYLIST_ITEM_SIZE = glm::vec2(300.f, 30.f);
+
+			_PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdCurrentWidth - 60.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
+			_PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, mdCurrentHeight - 400.f);
 		}
 
 		void Data::UpdateData()
@@ -540,7 +568,7 @@ namespace MP
 
 
 			_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
-			_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 60.f);
+			_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 10.f);
 
 
 		}
@@ -593,7 +621,9 @@ namespace MP
 
 			new Button(Input::ButtonType::Playlist, Data::_PLAYLIST_BUTTON_SIZE, Data::_PLAYLIST_BUTTON_POS);
 
-			clickDelayTimer = Time::Timer(500);
+			new Button(Input::ButtonType::SliderPlaylist, Data::_PLAYLIST_SCROLL_BAR_SIZE, Data::_PLAYLIST_SCROLL_BAR_POS);
+
+			clickDelayTimer = Time::Timer(Data::_PLAYLIST_CHOOSE_ITEM_DELAY);
 
 
 			DebugStart();
@@ -611,6 +641,10 @@ namespace MP
 
 			for (u16 i = 0; i < mdButtonsContainer.size(); i++)
 				App::ProcessButton(mdButtonsContainer[i].second);
+
+			for (u16 i = 0; i < mdPlaylistButtonsContainer.size(); i++)
+				App::ProcessButton(mdPlaylistButtonsContainer[i].second);
+
 
 			HandleInput();
 
@@ -662,26 +696,81 @@ namespace MP
 				Playlist::RepeatMusic();
 			}
 
+
 			for (s32 i = 0; i < mdItemContainer.size(); i++)
 			{
-				if (mdItemContainer[i]->isPressed == true)
+				std::vector<s32*>::iterator it;
+				if (App::Input::IsKeyDown(App::KeyCode::LShift) && App::Input::IsKeyDown(App::KeyCode::A))
 				{
-					std::wcout << mdItemContainer[i]->GetTitle() << std::endl;
+					it = std::find(Graphics::MP::playlist.multipleSelect.begin(),
+								   Graphics::MP::playlist.multipleSelect.end(),
+								   &mdItemContainer[i]->mID);
+
+					if(it == Graphics::MP::playlist.multipleSelect.end())
+						Graphics::MP::playlist.multipleSelect.push_back(&mdItemContainer[i]->mID);
+				}
+				else if (mdItemContainer[i]->isPressed == true)
+				{
+					//std::wcout << mdItemContainer[i]->GetTitle() << std::endl;
 					clickDelayTimer.start();
 					mdItemContainer[i]->clickCount++;
+
+					// Check if current's item position is in vector with selected item's positions
+					it = std::find(Graphics::MP::playlist.multipleSelect.begin(),
+										Graphics::MP::playlist.multipleSelect.end(),
+										&mdItemContainer[i]->mID);
+					// WHY LCTRL IS NOT WORKING??
+					if (App::Input::IsKeyDown(App::KeyCode::LShift))
+					{
+						if(it == Graphics::MP::playlist.multipleSelect.end())
+							Graphics::MP::playlist.multipleSelect.push_back(&mdItemContainer[i]->mID);
+						else
+						{
+							Graphics::MP::playlist.multipleSelect.erase(it);
+						}
+					}
+					else
+					{
+						if (Graphics::MP::playlist.multipleSelect.size() < 1)
+						{
+							Graphics::MP::playlist.multipleSelect.push_back(&mdItemContainer[i]->mID);
+						}
+						else
+						{
+							Graphics::MP::playlist.multipleSelect.clear();
+							Graphics::MP::playlist.multipleSelect.push_back(&mdItemContainer[i]->mID);
+						}
+					}
+
 					if (mdItemContainer[i]->clickCount > 1)
-						Playlist::RamLoadedMusic.load(Playlist::mdPathContainer[mdItemContainer[i]->mID],
-													  mdItemContainer[i]->mID - 1,
-													  Playlist::SongState::mNext);
+					{
+						MP::musicPlayerState = MP::MusicPlayerState::kMusicChosen;
+						Playlist::RamLoadedMusic.load(Playlist::mdPathContainer[mdItemContainer[i]->mID], mdItemContainer[i]->mID);
+						Playlist::PlayMusic();
+					}
 
 				}
 
+				//If time for second click expires, reset click count
 				if (clickDelayTimer.finished == true)
 					mdItemContainer[i]->clickCount = 0;
+
 			}
 
+			// If delete pressed, delete every item on position from selected positions vector
+			if (App::Input::IsKeyPressed(App::KeyCode::Delete))
+			{
+				for (u16 j = 0; j < Graphics::MP::playlist.multipleSelect.size(); j++)
+				{
+					Playlist::DeleteMusic(*Graphics::MP::playlist.multipleSelect[j]);
+
+				}
+				Graphics::MP::playlist.multipleSelect.clear();
+			}
+
+
+			// Update second click timer
 			clickDelayTimer.update();
-		
 		}
 	}
 

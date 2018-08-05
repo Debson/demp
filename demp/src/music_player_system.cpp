@@ -13,6 +13,7 @@
 #include "settings.h"
 #include "music_player_playlist.h"
 #include "music_player_ui.h"
+#include "music_player.h"
 
 #ifdef _WIN32_
 #define OUTPUT std::wcout
@@ -148,7 +149,7 @@ namespace MP
 	}
 
 #ifdef _WIN32_
-	void PushToPlaylist(std::wstring path)
+	void PushToPlaylist(std::wstring* path)
 #else
 	void PushToPlaylist(const char* path)
 #endif
@@ -157,7 +158,7 @@ namespace MP
 		b8 exist = false;
 		b8 valid = false;
 
-		fs::path pathToDisplay(path);
+		fs::path pathToDisplay(*path);
 #ifdef _WIN32_
 		std::wstring ext;
 		/* Extract extension from file. If file doesn't have an extension or
@@ -185,11 +186,12 @@ namespace MP
 #endif
 		else
 		{
-			for (auto & i : fs::directory_iterator(path))
+			for (auto & i : fs::directory_iterator(*path))
 			{
 #ifdef _WIN32_
-				wchar_t * dirPath = new wchar_t[i.path().wstring().length() + 1];
-				wcscpy(dirPath, i.path().wstring().c_str());
+				std::wstring* dirPath = new std::wstring(i.path().wstring());
+				/*wchar_t * dirPath = new wchar_t[i.path().wstring().length() + 1];
+				wcscpy(dirPath, i.path().wstring().c_str());*/
 #else
 				char * dirPath = new char[i.path().string().length() + 1];
 				strcpy(dirPath, i.path().string().c_str());
@@ -203,7 +205,7 @@ namespace MP
 		for (u32 i = 0; i < Playlist::mdPathContainer.size(); i++)
 		{
 #ifdef _WIN32_
-			if (path.compare(Playlist::mdPathContainer[i]) == 0)
+			if (path->compare(*Playlist::mdPathContainer[i]) == 0)
 #else
 			if (strcmp(path, Playlist::mdPathContainer[i]) == 0)
 #endif
@@ -220,28 +222,35 @@ namespace MP
 		/* Proceed the path */
 		if (exist == true)
 		{
-			OUTPUT << "ERROR: \""<<  path << "\" already loaded!\n";
+			OUTPUT << "ERROR: \""<<  *path << "\" already loaded!\n";
+			delete path;
+			path = NULL;
 		}
 		else if(valid == false)
 		{
 			OUTPUT << "ERROR: Invalid extension \"" << ext << "\"!\n";
+			delete path;
+			path = NULL;
 		}
 		else if(Playlist::RamLoadedMusic.mMusic == NULL)
 		{
 			if (Playlist::RamLoadedMusic.init(path))
 			{
-				OUTPUT << "Music at path: \"" << path << "\" loaded successfuly!\n";
+				OUTPUT << "Music at path: \"" << *path << "\" loaded successfuly!\n";
 				std::cout << "Song loaded to the RAM succesfuly\n";
 			}
 			else
 			{
-				OUTPUT << "ERROR: " << path << " cannot be loaded!\n";
+				OUTPUT << "ERROR: " << *path << " cannot be loaded!\n";
+				delete path;
+				path = NULL;
 			}
 		}
 		else
 		{
 			/* If song is already loaded to ram, save others's songs paths in vector */
 			Playlist::mdPathContainer.push_back(path);
+			MP::musicPlayerState = MP::MusicPlayerState::kMusicAdded;
 			std::cout << "Song's path saved succesfuly\n";
 			UI::PlaylistItem * item = new UI::PlaylistItem();
 			item->InitFont();

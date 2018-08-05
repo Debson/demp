@@ -18,6 +18,7 @@ namespace MP
 	{
 		namespace Data
 		{
+			extern u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
 
 			extern glm::vec2 _MIN_PLAYER_SIZE;
 
@@ -85,13 +86,14 @@ namespace MP
 			extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 		
 			extern glm::vec2 _PLAYLIST_ITEM_SIZE;
+
+			extern glm::vec2 _PLAYLIST_SCROLL_BAR_POS;
+			extern glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE;
 		}
 
 		struct Movable
 		{
-			Movable();
-			Movable(glm::vec2 size, glm::vec2 pos);
-			~Movable();
+			Movable(glm::vec2 size, glm::vec2 pos);;
 
 			glm::vec2 mSize;
 			glm::vec2 mPos;
@@ -100,9 +102,7 @@ namespace MP
 
 		struct Resizable
 		{
-			Resizable();
-			Resizable(glm::vec2 size, glm::vec2 pos);
-			~Resizable();
+			Resizable(glm::vec2 size, glm::vec2 pos);;
 
 			glm::vec2 size;
 			glm::vec2 pos;
@@ -112,7 +112,6 @@ namespace MP
 		{
 			Button();
 			Button(Input::ButtonType type, glm::vec2 size, glm::vec2 pos);
-			~Button();
 			
 			glm::vec2 mSize;
 			glm::vec2 mPos;
@@ -130,15 +129,10 @@ namespace MP
 		class PlaylistItem : public Button
 		{
 		public:
-			PlaylistItem();
-			~PlaylistItem();
-
-			
+			virtual ~PlaylistItem();
 			glm::vec3 mColor;
 			glm::vec2 mStartPos;
 			SDL_Color mTextColor;
-
-
 
 			static s32 mOffsetY;
 			static s32 mCount;
@@ -160,7 +154,6 @@ namespace MP
 			f32 mTextScale;
 			u8 clickCount;
 		private:
-
 			char* mTitleC;
 			GLuint mTitleTexture;
 			std::wstring mTitle;
@@ -171,6 +164,7 @@ namespace MP
 
 		};
 
+		extern std::vector<std::pair<Input::ButtonType, Button*>> mdPlaylistButtonsContainer;
 		extern std::vector<std::pair<Input::ButtonType, Button*>> mdButtonsContainer;
 		extern std::vector<PlaylistItem*> mdItemContainer;
 

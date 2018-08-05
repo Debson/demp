@@ -247,7 +247,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			case (SDL_DROPFILE):
 			{
 #ifdef _WIN32_
-				std::wstring path = utf8_to_utf16(event.drop.file);
+				std::wstring* path = new std::wstring();
+				path = utf8_to_utf16(event.drop.file);
 				MP::PushToPlaylist(path);
 #else
 				MP::PushToPlaylist(event.drop.file);
