@@ -71,3 +71,22 @@ std::wstring* utf8_to_utf16(const std::string& utf8)
 	}
 	return utf16;
 }
+
+
+std::string utf16_to_utf8(const wchar_t* buffer, int len)
+{
+	int nChars = WideCharToMultiByte(CP_UTF8, 0, buffer, len, NULL, 0, NULL, NULL);
+	if (nChars == 0)
+		return "";
+
+	std::string newbuffer;
+	newbuffer.resize(nChars);
+	WideCharToMultiByte(CP_UTF8, 0, buffer, len, const_cast<char*>(newbuffer.c_str()), nChars, NULL, NULL);
+
+	return newbuffer;
+}
+
+std::string utf16_to_utf8(const std::wstring& str)
+{
+	return utf16_to_utf8(str.c_str(), (int)str.size());
+}

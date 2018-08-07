@@ -13,13 +13,15 @@ namespace mdEngine
 {
 	namespace MP
 	{
-		void Open(void);
+		void OpenMusicPlayer(void);
 
 		void UpdateInput(void);
 
 		void UpdateLogic(void);
 
 		void RenderMusicPlayer();
+
+		void CloseMusicPlayer();
 
 #ifdef _WIN32_
 		void PushToPlaylist(std::wstring* path);

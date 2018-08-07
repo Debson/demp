@@ -3,6 +3,8 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 
+#include <thread>
+
 #include "realtime_system_application.h"
 #include "music_player_graphics.h"
 #include "md_shape.h"
@@ -20,7 +22,6 @@ namespace mdEngine
 			mdShader* shaderBorder	= NULL;
 			mdShape* quad			= NULL;
 			mdShape* dot			= NULL;
-
 		}
 
 		void Shader::InitShader()
@@ -79,12 +80,11 @@ namespace mdEngine
 		{
 			dot->Draw(*shaderBorder);
 		}
-
 	}
-
 
 	void Graphics::StartGraphics()
 	{
+		
 		Text::InitializeText();
 		Shader::InitShader();
 		MP::StartMainWindow();
@@ -98,7 +98,6 @@ namespace mdEngine
 	void Graphics::RenderGraphics()
 	{
 		MP::RenderMainWindow();
-		//MP::RenderTest();
 	}
 	void Graphics::CloseGraphics()
 	{

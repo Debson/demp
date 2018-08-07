@@ -29,10 +29,14 @@ void Demp::OnRealtimeRender()
 	mMusicPlayer.Render();
 }
 
+void Demp::OnWindowClose()
+{
+	mMusicPlayer.Close();
+}
+
 
 int main(int argc, char** argv)
 {
-	setlocale(LC_ALL, "");
 	Demp demp;
 	mdEngine::App::RealtimeApplication theApp(demp);
 

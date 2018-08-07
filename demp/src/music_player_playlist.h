@@ -78,11 +78,16 @@ namespace MP
 
 		void DeleteMusic(s32 pos);
 
+
 		b8 IsLoaded();
 
-		b8 isPaused();
+		b8 IsPaused();
 
 		b8 IsPlaying();
+
+		b8 IsShuffleEnabled();
+
+		b8 IsRepeatEnabled();
 
 		std::wstring GetTitle(s32 id);
 

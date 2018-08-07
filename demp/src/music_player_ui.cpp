@@ -552,7 +552,7 @@ namespace MP
 
 			_PLAYLIST_ITEM_SIZE = glm::vec2(300.f, 30.f);
 
-			_PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdCurrentWidth - 60.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
+			_PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdCurrentWidth - 60.f, mdCurrentHeight - (mdCurrentHeight - 350.f) - 20.f);
 			_PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, mdCurrentHeight - 400.f);
 		}
 
@@ -567,9 +567,8 @@ namespace MP
 			mdDefaultHeight = Window::windowProperties.mWindowHeight - 350.f;
 
 
-			_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
-			_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 10.f);
-
+			_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f) - 20.f);
+			_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 20.f);
 
 		}
 

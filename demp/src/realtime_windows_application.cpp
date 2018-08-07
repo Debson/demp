@@ -7,6 +7,9 @@
 #include <string>
 #include <Windows.h>
 
+#include <thread>
+#include <chrono>
+
 #include <SDL.h>
 #undef main // SDL_main.h is included automatically from SDL.h, so you always get the nasty #define.
 #include <SDL_ttf.h>
@@ -209,13 +212,15 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 	SDL_Event event;
 
-	Time::deltaTime = Time::time();
+	Time::deltaTime = Time::Time();
 	
 	f64 previousFrame = 0;
 	f64 currentFrame = 0;
+	Time::Timer capTimer;
 
 	while (mdIsRunning == true)
 	{
+		capTimer.start();
 		/* main loop */
 		mdEngine::StartNewFrame();
 #ifdef _DEBUG_
@@ -226,7 +231,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 #endif
 
 		/* Calcualte delta time */
-		currentFrame = Time::time();
+		currentFrame = Time::Time();
 		Time::deltaTime = currentFrame - previousFrame;
 		previousFrame = currentFrame;
 
@@ -265,6 +270,24 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 			}
 
+			if (event.type == SDL_WINDOWEVENT)
+			{
+				switch (event.window.event)
+				{
+				case (SDL_WINDOWEVENT_FOCUS_GAINED):
+					Window::windowProperties.mActualWindowEvent = App::WindowEvent::kFocusGained;
+					break;
+				case (SDL_WINDOWEVENT_FOCUS_LOST):
+					Window::windowProperties.mActualWindowEvent = App::WindowEvent::kFocusLost;
+					break;
+				case (SDL_WINDOWEVENT_ENTER):
+					Window::windowProperties.mActualWindowEvent = App::WindowEvent::kEnter;
+					break;
+				case (SDL_WINDOWEVENT_LEAVE):
+					Window::windowProperties.mActualWindowEvent = App::WindowEvent::kLeave;
+					break;
+				}
+			}
 		}
 
 		//Window::GetWindowSize(&mdCurrentWindowWidth, &mdCurrentWindowHeight);
@@ -280,9 +303,13 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		if (mdIsRunning == true)
 		{
 			/* graphics render */
-			UpdateWindowSize();
-			mdApplicationHandler->OnRealtimeUpdate();
-			Graphics::UpdateGraphics();
+			//if (Window::windowProperties.mActualWindowEvent == App::WindowEvent::kFocusGained)
+			{
+				//std::cout << "focus gained\n";
+				UpdateWindowSize();
+				mdApplicationHandler->OnRealtimeUpdate();
+				Graphics::UpdateGraphics();
+			}
 		}
 
 		SDL_GL_MakeCurrent(mdWindow, gl_context);
@@ -304,6 +331,12 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		Graphics::Render();
 #endif
 		SDL_GL_SwapWindow(mdWindow);
+
+		f32 frameTicks = capTimer.getTicks();
+		if (frameTicks < App::Data::_SCREEN_TICK_PER_FRAME)
+		{
+			SDL_Delay(App::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
+		}
 	}
 
 	CloseRealtimeApplication(*mdApplicationHandler);

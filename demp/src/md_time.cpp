@@ -8,12 +8,17 @@ namespace mdEngine
 		{ 
 			finished = false;
 			started = false;
+			startTime = 0.f;
+			targetTime = 0.f;
+			currentTime = 0.f;
 		}
 
 		Timer::Timer(f32 time) : targetTime(time) 
 		{
 			finished = false;
 			started = false;
+			startTime = 0.f;
+			currentTime = 0.f;
 		}
 
 		Timer::~Timer() { }
@@ -31,7 +36,7 @@ namespace mdEngine
 
 		void Timer::start()
 		{
-			startTime = getTicks();
+			startTime = SDL_GetTicks();
 			started = true;
 			finished = false;
 		}
@@ -40,26 +45,31 @@ namespace mdEngine
 		{
 			if (started == true)
 			{
-				if (getTicks() - startTime > targetTime)
+				if (SDL_GetTicks() - startTime > targetTime)
 				{
 					finished = true;
 					started = false;
 				}
 
-				currentTime = getTicks() - startTime;
+				currentTime = SDL_GetTicks() - startTime;
 			}
+		}
+
+		f32 Timer::getTicks()
+		{
+			return SDL_GetTicks() - startTime;
 		}
 	
 
 		f64 deltaTime = 0;
 
 
-		f64 Time::time()
+		f64 Time::Time()
 		{
 			return (SDL_GetTicks() / 1000.0);
 		}
 
-		u64 Time::getTicks()
+		u64 Time::GetTicks()
 		{
 			return SDL_GetTicks();
 		}

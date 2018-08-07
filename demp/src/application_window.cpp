@@ -31,7 +31,7 @@ namespace mdEngine
 						mWindowPositionX(600),
 						mWindowPositionY(100),
 						mWindowMode(WindowMode::Windowed),
-						mActualWindowEvent(WindowEvent::kFocus),
+						mActualWindowEvent(WindowEvent::kFocusGained),
 						mVerticalSync(true)
 	{ }
 

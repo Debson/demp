@@ -14,6 +14,8 @@
 #include "music_player_playlist.h"
 #include "music_player_ui.h"
 #include "music_player.h"
+#include "md_parser.h"
+#include "music_player_string.h"
 
 #ifdef _WIN32_
 #define OUTPUT std::wcout
@@ -34,11 +36,12 @@ namespace mdEngine
 namespace MP
 {
 
-	void Open(void)
+	void OpenMusicPlayer(void)
 	{
+		UI::Start();
+		Parser::ReadPathsFromFile(Strings::_PATHS_FILE);
 		Playlist::Start();
 
-		UI::Start();
 	}
 
 
@@ -257,6 +260,12 @@ namespace MP
 			item->InitItem();
 
 		}
+	}
+
+	void MP::CloseMusicPlayer()
+	{
+		Parser::SavePathsToFile(Strings::_PATHS_FILE, &Playlist::mdPathContainer);
+		Parser::SaveSettingsToFile(Strings::_SETTINGS_FILE);
 	}
 	/*
 	std::string get_ext(char* path)

@@ -16,6 +16,7 @@ public:
 	virtual void OnWindowOpen();
 	virtual void OnRealtimeUpdate(void);
 	virtual void OnRealtimeRender(void);
+	virtual void OnWindowClose(void);
 
 private:
 	mdEngine::MP::MusicPlayer mMusicPlayer;

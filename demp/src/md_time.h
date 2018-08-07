@@ -24,6 +24,7 @@ namespace Time
 		b8 finished;
 
 		f32 progress();
+		f32 getTicks();
 		void reset();
 		void start();
 		void update();
@@ -31,9 +32,9 @@ namespace Time
 
 	extern f64 deltaTime;
 
-	f64 time();
+	f64 Time();
 
-	u64 getTicks();
+	u64 GetTicks();
 
 	void sleep(f32 time);
 }

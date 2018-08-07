@@ -16,6 +16,8 @@
 #include "graphics.h"
 #include "md_text.h"
 #include "music_player.h"
+#include "music_player_string.h"
+#include "md_parser.h"
 
 using namespace mdEngine::Graphics;
 using namespace mdEngine::MP;
@@ -51,19 +53,8 @@ namespace Graphics
 
 		b8 playlistToggled(false);
 
-		b8 playlistPosChanged(true);
-		s32 playlistPosPrevious = 0;
-
-		PlaylistMovement playlistMovement;
-
-
 
 		b8 updatePlaylistPos(false);
-
-		s32 playlistCurrentLast;
-		s32 playlistLast = 0;
-		s32 playlistFirst = 0;
-		f32 playlistPos = 0;
 
 		s32 playlistCurrentPos = 0;
 		s32 playlistIndex = 0;
@@ -78,8 +69,11 @@ namespace Graphics
 		/* TEST */
 
 		f32 testOffsetY = 0;
-		f32 testScrollStep = 3.f;
+		f32 testScrollStep = 30.f;
 			
+
+		void InitializeConfig();
+
 		void RenderPlaylistWindow();
 
 		void RenderVolume();
@@ -173,7 +167,7 @@ namespace Graphics
 
 	s32 MP::PlaylistObject::GetPlayingID()
 	{
-		return playingID;
+		return Playlist::RamLoadedMusic.get() != NULL ? Playlist::RamLoadedMusic.mID : -1;
 	}
 
 	void MP::PlaylistObject::SetRollTime(s16 time)
@@ -186,6 +180,17 @@ namespace Graphics
 		return timer.progress();
 	}
 
+	void MP::InitializeConfig()
+	{
+		std::string file = Strings::_SETTINGS_FILE;
+		shuffleActive = Parser::GetInt(file, Strings::_SHUFFLE_STATE);
+		repeatActive = Parser::GetInt(file, Strings::_REPEAT_STATE);
+		Parser::GetInt(file, Strings::_PLAYLIST_STATE) == 1 ? playlist.Enable() : (void)0;
+		//Window::windowProperties.mApplicationHeight = Parser::GetInt(file, Strings::_APP_HEIGHT);
+
+		mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicChanged;
+	}
+
 	void MP::RenderPlaylistWindow()
 	{
 		glm::mat4 model;
@@ -194,7 +199,7 @@ namespace Graphics
 
 		if (playlist.IsRolling() && playlist.IsEnabled() == true)
 		{
-			stretchMultiplier = (1.f + playlist.GetRollProgress()) * scaleY;
+			stretchMultiplier = (1.f + playlist.GetRollProgress());
 			stretchPlaylistMultplier = playlist.GetRollProgress();
 			peekStretchMultiplier = stretchMultiplier;
 		}
@@ -206,7 +211,7 @@ namespace Graphics
 		if (playlist.IsToggled() && playlist.IsEnabled())
 		{
 			stretchMultiplier = 2.f * scaleY;
-			stretchPlaylistMultplier = 2.f * scaleY - 1.f;;
+			stretchPlaylistMultplier = (2.f * scaleY) - 1.f;
 		}
 
 
@@ -705,16 +710,16 @@ namespace Graphics
 			//std::cout << mdItemContainer.size() << std::endl;
 			if (mdEngine::App::Input::IsScrollForwardActive())
 			{
-				playlistCurrentPos--;
+				testOffsetY += testScrollStep;
 				texturesLoaded = false;
 			}
 			if (mdEngine::App::Input::IsScrollBackwardActive())
 			{
-				playlistCurrentPos++;
+				testOffsetY -= testScrollStep;
 				texturesLoaded = false;
 			}
 
-			if (App::Input::IsKeyDown(App::KeyCode::Keypad8))
+			/*if (App::Input::IsKeyDown(App::KeyCode::Keypad8))
 			{
 				playlistMovement = PlaylistMovement::Up;
 				testOffsetY += testScrollStep;
@@ -725,7 +730,7 @@ namespace Graphics
 				playlistMovement = PlaylistMovement::Down;
 				testOffsetY -= testScrollStep;
 				texturesLoaded = false;
-			}
+			}*/
 
 			s32 displayedItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / mdItemContainer[0]->mSize.y;
 			s32 maxItems = mdItemContainer.size();
@@ -751,7 +756,7 @@ namespace Graphics
 					testOffsetY += itemH;
 				}
 				
-				while (currentPos - itemH < low)
+				while (currentPos - 2 *itemH < low)
 				{
 					low -= itemH;
 					testOffsetY -= itemH;
@@ -759,14 +764,16 @@ namespace Graphics
 				
 				if (currentPos >= 0)
 					testOffsetY -= itemH;
-				/*if(currentPos <= (maxItems - 1) * itemH * -1)
-					testOffsetY += itemH;*/
+				//if(currentPos <= (maxItems - 1) * itemH * -1)
+					//testOffsetY += itemH;
 			}
 
 			
 
 			if (testOffsetY > 0)
 				testOffsetY = 0;
+
+			
 
 			/* When playlist pos is different than top and low, resize till reach low then change offset to reach top */
 			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kResized &&
@@ -851,7 +858,7 @@ namespace Graphics
 				// Predefine positions user can actually see
 				PlaylistItem* item = NULL;
 				s32 itemsOffset = 0;
-				glm::vec2 itemStartPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f);
+				glm::vec2 itemStartPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, Data::_PLAYLIST_ITEMS_SURFACE_POS.y);
 
 				predefinedPos[0] = glm::vec2(itemStartPos.x, itemStartPos.y);
 				int x = 0;
@@ -892,21 +899,21 @@ namespace Graphics
 
 
 			// SCROLL BAR
-			if (maxItems < mdItemContainer.size())
+			if (displayedItems < mdItemContainer.size())
 			{
-
+				//std::cout << testOffsetY << std::endl;
 				s32 newPosY = Data::_PLAYLIST_SCROLL_BAR_POS.y - testOffsetY;
-				s32 scaleY = Data::_PLAYLIST_SCROLL_BAR_SIZE.y * stretchPlaylistMultplier / mdItemContainer.size() * maxItems;
+				s32 scaleY = Data::_PLAYLIST_SCROLL_BAR_SIZE.y * stretchPlaylistMultplier / mdItemContainer.size() * displayedItems;
 
 				if (newPosY + scaleY > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
 				{
-					testOffsetY += testScrollStep;
+					//testOffsetY += testScrollStep;
 					newPosY = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - scaleY;
 				}
 
 				if (newPosY < Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
 				{
-					testOffsetY -= testScrollStep;
+					//testOffsetY -= testScrollStep;
 					newPosY = Data::_PLAYLIST_ITEMS_SURFACE_POS.y;;
 				}
 
@@ -923,8 +930,8 @@ namespace Graphics
 
 
 			Shader::shaderDefault->setBool("playlistCut", true);
-			Shader::shaderDefault->setFloat("playlistMaxY", Window::windowProperties.mApplicationHeight - 20.f);
-			Shader::shaderDefault->setFloat("playlistMinY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f);
+			Shader::shaderDefault->setFloat("playlistMinY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y);
+			Shader::shaderDefault->setFloat("playlistMaxY", Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
 
 			u16 texIndex = 0;
 			while (playlistIndex < maxRenderItems + playlistCurrentPos)
@@ -942,7 +949,7 @@ namespace Graphics
 									playlist.multipleSelect.end(),
 									&item->mID);
 
-				if (item->mID == playlist.GetPlayingID() && it != playlist.multipleSelect.end())
+				if (playlist.GetPlayingID() && it != playlist.multipleSelect.end())
 				{
 					itemColor *= Color::Red * Color::Grey;
 					item->DrawDottedBorder(playlistCurrentPos);
@@ -1047,13 +1054,9 @@ namespace Graphics
 		Shader::Draw();
 	}
 
-	void MP::StartTest()
-	{
-		
-	}
-
 	void MP::StartMainWindow()
 	{
+		InitializeConfig();
 
 
 		playlist.SetRollTime(200);
@@ -1080,9 +1083,6 @@ namespace Graphics
 		music_progress_bar		= mdLoadTexture("assets/music_progress_bar.png");
 
 		deltaVolumePos = (s32)(mdEngine::MP::Playlist::GetVolume() * 100.f * 0.9f);
-
-		playlistPos = Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 20.f;
-
 
 	}
 

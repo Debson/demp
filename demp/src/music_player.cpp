@@ -4,8 +4,10 @@
 #include <assert.h>
 
 #include "md_util.h"
+#include "music_player_system.h""
+#include "music_player_playlist.h"
+#include "music_player_string.h"
 
-#include "music_player_system.h"
 
 namespace mdEngine
 {
@@ -21,7 +23,7 @@ namespace mdEngine
 
 	void MP::MusicPlayer::Start()
 	{
-		Open();
+		OpenMusicPlayer();
 	}
 
 	void MP::MusicPlayer::Update()
@@ -37,7 +39,7 @@ namespace mdEngine
 
 	void MP::MusicPlayer::Close()
 	{
-
+		MP::CloseMusicPlayer();
 	}
 	
 }

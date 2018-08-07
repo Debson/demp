@@ -2,13 +2,9 @@
 
 namespace mdEngine
 {
-	// TODO
-	std::wstring GetTitle(std::wstring path)
+	namespace Strings
 	{
-		std::wstring str = L"";
+		
 
-
-
-		return str;
 	}
 }

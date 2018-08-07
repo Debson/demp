@@ -1,8 +1,6 @@
 #include "md_text.h"
 
 #include <sstream>
-#include <ft2build.h>
-#include FT_FREETYPE_H
 
 #include "realtime_system_application.h"
 
@@ -25,11 +23,6 @@ namespace mdEngine
 	namespace Text
 	{
 		typedef std::basic_string<Uint16, std::char_traits<Uint16>, std::allocator<Uint16> > u16string;
-
-		GLuint vao, vbo;
-		 
-		FT_Library ft;
-		FT_Face face;
 
 	}
 
