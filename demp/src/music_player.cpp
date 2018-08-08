@@ -1,12 +1,7 @@
 #include "music_player.h"
 
-#include <fstream>
-#include <assert.h>
-
-#include "md_util.h"
-#include "music_player_system.h""
-#include "music_player_playlist.h"
-#include "music_player_string.h"
+#include "music_player_system.h"
+#include "music_player_settings.h"
 
 
 namespace mdEngine
@@ -23,11 +18,13 @@ namespace mdEngine
 
 	void MP::MusicPlayer::Start()
 	{
+		Data::InitializeData();
 		OpenMusicPlayer();
 	}
 
 	void MP::MusicPlayer::Update()
 	{
+		Data::UpdateData();
 		UpdateInput();
 		UpdateLogic();
 	}

@@ -42,6 +42,8 @@ namespace UI
 		b8 hasFocus(ButtonType code);
 		b8 hasFocusTillRelease(ButtonType code);
 		
+		b8 GetButtonExtraState();
+		void SetButtonExtraState(b8 state);
 		glm::vec2 GetButtonMousePos(ButtonType code);
 		
 	}

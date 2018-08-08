@@ -3,23 +3,13 @@
 #include <sstream>
 
 #include "realtime_system_application.h"
-
 #include "md_shader.h"
 #include "md_shape.h"
 #include "graphics.h"
 
+
 namespace mdEngine
 {
-
-	struct Character {
-		GLuint TextureID;   // ID handle of the glyph texture
-		glm::ivec2 Size;    // Size of glyph
-		glm::ivec2 Bearing;  // Offset from baseline to left/top of glyph
-		GLuint Advance;    // Horizontal offset to advance to next glyph
-	};
-
-	std::map<GLchar, Character> Characters;
-
 	namespace Text
 	{
 		typedef std::basic_string<Uint16, std::char_traits<Uint16>, std::allocator<Uint16> > u16string;
@@ -78,20 +68,6 @@ namespace mdEngine
 		return textTexture;
 	}
 
-	void Text::RenderText()
-	{
-		/*Graphics::Shader::shaderDefault->use();
-		glm::mat4 model;
-		model = glm::translate(model, glm::vec3(100.f, 50.f, 1.f));
-		model = glm::scale(model, glm::vec3(100, 20, 1.f));
-		glm::vec3 color(1.f);
-		Graphics::Shader::shaderDefault->setMat4("model", model);
-		Graphics::Shader::shaderDefault->setVec3("color", color);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textTexture);
-		Graphics::Shader::Draw();*/
-
-	}
 
 	void Text::CloseText()
 	{

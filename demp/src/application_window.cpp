@@ -2,7 +2,7 @@
 
 #include "realtime_system_application.h"
 #include "music_player.h"
-
+#include "music_player_settings.h"
 
 namespace mdEngine
 {
@@ -106,10 +106,14 @@ namespace mdEngine
 		bool inside = mouseX > button->mPos.x && mouseX < (button->mPos.x + button->mSize.x) &&
 			mouseY > button->mPos.y && mouseY < (button->mPos.y + button->mSize.y);
 
-		if (inside)
+		
+		if (inside && !button->wasDown)
 			button->hasFocus = true;
 		else
+		{
 			button->hasFocus = false;
+			button->wasDown = App::Input::IsKeyDown(App::KeyCode::MouseLeft);
+		}
 
 		if (inside)
 			button->hasFocusTillRelease = true;
@@ -142,6 +146,7 @@ namespace mdEngine
 	{
 	
 		//std::cout << winSizeBeforeResize << std::endl;
+
 		if (Input::IsKeyDown(KeyCode::MouseLeft))
 		{
 			prevWinSize = currWinSize;
@@ -163,17 +168,14 @@ namespace mdEngine
 			b8 inside = mouseX > bar->pos.x && mouseX < (bar->pos.x + bar->size.x) &&
 				mouseY > bar->pos.y && mouseY < (bar->pos.y + bar->size.y);
 
-			if (inside)
-			{
+			if (inside && !MP::UI::Input::GetButtonExtraState())
 				wasInsideResizable = true;
-
-			}
-			//std::cout << bar->pos.y << std::endl;
+			
 
 			if (wasInsideResizable)
 			{
-				if (MP::UI::Data::_MIN_PLAYER_SIZE.y < winSizeBeforeResize + deltaY &&
-					MP::UI::Data::_MIN_PLAYER_SIZE.y < mouseY)
+				if (MP::Data::_MIN_PLAYER_SIZE.y < winSizeBeforeResize + deltaY &&
+					MP::Data::_MIN_PLAYER_SIZE.y < mouseY)
 				{
 					Window::windowProperties.mActualWindowEvent = WindowEvent::kResize;
 					MP::musicPlayerState = MP::MusicPlayerState::kResized;
@@ -196,7 +198,6 @@ namespace mdEngine
 			firstMove = false;
 			Input::GetGlobalMousePosition(&globalMouseX, &globalMouseY);
 		}
-
 	}
 	
 }

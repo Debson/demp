@@ -1,9 +1,7 @@
 #include "music_player_ui.h"
 
-#include <iostream>
 #include <vector>
 #include <locale.h>
-
 
 #ifdef _DEBUG_
 #include <glm.hpp>
@@ -16,16 +14,11 @@
 #include "../external/imgui/imgui.h"
 #include "music_player_playlist.h"
 #include "realtime_system_application.h"
-#include "application_window.h"
-#include "realtime_application.h"
-#include "md_shader.h"
-#include "input.h"
 #include "graphics.h"
-#include "md_text.h"
 #include "music_player_string.h"
-#include "md_time.h"
 #include "music_player.h"
 #include "music_player_graphics.h"
+#include "music_player_settings.h"
 
 
 using namespace mdEngine::Graphics;
@@ -66,92 +59,12 @@ namespace MP
 		ImVec4 ClearColor = ImVec4(1.f, 254.f/255.f, 1.f, 1.f);
 
 		std::locale l("");
+
 		void HandleInput();
 
 		void DebugStart();
 
 		void DebugRender();
-
-		namespace Data
-		{
-			u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
-
-			TTF_Font* _MUSIC_PLAYER_FONT;
-
-			glm::vec2 _MIN_PLAYER_SIZE;
-
-			glm::vec2 _DEFAULT_PLAYER_POS;
-			glm::vec2 _DEFAULT_PLAYER_SIZE;
-
-			glm::vec2 _DEFAULT_WINDOW_POS;
-			glm::vec2 _DEFAULT_WINDOW_SIZE;
-
-			glm::vec2 _MAIN_BACKGROUND_POS;
-			glm::vec2 _MAIN_BACKGROUND_SIZE;
-
-			glm::vec2 _MAIN_FOREGROUND_POS;
-			glm::vec2 _MAIN_FOREGROUND_SIZE;
-
-			glm::vec2 _PLAYLIST_FOREGROUND_POS;
-			glm::vec2 _PLAYLIST_FOREGROUND_SIZE;
-
-			glm::vec2 _VOLUME_BAR_POS;
-			glm::vec2 _VOLUME_BAR_SIZE;
-
-			glm::vec2 _MUSIC_PROGRESS_BAR_POS;
-			glm::vec2 _MUSIC_PROGRESS_BAR_SIZE;
-
-			glm::vec2 _VOLUME_SPEAKER_POS;
-			glm::vec2 _VOLUME_SPEAKER_SIZE;
-
-			glm::vec2 _MUSIC_PROGRESS_BAR_DOT_POS;
-			glm::vec2 _VOLUME_BAR_DOT_POS;
-			glm::vec2 _SLIDER_DOT_SIZE;
-
-			glm::vec2 _UI_WINDOW_BAR_POS;
-			glm::vec2 _UI_WINDOW_BAR_SIZE;
-
-			glm::vec2 _EXIT_BUTTON_POS;
-			glm::vec2 _EXIT_BUTTON_SIZE;
-
-			glm::vec2 _MINIMIZE_BUTTON_POS;
-			glm::vec2 _MINIMIZE_BUTTON_SIZE;
-
-			glm::vec2 _STAY_ON_TOP_BUTTON_POS;
-			glm::vec2 _STAY_ON_TOP_BUTTON_SIZE;
-
-			glm::vec2 _PLAY_BUTTON_POS;
-			glm::vec2 _PLAY_BUTTON_SIZE;
-
-			glm::vec2 _NEXT_BUTTON_POS;
-			glm::vec2 _NEXT_BUTTON_SIZE;
-
-			glm::vec2 _PREVIOUS_BUTTON_POS;
-			glm::vec2 _PREVIOUS_BUTTON_SIZE;
-
-			glm::vec2 _SHUFFLE_BUTTON_POS;
-			glm::vec2 _SHUFFLE_BUTTON_SIZE;
-
-			glm::vec2 _REPEAT_BUTTON_POS;
-			glm::vec2 _REPEAT_BUTTON_SIZE;
-
-			glm::vec2 _DOT_BUTTON_STATE_SIZE;
-
-			glm::vec2 _PLAYLIST_BUTTON_POS;
-			glm::vec2 _PLAYLIST_BUTTON_SIZE;
-
-			glm::vec2 _PLAYLIST_ITEMS_SURFACE_POS;
-			glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
-
-			glm::vec2 _PLAYLIST_ITEM_SIZE;
-
-			glm::vec2 _PLAYLIST_SCROLL_BAR_POS;
-			glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE;
-
-			void InitializeData();
-
-			void UpdateData();
-		}
 
 	}
 
@@ -174,13 +87,12 @@ namespace MP
 
 	UI::PlaylistItem::~PlaylistItem()
 	{
-		delete mTitleC;
-		mTitleC = NULL;
+		
 	}
 
 	void UI::PlaylistItem::InitFont()
 	{
-		mFont = Data::_MUSIC_PLAYER_FONT;
+		mFont = MP::Data::_MUSIC_PLAYER_FONT;
 		if (mFont == NULL)
 		{
 			std::cout << "ERROR: initfont!\n";
@@ -204,12 +116,11 @@ namespace MP
 		mID = mCount;
 		mTitle = Playlist::GetTitle(mID);
 
-		u16 len = wcslen(mTitle.c_str());
-		mTitleC = new char[len + 1];
-		mTitleC[len] = '\0';
-		wcstombs(mTitleC, mTitle.c_str(), len);
+		u16 len = mTitle.length();
+		mTitleC.resize(len + 1);
+		mTitleC = utf16_to_utf8(mTitle);
 
-		TTF_SizeText(mFont, mTitleC, &mTextSize.x, &mTextSize.y);
+		TTF_SizeText(mFont, mTitleC.c_str(), &mTextSize.x, &mTextSize.y);
 
 		mdItemContainer.push_back(this);
 		mdPlaylistButtonsContainer.push_back(std::make_pair(Input::ButtonType::None, this));
@@ -219,13 +130,13 @@ namespace MP
 
 	void UI::PlaylistItem::UpdateItem()
 	{
-		mTitle = Playlist::GetTitle(mID);
+		/*mTitle = Playlist::GetTitle(mID);
 		u16 len = wcslen(mTitle.c_str());
 		mTitleC = new char[len + 1];
 		mTitleC[len] = '\0';
 		wcstombs(mTitleC, mTitle.c_str(), len);
 
-		TTF_SizeText(mFont, mTitleC, &mTextSize.x, &mTextSize.y);
+		TTF_SizeText(mFont, mTitleC, &mTextSize.x, &mTextSize.y);*/
 
 	}
 
@@ -254,9 +165,9 @@ namespace MP
 	
 	std::wstring UI::PlaylistItem::GetTitle()
 	{
-		std::wstring title = Playlist::GetTitle(mID);
-		s16 len = wcslen(title.c_str());
+		s16 len = wcslen(mTitle.c_str());
 		f32 textSize = mTextSize.x * mTextScale;
+
 		if (textSize > this->mSize.x)
 		{
 			float charSize = textSize / (float)len;
@@ -265,18 +176,17 @@ namespace MP
 			while (i * charSize < this->mSize.x)
 				i++;
 
-			title = title.substr(0, i - 1);
-			title += L"...";
+			mTitle = mTitle.substr(0, i - 4);
+			mTitle += L"...";
 
-			len = wcslen(title.c_str());
-			mTitleC = new char[len + 1];
-			mTitleC[len] = '\0';
-			wcstombs(mTitleC, title.c_str(), len);
-			TTF_SizeText(mFont, mTitleC, &mTextSize.x, &mTextSize.y);
+			len = mTitle.length();
+			mTitleC.resize(len + 1);
+			mTitleC = utf16_to_utf8(mTitle);
+			TTF_SizeText(mFont, mTitleC.c_str(), &mTextSize.x, &mTextSize.y);;
 		}
 		
 
-		return title;
+		return mTitle;
 	}
 
 	b8 UI::PlaylistItem::IsPlaying()
@@ -425,7 +335,7 @@ namespace MP
 					model = glm::mat4();
 					model = glm::translate(model, glm::vec3(mdButtonsContainer[i].second->mPos, 1.f));
 					model = glm::scale(model, glm::vec3(mdButtonsContainer[i].second->mSize, 1.f));;
-					Shader::shaderDefault->setFloat("aspect", mdButtonsContainer[i].second->mSize.x / mdButtonsContainer[i].second->mSize.y	);
+					Shader::shaderDefault->setFloat("aspectXY", mdButtonsContainer[i].second->mSize.x / mdButtonsContainer[i].second->mSize.y	);
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::Draw();
 				}
@@ -434,7 +344,7 @@ namespace MP
 					model = glm::mat4();
 					model = glm::translate(model, glm::vec3(mdMovableContainer[i]->mPos, 1.f));
 					model = glm::scale(model, glm::vec3(mdMovableContainer[i]->mSize, 1.f));;
-					Shader::shaderDefault->setFloat("aspect", mdMovableContainer[i]->mSize.x / mdMovableContainer[i]->mSize.y);
+					Shader::shaderDefault->setFloat("aspectXY", mdMovableContainer[i]->mSize.x / mdMovableContainer[i]->mSize.y);
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::Draw();
 				}
@@ -444,7 +354,7 @@ namespace MP
 					model = glm::mat4();
 					model = glm::translate(model, glm::vec3(mdResizableContainer[i]->pos, 1.f));
 					model = glm::scale(model, glm::vec3(mdResizableContainer[i]->size, 1.f));;
-					Shader::shaderDefault->setFloat("aspect", mdResizableContainer[i]->size.x / mdResizableContainer[i]->size.y);
+					Shader::shaderDefault->setFloat("aspectXY", mdResizableContainer[i]->size.x / mdResizableContainer[i]->size.y);
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::Draw();
 				}
@@ -456,7 +366,7 @@ namespace MP
 						model = glm::mat4();
 						model = glm::translate(model, glm::vec3(mdPlaylistButtonsContainer[i].second->mPos, 1.f));
 						model = glm::scale(model, glm::vec3(mdPlaylistButtonsContainer[i].second->mSize, 1.f));;
-						Shader::shaderDefault->setFloat("aspect", mdPlaylistButtonsContainer[i].second->mSize.x / mdPlaylistButtonsContainer[i].second->mSize.y);
+						Shader::shaderDefault->setFloat("aspectXY", mdPlaylistButtonsContainer[i].second->mSize.x / mdPlaylistButtonsContainer[i].second->mSize.y);
 						Shader::shaderDefault->setMat4("model", model);
 						Shader::Draw();;
 					}
@@ -471,107 +381,6 @@ namespace MP
 #endif
 		}
 
-		void Data::InitializeData()
-		{
-			s16 musicUIOffsetX = -60;
-			s16 musicUIOffsetY = 35;
-			s16 musicProgressBarOffsetY = 10;
-
-			_PLAYLIST_CHOOSE_ITEM_DELAY = 400;
-
-			_MUSIC_PLAYER_FONT = TTF_OpenFont("assets/font/Raleway-Regular.ttf", 14);
-
-			_MIN_PLAYER_SIZE = glm::vec2(500.f, 500.f);
-
-			_DEFAULT_PLAYER_POS = glm::vec2(0.f, 0.f);
-			_DEFAULT_PLAYER_SIZE = glm::vec2(500.f, 350.f);
-
-			_DEFAULT_WINDOW_POS = glm::vec2(0.f, 0.f);
-			_DEFAULT_WINDOW_SIZE = glm::vec2(mdDefaultWidth, 700.f);
-
-			_MAIN_BACKGROUND_POS = glm::vec2(0.f, 0.f);
-			_MAIN_BACKGROUND_SIZE = glm::vec2(mdDefaultWidth, mdDefaultHeight);
-
-			_MAIN_FOREGROUND_POS = glm::vec2(20.0f, 20.0f);
-			_MAIN_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight - 75.f);
-
-			_PLAYLIST_FOREGROUND_POS = glm::vec2(20.f, mdDefaultHeight - 20.f);
-			_PLAYLIST_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight);
-
-			_EXIT_BUTTON_POS = glm::vec2(mdDefaultWidth - 50.f, 5.f);
-			_EXIT_BUTTON_SIZE = glm::vec2(15.f, 15.f);
-
-			
-			/* Initialize later */
-
-			_VOLUME_BAR_POS = glm::vec2(mdDefaultWidth / 2.f - 170.f, mdDefaultHeight - 60.f - musicUIOffsetY);
-			_VOLUME_BAR_SIZE = glm::vec2(90.f, 4.f);
-
-			_VOLUME_SPEAKER_POS = glm::vec2(mdDefaultWidth / 2.f - 200.f, mdDefaultHeight - 66.f - musicUIOffsetY);
-			_VOLUME_SPEAKER_SIZE = glm::vec2(15.f, 15.f);
-
-			_MUSIC_PROGRESS_BAR_POS = glm::vec2(mdDefaultWidth / 2.f - 175.f, mdDefaultHeight - 35.f - musicProgressBarOffsetY);
-			_MUSIC_PROGRESS_BAR_SIZE = glm::vec2(mdDefaultWidth / 2.f + 100.f, 5.f);
-
-
-			_MUSIC_PROGRESS_BAR_DOT_POS = glm::vec2(mdDefaultWidth / 2.f - 175.f, mdDefaultHeight - 37.f - musicProgressBarOffsetY);
-			_VOLUME_BAR_DOT_POS = glm::vec2(mdDefaultWidth / 2.f - 130.f, mdDefaultHeight - 63.f - musicUIOffsetY);
-			_SLIDER_DOT_SIZE = glm::vec2(9.f, 9.f);
-
-			_UI_WINDOW_BAR_POS;
-			_UI_WINDOW_BAR_SIZE;
-
-			_MINIMIZE_BUTTON_POS;
-			_MINIMIZE_BUTTON_SIZE;
-
-			_STAY_ON_TOP_BUTTON_POS;
-			_STAY_ON_TOP_BUTTON_SIZE;	
-
-			_SHUFFLE_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f - 110.f - musicUIOffsetX, mdDefaultHeight - 65.f - musicUIOffsetY);
-			_SHUFFLE_BUTTON_SIZE = glm::vec2(20.f, 12.f);
-
-			_PREVIOUS_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f - 60.f - musicUIOffsetX, mdDefaultHeight - 67.f - musicUIOffsetY);;
-			_PREVIOUS_BUTTON_SIZE = glm::vec2(15.f, 15.f);
-
-			_PLAY_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f - 20.f - musicUIOffsetX, mdDefaultHeight - 80.f - musicUIOffsetY);
-			_PLAY_BUTTON_SIZE = glm::vec2(40.f, 40.f);
-
-			_NEXT_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f + 40.f - musicUIOffsetX, mdDefaultHeight - 67.f - musicUIOffsetY);
-			_NEXT_BUTTON_SIZE = glm::vec2(15.f, 15.f);
-
-			_REPEAT_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f + 90.f - musicUIOffsetX, mdDefaultHeight - 65.f - musicUIOffsetY);;
-			_REPEAT_BUTTON_SIZE = glm::vec2(20.f, 12.f);
-
-			_DOT_BUTTON_STATE_SIZE = glm::vec2(5.f);
-
-			_PLAYLIST_BUTTON_POS = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight - 40.f - musicUIOffsetY);
-			_PLAYLIST_BUTTON_SIZE = glm::vec2(15.f, 15.f);
-
-			_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
-			_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight);
-
-			_PLAYLIST_ITEM_SIZE = glm::vec2(300.f, 30.f);
-
-			_PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdCurrentWidth - 60.f, mdCurrentHeight - (mdCurrentHeight - 350.f) - 20.f);
-			_PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, mdCurrentHeight - 400.f);
-		}
-
-		void Data::UpdateData()
-		{
-			// keep width as default for now
-			mdCurrentWidth = mdEngine::Window::windowProperties.mWindowWidth;
-			mdCurrentHeight = mdEngine::Window::windowProperties.mApplicationHeight;
-			
-			//std::cout << mdCurrentHeight << std::endl;
-			mdDefaultWidth = 500.f;
-			mdDefaultHeight = Window::windowProperties.mWindowHeight - 350.f;
-
-
-			_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f) - 20.f);
-			_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 20.f);
-
-		}
-
 		void Start()
 		{
 			//std::string locale = setlocale(LC_ALL, "");
@@ -581,10 +390,7 @@ namespace MP
 			mdCurrentHeight = mdEngine::Window::windowProperties.mApplicationHeight;
 
 			mdDefaultWidth = 500.f;
-			mdDefaultHeight = 350.f;;
-
-			Data::InitializeData();
-
+			mdDefaultHeight = 350.f;
 
 			new Movable(glm::vec2(mdDefaultWidth, 20), glm::vec2(0.f, 0.f));
 
@@ -646,8 +452,6 @@ namespace MP
 
 
 			HandleInput();
-
-			Data::UpdateData();
 		}
 
 		void Render()
@@ -710,7 +514,8 @@ namespace MP
 				}
 				else if (mdItemContainer[i]->isPressed == true)
 				{
-					//std::wcout << mdItemContainer[i]->GetTitle() << std::endl;
+					std::wstring x = mdItemContainer[i]->GetTitle();
+
 					clickDelayTimer.start();
 					mdItemContainer[i]->clickCount++;
 

@@ -1,21 +1,13 @@
 ﻿#include "music_player_system.h"
 
-#include <vector>
-#include <string>
-#include <assert.h>
-#include <cstring>
-#include <sstream>
 #include <algorithm>
-#include <iostream>
 #include <filesystem>
 
-#include "md_time.h"
-#include "settings.h"
-#include "music_player_playlist.h"
 #include "music_player_ui.h"
 #include "music_player.h"
 #include "md_parser.h"
 #include "music_player_string.h"
+#include "music_player_settings.h"
 
 #ifdef _WIN32_
 #define OUTPUT std::wcout
@@ -216,9 +208,9 @@ namespace MP
 		
 		}
 		/* Check if current's file extension is a valid music format */
-		for (u8 i = 0; i < Data::SupportedFormats.size(); i++)
+		for (u8 i = 0; i < MP::Data::SupportedFormats.size(); i++)
 		{
-			if (ext.compare(Data::SupportedFormats[i]) == 0)
+			if (ext.compare(MP::Data::SupportedFormats[i]) == 0)
 				valid = true;
 		}
 

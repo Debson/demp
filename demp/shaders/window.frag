@@ -13,14 +13,15 @@ uniform bool playlistCut;
 uniform mat4 projection;
 uniform mat4 model;
 
-uniform float aspect;
+uniform float aspectXY;
 uniform float border_width;
 uniform float playlistMinY;
 uniform float playlistMaxY;
 
-float maxX = 1.0 - border_width / aspect;;
-float minX = border_width / aspect;;
-float maxY = 1.0 - border_width;
+float aspectYX = 1.0 / aspectXY;
+float maxX = 1.0 - border_width / aspectXY;
+float minX = border_width / aspectXY;
+float maxY = (1.0 - border_width);
 float minY = border_width;
 
 

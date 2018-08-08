@@ -6,7 +6,6 @@
 #include <SDL_ttf.h>
 #include <GL/gl3w.h>
 #include "../external/imgui/imgui.h"
-#include "md_types.h"
 
 #include "music_player_ui_input.h"
 
@@ -16,81 +15,6 @@ namespace MP
 {
 	namespace UI
 	{
-		namespace Data
-		{
-			extern u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
-
-			extern glm::vec2 _MIN_PLAYER_SIZE;
-
-			extern glm::vec2 _DEFAULT_PLAYER_POS;
-			extern glm::vec2 _DEFAULT_PLAYER_SIZE;
-
-			extern glm::vec2 _DEFAULT_WINDOW_POS;
-			extern glm::vec2 _DEFAULT_WINDOW_SIZE;
-
-			extern glm::vec2 _MAIN_BACKGROUND_POS;
-			extern glm::vec2 _MAIN_BACKGROUND_SIZE;
-
-			extern glm::vec2 _MAIN_FOREGROUND_POS;
-			extern glm::vec2 _MAIN_FOREGROUND_SIZE;
-
-			extern glm::vec2 _PLAYLIST_FOREGROUND_POS;
-			extern glm::vec2 _PLAYLIST_FOREGROUND_SIZE;
-
-			extern glm::vec2 _VOLUME_BAR_POS;
-			extern glm::vec2 _VOLUME_BAR_SIZE;
-
-			extern glm::vec2 _MUSIC_PROGRESS_BAR_POS;
-			extern glm::vec2 _MUSIC_PROGRESS_BAR_SIZE;
-
-			extern glm::vec2 _VOLUME_SPEAKER_POS;
-			extern glm::vec2 _VOLUME_SPEAKER_SIZE;
-
-			extern glm::vec2 _MUSIC_PROGRESS_BAR_DOT_POS;
-			extern glm::vec2 _VOLUME_BAR_DOT_POS;
-			extern glm::vec2 _SLIDER_DOT_SIZE;
-
-			extern glm::vec2 _UI_WINDOW_BAR_POS;
-			extern glm::vec2 _UI_WINDOW_BAR_SIZE;
-
-			extern glm::vec2 _EXIT_BUTTON_POS;
-			extern glm::vec2 _EXIT_BUTTON_SIZE;
-
-			extern glm::vec2 _MINIMIZE_BUTTON_POS;
-			extern glm::vec2 _MINIMIZE_BUTTON_SIZE;
-
-			extern glm::vec2 _STAY_ON_TOP_BUTTON_POS;
-			extern glm::vec2 _STAY_ON_TOP_BUTTON_SIZE;
-
-			extern glm::vec2 _PLAY_BUTTON_POS;
-			extern glm::vec2 _PLAY_BUTTON_SIZE;
-
-			extern glm::vec2 _NEXT_BUTTON_POS;
-			extern glm::vec2 _NEXT_BUTTON_SIZE;
-
-			extern glm::vec2 _PREVIOUS_BUTTON_POS;
-			extern glm::vec2 _PREVIOUS_BUTTON_SIZE;
-
-			extern glm::vec2 _SHUFFLE_BUTTON_POS;
-			extern glm::vec2 _SHUFFLE_BUTTON_SIZE;
-
-			extern glm::vec2 _REPEAT_BUTTON_POS;
-			extern glm::vec2 _REPEAT_BUTTON_SIZE;
-
-			extern glm::vec2 _DOT_BUTTON_STATE_SIZE;
-
-			extern glm::vec2 _PLAYLIST_BUTTON_POS;
-			extern glm::vec2 _PLAYLIST_BUTTON_SIZE;
-
-			extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_POS;
-			extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
-		
-			extern glm::vec2 _PLAYLIST_ITEM_SIZE;
-
-			extern glm::vec2 _PLAYLIST_SCROLL_BAR_POS;
-			extern glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE;
-		}
-
 		struct Movable
 		{
 			Movable(glm::vec2 size, glm::vec2 pos);;
@@ -124,6 +48,7 @@ namespace MP
 			b8 hasFocus;
 			b8 hasFocusTillRelease;
 
+			b8 wasDown;
 		};
 
 		class PlaylistItem : public Button
@@ -154,7 +79,7 @@ namespace MP
 			f32 mTextScale;
 			u8 clickCount;
 		private:
-			char* mTitleC;
+			std::string mTitleC;
 			GLuint mTitleTexture;
 			std::wstring mTitle;
 			std::string mInfo;

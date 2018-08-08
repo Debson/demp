@@ -579,7 +579,7 @@ namespace MP
 			switch (event)
 			{
 			case App::InputEvent::kPressedEvent:
-				mdVolume += (Settings::VolumeKeyMultiplier * Time::deltaTime);
+				mdVolume += (Data::VolumeKeyMultiplier * Time::deltaTime);
 				break;
 			case App::InputEvent::kScrollEvent:
 				mdVolume += (mdVolumeScrollStep / 100.f);
@@ -592,7 +592,7 @@ namespace MP
 			switch (event)
 			{
 			case App::InputEvent::kPressedEvent:
-				mdVolume -= (Settings::VolumeKeyMultiplier * Time::deltaTime);
+				mdVolume -= (Data::VolumeKeyMultiplier * Time::deltaTime);
 				break;
 			case App::InputEvent::kScrollEvent:
 				mdVolume -= (mdVolumeScrollStep / 100.f);
@@ -650,7 +650,10 @@ namespace MP
 			*/
 
 			if (mdShuffleMusicPosContainer.size() > 0)
+			{
 				mdShuffleMusicPosContainer.clear();
+				mdCurrentShuffleMusicPos = 0;
+			}
 			
 			if (RamLoadedMusic.mID < mdPathContainer.size())
 				mdShuffleMusicPosContainer.push_back(RamLoadedMusic.mID);
@@ -709,10 +712,12 @@ namespace MP
 			delete mdPathContainer[pos];
 			delete UI::mdItemContainer[pos];
 
+
 			mdPathContainer.erase(mdPathContainer.begin() + pos);
 			UI::mdItemContainer.erase(UI::mdItemContainer.begin() + pos);
 			UI::mdPlaylistButtonsContainer.erase(UI::mdPlaylistButtonsContainer.begin() + pos);
 			UI::PlaylistItem::mCount--;
+				
 
 			if (Graphics::MP::playlist.GetPlayingID() == pos)
 				Graphics::MP::playlist.SetPlayingID(-1);

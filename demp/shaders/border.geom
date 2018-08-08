@@ -2,13 +2,18 @@
 layout (points) in;
 layout (points, max_vertices = 256) out;
 
-
 uniform mat4 projection;
 uniform mat4 model;
 
 uniform float xOffset = 0.1;
 uniform float yOffset = 0.1;
+uniform float playlistMinY;
+uniform float playlistMaxY;
+
 vec4 pos;
+vec4 FragPos;
+vec4 CurrentPos;
+
 
 void main()
 {
@@ -17,29 +22,44 @@ void main()
 	for(int i = 0; i < 100; i++)
 	{
 		pos = gl_in[0].gl_Position + vec4(xOffset * i, 0.0, 0.0, 0.0);
-		gl_Position = projection * model * pos;
+		FragPos = projection * model * pos;
+		CurrentPos = model * vec4(pos.xy, 0.0, 1.0);
+		if(CurrentPos.y < playlistMinY || CurrentPos.y > playlistMaxY)
+			FragPos = vec4(1.0, 1.0, 1.0, 0.0);
+		gl_Position = FragPos;
+		EmitVertex();
+	}
+
+	for(int i = 0; i < 100; i++)
+	{
+		pos = gl_in[0].gl_Position + vec4(xOffset * i, 1.0, 0.0, 0.0);
+		FragPos = projection * model * pos;
+		CurrentPos = model * vec4(pos.xy, 0.0, 1.0);
+		if(CurrentPos.y < playlistMinY || CurrentPos.y > playlistMaxY)
+			FragPos = vec4(1.0, 1.0, 1.0, 0.0);
+		gl_Position = FragPos;;
 		EmitVertex();
 	}
 
 	for(int i = 0; i < 10; i++)
 	{
 		pos = gl_in[0].gl_Position + vec4(0.0, yOffset * i, 0.0, 0.0);
-		gl_Position = projection * model * pos;
-		EmitVertex();
-	}
-
-
-	for(int i = 0; i < 100; i++)
-	{
-		pos = gl_in[0].gl_Position + vec4(xOffset * i, 1.0, 0.0, 0.0);
-		gl_Position = projection * model * pos;
+		FragPos = projection * model * pos;
+		CurrentPos = model * vec4(pos.xy, 0.0, 1.0);;
+		if(CurrentPos.y < playlistMinY || CurrentPos.y > playlistMaxY)
+			FragPos = vec4(1.0, 1.0, 1.0, 0.0);
+		gl_Position = FragPos;
 		EmitVertex();
 	}
 
 	for(int i = 0; i < 10; i++)
 	{
 		pos = gl_in[0].gl_Position + vec4(1.0, yOffset * i, 0.0, 0.0);
-		gl_Position = projection * model * pos;
+		FragPos = projection * model * pos;
+		CurrentPos = model * vec4(pos.xy, 0.0, 1.0);
+		if(CurrentPos.y < playlistMinY || CurrentPos.y > playlistMaxY)
+			FragPos = vec4(1.0, 1.0, 1.0, 0.0);
+		gl_Position = FragPos;
 		EmitVertex();
 	}
 

@@ -9,20 +9,17 @@
 
 #include "md_load_texture.h"
 #include "realtime_system_application.h"
-#include "md_shader.h"
-#include "md_shape.h"
-#include "music_player_ui_input.h"
 #include "music_player_playlist.h"
 #include "graphics.h"
 #include "md_text.h"
 #include "music_player.h"
 #include "music_player_string.h"
 #include "md_parser.h"
+#include "music_player_settings.h"
 
 using namespace mdEngine::Graphics;
 using namespace mdEngine::MP;
 using namespace mdEngine::MP::UI;
-using namespace mdEngine::MP::UI::Data;
 
 namespace mdEngine
 {
@@ -31,6 +28,7 @@ namespace Graphics
 	namespace MP
 	{
 		PlaylistObject playlist;
+		Button* playlistBarSlider;
 
 		GLuint main_background = 0, main_foreground = 0;
 		GLuint exit_background, exit_icon, minimize_icon, stay_on_top_icon;
@@ -53,23 +51,28 @@ namespace Graphics
 
 		b8 playlistToggled(false);
 
+		b8 playlistFirstEnter(true);
 
-		b8 updatePlaylistPos(false);
-
+		s32 playlistPreviousOffsetY = 0;
+		f32 playlistCurrentOffsetY = 0;
 		s32 playlistCurrentPos = 0;
+		s32 playlistPreviousPos = 0;
 		s32 playlistIndex = 0;
+
 		f32 stretchPlaylistMultplier = 0.f;
 		f32 stretchMultiplier = 1.f;
 		f32 peekStretchMultiplier = 2.f;
 
-		f32 stretchOffsetY = 0.f;
 		s32 lastMousePos = 0;
 		s32 deltaVolumePos = 0;
 		s32 deltaMusicPos = 0;
-		/* TEST */
-
-		f32 testOffsetY = 0;
-		f32 testScrollStep = 30.f;
+		
+		// Scroll bar
+		b8 playlistSliderActive(false);
+		b8 playlistSliderFirstEnter(true);
+		s32 mouseX, mouseY;
+		s32 lastMouseX = 0, lastMouseY = 0;
+		s32 deltaMouseY = 0;
 			
 
 		void InitializeConfig();
@@ -88,7 +91,6 @@ namespace Graphics
 
 		void RenderWindowControlButtons();
 
-		void StartTest();
 	}
 
 
@@ -167,7 +169,7 @@ namespace Graphics
 
 	s32 MP::PlaylistObject::GetPlayingID()
 	{
-		return Playlist::RamLoadedMusic.get() != NULL ? Playlist::RamLoadedMusic.mID : -1;
+		return mdEngine::MP::Playlist::RamLoadedMusic.get() != NULL ? mdEngine::MP::Playlist::RamLoadedMusic.mID : -1;
 	}
 
 	void MP::PlaylistObject::SetRollTime(s16 time)
@@ -195,7 +197,7 @@ namespace Graphics
 	{
 		glm::mat4 model;
 
-		f32 scaleY = (float)Window::windowProperties.mApplicationHeight / _DEFAULT_WINDOW_SIZE.y;
+		f32 scaleY = (float)Window::windowProperties.mApplicationHeight / Data::_DEFAULT_WINDOW_SIZE.y;
 
 		if (playlist.IsRolling() && playlist.IsEnabled() == true)
 		{
@@ -218,8 +220,8 @@ namespace Graphics
 
 		/* Main background*/
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(_MAIN_BACKGROUND_POS.x, _MAIN_BACKGROUND_POS.y, 0.f));
-		model = glm::scale(model, glm::vec3(_MAIN_BACKGROUND_SIZE.x, _MAIN_BACKGROUND_SIZE.y * stretchMultiplier, 1.f));;
+		model = glm::translate(model, glm::vec3(Data::_MAIN_BACKGROUND_POS.x, Data::_MAIN_BACKGROUND_POS.y, 0.f));
+		model = glm::scale(model, glm::vec3(Data::_MAIN_BACKGROUND_SIZE.x, Data::_MAIN_BACKGROUND_SIZE.y * stretchMultiplier, 1.f));;
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setBool("cut", true);
 		glBindTexture(GL_TEXTURE_2D, main_background);
@@ -228,8 +230,8 @@ namespace Graphics
 
 		// Main foreground
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(_MAIN_FOREGROUND_POS, 0.1f));
-		model = glm::scale(model, glm::vec3(_MAIN_FOREGROUND_SIZE, 1.f));
+		model = glm::translate(model, glm::vec3(Data::_MAIN_FOREGROUND_POS, 0.1f));
+		model = glm::scale(model, glm::vec3(Data::_MAIN_FOREGROUND_SIZE, 1.f));
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setBool("cut", true);
 		glBindTexture(GL_TEXTURE_2D, main_foreground);
@@ -241,8 +243,8 @@ namespace Graphics
 		if (stretchPlaylistMultplier > 0.05)
 		{
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(_PLAYLIST_FOREGROUND_POS, 0.4f));
-			model = glm::scale(model, glm::vec3(_PLAYLIST_FOREGROUND_SIZE.x, _PLAYLIST_FOREGROUND_SIZE.y * stretchPlaylistMultplier, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_PLAYLIST_FOREGROUND_POS, 0.4f));
+			model = glm::scale(model, glm::vec3(Data::_PLAYLIST_FOREGROUND_SIZE.x, Data::_PLAYLIST_FOREGROUND_SIZE.y * stretchPlaylistMultplier, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
 			Shader::shaderDefault->setBool("cut", true);
 			glBindTexture(GL_TEXTURE_2D, main_foreground);
@@ -264,9 +266,9 @@ namespace Graphics
 		if (Input::hasFocus(Input::ButtonType::Playlist))
 		{
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(_PLAYLIST_BUTTON_POS, 0.4));
+			model = glm::translate(model, glm::vec3(Data::_PLAYLIST_BUTTON_POS, 0.4));
 			lastMousePos = deltaVolumePos;
-			model = glm::scale(model, glm::vec3(_PLAYLIST_BUTTON_SIZE, 1.f));
+			model = glm::scale(model, glm::vec3(Data::_PLAYLIST_BUTTON_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, playlist_button);
 			Shader::Draw();
@@ -275,9 +277,9 @@ namespace Graphics
 		{
 			Shader::shaderDefault->setVec3("color", Color::Grey);
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(_PLAYLIST_BUTTON_POS, 0.4));
+			model = glm::translate(model, glm::vec3(Data::_PLAYLIST_BUTTON_POS, 0.4));
 			lastMousePos = deltaVolumePos;
-			model = glm::scale(model, glm::vec3(_PLAYLIST_BUTTON_SIZE, 1.f));
+			model = glm::scale(model, glm::vec3(Data::_PLAYLIST_BUTTON_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, playlist_button);
 			Shader::Draw();
@@ -295,7 +297,7 @@ namespace Graphics
 			//		 Add speaker level of volume (1 line, 2 lines etc.)
 
 			// Calculate current slider pos basing on current volume in range (0 - volume_bar_width)
-			deltaVolumePos = (s32)(mdEngine::MP::Playlist::GetVolume() * (float)_VOLUME_BAR_SIZE.x);
+			deltaVolumePos = (s32)(mdEngine::MP::Playlist::GetVolume() * (float)Data::_VOLUME_BAR_SIZE.x);
 
 			if (Input::isButtonPressed(Input::ButtonType::Volume))
 				volumeMuted = !volumeMuted;
@@ -311,13 +313,13 @@ namespace Graphics
 			{
 				s32 mouseX, mouseY;
 				App::Input::GetMousePosition(&mouseX, &mouseY);
-				deltaVolumePos = mouseX - _VOLUME_BAR_POS.x;
-				if (deltaVolumePos > _VOLUME_BAR_SIZE.x)
-					deltaVolumePos = _VOLUME_BAR_SIZE.x;
+				deltaVolumePos = mouseX - Data::_VOLUME_BAR_POS.x;
+				if (deltaVolumePos > Data::_VOLUME_BAR_SIZE.x)
+					deltaVolumePos = Data::_VOLUME_BAR_SIZE.x;
 				if (deltaVolumePos < 0)
 					deltaVolumePos = 0;
 
-				mdEngine::MP::Playlist::SetVolume(deltaVolumePos / (float)_VOLUME_BAR_SIZE.x);
+				mdEngine::MP::Playlist::SetVolume(deltaVolumePos / (float)Data::_VOLUME_BAR_SIZE.x);
 			}
 
 
@@ -326,8 +328,8 @@ namespace Graphics
 			{
 				mdEngine::MP::Playlist::MuteVolume(true);
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(_VOLUME_SPEAKER_POS, 0.3f));
-				model = glm::scale(model, glm::vec3(_VOLUME_SPEAKER_SIZE, 1.f));
+				model = glm::translate(model, glm::vec3(Data::_VOLUME_SPEAKER_POS, 0.3f));
+				model = glm::scale(model, glm::vec3(Data::_VOLUME_SPEAKER_SIZE, 1.f));
 				Shader::shaderDefault->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, volume_speaker_muted);
 				Shader::Draw();
@@ -337,8 +339,8 @@ namespace Graphics
 				Shader::shaderDefault->setVec3("color", Color::Grey);
 				mdEngine::MP::Playlist::MuteVolume(true);
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(_VOLUME_SPEAKER_POS, 0.3f));
-				model = glm::scale(model, glm::vec3(_VOLUME_SPEAKER_SIZE, 1.f));
+				model = glm::translate(model, glm::vec3(Data::_VOLUME_SPEAKER_POS, 0.3f));
+				model = glm::scale(model, glm::vec3(Data::_VOLUME_SPEAKER_SIZE, 1.f));
 				Shader::shaderDefault->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, volume_speaker_muted);
 				Shader::Draw();
@@ -348,8 +350,8 @@ namespace Graphics
 			{
 				mdEngine::MP::Playlist::MuteVolume(false);
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(_VOLUME_SPEAKER_POS, 0.3f));
-				model = glm::scale(model, glm::vec3(_VOLUME_SPEAKER_SIZE, 1.f));
+				model = glm::translate(model, glm::vec3(Data::_VOLUME_SPEAKER_POS, 0.3f));
+				model = glm::scale(model, glm::vec3(Data::_VOLUME_SPEAKER_SIZE, 1.f));
 				Shader::shaderDefault->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, volume_speaker);
 				Shader::Draw();
@@ -359,8 +361,8 @@ namespace Graphics
 				Shader::shaderDefault->setVec3("color", Color::Grey);
 				mdEngine::MP::Playlist::MuteVolume(false);
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(_VOLUME_SPEAKER_POS, 0.3f));
-				model = glm::scale(model, glm::vec3(_VOLUME_SPEAKER_SIZE, 1.f));
+				model = glm::translate(model, glm::vec3(Data::_VOLUME_SPEAKER_POS, 0.3f));
+				model = glm::scale(model, glm::vec3(Data::_VOLUME_SPEAKER_SIZE, 1.f));
 				Shader::shaderDefault->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, volume_speaker);
 				Shader::Draw();
@@ -370,8 +372,8 @@ namespace Graphics
 
 			/* Volume bar under volume slider */
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(_VOLUME_BAR_POS, 0.3f));
-			model = glm::scale(model, glm::vec3(_VOLUME_BAR_SIZE, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_VOLUME_BAR_POS, 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_VOLUME_BAR_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
 			Shader::shaderDefault->setVec3("color", Color::DarkGrey);
 			glBindTexture(GL_TEXTURE_2D, volume_bar);
@@ -384,25 +386,25 @@ namespace Graphics
 				if (volumeMuted == true)
 				{
 					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(_VOLUME_BAR_POS.x - _SLIDER_DOT_SIZE.x / 2.f, _VOLUME_BAR_DOT_POS.y, 0.4));
+					model = glm::translate(model, glm::vec3(Data::_VOLUME_BAR_POS.x - Data::_SLIDER_DOT_SIZE.x / 2.f, Data::_VOLUME_BAR_DOT_POS.y, 0.4));
 					if (lastMousePos != deltaVolumePos)
 						volumeMuted = false;
 				}
 				else
 				{
 					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(_VOLUME_BAR_POS.x + deltaVolumePos - _SLIDER_DOT_SIZE.x / 2.f, _VOLUME_BAR_DOT_POS.y, 0.4));
+					model = glm::translate(model, glm::vec3(Data::_VOLUME_BAR_POS.x + deltaVolumePos - Data::_SLIDER_DOT_SIZE.x / 2.f, Data::_VOLUME_BAR_DOT_POS.y, 0.4));
 					lastMousePos = deltaVolumePos;
 				}
 
-				model = glm::scale(model, glm::vec3(_SLIDER_DOT_SIZE, 1.f));
+				model = glm::scale(model, glm::vec3(Data::_SLIDER_DOT_SIZE, 1.f));
 				Shader::shaderDefault->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, dot_icon);
 				Shader::Draw();
 
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(_VOLUME_BAR_POS, 0.35f));
-				model = glm::scale(model, glm::vec3(deltaVolumePos, _VOLUME_BAR_SIZE.y, 1.f));
+				model = glm::translate(model, glm::vec3(Data::_VOLUME_BAR_POS, 0.35f));
+				model = glm::scale(model, glm::vec3(deltaVolumePos, Data::_VOLUME_BAR_SIZE.y, 1.f));
 				Shader::shaderDefault->setMat4("model", model);
 				Shader::shaderDefault->setVec3("color", Color::Green);
 				glBindTexture(GL_TEXTURE_2D, volume_bar);
@@ -412,8 +414,8 @@ namespace Graphics
 			else if (volumeMuted == false)
 			{
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(_VOLUME_BAR_POS, 0.35f));
-				model = glm::scale(model, glm::vec3(deltaVolumePos, _VOLUME_BAR_SIZE.y, 1.f));
+				model = glm::translate(model, glm::vec3(Data::_VOLUME_BAR_POS, 0.35f));
+				model = glm::scale(model, glm::vec3(deltaVolumePos, Data::_VOLUME_BAR_SIZE.y, 1.f));
 				Shader::shaderDefault->setMat4("model", model);
 				Shader::shaderDefault->setVec3("color", Color::Grey);
 				glBindTexture(GL_TEXTURE_2D, volume_bar);
@@ -426,26 +428,26 @@ namespace Graphics
 	void MP::RenderMusicProgressBar()
 	{
 		glm::mat4 model;
-		f32 musicPos = Playlist::GetPosition();
-		f32 musicLength = Playlist::GetMusicLength();
+		f32 musicPos = mdEngine::MP::Playlist::GetPosition();
+		f32 musicLength = mdEngine::MP::Playlist::GetMusicLength();
 
 		if (musicPos < 0 || musicLength < 0)
 			deltaMusicPos = 0;
 		else
-			deltaMusicPos = musicPos / musicLength * _MUSIC_PROGRESS_BAR_SIZE.x;
+			deltaMusicPos = musicPos / musicLength * Data::_MUSIC_PROGRESS_BAR_SIZE.x;
 
 		if (musicSliderActive == true)
 		{
 			s32 mouseX, mouseY;
 			App::Input::GetMousePosition(&mouseX, &mouseY);
-			deltaMusicPos = mouseX - _MUSIC_PROGRESS_BAR_POS.x;
-			if (deltaMusicPos > _MUSIC_PROGRESS_BAR_SIZE.x)
-				deltaMusicPos = _MUSIC_PROGRESS_BAR_SIZE.x;
+			deltaMusicPos = mouseX - Data::_MUSIC_PROGRESS_BAR_POS.x;
+			if (deltaMusicPos > Data::_MUSIC_PROGRESS_BAR_SIZE.x)
+				deltaMusicPos = Data::_MUSIC_PROGRESS_BAR_SIZE.x;
 			if (deltaMusicPos < 0)
 				deltaMusicPos = 0;
 
 			if (App::Input::IsKeyDown(App::KeyCode::MouseLeft) == false)
-				mdEngine::MP::Playlist::SetPosition(deltaMusicPos / (float)_MUSIC_PROGRESS_BAR_SIZE.x * Playlist::GetMusicLength());
+				mdEngine::MP::Playlist::SetPosition(deltaMusicPos / (float)Data::_MUSIC_PROGRESS_BAR_SIZE.x * mdEngine::MP::Playlist::GetMusicLength());
 		}
 
 		if (Input::hasFocus(Input::ButtonType::SliderMusic) && App::Input::IsKeyDown(App::KeyCode::MouseLeft) && 
@@ -455,8 +457,8 @@ namespace Graphics
 			musicSliderActive = false;
 
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(_MUSIC_PROGRESS_BAR_POS, 0.3f));
-		model = glm::scale(model, glm::vec3(_MUSIC_PROGRESS_BAR_SIZE, 1.f));
+		model = glm::translate(model, glm::vec3(Data::_MUSIC_PROGRESS_BAR_POS, 0.3f));
+		model = glm::scale(model, glm::vec3(Data::_MUSIC_PROGRESS_BAR_SIZE, 1.f));
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setVec3("color", Color::DarkGrey);
 		glBindTexture(GL_TEXTURE_2D, music_progress_bar);
@@ -467,8 +469,8 @@ namespace Graphics
 		{
 			Shader::shaderDefault->setVec3("color", Color::Green);
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(_MUSIC_PROGRESS_BAR_POS, 0.35f));
-			model = glm::scale(model, glm::vec3(deltaMusicPos, _MUSIC_PROGRESS_BAR_SIZE.y, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_MUSIC_PROGRESS_BAR_POS, 0.35f));
+			model = glm::scale(model, glm::vec3(deltaMusicPos, Data::_MUSIC_PROGRESS_BAR_SIZE.y, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, music_progress_bar);
 			Shader::Draw();
@@ -476,9 +478,9 @@ namespace Graphics
 
 
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(_MUSIC_PROGRESS_BAR_POS.x + deltaMusicPos - _SLIDER_DOT_SIZE.x / 2.f, _MUSIC_PROGRESS_BAR_DOT_POS.y, 0.4));
+			model = glm::translate(model, glm::vec3(Data::_MUSIC_PROGRESS_BAR_POS.x + deltaMusicPos - Data::_SLIDER_DOT_SIZE.x / 2.f, Data::_MUSIC_PROGRESS_BAR_DOT_POS.y, 0.4));
 			lastMousePos = deltaVolumePos;
-			model = glm::scale(model, glm::vec3(_SLIDER_DOT_SIZE, 1.f));
+			model = glm::scale(model, glm::vec3(Data::_SLIDER_DOT_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, dot_icon);
 			Shader::Draw();
@@ -488,8 +490,8 @@ namespace Graphics
 		else
 		{
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(_MUSIC_PROGRESS_BAR_POS, 0.35f));
-			model = glm::scale(model, glm::vec3(deltaMusicPos, _MUSIC_PROGRESS_BAR_SIZE.y, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_MUSIC_PROGRESS_BAR_POS, 0.35f));
+			model = glm::scale(model, glm::vec3(deltaMusicPos, Data::_MUSIC_PROGRESS_BAR_SIZE.y, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, music_progress_bar);
 			Shader::Draw();
@@ -516,25 +518,26 @@ namespace Graphics
 		{
 			focusMultiplier = 1.02f;
 			color = Color::White;
-			model = glm::translate(model, glm::vec3(_SHUFFLE_BUTTON_POS.x + (_SHUFFLE_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
-				_SHUFFLE_BUTTON_POS.y + (_SHUFFLE_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
-			model = glm::scale(model, glm::vec3(_SHUFFLE_BUTTON_SIZE * focusMultiplier, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_SHUFFLE_BUTTON_POS.x + (Data::_SHUFFLE_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
+				Data::_SHUFFLE_BUTTON_POS.y + (Data::_SHUFFLE_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_SHUFFLE_BUTTON_SIZE * focusMultiplier, 1.f));
 
 		}
 		else if (shuffleActive == false)
 		{
 			color = Color::Grey;
-			model = glm::translate(model, glm::vec3(_SHUFFLE_BUTTON_POS, 0.3f));
-			model = glm::scale(model, glm::vec3(_SHUFFLE_BUTTON_SIZE, 1.f));;
+			model = glm::translate(model, glm::vec3(Data::_SHUFFLE_BUTTON_POS, 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_SHUFFLE_BUTTON_SIZE, 1.f));;
 		}
 		else
 		{
 			color = Color::Green;
-			model = glm::translate(model, glm::vec3(_SHUFFLE_BUTTON_POS, 0.3f));
-			model = glm::scale(model, glm::vec3(_SHUFFLE_BUTTON_SIZE, 1.f));;
+			model = glm::translate(model, glm::vec3(Data::_SHUFFLE_BUTTON_POS, 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_SHUFFLE_BUTTON_SIZE, 1.f));;
 
-			dotModel = glm::translate(dotModel, glm::vec3(_SHUFFLE_BUTTON_POS.x + _SHUFFLE_BUTTON_SIZE.x / 2.f - _DOT_BUTTON_STATE_SIZE.x / 2.f - dotOffsetXShuffle, _SHUFFLE_BUTTON_POS.y + 18.f, 0.3f));
-			dotModel = glm::scale(dotModel, glm::vec3(_DOT_BUTTON_STATE_SIZE, 1.f));
+			dotModel = glm::translate(dotModel, glm::vec3(Data::_SHUFFLE_BUTTON_POS.x + Data::_SHUFFLE_BUTTON_SIZE.x / 2.f - Data::_DOT_BUTTON_STATE_SIZE.x / 2.f - dotOffsetXShuffle, 
+														  Data::_SHUFFLE_BUTTON_POS.y + 18.f, 0.3f));
+			dotModel = glm::scale(dotModel, glm::vec3(Data::_DOT_BUTTON_STATE_SIZE, 1.f));
 			Shader::shaderDefault->setVec3("color", color);
 			Shader::shaderDefault->setMat4("model", dotModel);
 			glBindTexture(GL_TEXTURE_2D, dot_icon);
@@ -553,16 +556,16 @@ namespace Graphics
 		{
 			focusMultiplier = 1.02f;
 			color = Color::White;
-			model = glm::translate(model, glm::vec3(_PREVIOUS_BUTTON_POS.x + (_PREVIOUS_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
-				_PREVIOUS_BUTTON_POS.y + (_PREVIOUS_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
-			model = glm::scale(model, glm::vec3(_PREVIOUS_BUTTON_SIZE * focusMultiplier, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_PREVIOUS_BUTTON_POS.x + (Data::_PREVIOUS_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
+				Data::_PREVIOUS_BUTTON_POS.y + (Data::_PREVIOUS_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_PREVIOUS_BUTTON_SIZE * focusMultiplier, 1.f));
 
 		}
 		else
 		{
 			color = Color::Grey;
-			model = glm::translate(model, glm::vec3(_PREVIOUS_BUTTON_POS, 0.3f));
-			model = glm::scale(model, glm::vec3(_PREVIOUS_BUTTON_SIZE, 1.f));;
+			model = glm::translate(model, glm::vec3(Data::_PREVIOUS_BUTTON_POS, 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_PREVIOUS_BUTTON_SIZE, 1.f));;
 		}
 		Shader::shaderDefault->setVec3("color", color);
 		Shader::shaderDefault->setMat4("model", model);
@@ -571,7 +574,7 @@ namespace Graphics
 
 
 		// Play
-		if (Input::isButtonPressed(Input::ButtonType::Play) && Playlist::IsLoaded() == true)
+		if (Input::isButtonPressed(Input::ButtonType::Play) && mdEngine::MP::Playlist::IsLoaded() == true)
 			playActive = !playActive;
 
 		if (Input::isButtonPressed(Input::ButtonType::Previous) || Input::isButtonPressed(Input::ButtonType::Next) &&
@@ -583,16 +586,16 @@ namespace Graphics
 		{
 			focusMultiplier = 1.07f;
 			color = Color::White;
-			model = glm::translate(model, glm::vec3(_PLAY_BUTTON_POS.x + (_PLAY_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
-				_PLAY_BUTTON_POS.y + (_PLAY_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
-			model = glm::scale(model, glm::vec3(_PLAY_BUTTON_SIZE * focusMultiplier, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_PLAY_BUTTON_POS.x + (Data::_PLAY_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
+				Data::_PLAY_BUTTON_POS.y + (Data::_PLAY_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_PLAY_BUTTON_SIZE * focusMultiplier, 1.f));
 
 		}
 		else if (!Input::hasFocus(Input::ButtonType::Play) && playActive == false)
 		{
 			color = Color::Grey;
-			model = glm::translate(model, glm::vec3(_PLAY_BUTTON_POS, 0.3f));
-			model = glm::scale(model, glm::vec3(_PLAY_BUTTON_SIZE, 1.f));;
+			model = glm::translate(model, glm::vec3(Data::_PLAY_BUTTON_POS, 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_PLAY_BUTTON_SIZE, 1.f));;
 		}
 
 		if (playActive == false)
@@ -613,16 +616,16 @@ namespace Graphics
 		{
 			focusMultiplier = 1.07f;
 			color = Color::White;
-			model = glm::translate(model, glm::vec3(_PLAY_BUTTON_POS.x + (_PLAY_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
-				_PLAY_BUTTON_POS.y + (_PLAY_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
-			model = glm::scale(model, glm::vec3(_PLAY_BUTTON_SIZE * focusMultiplier, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_PLAY_BUTTON_POS.x + (Data::_PLAY_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
+				Data::_PLAY_BUTTON_POS.y + (Data::_PLAY_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_PLAY_BUTTON_SIZE * focusMultiplier, 1.f));
 
 		}
 		else if (!Input::hasFocus(Input::ButtonType::Stop) && playActive == true)
 		{
 			color = Color::Grey;
-			model = glm::translate(model, glm::vec3(_PLAY_BUTTON_POS, 0.3f));
-			model = glm::scale(model, glm::vec3(_PLAY_BUTTON_SIZE, 1.f));;
+			model = glm::translate(model, glm::vec3(Data::_PLAY_BUTTON_POS, 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_PLAY_BUTTON_SIZE, 1.f));;
 		}
 
 		if (playActive)
@@ -641,16 +644,16 @@ namespace Graphics
 		{
 			focusMultiplier = 1.02f;
 			color = Color::White;
-			model = glm::translate(model, glm::vec3(_NEXT_BUTTON_POS.x + (_NEXT_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
-				_NEXT_BUTTON_POS.y + (_NEXT_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
-			model = glm::scale(model, glm::vec3(_NEXT_BUTTON_SIZE * focusMultiplier, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_NEXT_BUTTON_POS.x + (Data::_NEXT_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
+				Data::_NEXT_BUTTON_POS.y + (Data::_NEXT_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_NEXT_BUTTON_SIZE * focusMultiplier, 1.f));
 
 		}
 		else
 		{
 			color = Color::Grey;
-			model = glm::translate(model, glm::vec3(_NEXT_BUTTON_POS, 0.3f));
-			model = glm::scale(model, glm::vec3(_NEXT_BUTTON_SIZE, 1.f));;
+			model = glm::translate(model, glm::vec3(Data::_NEXT_BUTTON_POS, 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_NEXT_BUTTON_SIZE, 1.f));;
 		}
 		Shader::shaderDefault->setVec3("color", color);
 		Shader::shaderDefault->setMat4("model", model);
@@ -667,26 +670,27 @@ namespace Graphics
 		{
 			focusMultiplier = 1.02f;
 			color = Color::White;
-			model = glm::translate(model, glm::vec3(_REPEAT_BUTTON_POS.x + (_REPEAT_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
-				_REPEAT_BUTTON_POS.y + (_REPEAT_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
-			model = glm::scale(model, glm::vec3(_REPEAT_BUTTON_SIZE * focusMultiplier, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_REPEAT_BUTTON_POS.x + (Data::_REPEAT_BUTTON_SIZE.x / 2.f) * (1.f - focusMultiplier),
+				Data::_REPEAT_BUTTON_POS.y + (Data::_REPEAT_BUTTON_SIZE.y / 2.f) * (1.f - focusMultiplier), 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_REPEAT_BUTTON_SIZE * focusMultiplier, 1.f));
 
 		}
 		else if (repeatActive == false)
 		{
 			color = Color::Grey;
-			model = glm::translate(model, glm::vec3(_REPEAT_BUTTON_POS, 0.3f));
-			model = glm::scale(model, glm::vec3(_REPEAT_BUTTON_SIZE, 1.f));;
+			model = glm::translate(model, glm::vec3(Data::_REPEAT_BUTTON_POS, 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_REPEAT_BUTTON_SIZE, 1.f));;
 		}
 		else
 		{
 			color = Color::Green;
-			model = glm::translate(model, glm::vec3(_REPEAT_BUTTON_POS, 0.3f));
-			model = glm::scale(model, glm::vec3(_REPEAT_BUTTON_SIZE, 1.f));
+			model = glm::translate(model, glm::vec3(Data::_REPEAT_BUTTON_POS, 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_REPEAT_BUTTON_SIZE, 1.f));
 
 			dotModel = glm::mat4();
-			dotModel = glm::translate(dotModel, glm::vec3(_REPEAT_BUTTON_POS.x + _REPEAT_BUTTON_SIZE.x / 2.f - _DOT_BUTTON_STATE_SIZE.x / 2.f - dotOffsetXRepeat, _REPEAT_BUTTON_POS.y + 18.f, 0.3f));
-			dotModel = glm::scale(dotModel, glm::vec3(_DOT_BUTTON_STATE_SIZE, 1.f));
+			dotModel = glm::translate(dotModel, glm::vec3(Data::_REPEAT_BUTTON_POS.x + Data::_REPEAT_BUTTON_SIZE.x / 2.f - Data::_DOT_BUTTON_STATE_SIZE.x / 2.f - dotOffsetXRepeat, 
+									  Data::_REPEAT_BUTTON_POS.y + 18.f, 0.3f));
+			dotModel = glm::scale(dotModel, glm::vec3(Data::_DOT_BUTTON_STATE_SIZE, 1.f));
 			Shader::shaderDefault->setVec3("color", color);
 			Shader::shaderDefault->setMat4("model", dotModel);
 			glBindTexture(GL_TEXTURE_2D, dot_icon);
@@ -706,31 +710,14 @@ namespace Graphics
 
 		if (playlist.IsToggled() && mdItemContainer.size() > 0)
 		{
-
-			//std::cout << mdItemContainer.size() << std::endl;
 			if (mdEngine::App::Input::IsScrollForwardActive())
 			{
-				testOffsetY += testScrollStep;
-				texturesLoaded = false;
+				playlistCurrentOffsetY += Data::PlaylistScrollStep;
 			}
 			if (mdEngine::App::Input::IsScrollBackwardActive())
 			{
-				testOffsetY -= testScrollStep;
-				texturesLoaded = false;
+				playlistCurrentOffsetY -= Data::PlaylistScrollStep;
 			}
-
-			/*if (App::Input::IsKeyDown(App::KeyCode::Keypad8))
-			{
-				playlistMovement = PlaylistMovement::Up;
-				testOffsetY += testScrollStep;
-				texturesLoaded = false;
-			}
-			if (App::Input::IsKeyDown(App::KeyCode::Keypad2))
-			{
-				playlistMovement = PlaylistMovement::Down;
-				testOffsetY -= testScrollStep;
-				texturesLoaded = false;
-			}*/
 
 			s32 displayedItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / mdItemContainer[0]->mSize.y;
 			s32 maxItems = mdItemContainer.size();
@@ -742,90 +729,53 @@ namespace Graphics
 			s32 itemH = mdItemContainer[0]->mSize.y;
 
 			
-			f32 top = testOffsetY;
+			f32 top = playlistCurrentOffsetY;
 			f32 low = top - displayedItems * itemH;
 			f32 currentPos = 0;
 
 			currentPos = currentSongID * itemH * -1;
-			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicChanged)
+			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicChanged ||
+				mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicAdded)
 			{
 				
 				while (currentPos + itemH > top)
 				{
 					top += itemH;
-					testOffsetY += itemH;
+					playlistCurrentOffsetY += itemH;
 				}
 				
 				while (currentPos - 2 *itemH < low)
 				{
 					low -= itemH;
-					testOffsetY -= itemH;
+					playlistCurrentOffsetY -= itemH;
 				}
 				
 				if (currentPos >= 0)
-					testOffsetY -= itemH;
+					playlistCurrentOffsetY -= itemH;
 				//if(currentPos <= (maxItems - 1) * itemH * -1)
 					//testOffsetY += itemH;
 			}
 
-			
 
-			if (testOffsetY > 0)
-				testOffsetY = 0;
-
-			
+			if (playlistCurrentOffsetY > 0)
+				playlistCurrentOffsetY = 0;
 
 			/* When playlist pos is different than top and low, resize till reach low then change offset to reach top */
 			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kResized &&
 				Window::windowProperties.mDeltaHeightResize > 0 &&
-				testOffsetY <= (maxItems - displayedItems) * itemH * -1)
+				playlistCurrentOffsetY <= (maxItems - displayedItems) * itemH * -1)
 			{
-				testOffsetY += Window::windowProperties.mDeltaHeightResize;
+				playlistCurrentOffsetY += Window::windowProperties.mDeltaHeightResize;
 			}
 			else if(mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kResized)
 			{
-				if (testOffsetY < (maxItems - displayedItems) * itemH * -1)
-					testOffsetY = (maxItems - displayedItems) * itemH * -1;
+				if (playlistCurrentOffsetY < (maxItems - displayedItems) * itemH * -1)
+					playlistCurrentOffsetY = (maxItems - displayedItems) * itemH * -1;
 			}
 			
-			
-
-
-			/*if (playlistPosPrevious != (s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y)
-				playlistPosChanged = true;
-
-			if (playlistPosChanged == true)
-			{
-				if(playlistMovement == PlaylistMovement::Down)
-					playlistCurrentPos -= ((s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y);
-				else
-					playlistCurrentPos += ((s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y);
-				playlistPosPrevious = (s32)testOffsetY / (s32)mdItemContainer[0]->mSize.y;
-				playlistPosChanged = false;
-			}*/
-			
-			playlistCurrentPos = (s32)(testOffsetY / Data::_PLAYLIST_ITEM_SIZE.y) * -1;
-
-
-			
-			s32 maxRenderItems = displayedItems;
-
-			if (playlistCurrentPos + displayedItems > maxItems)
-			{
-				playlistCurrentPos = maxItems - displayedItems;
-				texturesLoaded = true;
-			}
-
-			if (playlistCurrentPos < 0)
-			{
-				playlistCurrentPos = 0;
-				texturesLoaded = true;
-			}
-			
-			playlistIndex = playlistCurrentPos;
+			playlistCurrentPos = (s32)(playlistCurrentOffsetY / Data::_PLAYLIST_ITEM_SIZE.y) * -1;
 
 			//std::cout << playlistCurrentPos << std::endl;
-
 
 			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kIdle)
 			{
@@ -835,63 +785,105 @@ namespace Graphics
 					mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kIdle;
 						
 			}
-			
-
 			//std::cout << testOffsetY << std::endl;
+			s32 min = playlistCurrentPos - 2;
+			if (min < 0)
+				min = 0;
+			s32 max = displayedItems + playlistCurrentPos + 2;
+			if (max > mdItemContainer.size())
+				max = mdItemContainer.size();
+			s32 visibleSpectrum = max - min;
+
+			{ // text debug
+				//std::cout << "Min: " << min << "  Max: " << max << std::endl;
+				//std::cout << playlistCurrentOffsetY << std::endl;
+				//std::cout << "\n\n\n\n\n\n\n\n";
+				for (u32 i = min; i < max; i++)
+				{
+					//std::cout << mdItemContainer[i]->mPos.y << std::endl;
+				}
+			}
+
+			if (playlistFirstEnter && playlistCurrentOffsetY > 80)
+			{
+				playlistPreviousPos = playlistCurrentPos;
+				playlistPreviousOffsetY = playlistCurrentOffsetY;
+				
+
+				
+				playlistFirstEnter = false;
+			}
+
+			if (abs(playlistPreviousOffsetY - playlistCurrentOffsetY) > 0)
+			{
+				for (u32 i = min; i < max; i++)
+				{
+					if(playlistPreviousOffsetY - playlistCurrentOffsetY > 0)
+						mdItemContainer[i]->mPos.y -= abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
+					else
+						mdItemContainer[i]->mPos.y += abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
+				}
+				playlistPreviousOffsetY = playlistCurrentOffsetY;
+			}
+
+			if (playlistCurrentPos != playlistPreviousPos)
+				texturesLoaded = false;
 
 			if (texturesLoaded == false)
 			{
+				playlistPreviousPos = playlistCurrentPos;
 				// Load all textures that are in in display range 
 				if (textTexture != NULL)
 				{
-					glDeleteTextures(maxRenderItems, textTexture);
+					glDeleteTextures(visibleSpectrum, textTexture);
 					delete[] textTexture;
 				}
 
 				if (predefinedPos != NULL)
 					delete[] predefinedPos;
 
-				textTexture = new GLuint[maxRenderItems];
-				predefinedPos = new glm::vec2[maxRenderItems];
+				textTexture = new GLuint[visibleSpectrum];
+				predefinedPos = new glm::vec2[visibleSpectrum];
 
 
 				// Predefine positions user can actually see
 				PlaylistItem* item = NULL;
 				s32 itemsOffset = 0;
-				glm::vec2 itemStartPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, Data::_PLAYLIST_ITEMS_SURFACE_POS.y);
-
+				glm::vec2 itemStartPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, 
+												   Data::_PLAYLIST_ITEMS_SURFACE_POS.y + (min - 1) * itemH);
+				//std::cout << itemStartPos.y << std::endl;
 				predefinedPos[0] = glm::vec2(itemStartPos.x, itemStartPos.y);
-				int x = 0;
-				for (u16 i = playlistIndex, t = 0; i < maxRenderItems + playlistCurrentPos; i++, t++)
+				for (u16 i = min, t = 0; i < max; i++, t++)
 				{
 					item = mdItemContainer[i];
 					textTexture[t] = Text::LoadText(item->mFont,
 													item->GetTitle(),
 													item->mTextColor);
 
-					if (t != 0)
+					if (t != -1)
 					{
-						
-						predefinedPos[t] = glm::vec2(itemStartPos.x, itemStartPos.y + Data::_PLAYLIST_ITEM_SIZE.y - item->mOffsetY);
+
+						predefinedPos[t] = glm::vec2(itemStartPos.x, itemStartPos.y + Data::_PLAYLIST_ITEM_SIZE.y + item->mOffsetY);
 						itemStartPos = predefinedPos[t];
-						x++;
+						predefinedPos[t].y += playlistCurrentOffsetY;
 					}
 					
 				}
 
-
 				// Write predefined positions to playlist items that are currently displayed
-				for (u32 i = 0, t = 0; i < mdItemContainer.size(); i++)
+				for (u32 i = 0, t = 0; i < maxItems; i++)
 				{
-					if (i >= playlistIndex && i < maxRenderItems + playlistCurrentPos)
+					if (i >= min && i < max)
 					{
 						mdItemContainer[i]->mPos = glm::vec2(predefinedPos[t].x, predefinedPos[t].y);
+						//std::cout << mdItemContainer[i]->mPos.y << "   " << playlistCurrentOffsetY << std::endl;
 						t++;
 					}
 					else
 					{
 						mdItemContainer[i]->mPos = glm::vec2(INVALID);
 					}
+					//std::cout << mdItemContainer[i]->mPos.y << "   " << playlistCurrentPos << "  " << playlistCurrentOffsetY << std::endl;
 				}
 
 				texturesLoaded = true;
@@ -902,20 +894,52 @@ namespace Graphics
 			if (displayedItems < mdItemContainer.size())
 			{
 				//std::cout << testOffsetY << std::endl;
-				s32 newPosY = Data::_PLAYLIST_SCROLL_BAR_POS.y - testOffsetY;
-				s32 scaleY = Data::_PLAYLIST_SCROLL_BAR_SIZE.y * stretchPlaylistMultplier / mdItemContainer.size() * displayedItems;
+				f32 playlistSurface = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
+				s32 scaleY = playlistSurface  / mdItemContainer.size() * displayedItems;
+				f32 scrollSurface = playlistSurface - scaleY;
+				//std::cout << scrollSurface << std::endl;
+				f32 scrollStep = (playlistCurrentOffsetY * scrollSurface) / ((maxItems - displayedItems) * itemH);
+				s32 newPosY = (Data::_PLAYLIST_SCROLL_BAR_POS.y - scrollStep);
 
-				if (newPosY + scaleY > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+				playlistBarSlider->mPos.y = newPosY;
+
+				if(playlistBarSlider != NULL)
+					playlistBarSlider->mSize.y = scaleY;
+
+				if (App::Input::IsKeyDown(App::KeyCode::MouseLeft))
 				{
-					//testOffsetY += testScrollStep;
-					newPosY = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - scaleY;
+					App::Input::GetGlobalMousePosition(&mouseX, &mouseY);
+
+					if (Input::hasFocus(Input::ButtonType::SliderPlaylist))
+					{
+						playlistSliderActive = true;
+
+						if (playlistSliderFirstEnter)
+						{
+							lastMouseY = mouseY;
+							playlistSliderFirstEnter = false;
+						}
+					}
+				}
+				else
+				{
+					playlistSliderActive = false;
+					playlistSliderFirstEnter = true;
 				}
 
-				if (newPosY < Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
+				Input::SetButtonExtraState(playlistSliderActive);
+
+				if (playlistSliderActive)
 				{
-					//testOffsetY -= testScrollStep;
-					newPosY = Data::_PLAYLIST_ITEMS_SURFACE_POS.y;;
+					deltaMouseY = mouseY - lastMouseY;
+					lastMouseY = mouseY;
+					playlistCurrentOffsetY -= deltaMouseY;
 				}
+
+				if (playlistBarSlider->mPos.y < Data::_PLAYLIST_SCROLL_BAR_POS.y)
+					playlistBarSlider->mPos.y = Data::_PLAYLIST_SCROLL_BAR_POS.y;
+				if (playlistBarSlider->mPos.y + playlistBarSlider->mSize.y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+					playlistBarSlider->mPos.y = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - playlistBarSlider->mSize.y;
 
 				model = glm::mat4();
 				model = glm::translate(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_POS.x, newPosY, 0.9f));
@@ -927,14 +951,16 @@ namespace Graphics
 			}
 
 
-
-
 			Shader::shaderDefault->setBool("playlistCut", true);
 			Shader::shaderDefault->setFloat("playlistMinY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y);
 			Shader::shaderDefault->setFloat("playlistMaxY", Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
+			Shader::shaderBorder->use();
+			Shader::shaderBorder->setFloat("playlistMinY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y);
+			Shader::shaderBorder->setFloat("playlistMaxY", Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
 
 			u16 texIndex = 0;
-			while (playlistIndex < maxRenderItems + playlistCurrentPos)
+			playlistIndex = min;
+			while (playlistIndex < max)
 			{
 				/* Playlist items are rendered on the same positions as positions of the first(0 - maxItems), 
 				   they are only transformed by matrix, so when you want to check if specific item has focus, 
@@ -982,6 +1008,8 @@ namespace Graphics
 						item->DrawDottedBorder(playlistCurrentPos);
 					}
 				}
+				//if (item->clickCount == 1)
+					//std::cout << (float)item->mTextSize.x * item->mTextScale << std::endl;
 			
 				Shader::shaderDefault->use();
 				model = glm::mat4();
@@ -1083,6 +1111,12 @@ namespace Graphics
 		music_progress_bar		= mdLoadTexture("assets/music_progress_bar.png");
 
 		deltaVolumePos = (s32)(mdEngine::MP::Playlist::GetVolume() * 100.f * 0.9f);
+
+		auto it = std::find_if(mdButtonsContainer.begin(), mdButtonsContainer.end(),
+			[&](std::pair<Input::ButtonType, Button*> const& ref) { return ref.first == Input::ButtonType::SliderPlaylist; });
+
+		if (it != mdButtonsContainer.end())
+			playlistBarSlider = it->second;
 
 	}
 
