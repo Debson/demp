@@ -68,12 +68,11 @@ namespace mdEngine
 			shaderBorder->use();
 			shaderBorder->setMat4("projection", projection);
 
-
 		}
 
-		void Shader::Draw()
+		void Shader::Draw(mdShader* shader)
 		{
-			quad->Draw(*shaderDefault);
+			quad->Draw(*shader);
 		}
 
 		void Shader::DrawDot()
@@ -97,6 +96,7 @@ namespace mdEngine
 
 	void Graphics::RenderGraphics()
 	{
+
 		MP::RenderMainWindow();
 	}
 	void Graphics::CloseGraphics()

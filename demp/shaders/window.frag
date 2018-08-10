@@ -10,8 +10,7 @@ uniform vec3 color;
 uniform bool cut;
 uniform bool border;
 uniform bool playlistCut;
-uniform mat4 projection;
-uniform mat4 model;
+uniform bool plain;
 
 uniform float aspectXY;
 uniform float border_width;
@@ -59,9 +58,6 @@ void main()
 		FragColor = texColor * vec4(color, 1.0);
 	}
 
-
-	vec2 texCords = TexCoords;
-	
 	if(playlistCut)
 	{
 		if(pos.y > playlistMaxY || pos.y < playlistMinY)
@@ -74,6 +70,10 @@ void main()
 		}
 	}
 
+	if(plain)
+	{
+		FragColor = vec4(color, 1.0);
+	}
 
 
 

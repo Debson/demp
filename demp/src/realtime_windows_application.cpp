@@ -39,6 +39,8 @@ namespace mdEngine
 	SDL_GLContext gl_context;
 	SDL_SysWMinfo wmInfo;
 	HWND hwnd;
+	std::thread graphicsThread, updateThread;
+
 #ifdef _DEBUG_
 	ImGuiIO io;
 	const char* glsl_version = "#version 130";
@@ -68,6 +70,12 @@ namespace mdEngine
 
 	void UpdateWindowSize();
 
+	void Test();
+}
+
+void mdEngine::Test()
+{
+	std::cout << "elo\n";
 }
 
 void mdEngine::SetupSDL()
@@ -203,6 +211,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	mdApplicationHandler->OnWindowOpen();
 	Graphics::StartGraphics();
 
+
 	glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 }
 
@@ -317,7 +326,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
 		Graphics::RenderGraphics();
 		mdApplicationHandler->OnRealtimeRender();
 
@@ -331,6 +339,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		Graphics::Render();
 #endif
 		SDL_GL_SwapWindow(mdWindow);
+
+		
 
 		f32 frameTicks = capTimer.getTicks();
 		if (frameTicks < App::Data::_SCREEN_TICK_PER_FRAME)
@@ -383,6 +393,11 @@ void mdEngine::SetWindowProperties(const App::WindowProperties& windowProperties
 {
 	mdActualWindowWidth = windowProperties.mWindowWidth;
 	mdActualWindowHeight = windowProperties.mWindowHeight;
+}
+
+HWND mdEngine::Window::GetHWNDWindow()
+{
+	return hwnd;
 }
 
 void mdEngine::Window::SetWindowTitle(const b8& windowTitle)

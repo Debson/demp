@@ -3,7 +3,7 @@
 
 #include "md_types.h"
 #include "system_application_input.h"
-#include "music_player_ui.h"
+#include "interface/md_interface.h"
 
 namespace mdEngine
 {
@@ -57,12 +57,13 @@ namespace App
 	};
 
 
+	void SetButtonCheckBounds(s32 low, s32 high, b8 val);
 
-	void ProcessMovable(MP::UI::Movable* bar);
+	void ProcessMovable(Interface::Movable* bar);
 
-	void ProcessButton(MP::UI::Button* button);
+	void ProcessButton(Interface::Button* button);
 
-	void ProcessResizable(MP::UI::Resizable* bar);
+	void ProcessResizable(Interface::Resizable* bar);
 }
 }
 

@@ -210,13 +210,6 @@ namespace App
 		KeypadDecimal = SDL_SCANCODE_KP_DECIMAL,
 		KeypadHexadecimal = SDL_SCANCODE_KP_HEXADECIMAL,
 
-		MouseLeft,
-		MouseRight,
-		MouseMiddle,
-
-		MouseWheelUp,
-		MouseWheelDown,
-
 		LCtrl = SDL_SCANCODE_LCTRL,
 		LShift = SDL_SCANCODE_LSHIFT,
 		LAlt = SDL_SCANCODE_LALT,
@@ -225,6 +218,14 @@ namespace App
 		RShift = SDL_SCANCODE_RSHIFT,
 		RAlt = SDL_SCANCODE_RALT,
 		RGui = SDL_SCANCODE_RGUI,
+
+		MouseLeft,
+		MouseRight,
+		MouseMiddle,
+
+		MouseWheelUp,
+		MouseWheelDown,
+
 	
 		/*Mode = SDL_SCANCODE_MODE,
 		

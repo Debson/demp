@@ -1,4 +1,7 @@
 #include "demp.h"
+
+#include <thread>
+
 #include "application_window.h"
 
 Demp::Demp()
@@ -43,6 +46,7 @@ int main(int argc, char** argv)
 	mdEngine::App::WindowProperties windowProperties;
 	theApp.SetWindowProperties(windowProperties);
 	theApp.Open();
+
 	theApp.Run();
 
 	return 0;

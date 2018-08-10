@@ -13,7 +13,7 @@ namespace mdEngine
 			extern mdShader* shaderBorder;
 
 			void InitShader();
-			void Draw();
+			void Draw(mdShader* shader);
 			void DrawDot();
 		}
 

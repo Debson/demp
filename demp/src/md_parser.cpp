@@ -89,7 +89,7 @@ namespace mdEngine
 		AddToFile(&file, Strings::_SONG_POSITION, MP::Playlist::GetPosition());
 		AddToFile(&file, Strings::_SHUFFLE_STATE, MP::Playlist::IsShuffleEnabled());
 		AddToFile(&file, Strings::_REPEAT_STATE, MP::Playlist::IsRepeatEnabled());
-		AddToFile(&file, Strings::_PLAYLIST_STATE, Graphics::MP::playlist.IsToggled());
+		AddToFile(&file, Strings::_PLAYLIST_STATE, Graphics::MP::m_Playlist.IsToggled());
 		AddToFile(&file, Strings::_APP_HEIGHT, Window::windowProperties.mApplicationHeight);
 		AddToFile(&file, "random1", 5.232);
 		AddToFile(&file, "random2", "elo");

@@ -13,6 +13,8 @@
 /* Max size of song that can be loaded into ram IN BYTES */
 #define _MAX_SIZE_RAM_LOADED 50000000
 #define MAX_EXTENSION_LENGTH 4
+#define MAX_FILEPATH_BUFFER_SIZE 65536
+#define MAX_FOLDERPATH_BUFFER_SIZE 512
 
 namespace mdEngine
 {
@@ -94,8 +96,18 @@ namespace MP
 		extern glm::vec2 _PLAYLIST_SCROLL_BAR_POS;
 		extern glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE;
 
-		
+		extern glm::vec2 _PLAYLIST_ADD_BUTTON_POS;
+		extern glm::vec2 _PLAYLIST_ADD_BUTTON_SIZE;
+
+		extern glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_POS;
+		extern glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE;
+
+		extern s16 _TEXT_BOX_ITEM_HEIGHT;
+
 		extern f32 VolumeKeyMultiplier;
+		extern s32 VolumeScrollStep;
+		extern s32 VolumeFadeTime;
+		extern s32 PlaylistRollMultiplier;
 
 		extern f32 PlaylistScrollStep;
 
@@ -103,7 +115,8 @@ namespace MP
 		const std::vector<std::wstring> SupportedFormats =
 		{
 			L".mp3",
-			L".wav"
+			L".wav",
+			L".wma"
 		};
 #else
 		const std::vector<const char*> SupportedFormats =

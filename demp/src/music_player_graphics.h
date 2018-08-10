@@ -5,6 +5,7 @@
 
 #include "md_types.h"
 #include "md_time.h"
+#include "interface/md_interface.h"
 
 namespace mdEngine
 {
@@ -23,35 +24,52 @@ namespace Graphics
 		public:
 			PlaylistObject();
 
-			void Enable();
-			void Disable();
-			void Update();
-
 		
 			b8 IsEnabled();
 			b8 IsToggled();
-			b8 IsRolling();
-			void SetRollTime(s16 time);
-			void SetSelectedID(s32 id);
-			void SetPlayingID(s32 id);
+			b8 hasFocus();
 			s32 GetSelectedID();
 			s32 GetPlayingID();
-			// Returns float value from 0 to 1 signifying current roll state
-			f32 GetRollProgress();
+			void Enable();
+			void Toggle();
+			void UnToggle();
+			void SetSelectedID(s32 id);
+			void SetPlayingID(s32 id);
+			void setPos(glm::vec2 pos);
+			void setSize(glm::vec2 size);
+			glm::vec2 getPos();
+			glm::vec2 getSize();
 			std::vector<s32*> multipleSelect;
+
 		private:
-			s32 selectedID;
-			s32 playingID;
-			Time::Timer timer;
-			f32 currTime;
-			f32 prevTime;
-			s16 unwindTime;
-			b8 enabled;
-			b8 toggled;
+			b8 m_Focus;
+			glm::vec2 m_Pos;
+			glm::vec2 m_Size;
+			s32 m_SelectedID;
+			s32 m_PlayingID;
+			b8 m_Enabled;
+			b8 m_Toggled;
 
 		};
 
-		extern PlaylistObject playlist;
+		class MainPlayerObject
+		{
+		public:
+
+
+			b8 hasFocus();
+			void setPos(glm::vec2 pos);
+			void setSize(glm::vec2 size);
+
+		private:
+			glm::vec2 m_Pos;
+			glm::vec2 m_Size;
+
+		};
+
+		extern PlaylistObject m_Playlist;
+		extern MainPlayerObject m_MainPlayer;
+		extern Interface::TextBox m_AddFileTextBox;
 
 		void StartMainWindow();
 

@@ -1,6 +1,8 @@
 #include "music_player_settings.h"
 
 #include "realtime_system_application.h"
+#include "md_parser.h"
+#include "music_player_string.h"
 
 namespace mdEngine
 {
@@ -82,10 +84,22 @@ namespace MP
 		glm::vec2 _PLAYLIST_SCROLL_BAR_POS;
 		glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE;
 
+		glm::vec2 _PLAYLIST_ADD_BUTTON_POS;
+		glm::vec2 _PLAYLIST_ADD_BUTTON_SIZE;
+
+		glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_POS;
+		glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE;
+
+		s16 _TEXT_BOX_ITEM_HEIGHT;
+
 		f32 VolumeKeyMultiplier = 0.8f;
+		s32 VolumeScrollStep = 2.f;
+		s32 VolumeFadeTime = 500;
+		s32 PlaylistRollMultiplier = 500;
 
-		f32 PlaylistScrollStep = 5.f;
+		f32 PlaylistScrollStep = 50.f;
 
+		// private
 		f32 mdDefaultWidth;
 		f32 mdDefaultHeight;
 		f32 mdCurrentWidth;
@@ -94,6 +108,8 @@ namespace MP
 
 	void Data::InitializeData()
 	{
+
+		Window::windowProperties.mApplicationHeight = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_APP_HEIGHT);
 		mdCurrentWidth = mdEngine::Window::windowProperties.mWindowWidth;
 		mdCurrentHeight = mdEngine::Window::windowProperties.mApplicationHeight;
 
@@ -175,12 +191,20 @@ namespace MP
 		_PLAYLIST_BUTTON_SIZE = glm::vec2(15.f, 15.f);
 
 		_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
-		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight);
+		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 30.f);
 
 		_PLAYLIST_ITEM_SIZE = glm::vec2(300.f, 30.f);
 
 		_PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdCurrentWidth - 60.f, mdCurrentHeight - (mdCurrentHeight - 350.f) - 20.f);
-		_PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, 15.f);
+		_PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, 20.f);
+
+		_PLAYLIST_ADD_BUTTON_POS = glm::vec2(40.f, mdCurrentHeight - 20.f);
+		_PLAYLIST_ADD_BUTTON_SIZE = glm::vec2(35.f, 35.f);
+
+		_PLAYLIST_ADD_BUTTON_TEXTBOX_POS = glm::vec2(40.f, mdCurrentHeight - 20.f);
+		_PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE = glm::vec2(120.f, 100);
+
+		_TEXT_BOX_ITEM_HEIGHT = 20;
 	}
 
 	void Data::UpdateData()
@@ -193,8 +217,16 @@ namespace MP
 		mdDefaultWidth = 500.f;
 		mdDefaultHeight = Window::windowProperties.mWindowHeight - 350.f;
 
+
+		//_MAIN_BACKGROUND_SIZE = glm::vec2(mdDefaultWidth, mdCurrentHeight);
+
+		_PLAYLIST_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdCurrentHeight - _DEFAULT_PLAYER_SIZE.y - 15.f);
+
 		_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f) - 20.f);
-		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 20.f);
+		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 100.f, mdCurrentHeight - 35.f);
+		_PLAYLIST_ADD_BUTTON_POS = glm::vec2(40.f, mdCurrentHeight - 35.f);
+
+		_PLAYLIST_ADD_BUTTON_TEXTBOX_POS = glm::vec2(40.f, mdCurrentHeight - 20.f);
 
 	}
 }

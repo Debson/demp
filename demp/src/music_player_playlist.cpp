@@ -180,10 +180,10 @@ namespace MP
 					{
 						fclose(file);
 						Playlist::mdPathContainer.push_back(songPath);
-						UI::PlaylistItem * item = new UI::PlaylistItem();
+						Interface::PlaylistItem * item = new Interface::PlaylistItem();
 						item->InitFont();
 						item->InitItem();
-						Graphics::MP::playlist.SetSelectedID(mID);
+						Graphics::MP::m_Playlist.SetSelectedID(mID);
 
 						mMusic = BASS_StreamCreateFile(TRUE, mData, 0, size, BASS_STREAM_AUTOFREE);
 						if (check_file() == false)
@@ -322,6 +322,7 @@ namespace MP
 			RamLoadedMusic.load(Parser::GetStringUTF8(file, Strings::_CURRENT_SONG),
 								Parser::GetInt(file, Strings::_CURRENT_SONG_ID));
 			Parser::GetInt(file, Strings::_SHUFFLE_STATE) == 1 ? Playlist::ShuffleMusic() : (void)0;
+			mdShuffleMusic = Parser::GetInt(file, Strings::_SHUFFLE_STATE);
 			Parser::GetInt(file, Strings::_REPEAT_STATE)	== 1 ? Playlist::RepeatMusic()	: (void)0;
 
 			Playlist::SetPosition((s32)Parser::GetFloat(file, Strings::_SONG_POSITION));
@@ -416,8 +417,8 @@ namespace MP
 					RamLoadedMusic.load(mdPathContainer[RamLoadedMusic.mID], RamLoadedMusic.mID);
 				mdMPStarted = true;
 			}
-			Graphics::MP::playlist.SetPlayingID(RamLoadedMusic.mID);
-			Graphics::MP::playlist.SetSelectedID(RamLoadedMusic.mID);
+			Graphics::MP::m_Playlist.SetPlayingID(RamLoadedMusic.mID);
+			Graphics::MP::m_Playlist.SetSelectedID(RamLoadedMusic.mID);
 
 			
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
@@ -573,7 +574,6 @@ namespace MP
 			}
 		}
 
-
 		void IncreaseVolume(App::InputEvent event)
 		{
 			switch (event)
@@ -599,7 +599,6 @@ namespace MP
 				break;
 			};
 		}
-
 
 		void RewindMusic(s32 pos)
 		{
@@ -716,14 +715,14 @@ namespace MP
 			mdPathContainer.erase(mdPathContainer.begin() + pos);
 			UI::mdItemContainer.erase(UI::mdItemContainer.begin() + pos);
 			UI::mdPlaylistButtonsContainer.erase(UI::mdPlaylistButtonsContainer.begin() + pos);
-			UI::PlaylistItem::mCount--;
+			Interface::PlaylistItem::mCount--;
 				
 
-			if (Graphics::MP::playlist.GetPlayingID() == pos)
-				Graphics::MP::playlist.SetPlayingID(-1);
+			if (Graphics::MP::m_Playlist.GetPlayingID() == pos)
+				Graphics::MP::m_Playlist.SetPlayingID(-1);
 
-			if (Graphics::MP::playlist.GetSelectedID() > UI::mdItemContainer.size() - 1)
-				Graphics::MP::playlist.SetSelectedID(UI::mdItemContainer.size() - 1);
+			if (Graphics::MP::m_Playlist.GetSelectedID() > UI::mdItemContainer.size() - 1)
+				Graphics::MP::m_Playlist.SetSelectedID(UI::mdItemContainer.size() - 1);
 
 
 			for (s32 i = pos; i < UI::mdItemContainer.size(); i++)

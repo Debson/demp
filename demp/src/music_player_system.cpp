@@ -101,16 +101,6 @@ namespace MP
 			Playlist::LowerVolume(App::InputEvent::kPressedEvent);
 		}
 
-		/*if (App::Input::IsScrollForwardActive())
-		{
-			Playlist::IncreaseVolume(App::InputEvent::kScrollEvent);
-		}
-
-		if (App::Input::IsScrollBackwardActive())
-		{
-			Playlist::LowerVolume(App::InputEvent::kScrollEvent);
-		}*/
-
 		/* REWIND */
 		if (App::Input::IsKeyPressed(App::KeyCode::Left))
 		{
@@ -134,8 +124,6 @@ namespace MP
 
 		UI::Update();
 
-		/* volume in % */
-		//std::cout << Playlist::mdVolume * 100.f << std::endl;
 	}
 
 	void RenderMusicPlayer()
@@ -247,7 +235,7 @@ namespace MP
 			Playlist::mdPathContainer.push_back(path);
 			MP::musicPlayerState = MP::MusicPlayerState::kMusicAdded;
 			std::cout << "Song's path saved succesfuly\n";
-			UI::PlaylistItem * item = new UI::PlaylistItem();
+			Interface::PlaylistItem * item = new Interface::PlaylistItem();
 			item->InitFont();
 			item->InitItem();
 
@@ -258,6 +246,7 @@ namespace MP
 	{
 		Parser::SavePathsToFile(Strings::_PATHS_FILE, &Playlist::mdPathContainer);
 		Parser::SaveSettingsToFile(Strings::_SETTINGS_FILE);
+		UI::Close();
 	}
 	/*
 	std::string get_ext(char* path)

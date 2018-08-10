@@ -33,6 +33,7 @@ namespace mdEngine
 	{
 		extern App::WindowProperties windowProperties;
 
+		HWND GetHWNDWindow();
 		void SetWindowTitle(const b8& windowName);
 		void SetWindowPos(s32 x, s32 y);
 		void SetWindowSize(s32 w, s32 h);
