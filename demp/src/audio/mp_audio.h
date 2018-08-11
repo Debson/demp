@@ -27,7 +27,11 @@ namespace Audio
 
 	b8 DeallocateAudioItems();
 
+	void UpdateAudioLogic();
+
 	// temporary
+	void Test(std::wstring pa);
+
 	void GetItemsInfo();
 }
 

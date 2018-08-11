@@ -1,11 +1,14 @@
 #include "mp_channel_attrib.h"
 
-#include <filesystem>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 #include <bass.h>
 
 #include "../music_player_settings.h"
 
-namespace fs = std::experimental::filesystem::v1;
+
+
+namespace fs = boost::filesystem;
 
 namespace Audio
 {
@@ -14,51 +17,40 @@ namespace Audio
 	{
 		fs::path p(path);
 
-		if (p.extension().has_extension() && p.extension().string().length() < MAX_EXTENSION_LENGTH + 1)
-			return true;
+		std::string ext = fs::extension(path);
+		boost::algorithm::to_lower(ext);
+
+		for (u8 i = 0; i < mdEngine::MP::Data::SupportedFormats.size(); i++)
+		{
+			if(ext.compare(mdEngine::MP::Data::SupportedFormats[i]) == 0)
+				return true;
+		}
 
 		return false;
 	}
 
 	std::wstring Info::GetFolder(std::wstring path)
 	{
-		std::wstring folder(L"");
-		char slash = '\\';
-		s32 pos_first;
-		s32 pos_second;
-		
-		pos_first = path.find_last_of(slash);
-		folder = path.substr(0, pos_first);
-		pos_second = folder.find_last_of(slash);
-		folder = folder.substr(pos_second + 1, pos_first);
+		fs::path p(path);
 
-
-		return folder;
+		return p.parent_path().leaf().wstring();
 	}
 
 	std::wstring Info::GetName(std::wstring path)
 	{
-		fs::path ph(path);
-		std::wstring name(L"");
-		char slash = '\\';
-		s32 pos_first;
+		fs::path p(path);
 
-		s8 extL = ph.extension().string().length() + 1;
-
-		pos_first = path.find_last_of(slash);
-		name = path.substr(pos_first + 1, path.length() - pos_first - extL);
-
-		return name;
+		return p.filename().wstring();
 	}
 
 	void Info::GetInfo(Info::ChannelInfo* info, std::wstring path)
 	{
 		HSTREAM stream;
-		BASS_CHANNELINFO inf;
+		//BASS_CHANNELINFO inf;
 		
 		stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, 0);
-		BASS_ChannelGetInfo(stream, &inf);
-		switch (inf.ctype)
+		//BASS_ChannelGetInfo(stream, &inf);
+		/*switch (inf.ctype)
 		{
 		case(BASS_CTYPE_STREAM_MP1):
 			info->ext = L"MP1";
@@ -80,7 +72,7 @@ namespace Audio
 		case(BASS_CTYPE_STREAM_OGG):
 			info->ext = L"OGG";
 			break;
-		}
+		}*/
 
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_FREQ, &info->freq);
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_BITRATE, &info->bitrate);

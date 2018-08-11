@@ -112,11 +112,18 @@ namespace MP
 		extern f32 PlaylistScrollStep;
 
 #ifdef _WIN32_
-		const std::vector<std::wstring> SupportedFormats =
+		const std::vector<std::wstring> SupportedFormatsW =
 		{
 			L".mp3",
 			L".wav",
 			L".wma"
+		};
+
+		const std::vector<std::string> SupportedFormats =
+		{
+			".mp3",
+			".wav",
+			".wma"
 		};
 #else
 		const std::vector<const char*> SupportedFormats =

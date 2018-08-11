@@ -270,6 +270,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				std::wstring p(utf8_to_utf16(event.drop.file));
 				std::thread t(Audio::PushToPlaylist, p);
 				t.detach();
+				std::cout << Time::GetTicks() << std::endl;
 				//Audio::PushToPlaylist(p);
 #else
 				MP::PushToPlaylist(event.drop.file);

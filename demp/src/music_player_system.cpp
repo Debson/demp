@@ -36,7 +36,11 @@ namespace MP
 		Parser::ReadPathsFromFile(Strings::_PATHS_FILE);
 		Playlist::Start();
 
-		std::wstring path = L"C:\\Users\\michd\\Desktop\\test folder with music\\07. Bones - 404Error.mp3";
+		std::wstring path = L"C:\\Users\\michd\\Desktop\\house music 2017";
+
+
+		Audio::Test(path);
+
 
 		//Database::OpenDB();
 
@@ -131,6 +135,8 @@ namespace MP
 
 		UI::Update();
 
+		Audio::UpdateAudioLogic();
+
 	}
 
 	void RenderMusicPlayer()
@@ -203,9 +209,9 @@ namespace MP
 		
 		}
 		/* Check if current's file extension is a valid music format */
-		for (u8 i = 0; i < MP::Data::SupportedFormats.size(); i++)
+		for (u8 i = 0; i < MP::Data::SupportedFormatsW.size(); i++)
 		{
-			if (ext.compare(MP::Data::SupportedFormats[i]) == 0)
+			if (ext.compare(MP::Data::SupportedFormatsW[i]) == 0)
 				valid = true;
 		}
 

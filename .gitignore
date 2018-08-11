@@ -295,3 +295,9 @@ demp/settings\.txt
 demp/data\.db
 
 demp/external/sqlite3/
+
+demp/external/filesystem-develop/filesystem-develop/
+
+demp/external/utf8_v2_3_4/doc/
+
+demp/external/utf8_v2_3_4/source/
