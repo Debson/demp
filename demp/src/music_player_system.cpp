@@ -8,6 +8,8 @@
 #include "md_parser.h"
 #include "music_player_string.h"
 #include "music_player_settings.h"
+#include "sqlite/md_sqlite.h"
+#include "audio/mp_audio.h"
 
 #ifdef _WIN32_
 #define OUTPUT std::wcout
@@ -34,8 +36,13 @@ namespace MP
 		Parser::ReadPathsFromFile(Strings::_PATHS_FILE);
 		Playlist::Start();
 
-	}
+		std::wstring path = L"C:\\Users\\michd\\Desktop\\test folder with music\\07. Bones - 404Error.mp3";
 
+		//Database::OpenDB();
+
+		//sqlite::PushToDatabase(path);
+
+	}
 
 	void UpdateInput(void)
 	{
@@ -205,13 +212,13 @@ namespace MP
 		/* Proceed the path */
 		if (exist == true)
 		{
-			OUTPUT << "ERROR: \""<<  *path << "\" already loaded!\n";
+			//OUTPUT << "ERROR: \""<<  *path << "\" already loaded!\n";
 			delete path;
 			path = NULL;
 		}
 		else if(valid == false)
 		{
-			OUTPUT << "ERROR: Invalid extension \"" << ext << "\"!\n";
+			//OUTPUT << "ERROR: Invalid extension \"" << ext << "\"!\n";
 			delete path;
 			path = NULL;
 		}
@@ -219,12 +226,12 @@ namespace MP
 		{
 			if (Playlist::RamLoadedMusic.init(path))
 			{
-				OUTPUT << "Music at path: \"" << *path << "\" loaded successfuly!\n";
+				//OUTPUT << "Music at path: \"" << *path << "\" loaded successfuly!\n";
 				std::cout << "Song loaded to the RAM succesfuly\n";
 			}
 			else
 			{
-				OUTPUT << "ERROR: " << *path << " cannot be loaded!\n";
+				//OUTPUT << "ERROR: " << *path << " cannot be loaded!\n";
 				delete path;
 				path = NULL;
 			}
@@ -234,7 +241,7 @@ namespace MP
 			/* If song is already loaded to ram, save others's songs paths in vector */
 			Playlist::mdPathContainer.push_back(path);
 			MP::musicPlayerState = MP::MusicPlayerState::kMusicAdded;
-			std::cout << "Song's path saved succesfuly\n";
+			//std::cout << "Song's path saved succesfuly\n";
 			Interface::PlaylistItem * item = new Interface::PlaylistItem();
 			item->InitFont();
 			item->InitItem();
@@ -247,6 +254,9 @@ namespace MP
 		Parser::SavePathsToFile(Strings::_PATHS_FILE, &Playlist::mdPathContainer);
 		Parser::SaveSettingsToFile(Strings::_SETTINGS_FILE);
 		UI::Close();
+
+		//Database::CloseDB();
+		Audio::DeallocateAudioItems();
 	}
 	/*
 	std::string get_ext(char* path)

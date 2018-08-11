@@ -106,6 +106,8 @@ namespace MP
 
 		f32 GetVolume();
 
+		void GetBitrate(f32* bitrate);
+
 		void MuteVolume(b8 param);
 
 		/* Returns music length in seconds*/

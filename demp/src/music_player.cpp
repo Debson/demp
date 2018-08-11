@@ -2,7 +2,7 @@
 
 #include "music_player_system.h"
 #include "music_player_settings.h"
-
+#include "realtime_system_application.h"
 
 namespace mdEngine
 {

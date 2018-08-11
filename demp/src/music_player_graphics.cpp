@@ -754,12 +754,13 @@ namespace Graphics
 
 	void MP::RenderPlaylistItems()
 	{
-		glm::mat4 model;
 
-		if (m_Playlist.IsToggled() && m_Playlist.IsEnabled() && mdItemContainer.size() > 0)
+		if (m_Playlist.IsToggled() && m_Playlist.IsEnabled())
 		{
-			RenderPlaylistButtons();
+			//RenderPlaylistButtons();
 
+			if (mdItemContainer.size() == 0)
+				return;
 
 			if (mdEngine::App::Input::IsScrollForwardActive() && m_Playlist.hasFocus())
 			{
@@ -810,18 +811,17 @@ namespace Graphics
 					//testOffsetY += itemH;
 			}
 
-
-
 			if (playlistCurrentOffsetY > 0)
 				playlistCurrentOffsetY = 0;
 
 
-			/* When playlist pos is different than top and low, resize till reach low then change offset to reach top */
+			/* When playlist pos is different than top and low, keep resizing till it reaches end, then start roll out to the top */
 			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kResized &&
 				Window::windowProperties.mDeltaHeightResize > 0 &&
-				playlistCurrentOffsetY <= (maxItems - displayedItems) * itemH * -1)
+				playlistCurrentOffsetY <= (maxItems - displayedItems) * itemH * -1 &&
+				displayedItems < maxItems)
 			{
-				//playlistCurrentOffsetY += Window::windowProperties.mDeltaHeightResize;
+				playlistCurrentOffsetY += Window::windowProperties.mDeltaHeightResize;
 			}
 			else if(mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kResized)
 			{
@@ -831,8 +831,6 @@ namespace Graphics
 			
 			playlistCurrentPos = (s32)(playlistCurrentOffsetY / Data::_PLAYLIST_ITEM_SIZE.y) * -1;
 
-			//std::cout << playlistCurrentPos << std::endl;
-
 			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kIdle)
 			{
 				texturesLoaded = false;
@@ -841,7 +839,7 @@ namespace Graphics
 					mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kIdle;
 						
 			}
-			//std::cout << testOffsetY << std::endl;
+			
 			s32 min = playlistCurrentPos - 2;
 			if (min < 0)
 				min = 0;
@@ -850,14 +848,11 @@ namespace Graphics
 				max = mdItemContainer.size();
 			s32 visibleSpectrum = max - min;
 
-			
 
 			if (playlistFirstEnter && playlistCurrentOffsetY > 80)
 			{
 				playlistPreviousPos = playlistCurrentPos;
 				playlistPreviousOffsetY = playlistCurrentOffsetY;
-				
-
 				
 				playlistFirstEnter = false;
 			}
@@ -941,12 +936,13 @@ namespace Graphics
 
 
 			// SCROLL BAR
+			glm::mat4 model;
 			if (displayedItems < mdItemContainer.size())
 			{
+				f32 displayedItemsF = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / mdItemContainer[0]->mSize.y;
 				f32 playlistSurface = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
-				s32 scaleY = playlistSurface  / mdItemContainer.size() * displayedItems;
+				f32 scaleY = playlistSurface  / (float)mdItemContainer.size() * displayedItemsF;
 				f32 scrollSurface = playlistSurface - scaleY;
-				//std::cout << scrollSurface << std::endl;
 				f32 scrollStep = (playlistCurrentOffsetY * scrollSurface) / ((maxItems - displayedItems) * itemH);
 				s32 newPosY = (Data::_PLAYLIST_SCROLL_BAR_POS.y - scrollStep);
 
@@ -1001,7 +997,7 @@ namespace Graphics
 				Shader::Draw(Shader::shaderDefault);
 			}
 
-
+			// Cut all items and item border if it is out of bou
 			Shader::shaderDefault->setBool("playlistCut", true);
 			Shader::shaderDefault->setFloat("playlistMinY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y);
 			Shader::shaderDefault->setFloat("playlistMaxY", Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
@@ -1177,9 +1173,6 @@ namespace Graphics
 	{
 		InitializeConfig();
 
-
-		m_Playlist.SetRollTime(200);
-
 		main_background			= mdLoadTexture("assets/main_stretched.png");
 		main_foreground			= mdLoadTexture("assets/main_foreground.png");
 
@@ -1222,7 +1215,6 @@ namespace Graphics
 
 	void MP::UpdateMainWindow()
 	{
-		m_Playlist.Update();
 
 	}
 

@@ -13,5 +13,7 @@
 
 #define MD_BASS_ERROR(x) (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", x, nullptr))
 
-#define MD_ERROR(x) (std::cout << x << std::endl)
+#define MD_ERROR(x) (std::cout << "ERROR: " << x << std::endl)
+
+#define MD_LOG(x) (std::cout << "LOG: " << x << std::endl);
 

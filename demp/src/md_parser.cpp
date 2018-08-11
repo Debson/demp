@@ -65,7 +65,7 @@ namespace mdEngine
 		std::string intext;
 		while(getline(file, intext))
 		{
-			MP::PushToPlaylist(utf8_to_utf16(intext));
+			MP::PushToPlaylist(utf8_to_utf16p(intext));
 		}
 
 		file.close();
@@ -209,7 +209,7 @@ namespace mdEngine
 			if (t.find(valName) != std::string::npos)
 				break;
 		}
-		f32 val = 0;
+		f32 val = 0.f;
 		if (!file.eof())
 		{
 			s32 pos = t.find("\"");
@@ -241,7 +241,7 @@ namespace mdEngine
 
 		std::string intext;
 
-		std::string t;
+		std::string t = "";
 		while (getline(file, t))
 		{
 			if (t.find(valName) != std::string::npos)
@@ -264,7 +264,7 @@ namespace mdEngine
 
 		file.close();
 
-		return utf8_to_utf16(t);
+		return utf8_to_utf16p(t);
 	}
 
 	

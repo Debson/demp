@@ -291,3 +291,7 @@ demp/external/jSON/
 demp/path\.txt
 
 demp/settings\.txt
+
+demp/data\.db
+
+demp/external/sqlite3/

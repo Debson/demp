@@ -11,6 +11,7 @@ namespace mdEngine
 
 		const std::string _SETTINGS_FILE		= "E:\\SDL Projects\\demp\\demp\\settings.txt";
 		const std::string _PATHS_FILE			= "E:\\SDL Projects\\demp\\demp\\path.txt";
+		const std::string _DATABASE_FILE		= "E:\\SDL Projects\\demp\\demp\\data.db";
 		extern std::string _SAVED_PATH;
 		const std::string _VOLUME				= "volume";
 		const std::string _CURRENT_SONG			= "current_song";

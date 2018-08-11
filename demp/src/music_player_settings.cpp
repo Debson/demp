@@ -109,12 +109,16 @@ namespace MP
 	void Data::InitializeData()
 	{
 
-		Window::windowProperties.mApplicationHeight = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_APP_HEIGHT);
-		mdCurrentWidth = mdEngine::Window::windowProperties.mWindowWidth;
-		mdCurrentHeight = mdEngine::Window::windowProperties.mApplicationHeight;
-
 		mdDefaultWidth = 500.f;
 		mdDefaultHeight = 350.f;;
+		_MIN_PLAYER_SIZE = glm::vec2(500.f, 500.f);
+
+		Window::windowProperties.mApplicationHeight = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_APP_HEIGHT);
+		if (Window::windowProperties.mApplicationHeight < _MIN_PLAYER_SIZE.y)
+			Window::windowProperties.mApplicationHeight = _MIN_PLAYER_SIZE.y + 20.f;
+
+		mdCurrentWidth = mdEngine::Window::windowProperties.mWindowWidth;
+		mdCurrentHeight = mdEngine::Window::windowProperties.mApplicationHeight;
 
 		s16 musicUIOffsetX = -60;
 		s16 musicUIOffsetY = 35;
@@ -124,7 +128,6 @@ namespace MP
 
 		_MUSIC_PLAYER_FONT = TTF_OpenFont("assets/font/Raleway-Regular.ttf", 14);
 
-		_MIN_PLAYER_SIZE = glm::vec2(500.f, 500.f);
 
 		_DEFAULT_PLAYER_POS = glm::vec2(0.f, 0.f);
 		_DEFAULT_PLAYER_SIZE = glm::vec2(500.f, 350.f);

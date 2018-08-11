@@ -39,6 +39,8 @@ namespace mdEngine
 						mWindowPositionY(100),
 						mWindowMode(WindowMode::Windowed),
 						mActualWindowEvent(WindowEvent::kFocusGained),
+						mPlayerWindowEvent(WindowEvent::kEnter),
+						mMouseWindowEvent(WindowEvent::kEnter),
 						mVerticalSync(true)
 	{ }
 
@@ -87,7 +89,6 @@ namespace mdEngine
 			}
 		
 	}
-
 
 	void App::ProcessButton(Interface::Button* button)
 	{

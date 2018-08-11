@@ -25,6 +25,8 @@
 #include "music_player_system.h"
 #include "md_windows.h"
 #include "interface/md_interface.h"
+#include "audio/mp_audio.h"
+#include "sqlite/md_sqlite.h"
 
 
 
@@ -83,8 +85,6 @@ namespace MP
 		void OpenFolderBrowserWrap();
 
 	}
-
-	
 
 	
 	void UI::DebugStart()
@@ -190,6 +190,29 @@ namespace MP
 					std::cout << *Graphics::MP::m_Playlist.multipleSelect[i] << std::endl;
 				}
 			}
+
+			f32 bitrate = 0.f;
+			if (ImGui::Button("Print Bitrate") == true)
+			{
+				Playlist::GetBitrate(&bitrate);
+				std::cout << bitrate << std::endl;
+			}
+
+
+			if (ImGui::Button("Print items container") == true)
+			{
+				std::thread t(Audio::GetItemsInfo);
+				t.detach();
+			}
+
+			if (ImGui::Button("Print database") == true)
+			{
+				//std::thread t(Database::GetItemsInfo);
+				//t.detach();
+				Database::GetItemsInfo();
+			}
+
+
 
 			ImGui::TreePop();
 		}
@@ -337,7 +360,6 @@ namespace MP
 
 	void UI::Update()
 	{
-
 		/* Collect user input for buttons and movable */
 		for(u16 i = 0; i < mdMovableContainer.size(); i++)
 			App::ProcessMovable(mdMovableContainer[i]);

@@ -30,6 +30,8 @@
 #include "application_window.h"
 #include "graphics.h"
 #include "realtime_application.h"
+#include "sqlite/md_sqlite.h";
+#include "audio/mp_audio.h"
 
 
 namespace mdEngine
@@ -187,7 +189,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	mdApplicationHandler->CollectWindowProperties(Window::windowProperties);
 
 
-	if (BASS_Init(-1, 44100, 0, 0, NULL) == false)
+	if (BASS_Init(-1, 192000, 0, 0, NULL) == false)
 	{
 		MD_BASS_ERROR("ERROR: Initialize BASS");
 		assert(SDL_Init(SDL_INIT_VIDEO) == false);
@@ -244,8 +246,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		Time::deltaTime = currentFrame - previousFrame;
 		previousFrame = currentFrame;
 
-		//Window::windowProperties.mActualWindowEvent = App::WindowEvent::kNone;
-		//Window::windowProperties.mPlayerWindowEvent = App::WindowEvent::kNone;
 
 
 		if (SDL_PollEvent(&event))
@@ -261,9 +261,16 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			case (SDL_DROPFILE):
 			{
 #ifdef _WIN32_
-				std::wstring* path = new std::wstring();
-				path = utf8_to_utf16(event.drop.file);
-				MP::PushToPlaylist(path);
+				//std::wstring* path = new std::wstring();
+				//path = utf8_to_utf16p(event.drop.file);
+
+				//std::thread tt(MP::PushToPlaylist, path);
+				//tt.detach();
+				//MP::PushToPlaylist(path);
+				std::wstring p(utf8_to_utf16(event.drop.file));
+				std::thread t(Audio::PushToPlaylist, p);
+				t.detach();
+				//Audio::PushToPlaylist(p);
 #else
 				MP::PushToPlaylist(event.drop.file);
 #endif
@@ -284,23 +291,23 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				switch (event.window.event)
 				{
 				case (SDL_WINDOWEVENT_FOCUS_GAINED):
-					Window::windowProperties.mActualWindowEvent = App::WindowEvent::kFocusGained;
+					Window::windowProperties.mPlayerWindowEvent = App::WindowEvent::kFocusGained;
 					break;
 				case (SDL_WINDOWEVENT_FOCUS_LOST):
-					Window::windowProperties.mActualWindowEvent = App::WindowEvent::kFocusLost;
+					Window::windowProperties.mPlayerWindowEvent = App::WindowEvent::kFocusLost;
 					break;
 				case (SDL_WINDOWEVENT_ENTER):
-					Window::windowProperties.mActualWindowEvent = App::WindowEvent::kEnter;
+					Window::windowProperties.mMouseWindowEvent = App::WindowEvent::kEnter;
 					break;
 				case (SDL_WINDOWEVENT_LEAVE):
-					Window::windowProperties.mActualWindowEvent = App::WindowEvent::kLeave;
+					Window::windowProperties.mMouseWindowEvent = App::WindowEvent::kLeave;
+					break;
+				case(SDL_WINDOWEVENT_MINIMIZED):
+					Window::windowProperties.mPlayerWindowEvent = App::WindowEvent::kMinimized;
 					break;
 				}
 			}
 		}
-
-		//Window::GetWindowSize(&mdCurrentWindowWidth, &mdCurrentWindowHeight);
-
 		
 		const u8* current_keystate = SDL_GetKeyboardState(NULL);
 		mdEngine::UpdateKeyState(current_keystate);
@@ -309,16 +316,13 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		mdEngine::UpdateMouseState(current_mousestate);
 
 
-		if (mdIsRunning == true)
+		if (mdIsRunning == true && Window::windowProperties.mMouseWindowEvent == App::WindowEvent::kEnter)
 		{
-			/* graphics render */
-			//if (Window::windowProperties.mActualWindowEvent == App::WindowEvent::kFocusGained)
-			{
-				//std::cout << "focus gained\n";
-				UpdateWindowSize();
-				mdApplicationHandler->OnRealtimeUpdate();
-				Graphics::UpdateGraphics();
-			}
+			
+			UpdateWindowSize();
+			mdApplicationHandler->OnRealtimeUpdate();
+			Graphics::UpdateGraphics();
+	
 		}
 
 		SDL_GL_MakeCurrent(mdWindow, gl_context);
@@ -326,8 +330,12 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		Graphics::RenderGraphics();
-		mdApplicationHandler->OnRealtimeRender();
+		if (Window::windowProperties.mPlayerWindowEvent != App::WindowEvent::kMinimized)
+		{
+			Graphics::RenderGraphics();
+			mdApplicationHandler->OnRealtimeRender();
+		}
+
 
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 		ImGui::Render();

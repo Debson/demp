@@ -24,7 +24,6 @@ namespace mdEngine
 		f32 GetFloat(const std::string& fileName, const std::string& valName);
 		std::wstring* GetStringUTF8(const std::string& fileName, const std::string& valName);
 
-
 	}
 }
 

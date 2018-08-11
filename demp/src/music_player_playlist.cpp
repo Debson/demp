@@ -246,14 +246,15 @@ namespace MP
 			else
 			{
 				fseek(file, 0L, SEEK_END);
-				size_t size = ftell(file); // size of opened file
+				s32 size = ftell(file); // size of opened file
 				fseek(file, 0L, SEEK_SET); // set cursor at the beginning
 
 				mPath = songPath;
 				mID = id;
 				mSize = size;
 
-				delete[] mData;
+				if(mData != NULL)
+					delete[] mData;
 				BASS_StreamFree(mMusic);
 				mData = NULL;
 				mMusic = NULL;
@@ -261,7 +262,7 @@ namespace MP
 				if (check_size(mSize) == true)
 				{
 					mData = new char[size];
-					size_t newLen = fread(mData, sizeof(char), mSize, file);
+					s32 newLen = fread(mData, sizeof(char), mSize, file);
 					if (ferror(file) == 0)
 					{
 						fclose(file);
@@ -881,6 +882,11 @@ namespace MP
 		f32 GetVolume()
 		{
 			return mdVolume;
+		}
+
+		void GetBitrate(f32* bitrate)
+		{
+			BASS_ChannelGetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_BITRATE, bitrate);
 		}
 
 		void MuteVolume(b8 param)

@@ -9,6 +9,7 @@ namespace mdEngine
 {
 namespace App
 {
+	//TODO move to settings
 	namespace Data
 	{
 		const s32 _SCREEN_FPS = 120;
@@ -45,14 +46,13 @@ namespace App
 		s32 mWindowPositionY;
 		s32 mDeltaHeightResize;
 		WindowMode mWindowMode;
-		WindowEvent mActualWindowEvent;
-		WindowEvent mPlayerWindowEvent;
+		WindowEvent mActualWindowEvent;		// All music player events, like music changed etc. (this should be switched with mPlayerWindowevent)
+		WindowEvent mPlayerWindowEvent;		// Focus gained or regained
+		WindowEvent mMouseWindowEvent;		// Enter of leave, manages update of all controls
 		
 		bool mVerticalSync;
 
 		WindowProperties(void);
-
-		//WindowProperties(const WindowMode& windowMode);
 
 	};
 
