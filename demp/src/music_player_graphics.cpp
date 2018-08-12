@@ -18,6 +18,8 @@
 #include "music_player_settings.h"
 #include "music_player_ui.h"
 #include "md_math.h"
+#include "audio/mp_audio.h"
+#include "music_player_state.h"
 
 using namespace mdEngine::Graphics;
 using namespace mdEngine::MP;
@@ -755,7 +757,7 @@ namespace Graphics
 	void MP::RenderPlaylistItems()
 	{
 
-		if (m_Playlist.IsToggled() && m_Playlist.IsEnabled())
+		if (m_Playlist.IsToggled() && m_Playlist.IsEnabled() && State::IsPlaylistEmpty == false)
 		{
 			//RenderPlaylistButtons();
 
@@ -792,7 +794,6 @@ namespace Graphics
 			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicChanged ||
 				mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicAdded)
 			{
-				
 				while (currentPos + itemH > top)
 				{
 					top += itemH;

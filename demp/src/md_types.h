@@ -12,6 +12,7 @@
 
 namespace mdEngine
 {
+
 	typedef bool b8;
 
 	typedef int8_t		s8;
@@ -44,6 +45,7 @@ namespace mdEngine
 
 	namespace Color
 	{
+
 		extern glm::vec3 White;
 		extern glm::vec3 Black;
 		extern glm::vec3 Grey;
@@ -53,5 +55,4 @@ namespace mdEngine
 		extern glm::vec3 Blue;
 	}
 }
-
 #endif // !MD_TYPES_H

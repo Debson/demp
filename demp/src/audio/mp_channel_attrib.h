@@ -23,11 +23,18 @@ namespace Audio
 			f64 length;	// in sec
 		};
 
+
 		b8 CheckIfAudio(std::wstring path);
+
+		b8 CheckIfHasItems(std::wstring path);
+		
+		b8 CheckIfAlreadyLoaded(std::vector<std::wstring>* v, std::wstring path);
 
 		std::wstring GetFolder(std::wstring path);
 
 		std::wstring GetName(std::wstring path);
+
+		std::wstring GetExt(std::wstring path);
 
 		void GetInfo(Info::ChannelInfo* info, std::wstring path);
 

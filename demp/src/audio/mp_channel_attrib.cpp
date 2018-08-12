@@ -1,17 +1,22 @@
 #include "mp_channel_attrib.h"
 
+#include <algorithm>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <bass.h>
 
 #include "../music_player_settings.h"
-
-
+#include "mp_audio.h"
+#include "../utf8_to_utf16.h"
 
 namespace fs = boost::filesystem;
 
 namespace Audio
 {
+	namespace Info
+	{
+		
+	}
 
 	b8 Info::CheckIfAudio(std::wstring path)
 	{
@@ -25,6 +30,29 @@ namespace Audio
 			if(ext.compare(mdEngine::MP::Data::SupportedFormats[i]) == 0)
 				return true;
 		}
+
+		return false;
+	}
+
+	b8 Info::CheckIfHasItems(std::wstring path)
+	{
+		fs::path p(path);
+
+		for (auto & i : fs::directory_iterator(path))
+		{
+			if (fs::is_regular_file(i.path()))
+				return true;
+		}
+
+		return false;
+	}
+
+	
+	b8 Info::CheckIfAlreadyLoaded(std::vector<std::wstring>* v, std::wstring path)
+	{
+		auto it = std::find(v->begin(), v->end(), path);
+
+		return it != v->end() ? true : false;
 
 		return false;
 	}
@@ -43,36 +71,24 @@ namespace Audio
 		return p.filename().wstring();
 	}
 
+	std::wstring Info::GetExt(std::wstring path)
+	{
+		fs::path p(path);
+
+		p = fs::extension(p);
+		p = p.string().substr(1, p.string().length());
+		std::string up(p.string());
+		boost::to_upper(up);
+		p = up;
+
+		return p.wstring();
+	}
+
 	void Info::GetInfo(Info::ChannelInfo* info, std::wstring path)
 	{
 		HSTREAM stream;
-		//BASS_CHANNELINFO inf;
 		
 		stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, 0);
-		//BASS_ChannelGetInfo(stream, &inf);
-		/*switch (inf.ctype)
-		{
-		case(BASS_CTYPE_STREAM_MP1):
-			info->ext = L"MP1";
-			break;
-		case(BASS_CTYPE_STREAM_MP2):
-			info->ext = L"MP2";
-			break;
-		case(BASS_CTYPE_STREAM_MP3):
-			info->ext = L"MP3";
-			break;
-		case(BASS_CTYPE_STREAM_WAV):
-		case(BASS_CTYPE_STREAM_WAV_FLOAT):
-		case(BASS_CTYPE_STREAM_WAV_PCM):
-			info->ext = L"WAV";
-			break;
-		case(BASS_CTYPE_STREAM_AIFF):
-			info->ext = L"AIFF";
-			break;
-		case(BASS_CTYPE_STREAM_OGG):
-			info->ext = L"OGG";
-			break;
-		}*/
 
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_FREQ, &info->freq);
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_BITRATE, &info->bitrate);

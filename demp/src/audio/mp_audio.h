@@ -5,6 +5,7 @@
 
 #include "mp_channel_attrib.h"
 
+
 namespace Audio
 {
 	struct AudioItem
@@ -19,15 +20,27 @@ namespace Audio
 
 	namespace Items
 	{
+		std::vector<AudioItem*>& GetContainer();
 		AudioItem* GetItem(s32 id);
 		u32 GetSize();
 	}
 
-	b8 PushToPlaylist(const std::wstring path);
+	namespace Folders
+	{
+		std::vector<std::wstring>& GetContainer();
+		std::wstring GetItem(s32 id);
+		u32 GetSize();
+		b8 AddFolder(std::wstring name);
+		void PrintContent();
+	}
+
+	b8 PushToPlaylist(std::wstring path);
 
 	b8 DeallocateAudioItems();
 
 	void UpdateAudioLogic();
+
+	extern b8 PathsLoaded;
 
 	// temporary
 	void Test(std::wstring pa);

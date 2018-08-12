@@ -230,12 +230,12 @@ namespace MP
 		}
 		else if(Playlist::RamLoadedMusic.mMusic == NULL)
 		{
-			if (Playlist::RamLoadedMusic.init(path))
+			//if (Playlist::RamLoadedMusic.init(path))
 			{
 				//OUTPUT << "Music at path: \"" << *path << "\" loaded successfuly!\n";
 				std::cout << "Song loaded to the RAM succesfuly\n";
 			}
-			else
+			//else
 			{
 				//OUTPUT << "ERROR: " << *path << " cannot be loaded!\n";
 				delete path;
@@ -257,7 +257,7 @@ namespace MP
 
 	void MP::CloseMusicPlayer()
 	{
-		Parser::SavePathsToFile(Strings::_PATHS_FILE, &Playlist::mdPathContainer);
+		Parser::SavePathsToFile(Strings::_PATHS_FILE);
 		Parser::SaveSettingsToFile(Strings::_SETTINGS_FILE);
 		UI::Close();
 

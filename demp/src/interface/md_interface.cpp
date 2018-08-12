@@ -9,6 +9,7 @@
 #include "../music_player_playlist.h"
 #include "../utf8_to_utf16.h"
 #include "../md_text.h"
+#include "../audio/mp_audio.h"
 
 using namespace mdEngine::MP::UI;
 using namespace mdEngine::Graphics;
@@ -92,7 +93,7 @@ namespace mdEngine
 		mTextColor = { 255, 255, 255 };
 
 		mID = mCount;
-		mTitle = Playlist::GetTitle(mID);
+		mTitle = Audio::Items::GetItem(mID)->name;
 
 		u16 len = mTitle.length();
 		mTitleC.resize(len + 1);

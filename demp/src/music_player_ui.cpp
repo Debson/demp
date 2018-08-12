@@ -167,7 +167,7 @@ namespace MP
 
 		if (ImGui::TreeNode("Other") == true)
 		{
-			ImGui::Text("Songs loaded: %d", Playlist::mdPathContainer.size());
+			ImGui::Text("Songs loaded: %d", Audio::Items::GetSize());
 
 			ImGui::Text("Current shuffle pos: %d", Playlist::GetCurrentShufflePos());
 
@@ -205,11 +205,9 @@ namespace MP
 				t.detach();
 			}
 
-			if (ImGui::Button("Print database") == true)
+			if (ImGui::Button("Print loaded folders") == true)
 			{
-				//std::thread t(Database::GetItemsInfo);
-				//t.detach();
-				Database::GetItemsInfo();
+				Audio::Folders::PrintContent();
 			}
 
 
@@ -525,7 +523,7 @@ namespace MP
 				if (mdItemContainer[i]->clickCount > 1)
 				{
 					MP::musicPlayerState = MP::MusicPlayerState::kMusicChosen;
-					Playlist::RamLoadedMusic.load(Playlist::mdPathContainer[mdItemContainer[i]->mID], mdItemContainer[i]->mID);
+					Playlist::RamLoadedMusic.load(Audio::Items::GetItem(i)->path, i);
 					Playlist::PlayMusic();
 				}
 

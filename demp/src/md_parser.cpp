@@ -5,7 +5,10 @@
 #include <string>
 #include <iostream>
 #include <Windows.h>
-#include <codecvt>
+#include <boost/filesystem.hpp>
+
+#include <boost/range/iterator_range.hpp>
+
 
 #include "md_util.h"
 #include "music_player_system.h"
@@ -14,7 +17,11 @@
 #include "music_player_string.h"
 #include "music_player_graphics.h"
 #include "realtime_system_application.h"
+#include "audio/mp_audio.h"
+#include "music_player_state.h"
 
+
+namespace fs = boost::filesystem;
 
 namespace mdEngine
 {
@@ -30,7 +37,7 @@ namespace mdEngine
 
 	}
 
-	b8 Parser::SavePathsToFile(const std::string& fileName, PathContainer* vec)
+	b8 Parser::SavePathsToFile(const std::string& fileName)
 	{
 		std::fstream file;
 		file.open(fileName, std::ios::out | std::ios::binary);
@@ -40,12 +47,31 @@ namespace mdEngine
 			return false;;
 		}
 
+		/* add current song index etc. */
+
+
 		std::string outtext;
-		for (u32 i = 0; i < vec->size(); i++)
+		file << "\n\n\n\n\n\n";
+		file << "#-----CONTENT-----#\n";
+
+		for (u32 i = 0; i < Audio::Folders::GetSize(); i++)
 		{
-			outtext = utf16_to_utf8(*vec->at(i));
-			file << outtext<< "\n";
+			fs::path p(Audio::Folders::GetItem(i));
+			file << "-" << utf16_to_utf8(p.wstring()) << "\n";
+			for (u32 j = 0; j < Audio::Items::GetSize(); j++)
+			{
+				fs::path ps(Audio::Items::GetItem(j)->path);
+				if (p.wstring().compare(ps.branch_path().wstring()) == 0)
+				{
+					outtext = utf16_to_utf8(Audio::Items::GetItem(j)->path);
+					file << outtext << "\n";
+
+					/**/
+				}
+			}
+
 		}
+
 		
 		file.close();
 
@@ -62,10 +88,26 @@ namespace mdEngine
 			return false;
 		}
 
-		std::string intext;
-		while(getline(file, intext))
+		std::string input;
+
+		while(getline(file, input))
 		{
-			MP::PushToPlaylist(utf8_to_utf16p(intext));
+			[&] 
+			{
+				if (input[0] == '-')
+				{
+					if (Audio::Folders::AddFolder(utf8_to_utf16(input.substr(1, input.length()))) == false)
+					{
+						while (getline(file, input) && input[0] != '-') { }
+						return;
+					}
+				}
+				else
+					Audio::PushToPlaylist(utf8_to_utf16(input));;
+			}();
+
+			State::IsPlaylistEmpty = false;
+			State::PathLoadedFromFile = true;
 		}
 
 		file.close();
@@ -84,7 +126,7 @@ namespace mdEngine
 		}
 
 		AddToFile(&file, Strings::_VOLUME, MP::Playlist::GetVolume());;
-		AddToFile(&file, Strings::_CURRENT_SONG, utf16_to_utf8(*MP::Playlist::RamLoadedMusic.mPath));
+		AddToFile(&file, Strings::_CURRENT_SONG, utf16_to_utf8(MP::Playlist::RamLoadedMusic.mPath));
 		AddToFile(&file, Strings::_CURRENT_SONG_ID, MP::Playlist::RamLoadedMusic.mID);
 		AddToFile(&file, Strings::_SONG_POSITION, MP::Playlist::GetPosition());
 		AddToFile(&file, Strings::_SHUFFLE_STATE, MP::Playlist::IsShuffleEnabled());
@@ -229,7 +271,7 @@ namespace mdEngine
 		return val;
 	}
 
-	std::wstring* Parser::GetStringUTF8(const std::string& fileName, const std::string& valName)
+	std::wstring Parser::GetStringUTF8(const std::string& fileName, const std::string& valName)
 	{
 		std::ifstream file;
 		file.open(fileName, std::ios::in | std::ios::binary);
@@ -264,7 +306,7 @@ namespace mdEngine
 
 		file.close();
 
-		return utf8_to_utf16p(t);
+		return utf8_to_utf16(t);
 	}
 
 	

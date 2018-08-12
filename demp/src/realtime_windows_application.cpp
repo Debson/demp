@@ -32,6 +32,7 @@
 #include "realtime_application.h"
 #include "sqlite/md_sqlite.h";
 #include "audio/mp_audio.h"
+#include "music_player_state.h"
 
 
 namespace mdEngine
@@ -267,10 +268,10 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				//std::thread tt(MP::PushToPlaylist, path);
 				//tt.detach();
 				//MP::PushToPlaylist(path);
+				State::PathLoadedFromFile = false;
 				std::wstring p(utf8_to_utf16(event.drop.file));
 				std::thread t(Audio::PushToPlaylist, p);
 				t.detach();
-				std::cout << Time::GetTicks() << std::endl;
 				//Audio::PushToPlaylist(p);
 #else
 				MP::PushToPlaylist(event.drop.file);
@@ -317,13 +318,11 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		mdEngine::UpdateMouseState(current_mousestate);
 
 
-		if (mdIsRunning == true && Window::windowProperties.mMouseWindowEvent == App::WindowEvent::kEnter)
+		//if (mdIsRunning == true && Window::windowProperties.mMouseWindowEvent == App::WindowEvent::kEnter)
 		{
-			
 			UpdateWindowSize();
 			mdApplicationHandler->OnRealtimeUpdate();
 			Graphics::UpdateGraphics();
-	
 		}
 
 		SDL_GL_MakeCurrent(mdWindow, gl_context);

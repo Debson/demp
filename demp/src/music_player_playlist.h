@@ -36,9 +36,9 @@ namespace MP
 			~SongObject();
 
 #ifdef _WIN32_
-			b8 init(std::wstring* songPath);
-			b8 load(std::wstring* songPath, u32 id);
-			std::wstring* mPath;
+			b8 init(std::wstring songPath);
+			b8 load(std::wstring songPath, u32 id);
+			std::wstring mPath;
 #else
 			b8 init(const char* songPath);
 			b8 load(const char* songPath, u32 id, SongState state);
