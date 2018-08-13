@@ -12,17 +12,25 @@ namespace Audio
 {
 	namespace Info
 	{
-		struct ChannelInfo
+		struct ID3
 		{
-			HSTREAM stream;
+			std::wstring id;
+			std::wstring title;
+			std::wstring artist;
+			std::wstring composer;
+			std::wstring encoded_by;
+			std::wstring track_num;
+			std::wstring album;
+			std::wstring year;
+			std::wstring comment;
+			std::wstring genre;
+			std::wstring format;
 
-			std::wstring ext;
 			f32 freq;
 			f32 bitrate;
-			s32 size;	// in bytes
+			f32 size;	// in bytes
 			f64 length;	// in sec
 		};
-
 
 		b8 CheckIfAudio(std::wstring path);
 
@@ -32,11 +40,15 @@ namespace Audio
 
 		std::wstring GetFolder(std::wstring path);
 
-		std::wstring GetName(std::wstring path);
+		std::wstring GetCompleteTitle(std::wstring path);
+
+		std::wstring GetArtist(std::wstring path);
 
 		std::wstring GetExt(std::wstring path);
 
-		void GetInfo(Info::ChannelInfo* info, std::wstring path);
+		void GetInfo(Info::ID3* info, std::wstring path);
+
+		void GetID3Info(Info::ID3* info, std::wstring path);
 
 
 	}

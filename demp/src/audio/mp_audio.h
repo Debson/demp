@@ -5,25 +5,11 @@
 
 #include "mp_channel_attrib.h"
 
+#include "mp_audio_object.h"
 
 namespace Audio
 {
-	struct AudioItem
-	{
-		s32 id;
-		std::wstring path;
-		std::wstring folder;
-		std::wstring name;
-
-		Info::ChannelInfo info;
-	};
-
-	namespace Items
-	{
-		std::vector<AudioItem*>& GetContainer();
-		AudioItem* GetItem(s32 id);
-		u32 GetSize();
-	}
+	
 
 	namespace Folders
 	{
@@ -32,6 +18,17 @@ namespace Audio
 		u32 GetSize();
 		b8 AddFolder(std::wstring name);
 		void PrintContent();
+	}
+
+	namespace Object
+	{
+		std::vector<AudioObject*>& GetContainer();
+		AudioObject* GetItem(u32 id);
+		u32 GetSize();
+
+#ifdef _DEBUG_
+		//void PrintContent();
+#endif
 	}
 
 	b8 PushToPlaylist(std::wstring path);

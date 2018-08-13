@@ -33,7 +33,7 @@ namespace MP
 	void OpenMusicPlayer(void)
 	{
 		UI::Start();
-		Parser::ReadPathsFromFile(Strings::_PATHS_FILE);
+		//Parser::ReadPathsFromFile(Strings::_PATHS_FILE);
 		Playlist::Start();
 
 		std::wstring path = L"C:\\Users\\michd\\Desktop\\house music 2017";
@@ -257,7 +257,7 @@ namespace MP
 
 	void MP::CloseMusicPlayer()
 	{
-		Parser::SavePathsToFile(Strings::_PATHS_FILE);
+		//Parser::SavePathsToFile(Strings::_PATHS_FILE);
 		Parser::SaveSettingsToFile(Strings::_SETTINGS_FILE);
 		UI::Close();
 

@@ -19,7 +19,7 @@ using namespace mdEngine;
 
 namespace Audio
 {
-	static std::vector<AudioItem*> m_AudioItemContainer;
+	static std::vector<AudioObject*> m_AudioObjectContainer;
 	static std::vector<std::wstring> m_FolderContainer;
 	static std::vector<std::wstring> m_PathContainer;
 
@@ -91,12 +91,12 @@ b8 Audio::PushToPlaylist(const std::wstring path)
 
 b8 Audio::DeallocateAudioItems()
 {
-	for (s32 i = 0; i < m_AudioItemContainer.size(); i++)
+	for (s32 i = 0; i < m_AudioObjectContainer.size(); i++)
 	{
-		delete m_AudioItemContainer[i];
+		delete m_AudioObjectContainer[i];
 	}
 
-	m_AudioItemContainer.clear();
+	m_AudioObjectContainer.clear();
 
 	return true;
 }
@@ -105,14 +105,14 @@ void Audio::UpdateAudioLogic()
 {
 	if (firstEnter == false)
 	{
-		lastVecSize = m_AudioItemContainer.size();
+		lastVecSize = m_AudioObjectContainer.size();
 		firstEnter = true;
 	}
 
 
-	if (lastVecSize != m_AudioItemContainer.size())
+	if (lastVecSize != m_AudioObjectContainer.size())
 	{
-		lastVecSize = m_AudioItemContainer.size();
+		lastVecSize = m_AudioObjectContainer.size();
 		loadingPaths = false;
 		loadInfo = true;
 	}
@@ -125,42 +125,20 @@ void Audio::UpdateAudioLogic()
 	{
 		State::IsPlaylistEmpty = false;
 		loadInfo = false;
-		//std::cout << m_AudioItemContainer.size() << std::endl;
 		std::thread t(RetrieveInfo);
 		t.detach();
+		std::cout << "Ticks after load: " << Time::GetTicks() << std::endl;
 	}
 }
 
 void Audio::RetrieveInfo()
 {
-	for (s32 i = 0; i < m_AudioItemContainer.size(); i++)
+	for (s32 i = 0; i < m_AudioObjectContainer.size(); i++)
 	{
-		Info::GetInfo(&m_AudioItemContainer[i]->info, m_AudioItemContainer[i]->path);
+		Info::GetInfo(&m_AudioObjectContainer[i]->GetAudioProperty()->info, 
+					   m_AudioObjectContainer[i]->GetPath());
 	}
 }
-
-std::vector<Audio::AudioItem*>& Audio::Items::GetContainer()
-{
-	return m_AudioItemContainer;
-}
-
-Audio::AudioItem* Audio::Items::GetItem(s32 id)
-{
-	if (m_AudioItemContainer.size() > 0 &&
-		m_AudioItemContainer.size() > id &&
-		id >= 0)
-	{
-		return m_AudioItemContainer.at(id);
-	}
-
-	return NULL;
-}
-
-u32 Audio::Items::GetSize()
-{
-	return m_AudioItemContainer.size();
-}
-
 
 std::vector<std::wstring>& Audio::Folders::GetContainer()
 {
@@ -203,25 +181,56 @@ void Audio::Folders::PrintContent()
 		std::cout << utf16_to_utf8(m_FolderContainer.at(i)) << std::endl;
 }
 
+std::vector<Audio::AudioObject*>& Audio::Object::GetContainer()
+{
+	return m_AudioObjectContainer;
+}
+
+Audio::AudioObject* Audio::Object::GetItem(u32 id)
+{
+	if (id < m_AudioObjectContainer.size())
+		return m_AudioObjectContainer.at(id);
+
+	return NULL;
+}
+
+u32 Audio::Object::GetSize()
+{
+	return m_AudioObjectContainer.size();
+}
+
+
 b8 Audio::AddAudioItem(const std::wstring path)
 {
 	if (Info::CheckIfAudio(path) == false)
 		return false;
 
-	AudioItem * item = new AudioItem();
+	AudioObject* audioObject = NULL;
+	AudioProperties* item = NULL;
+		
+	item = new AudioProperties();
 	item->id = itemCount;
 	item->path = path;
 	item->folder = Info::GetFolder(path);
-	item->name = Info::GetName(path);
-	item->info.ext = Info::GetExt(path);
+	item->info.format = Info::GetExt(path);
+
+	if (item->info.format.compare(L"MP3") == 0)
+	{
+		//Info::GetID3Info(&item->info, path);
+	}
+	else
+	{
+		//item->info.title = Info::GetCompleteTitle(path);
+	}
+
+
+	audioObject = new AudioObject(item);
+	m_AudioObjectContainer.push_back(audioObject);
+
 	itemCount++;
 	m_PathContainer.push_back(path);
+	m_FolderContainer.push_back(item->folder);
 
-	m_AudioItemContainer.push_back(item);
-
-	mdEngine::Interface::PlaylistItem * pItem = new mdEngine::Interface::PlaylistItem();
-	pItem->InitFont();
-	pItem->InitItem();
 
 	return true;
 }
@@ -229,18 +238,24 @@ b8 Audio::AddAudioItem(const std::wstring path)
 void Audio::GetItemsInfo()
 {
 	
-	for (s32 i = 0; i < m_AudioItemContainer.size(); i++)
+	for (s32 i = 0; i < m_AudioObjectContainer.size(); i++)
 	{
 		std::cout << std::endl;
-		std::cout << m_AudioItemContainer[i]->id << std::endl;
-		std::cout << utf16_to_utf8(m_AudioItemContainer[i]->path) << std::endl;
-		std::cout << utf16_to_utf8(m_AudioItemContainer[i]->folder) << std::endl;
-		std::cout << utf16_to_utf8(m_AudioItemContainer[i]->name) << std::endl;
-		std::wcout << m_AudioItemContainer[i]->info.ext << std::endl;
-		std::cout << m_AudioItemContainer[i]->info.freq << std::endl;
-		std::cout << m_AudioItemContainer[i]->info.bitrate << std::endl;
-		std::cout << m_AudioItemContainer[i]->info.size << std::endl;
-		std::cout << m_AudioItemContainer[i]->info.length << "s" << std::endl;
+		std::cout << "ID: " << m_AudioObjectContainer[i]->GetID() << std::endl;
+		std::cout << "Path: "<< utf16_to_utf8(m_AudioObjectContainer[i]->GetPath()) << std::endl;
+		std::cout << "Fodler path: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetFolderPath()) << std::endl;
+		std::cout << "Artist: "<< utf16_to_utf8(m_AudioObjectContainer[i]->GetArtist()) << std::endl;
+		std::cout << "Title: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetTitle()) << std::endl;
+		std::cout << "Track nr: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetTrackNum()) << std::endl;
+		std::cout << "Album: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetAlbum()) << std::endl;
+		std::cout << "Year: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetYear()) << std::endl;
+		std::cout << "Comment: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetComment()) << std::endl;
+		std::cout << "Genre: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetGenre()) << std::endl;
+		std::wcout << "Ext: " << m_AudioObjectContainer[i]->GetFormat() << std::endl;
+		std::cout << "Freq: " << m_AudioObjectContainer[i]->GetFrequency() << std::endl;
+		std::cout << "Bitrate: " << m_AudioObjectContainer[i]->GetBitrate() << std::endl;
+		std::cout << "Size: " << m_AudioObjectContainer[i]->GetObjectSize() << std::endl;
+		std::cout << "Length: " << m_AudioObjectContainer[i]->GetLength() << "s" << std::endl;
 	}
 
 }

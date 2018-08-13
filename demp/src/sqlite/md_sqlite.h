@@ -10,7 +10,7 @@ namespace mdEngine
 	namespace Database
 	{
 		b8 OpenDB();
-		b8 PushToDatabase(Audio::AudioItem* item);
+		b8 PushToDatabase(Audio::AudioProperties* item);
 		b8 CloseDB();
 
 		// temporary

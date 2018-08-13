@@ -270,6 +270,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				//MP::PushToPlaylist(path);
 				State::PathLoadedFromFile = false;
 				std::wstring p(utf8_to_utf16(event.drop.file));
+				std::cout << "Ticks before load: " << Time::GetTicks() << std::endl;
 				std::thread t(Audio::PushToPlaylist, p);
 				t.detach();
 				//Audio::PushToPlaylist(p);

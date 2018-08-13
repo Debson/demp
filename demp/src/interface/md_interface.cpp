@@ -93,7 +93,7 @@ namespace mdEngine
 		mTextColor = { 255, 255, 255 };
 
 		mID = mCount;
-		mTitle = Audio::Items::GetItem(mID)->name;
+		mTitle = Audio::Object::GetItem(mID)->GetTitle();
 
 		u16 len = mTitle.length();
 		mTitleC.resize(len + 1);

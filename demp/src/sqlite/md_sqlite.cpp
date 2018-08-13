@@ -21,8 +21,8 @@ namespace mdEngine
 
 		b8 Connect();
 		b8 Disconnect();
-		b8 CreateTable(Audio::AudioItem* audioItem);
-		b8 Insert(Audio::AudioItem* audioItem);
+		b8 CreateTable(Audio::AudioProperties* audioItem);
+		b8 Insert(Audio::AudioProperties* audioItem);
 		b8 Select(std::wstring table);
 		void Delete(std::wstring item);
 
@@ -33,7 +33,7 @@ namespace mdEngine
 		return Connect();
 	}
 
-	b8 Database::PushToDatabase(Audio::AudioItem* audioItem)
+	b8 Database::PushToDatabase(Audio::AudioProperties* audioItem)
 	{
 		//Connect();
 
@@ -54,9 +54,9 @@ namespace mdEngine
 	void Database::GetItemsInfo()
 	{
 		//Connect();
-		for (u32 i = 0; i < Audio::Items::GetSize(); i++)
+		for (u32 i = 0; i < Audio::Object::GetSize(); i++)
 		{
-			Select(Audio::Items::GetItem(i)->folder);
+			Select(Audio::Object::GetItem(i)->GetFolderPath());
 			std::cout << "\n\n";
 		}
 		//Disconnect();
@@ -99,7 +99,7 @@ namespace mdEngine
 		return true;
 	}
 
-	b8 Database::CreateTable(Audio::AudioItem* item)
+	b8 Database::CreateTable(Audio::AudioProperties* item)
 	{
 		char *errMsg = 0;
 		std::string sql;
@@ -136,25 +136,25 @@ namespace mdEngine
 		return true;
 	}
 
-	b8 Database::Insert(Audio::AudioItem* item)
+	b8 Database::Insert(Audio::AudioProperties* item)
 	{
 		char *errMsg = 0;
 		std::string sql;
 
-		sql = "INSERT INTO [";
+	/*	sql = "INSERT INTO [";
 		sql += utf16_to_utf8(item->folder);
 		sql += "] (ID, PATH, FOLDER, NAME, EXT, FREQ, BITRATE, SIZE, LENGTH) ";
 		sql += "VALUES (";
 		sql += std::to_string(item->id)				+ ", ";
 		sql += "'" + utf16_to_utf8(item->path)		+ "', ";
 		sql += "'" + utf16_to_utf8(item->folder)	+ "', ";
-		sql += "'" + utf16_to_utf8(item->name)		+ "', ";
+		sql += "'" + utf16_to_utf8(item->title)		+ "', ";
 		sql += "'" + utf16_to_utf8(item->info.ext)	+ "', ";
 		sql += std::to_string(item->info.freq)		+ ", ";
 		sql += std::to_string(item->info.bitrate)	+ ", ";
 		sql += std::to_string(item->info.size)		+ ", ";
 		sql += std::to_string(item->info.length);
-		sql += "); ";
+		sql += "); ";*/
 
 		rc = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
 

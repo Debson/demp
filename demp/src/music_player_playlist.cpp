@@ -265,7 +265,7 @@ namespace MP
 							//delete mdPathContainer[mID];
 							//mdPathContainer.erase(mdPathContainer.begin() + mID);
 
-							return load(Audio::Items::GetItem(mID + 1)->path, mID + 1);
+							return load(Audio::Object::GetItem(mID + 1)->GetPath(), mID + 1);
 						}
 					}
 					else
@@ -291,7 +291,7 @@ namespace MP
 						//delete mdPathContainer[mID];
 						//mdPathContainer.erase(mdPathContainer.begin() + mID);
 
-						return load(Audio::Items::GetItem(mID + 1)->path, mID + 1);;
+						return load(Audio::Object::GetItem(mID + 1)->GetPath(), mID + 1);;
 					}
 				}
 			}
@@ -400,13 +400,13 @@ namespace MP
 			if (GetPosition() > 0)
 				pos = GetPosition();
 
-			if (Audio::Items::GetSize() < 1)
+			if (Audio::Object::GetSize() < 1)
 				return;
 
 			if (RamLoadedMusic.get() != NULL)
 			{
 				if(IsPlaying() == false)
-					RamLoadedMusic.load(Audio::Items::GetItem(RamLoadedMusic.mID)->path, RamLoadedMusic.mID);
+					RamLoadedMusic.load(Audio::Object::GetItem(RamLoadedMusic.mID)->GetPath(), RamLoadedMusic.mID);
 				mdMPStarted = true;
 			}
 			Graphics::MP::m_Playlist.SetPlayingID(RamLoadedMusic.mID);
@@ -453,7 +453,7 @@ namespace MP
 		void NextMusic()
 		{
 			if ((RamLoadedMusic.get() != NULL || BASS_ErrorGetCode() == BASS_ERROR_FILEFORM) &&
-				Audio::Items::GetSize() > 0)
+				Audio::Object::GetSize() > 0)
 			{
 				BASS_ChannelStop(RamLoadedMusic.get());
 
@@ -471,11 +471,11 @@ namespace MP
 				*/
 				if (mdShuffleMusic == false)
 				{
-					if ((RamLoadedMusic.mID + 1) < Audio::Items::GetSize())
+					if ((RamLoadedMusic.mID + 1) < Audio::Object::GetSize())
 					{
 						s32 index = 1;
-						while ((RamLoadedMusic.load(Audio::Items::GetItem(RamLoadedMusic.mID + index)->path, RamLoadedMusic.mID + index) == false)
-							&& (RamLoadedMusic.mID + 1 < Audio::Items::GetSize()))
+						while ((RamLoadedMusic.load(Audio::Object::GetItem(RamLoadedMusic.mID + index)->GetPath(), RamLoadedMusic.mID + index) == false)
+							&& (RamLoadedMusic.mID + 1 < Audio::Object::GetSize()))
 						{
 							index++;
 						}
@@ -485,7 +485,7 @@ namespace MP
 					}
 					else
 					{
-						RamLoadedMusic.load(Audio::Items::GetItem(0)->path, 0);
+						RamLoadedMusic.load(Audio::Object::GetItem(0)->GetPath(), 0);
 						mdNextRequest = true;
 					}
 				}
@@ -494,7 +494,7 @@ namespace MP
 					mdCurrentShuffleMusicPos++;
 					if (mdCurrentShuffleMusicPos > mdShuffleMusicPosContainer.size() - 1)
 						mdCurrentShuffleMusicPos = 0;
-					while (RamLoadedMusic.load(Audio::Items::GetItem(mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos])->path,
+					while (RamLoadedMusic.load(Audio::Object::GetItem(mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos])->GetPath(),
 											   mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos]) == false)
 					{
 						mdCurrentShuffleMusicPos++;
@@ -511,7 +511,7 @@ namespace MP
 		void PreviousMusic()
 		{
 			if ((RamLoadedMusic.get() != NULL || BASS_ErrorGetCode() == BASS_ERROR_FILEFORM) &&
-				Audio::Items::GetSize() > 0)
+				Audio::Object::GetSize() > 0)
 			{
 				BASS_ChannelStop(RamLoadedMusic.get());
 
@@ -532,7 +532,7 @@ namespace MP
 					if ((RamLoadedMusic.mID - 1) >= 0)
 					{
 						int index = 1;
-						while ((RamLoadedMusic.load(Audio::Items::GetItem(RamLoadedMusic.mID - index)->path, RamLoadedMusic.mID - index) == false)
+						while ((RamLoadedMusic.load(Audio::Object::GetItem(RamLoadedMusic.mID - index)->GetPath(), RamLoadedMusic.mID - index) == false)
 							&& (RamLoadedMusic.mID - index >= 0))
 						{
 							index++;
@@ -543,7 +543,7 @@ namespace MP
 					}
 					else
 					{
-						RamLoadedMusic.load(Audio::Items::GetItem(Audio::Items::GetSize() - 1)->path, Audio::Items::GetSize() - 1);
+						RamLoadedMusic.load(Audio::Object::GetItem(Audio::Object::GetSize() - 1)->GetPath(), Audio::Object::GetSize() - 1);
 						mdPreviousRequest = true;
 					}
 				}
@@ -551,13 +551,13 @@ namespace MP
 				{
 					mdCurrentShuffleMusicPos--;
 					if (mdCurrentShuffleMusicPos < 0)
-						mdCurrentShuffleMusicPos = Audio::Items::GetSize() - 1;
-					while (RamLoadedMusic.load(Audio::Items::GetItem(mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos])->path,
+						mdCurrentShuffleMusicPos = Audio::Object::GetSize() - 1;
+					while (RamLoadedMusic.load(Audio::Object::GetItem(mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos])->GetPath(),
 											   mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos]) == false)
 					{
 						mdCurrentShuffleMusicPos--;
 						if (mdCurrentShuffleMusicPos < 0)
-							mdCurrentShuffleMusicPos = Audio::Items::GetSize() - 1;
+							mdCurrentShuffleMusicPos = Audio::Object::GetSize() - 1;
 					}
 
 					mdPreviousRequest = true;
@@ -646,10 +646,10 @@ namespace MP
 				mdCurrentShuffleMusicPos = 0;
 			}
 			
-			if (RamLoadedMusic.mID < Audio::Items::GetSize())
+			if (RamLoadedMusic.mID < Audio::Object::GetSize())
 				mdShuffleMusicPosContainer.push_back(RamLoadedMusic.mID);
 
-			for (u32 i = 0; i < Audio::Items::GetSize(); i++)
+			for (u32 i = 0; i < Audio::Object::GetSize(); i++)
 			{
 				if(i != RamLoadedMusic.mID)
 					mdShuffleMusicPosContainer.push_back(i);
@@ -700,11 +700,11 @@ namespace MP
 			if (pos < 0)
 				return;
 		
-			delete Audio::Items::GetItem(pos);
+			delete Audio::Object::GetItem(pos);
 			delete UI::mdItemContainer[pos];
 
 
-			//Audio::Items::GetContainer().erase(Audio::Items::GetContainer().begin() + pos);
+			//Audio::Object::GetContainer().erase(Audio::Object::GetContainer().begin() + pos);
 			UI::mdItemContainer.erase(UI::mdItemContainer.begin() + pos);
 			UI::mdPlaylistButtonsContainer.erase(UI::mdPlaylistButtonsContainer.begin() + pos);
 			Interface::PlaylistItem::mCount--;
@@ -755,10 +755,10 @@ namespace MP
 		{
 			std::wstring path;
 
-			if (Audio::Items::GetSize() > 0 && id >= 0)
+			if (Audio::Object::GetSize() > 0 && id >= 0)
 			{
 #ifdef _WIN32_
-				path = std::wstring(Audio::Items::GetItem(id)->path);
+				path = std::wstring(Audio::Object::GetItem(id)->GetPath());
 #else
 				path = mdPathContainer[id];
 #endif
@@ -788,7 +788,7 @@ namespace MP
 			else
 			{
 				if (RamLoadedMusic.mID - 1 < 0)
-					id = Audio::Items::GetSize() - 1;
+					id = Audio::Object::GetSize() - 1;
 				else
 					id = RamLoadedMusic.mID - 1;
 			}
@@ -808,7 +808,7 @@ namespace MP
 			}
 			else
 			{
-				if (RamLoadedMusic.mID + 1 > Audio::Items::GetSize() - 1)
+				if (RamLoadedMusic.mID + 1 > Audio::Object::GetSize() - 1)
 					id = 0;
 				else
 					id = RamLoadedMusic.mID + 1;
@@ -912,8 +912,8 @@ namespace MP
 
 		void PrintLoadedPaths()
 		{
-			for (u32 i = 0; i < Audio::Items::GetSize(); i++)
-				std::wcout << Audio::Items::GetItem(i)->path << std::endl;
+			for (u32 i = 0; i < Audio::Object::GetSize(); i++)
+				std::wcout << Audio::Object::GetItem(i)->GetPath() << std::endl;
 		}
 #endif
 
@@ -933,7 +933,7 @@ namespace MP
 
 		void ShuffleMusic()
 		{
-			if(Audio::Items::GetSize() > 0)
+			if(Audio::Object::GetSize() > 0)
 				mdShuffleMusic = !mdShuffleMusic;
 
 			ShuffleMusicProcedure();

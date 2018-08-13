@@ -9,6 +9,7 @@
 #include "configuration.h"
 
 #define INVALID (-1)
+#define INVALID_STR ("\0")
 
 namespace mdEngine
 {

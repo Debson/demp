@@ -4,6 +4,9 @@
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <bass.h>
+#include <taglib/tag.h>
+#include <taglib/fileref.h>
+
 
 #include "../music_player_settings.h"
 #include "mp_audio.h"
@@ -61,14 +64,31 @@ namespace Audio
 	{
 		fs::path p(path);
 
-		return p.parent_path().leaf().wstring();
+		return p.remove_filename().wstring();
 	}
 
-	std::wstring Info::GetName(std::wstring path)
+	std::wstring Info::GetCompleteTitle(std::wstring path)
 	{
 		fs::path p(path);
 
-		return p.filename().wstring();
+		s16 len = p.filename().string().length();
+		s16 extLen = p.extension().string().length();
+		std::wstring title = p.filename().wstring();
+		title = title.substr(0, len - extLen);
+
+		return title;
+	}
+
+	std::wstring Info::GetArtist(std::wstring path)
+	{
+		fs::path p(path);
+
+		std::wstring artist(p.filename().wstring());
+		wchar_t minus = '-';
+		s32 pos = artist.find(artist, minus);
+		artist = artist.substr(0, pos - 1);
+
+		return artist;
 	}
 
 	std::wstring Info::GetExt(std::wstring path)
@@ -84,19 +104,30 @@ namespace Audio
 		return p.wstring();
 	}
 
-	void Info::GetInfo(Info::ChannelInfo* info, std::wstring path)
+	void Info::GetInfo(Info::ID3* info, std::wstring path)
 	{
-		HSTREAM stream;
-		
-		stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, 0);
+		HSTREAM stream;;
+
+		stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE | BASS_UNICODE);
 
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_FREQ, &info->freq);
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_BITRATE, &info->bitrate);
 		info->size = BASS_ChannelGetLength(stream, BASS_POS_BYTE);
 		info->length = BASS_ChannelBytes2Seconds(stream, info->size);
 
-
 		BASS_StreamFree(stream);
+	}
+
+	void Info::GetID3Info(Info::ID3* info, std::wstring path)
+	{
+		TagLib::FileRef file(path.c_str());
+		info->title = file.tag()->title().toWString();
+		info->artist = file.tag()->artist().toWString();
+		/*info->track_num = std::to_wstring(file.tag()->track());
+		info->album = file.tag()->album().toWString();
+		info->year = std::to_wstring(file.tag()->year());
+		info->comment = file.tag()->comment().toWString();
+		info->genre = file.tag()->genre().toWString();*/
 	}
 
 }

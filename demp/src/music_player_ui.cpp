@@ -167,7 +167,7 @@ namespace MP
 
 		if (ImGui::TreeNode("Other") == true)
 		{
-			ImGui::Text("Songs loaded: %d", Audio::Items::GetSize());
+			ImGui::Text("Songs loaded: %d", Audio::Object::GetSize());
 
 			ImGui::Text("Current shuffle pos: %d", Playlist::GetCurrentShufflePos());
 
@@ -523,7 +523,7 @@ namespace MP
 				if (mdItemContainer[i]->clickCount > 1)
 				{
 					MP::musicPlayerState = MP::MusicPlayerState::kMusicChosen;
-					Playlist::RamLoadedMusic.load(Audio::Items::GetItem(i)->path, i);
+					Playlist::RamLoadedMusic.load(Audio::Object::GetItem(i)->GetPath(), i);
 					Playlist::PlayMusic();
 				}
 
