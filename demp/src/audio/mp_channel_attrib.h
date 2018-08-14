@@ -36,7 +36,7 @@ namespace Audio
 
 		b8 CheckIfHasItems(std::wstring path);
 		
-		b8 CheckIfAlreadyLoaded(std::vector<std::wstring>* v, std::wstring path);
+		b8 CheckIfAlreadyLoaded(const std::vector<std::wstring*>* v, std::wstring path);
 
 		std::wstring GetFolder(std::wstring path);
 

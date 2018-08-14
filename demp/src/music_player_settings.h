@@ -10,11 +10,15 @@
 #include "md_types.h"
 
 
+// #define _EXTRACT_ID3_TAGS_ // For now extracting id3 tags are not that efficent, will be oprimized in near future
+
+
 /* Max size of song that can be loaded into ram IN BYTES */
 #define _MAX_SIZE_RAM_LOADED 50000000
 #define MAX_EXTENSION_LENGTH 4
 #define MAX_FILEPATH_BUFFER_SIZE 65536
 #define MAX_FOLDERPATH_BUFFER_SIZE 512
+#define WAIT_TIME_BEFORE_NEXT_CALL 500
 
 namespace mdEngine
 {

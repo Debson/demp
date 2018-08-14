@@ -56,7 +56,7 @@ namespace mdEngine
 		//Connect();
 		for (u32 i = 0; i < Audio::Object::GetSize(); i++)
 		{
-			Select(Audio::Object::GetItem(i)->GetFolderPath());
+			Select(Audio::Object::GetAudioObject(i)->GetFolderPath());
 			std::cout << "\n\n";
 		}
 		//Disconnect();

@@ -9,12 +9,10 @@
 
 namespace Audio
 {
-	
-
 	namespace Folders
 	{
-		std::vector<std::wstring>& GetContainer();
-		std::wstring GetItem(s32 id);
+		std::vector<std::wstring*>& GetAudioFoldersContainer();
+		std::wstring* GetAudioFolder(s32 id);
 		u32 GetSize();
 		b8 AddFolder(std::wstring name);
 		void PrintContent();
@@ -22,8 +20,8 @@ namespace Audio
 
 	namespace Object
 	{
-		std::vector<AudioObject*>& GetContainer();
-		AudioObject* GetItem(u32 id);
+		std::vector<AudioObject*>& GetAudioObjectContainer();
+		AudioObject* GetAudioObject(s32 id);
 		u32 GetSize();
 
 #ifdef _DEBUG_
@@ -37,12 +35,15 @@ namespace Audio
 
 	void UpdateAudioLogic();
 
-	extern b8 PathsLoaded;
+	void OnUpdateAudio();
+	
+	void PerformDeletion(s32 index);
 
 	// temporary
-	void Test(std::wstring pa);
 
 	void GetItemsInfo();
+
+	u32 GetProccessedFileCount();
 }
 
 #endif // !MP_AUDIO_H

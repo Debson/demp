@@ -11,6 +11,8 @@
 #include "../music_player_settings.h"
 #include "mp_audio.h"
 #include "../utf8_to_utf16.h"
+#include "id3/tag.h"
+
 
 namespace fs = boost::filesystem;
 
@@ -19,6 +21,8 @@ namespace Audio
 	namespace Info
 	{
 		
+
+		std::wstring GetNewString(ID3_FrameID fid, const std::wstring& path);
 	}
 
 	b8 Info::CheckIfAudio(std::wstring path)
@@ -51,11 +55,15 @@ namespace Audio
 	}
 
 	
-	b8 Info::CheckIfAlreadyLoaded(std::vector<std::wstring>* v, std::wstring path)
+	b8 Info::CheckIfAlreadyLoaded(const std::vector<std::wstring*>* v, std::wstring path)
 	{
-		auto it = std::find(v->begin(), v->end(), path);
-
-		return it != v->end() ? true : false;
+		for (u32 i = 0; i < v->size(); i++)
+		{
+			if ((*v->at(i)).compare(path) == 0)
+			{
+				return true;
+			}
+		}
 
 		return false;
 	}
@@ -121,13 +129,66 @@ namespace Audio
 	void Info::GetID3Info(Info::ID3* info, std::wstring path)
 	{
 		TagLib::FileRef file(path.c_str());
-		info->title = file.tag()->title().toWString();
-		info->artist = file.tag()->artist().toWString();
-		/*info->track_num = std::to_wstring(file.tag()->track());
-		info->album = file.tag()->album().toWString();
+		TagLib::String buff = file.tag()->title();
+		s32 buffInt = 0;
+		if (buff != TagLib::String::null)
+			info->title = buff.toWString();
+		buff = file.tag()->artist();
+		if (buff != TagLib::String::null)
+			info->artist = buff.toWString();
+
+		info->track_num = std::to_wstring(file.tag()->track());
+		buff = file.tag()->album();
+		if (buff != TagLib::String::null)
+			info->album = buff.toWString();
+
 		info->year = std::to_wstring(file.tag()->year());
 		info->comment = file.tag()->comment().toWString();
-		info->genre = file.tag()->genre().toWString();*/
+		info->genre = file.tag()->genre().toWString();
+
+
+
+
+	}
+
+	std::wstring Info::GetNewString(ID3_FrameID fid, const std::wstring& path)
+	{
+		ID3_Tag f;
+		f.Link(utf16_to_utf8(path).c_str(), ID3TT_ID3);
+
+		char data[32];
+		ID3_Frame* frame = NULL;;
+		ID3_Field* field = NULL;
+
+		frame = f.Find(fid);
+		if (frame == 0)
+		{
+			return L"";
+		}
+
+		if (!frame->Contains(ID3FN_TEXTENC))
+		{
+			delete frame;
+			return L"";
+		}
+
+		if (frame->Contains(ID3FN_TEXT))
+		{
+			field = frame->GetField(ID3FN_TEXT);
+		}
+
+		if (field == 0)
+		{
+			delete frame;
+			return L"";
+		}
+
+		field->SetEncoding(ID3TE_ISO8859_1);
+
+		std::string rawText(field->GetRawText());
+		std::wstring rawTextW = utf8_to_utf16(rawText); // TODO: GetRawUnicodeText
+
+		return rawTextW;
 	}
 
 }

@@ -22,11 +22,14 @@ namespace Time
 
 		b8 started;
 		b8 finished;
+		b8 stopped;
 
 		f32 progress();
 		f32 getTicks();
+		f32 getTicksStart();
 		void reset();
 		void start();
+		void stop();
 		void update();
 	};
 

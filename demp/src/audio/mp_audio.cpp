@@ -13,6 +13,9 @@
 #include "../music_player.h"
 #include "../md_types.h"
 #include "../music_player_state.h"
+#include "../music_player_settings.h"
+
+
 
 namespace fs = boost::filesystem;
 using namespace mdEngine;
@@ -20,34 +23,29 @@ using namespace mdEngine;
 namespace Audio
 {
 	static std::vector<AudioObject*> m_AudioObjectContainer;
-	static std::vector<std::wstring> m_FolderContainer;
-	static std::vector<std::wstring> m_PathContainer;
+	static std::vector<std::wstring*> m_FolderContainer;
+	static std::vector<std::wstring*> m_PathContainer;
 
 	static s32 itemCount = 0;
+	static u32 processedFileCount = 0;
+	static u32 currentPropetyFilePos = 0;
+	static u32 currentID3FilePos = 0;
 
-	extern b8 PathsLoaded(false);
-
-
-	b8 loadingPaths(false);
-	b8 loadInfo(false);
-	b8 firstEnter(false);
-	s32 lastVecSize = 0;
+	Time::Timer lastFunctionCallTimer;
+	b8 startLoadingProperties(false);;
+	b8 propertiesLoaded(true);
 
 
 	b8 AddAudioItem(const std::wstring path);
-
 	void RetrieveInfo();
-
-}
-
-void Audio::Test(std::wstring pa)
-{
-
+	void RetrieveID3Info();
 }
 
 
 b8 Audio::PushToPlaylist(const std::wstring path)
 {
+	lastFunctionCallTimer.start();
+
 	if (fs::exists(path))
 	{
 		if (Info::CheckIfAlreadyLoaded(&m_PathContainer, path) == true)
@@ -55,14 +53,16 @@ b8 Audio::PushToPlaylist(const std::wstring path)
 			MD_ERROR("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
 			return false;
 		}
-		
-		loadingPaths = true;
+	
 		mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicAdded;
 
 		if (fs::is_directory(path))
 		{
-			if(Info::CheckIfHasItems(path))
-				m_FolderContainer.push_back(path);
+			if (Info::CheckIfHasItems(path))
+			{
+				std::wstring* p = new std::wstring(path);
+				m_FolderContainer.push_back(p);
+			}
 			for (auto & i : fs::directory_iterator(path))
 			{
 				if (Info::CheckIfAlreadyLoaded(&m_PathContainer, i.path().wstring()) == true)
@@ -97,55 +97,101 @@ b8 Audio::DeallocateAudioItems()
 	}
 
 	m_AudioObjectContainer.clear();
+	m_FolderContainer.clear();
+	m_PathContainer.clear();
+
 
 	return true;
 }
 
 void Audio::UpdateAudioLogic()
 {
-	if (firstEnter == false)
+	//std::cout << State::IsPlaylistEmpty << std::endl;
+
+	if (lastFunctionCallTimer.getTicksStart() > WAIT_TIME_BEFORE_NEXT_CALL)
 	{
-		lastVecSize = m_AudioObjectContainer.size();
-		firstEnter = true;
+		startLoadingProperties = true;
+		lastFunctionCallTimer.stop();
+		//std::cout << "essa\n";
 	}
 
+	if (startLoadingProperties == true)
+	{
+		startLoadingProperties = false;
 
-	if (lastVecSize != m_AudioObjectContainer.size())
-	{
-		lastVecSize = m_AudioObjectContainer.size();
-		loadingPaths = false;
-		loadInfo = true;
-	}
-	else
-	{
-		loadingPaths = true;
-	}
-
-	if (loadingPaths && loadInfo && State::PathLoadedFromFile == false)
-	{
 		State::IsPlaylistEmpty = false;
-		loadInfo = false;
+
 		std::thread t(RetrieveInfo);
 		t.detach();
-		std::cout << "Ticks after load: " << Time::GetTicks() << std::endl;
+
+#ifdef _EXTRACT_ID3_TAGS_
+		t = std::thread(RetrieveID3Info);
+		t.detach();
+#endif
 	}
+}
+
+void Audio::OnUpdateAudio()
+{
+	currentPropetyFilePos = m_AudioObjectContainer.size();
+	currentID3FilePos = m_AudioObjectContainer.size();
+}
+
+void Audio::PerformDeletion(s32 index)
+{
+	// Won't happen that index will be less than 0, so dont have to check it
+	delete m_AudioObjectContainer.at(index);
+	m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + index);
+	m_PathContainer.erase(m_PathContainer.begin() + index);
+
+	if (m_AudioObjectContainer.size() == 0)
+		State::IsPlaylistEmpty = true;
+
+	itemCount--;
 }
 
 void Audio::RetrieveInfo()
 {
-	for (s32 i = 0; i < m_AudioObjectContainer.size(); i++)
+	s32 i = currentPropetyFilePos;
+	std::cout << "i: " << i << std::endl;
+	for (; i < m_AudioObjectContainer.size(); i++)
 	{
 		Info::GetInfo(&m_AudioObjectContainer[i]->GetAudioProperty()->info, 
 					   m_AudioObjectContainer[i]->GetPath());
+
+		std::cout << i << "/" << m_AudioObjectContainer.size() << std::endl;
 	}
+	currentPropetyFilePos = i;
 }
 
-std::vector<std::wstring>& Audio::Folders::GetContainer()
+void Audio::RetrieveID3Info()
+{
+	s32 i = currentID3FilePos;
+	for (; i < m_AudioObjectContainer.size(); i++)
+	{
+		AudioProperties* item = m_AudioObjectContainer[i]->GetAudioProperty();
+
+		if (item->info.format.compare(L"MP3") == 0)
+		{
+			Info::GetID3Info(&item->info, item->path);
+		}
+		else
+		{
+			item->info.title = Info::GetCompleteTitle(item->path);
+		}
+
+		std::cout << i << "/" << m_AudioObjectContainer.size() << std::endl;
+		processedFileCount = i;
+	}
+	currentID3FilePos = i;
+}
+
+std::vector<std::wstring*>& Audio::Folders::GetAudioFoldersContainer()
 {
 	return m_FolderContainer;
 }
 
-std::wstring Audio::Folders::GetItem(s32 id)
+std::wstring* Audio::Folders::GetAudioFolder(s32 id)
 {
 	if (m_FolderContainer.size() > 0 &&
 		m_FolderContainer.size() > id &&
@@ -168,7 +214,8 @@ b8 Audio::Folders::AddFolder(std::wstring name)
 
 	if (fs::exists(name))
 	{
-		m_FolderContainer.push_back(name);
+		std::wstring* p = new std::wstring(name);
+		m_FolderContainer.push_back(p);
 		return true;
 	}
 
@@ -178,17 +225,17 @@ b8 Audio::Folders::AddFolder(std::wstring name)
 void Audio::Folders::PrintContent()
 {
 	for (s32 i = 0; i < m_FolderContainer.size(); i++)
-		std::cout << utf16_to_utf8(m_FolderContainer.at(i)) << std::endl;
+		std::cout << utf16_to_utf8(*m_FolderContainer.at(i)) << std::endl;
 }
 
-std::vector<Audio::AudioObject*>& Audio::Object::GetContainer()
+std::vector<Audio::AudioObject*>& Audio::Object::GetAudioObjectContainer()
 {
 	return m_AudioObjectContainer;
 }
 
-Audio::AudioObject* Audio::Object::GetItem(u32 id)
+Audio::AudioObject* Audio::Object::GetAudioObject(s32 id)
 {
-	if (id < m_AudioObjectContainer.size())
+	if (id < m_AudioObjectContainer.size() && id >= 0)
 		return m_AudioObjectContainer.at(id);
 
 	return NULL;
@@ -208,28 +255,24 @@ b8 Audio::AddAudioItem(const std::wstring path)
 	AudioObject* audioObject = NULL;
 	AudioProperties* item = NULL;
 		
+	// Need to retrieve basic properties on create time
 	item = new AudioProperties();
 	item->id = itemCount;
 	item->path = path;
 	item->folder = Info::GetFolder(path);
 	item->info.format = Info::GetExt(path);
 
-	if (item->info.format.compare(L"MP3") == 0)
-	{
-		//Info::GetID3Info(&item->info, path);
-	}
-	else
-	{
-		//item->info.title = Info::GetCompleteTitle(path);
-	}
-
 
 	audioObject = new AudioObject(item);
 	m_AudioObjectContainer.push_back(audioObject);
+	audioObject->Init(); // Create playlsit item AFTER audio object was push to the container
 
+	// Every created item has it's own unique id in ascending order
 	itemCount++;
-	m_PathContainer.push_back(path);
-	m_FolderContainer.push_back(item->folder);
+	// Store path and folder references for processing purposes
+
+	m_PathContainer.push_back(&item->path);
+	m_FolderContainer.push_back(&item->folder);
 
 
 	return true;
@@ -258,5 +301,11 @@ void Audio::GetItemsInfo()
 		std::cout << "Length: " << m_AudioObjectContainer[i]->GetLength() << "s" << std::endl;
 	}
 
+}
+
+u32 Audio::GetProccessedFileCount()
+{
+	u32 files = processedFileCount;
+	return files;
 }
 

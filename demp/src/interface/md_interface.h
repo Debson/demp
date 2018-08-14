@@ -89,12 +89,12 @@ namespace mdEngine
 
 			std::wstring GetTitle();
 
-			s32 mID;
 			TTF_Font * mFont;
 			glm::ivec2 mTextSize;
 			f32 mTextScale;
 			u8 clickCount;
 		private:
+			s32 mID;
 			std::string mTitleC;
 			GLuint mTitleTexture;
 			std::wstring mTitle;

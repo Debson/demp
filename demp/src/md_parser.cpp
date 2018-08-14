@@ -56,14 +56,14 @@ namespace mdEngine
 
 		for (u32 i = 0; i < Audio::Folders::GetSize(); i++)
 		{
-			fs::path p(Audio::Folders::GetItem(i));
+			fs::path p(*Audio::Folders::GetAudioFolder(i));
 			file << "-" << utf16_to_utf8(p.wstring()) << "\n";
 			for (u32 j = 0; j < Audio::Object::GetSize(); j++)
 			{
-				fs::path ps(Audio::Object::GetItem(j)->GetPath());
+				fs::path ps(Audio::Object::GetAudioObject(j)->GetPath());
 				if (p.wstring().compare(ps.branch_path().wstring()) == 0)
 				{
-					outtext = utf16_to_utf8(Audio::Object::GetItem(j)->GetPath());
+					outtext = utf16_to_utf8(Audio::Object::GetAudioObject(j)->GetPath());
 					file << outtext << "\n";
 
 					/**/

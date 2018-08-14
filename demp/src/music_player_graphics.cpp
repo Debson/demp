@@ -24,6 +24,7 @@
 using namespace mdEngine::Graphics;
 using namespace mdEngine::MP;
 using namespace mdEngine::MP::UI;
+using namespace Audio::Object;
 
 namespace mdEngine
 {
@@ -761,7 +762,7 @@ namespace Graphics
 		{
 			//RenderPlaylistButtons();
 
-			if (mdItemContainer.size() == 0)
+			if (::GetSize() == 0)
 				return;
 
 			if (mdEngine::App::Input::IsScrollForwardActive() && m_Playlist.hasFocus())
@@ -773,8 +774,9 @@ namespace Graphics
 				playlistCurrentOffsetY -= Data::PlaylistScrollStep;
 			}
 
-			s32 displayedItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / mdItemContainer[0]->mSize.y;
-			s32 maxItems = mdItemContainer.size();
+			s32 itemH = ::GetAudioObject(0)->GetPlaylistItem()->mSize.y;
+			s32 displayedItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / itemH;
+			s32 maxItems = ::GetSize();
 
 			if (displayedItems > maxItems)
 				displayedItems = maxItems;
@@ -783,7 +785,6 @@ namespace Graphics
 				displayedItems = 0;
 
 			s32 currentSongID = mdEngine::MP::Playlist::RamLoadedMusic.mID;
-			s32 itemH = mdItemContainer[0]->mSize.y;
 
 			
 			f32 top = playlistCurrentOffsetY;
@@ -845,8 +846,8 @@ namespace Graphics
 			if (min < 0)
 				min = 0;
 			s32 max = displayedItems + playlistCurrentPos + 2;
-			if (max > mdItemContainer.size())
-				max = mdItemContainer.size();
+			if (max > ::GetSize())
+				max = ::GetSize();
 			s32 visibleSpectrum = max - min;
 
 
@@ -863,9 +864,9 @@ namespace Graphics
 				for (u32 i = min; i < max; i++)
 				{
 					if(playlistPreviousOffsetY - playlistCurrentOffsetY > 0)
-						mdItemContainer[i]->mPos.y -= abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
+						::GetAudioObject(i)->GetPlaylistItem()->mPos.y -= abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
 					else
-						mdItemContainer[i]->mPos.y += abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
+						::GetAudioObject(i)->GetPlaylistItem()->mPos.y += abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
 				}
 				playlistPreviousOffsetY = playlistCurrentOffsetY;
 			}
@@ -901,7 +902,7 @@ namespace Graphics
 				predefinedPos[0] = glm::vec2(itemStartPos.x, itemStartPos.y);
 				for (u16 i = min, t = 0; i < max; i++, t++)
 				{
-					item = mdItemContainer[i];
+					item = ::GetAudioObject(i)->GetPlaylistItem();
 					textTexture[t] = Text::LoadText(item->mFont,
 													item->GetTitle(),
 													item->mTextColor);
@@ -921,13 +922,13 @@ namespace Graphics
 				{
 					if (i >= min && i < max)
 					{
-						mdItemContainer[i]->mPos = glm::vec2(predefinedPos[t].x, predefinedPos[t].y);
+						::GetAudioObject(i)->GetPlaylistItem()->mPos = glm::vec2(predefinedPos[t].x, predefinedPos[t].y);
 						//std::cout << mdItemContainer[i]->mPos.y << "   " << playlistCurrentOffsetY << std::endl;
 						t++;
 					}
 					else
 					{
-						mdItemContainer[i]->mPos = glm::vec2(INVALID);
+						::GetAudioObject(i)->GetPlaylistItem()->mPos = glm::vec2(INVALID);
 					}
 					//std::cout << mdItemContainer[i]->mPos.y << "   " << playlistCurrentPos << "  " << playlistCurrentOffsetY << std::endl;
 				}
@@ -938,11 +939,11 @@ namespace Graphics
 
 			// SCROLL BAR
 			glm::mat4 model;
-			if (displayedItems < mdItemContainer.size())
+			if (displayedItems < ::GetSize())
 			{
-				f32 displayedItemsF = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / mdItemContainer[0]->mSize.y;
+				f32 displayedItemsF = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / itemH;
 				f32 playlistSurface = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
-				f32 scaleY = playlistSurface  / (float)mdItemContainer.size() * displayedItemsF;
+				f32 scaleY = playlistSurface  / (float)::GetSize() * displayedItemsF;
 				f32 scrollSurface = playlistSurface - scaleY;
 				f32 scrollStep = (playlistCurrentOffsetY * scrollSurface) / ((maxItems - displayedItems) * itemH);
 				s32 newPosY = (Data::_PLAYLIST_SCROLL_BAR_POS.y - scrollStep);
@@ -1015,45 +1016,46 @@ namespace Graphics
 				   it will check the focus on the wrong item(0 - maxItems). To prevent that, always add mOffsetIndex,
 				   do checked positions, so you will get index of actuall rendered item. */
 				Interface::PlaylistItem::mOffsetIndex = playlistCurrentPos;
-				Interface::PlaylistItem* item = mdItemContainer[playlistIndex];
+				Audio::AudioObject* aItem = ::GetAudioObject(playlistIndex);
+				Interface::PlaylistItem* pItem = ::GetAudioObject(playlistIndex)->GetPlaylistItem();
 				glm::vec3 itemColor;
 
 				// Fint in vector with selected positions if current's id is inside
 				auto it = std::find(m_Playlist.multipleSelect.begin(),
 									m_Playlist.multipleSelect.end(),
-									&item->mID);
+									&aItem->GetID());
 
 				if (m_Playlist.GetPlayingID() && it != m_Playlist.multipleSelect.end())
 				{
 					itemColor *= Color::Red * Color::Grey;
-					item->DrawDottedBorder(playlistCurrentPos);
+					pItem->DrawDottedBorder(playlistCurrentPos);
 				}
-				else if (item->mID == m_Playlist.GetPlayingID())
+				else if (aItem->GetID() == m_Playlist.GetPlayingID())
 				{
 					itemColor = Color::Red * Color::Grey;
 				}
 				else if (it != m_Playlist.multipleSelect.end())
 				{
 					itemColor = Color::Grey;
-					item->DrawDottedBorder(playlistCurrentPos);
+					pItem->DrawDottedBorder(playlistCurrentPos);
 				}
 				else
 				{
-					itemColor = item->mColor;
+					itemColor = pItem->mColor;
 				}
 
 				// Draw border for every selected item
 				if (it != m_Playlist.multipleSelect.end())
 				{
-					if (item->mID == m_Playlist.GetPlayingID())
+					if (aItem->GetID() == m_Playlist.GetPlayingID())
 					{
 						itemColor = Color::Red * Color::Grey;
-						item->DrawDottedBorder(playlistCurrentPos);
+						pItem->DrawDottedBorder(playlistCurrentPos);
 					}
 					else
 					{
 						itemColor = Color::Grey;
-						item->DrawDottedBorder(playlistCurrentPos);
+						pItem->DrawDottedBorder(playlistCurrentPos);
 					}
 				}
 				//if (item->clickCount == 1)
@@ -1061,20 +1063,20 @@ namespace Graphics
 			
 				Shader::shaderDefault->use();
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(item->mPos.x, item->mPos.y, 0.5f));
-				model = glm::scale(model, glm::vec3(item->mSize, 1.0f));
+				model = glm::translate(model, glm::vec3(pItem->mPos.x, pItem->mPos.y, 0.5f));
+				model = glm::scale(model, glm::vec3(pItem->mSize, 1.0f));
 				Shader::shaderDefault->setMat4("model", model);
 				Shader::shaderDefault->setVec3("color", itemColor);
 				glBindTexture(GL_TEXTURE_2D, main_foreground);
 				Shader::Draw(Shader::shaderDefault);
 
-				if (item->mPos.y < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+				if (pItem->mPos.y < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
 				{
 					glm::vec3 color(1.f);
 					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(item->mPos.x + 5.f, item->mPos.y + item->mSize.y / 4.f, 0.8f));
-					model = glm::scale(model, glm::vec3((float)item->mTextSize.x * item->mTextScale,
-						(float)item->mTextSize.y * item->mTextScale, 1.0f));
+					model = glm::translate(model, glm::vec3(pItem->mPos.x + 5.f, pItem->mPos.y + pItem->mSize.y / 4.f, 0.8f));
+					model = glm::scale(model, glm::vec3((float)pItem->mTextSize.x * pItem->mTextScale,
+						(float)pItem->mTextSize.y * pItem->mTextScale, 1.0f));
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::shaderDefault->setVec3("color", Color::White);
 					glBindTexture(GL_TEXTURE_2D, textTexture[texIndex]);

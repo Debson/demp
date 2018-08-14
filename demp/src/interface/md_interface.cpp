@@ -93,15 +93,16 @@ namespace mdEngine
 		mTextColor = { 255, 255, 255 };
 
 		mID = mCount;
-		mTitle = Audio::Object::GetItem(mID)->GetTitle();
+
+		mTitle = Audio::Object::GetAudioObject(mID)->GetTitle();
 
 		u16 len = mTitle.length();
 		mTitleC.resize(len + 1);
 		mTitleC = utf16_to_utf8(mTitle);
 
 		TTF_SizeText(mFont, mTitleC.c_str(), &mTextSize.x, &mTextSize.y);
-
-		mdItemContainer.push_back(this);
+		
+		
 		mdPlaylistButtonsContainer.push_back(std::make_pair(Input::ButtonType::None, this));
 
 		mCount++;

@@ -270,7 +270,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				//MP::PushToPlaylist(path);
 				State::PathLoadedFromFile = false;
 				std::wstring p(utf8_to_utf16(event.drop.file));
-				std::cout << "Ticks before load: " << Time::GetTicks() << std::endl;
+				//std::cout << "Ticks before load: " << Time::GetTicks() << std::endl;
 				std::thread t(Audio::PushToPlaylist, p);
 				t.detach();
 				//Audio::PushToPlaylist(p);
@@ -349,16 +349,13 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 #endif
 		SDL_GL_SwapWindow(mdWindow);
 
-		
-
+	
 		f32 frameTicks = capTimer.getTicks();
 		if (frameTicks < App::Data::_SCREEN_TICK_PER_FRAME)
 		{
 			SDL_Delay(App::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
 		}
 	}
-
-	CloseRealtimeApplication(*mdApplicationHandler);
 }
 
 
@@ -369,7 +366,7 @@ void mdEngine::StopRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
-	/* CLEAR AND DELETE EVERYTHING */
+	/* CLEAR AND FREE MEMORY */
 
 
 	mdApplicationHandler->OnWindowClose();

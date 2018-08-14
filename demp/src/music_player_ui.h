@@ -17,7 +17,6 @@ namespace MP
 	namespace UI
 	{
 		extern std::vector<Interface::Movable*> mdMovableContainer;
-		extern std::vector<Interface::PlaylistItem*> mdItemContainer;
 		extern std::vector<Interface::Resizable*> mdResizableContainer;
 		extern std::vector<std::pair<Input::ButtonType, Interface::Button*>> mdButtonsContainer;
 		extern std::vector<std::pair<Input::ButtonType, Interface::Button*>> mdPlaylistButtonsContainer;

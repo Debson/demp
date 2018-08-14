@@ -7,17 +7,32 @@ namespace Audio
 }
 	Audio::AudioObject::AudioObject() { }
 
-	Audio::AudioObject::AudioObject(AudioProperties* ap){
-		m_AudioProperties = ap;
+	Audio::AudioObject::AudioObject(AudioProperties* ap) : m_AudioProperties(ap) { }
 
-		//m_PlaylistItem = new Interface::PlaylistItem();
-		//m_PlaylistItem->InitFont();
-		//m_PlaylistItem->InitItem();
+	Audio::AudioObject::~AudioObject()
+	{
+		m_AudioProperties->path = L"";
+		m_AudioProperties->folder = L"";
+		delete m_AudioProperties;
+		delete m_PlaylistItem;
 	}
 
-	u32 Audio::AudioObject::GetID(){
+	void Audio::AudioObject::Init()
+	{
+		m_PlaylistItem = new Interface::PlaylistItem();
+		m_PlaylistItem->InitFont();
+		m_PlaylistItem->InitItem();
+	}
+
+	s32& Audio::AudioObject::GetID(){
 
 		return m_AudioProperties->id;
+	}
+
+	void Audio::AudioObject::DecreaseID()
+	{
+		if(m_AudioProperties > 0)
+			m_AudioProperties->id--;
 	}
 
 	std::wstring Audio::AudioObject::GetPath(){
@@ -109,5 +124,6 @@ namespace Audio
 
 	Interface::PlaylistItem* Audio::AudioObject::GetPlaylistItem() {
 
+		assert(m_PlaylistItem != NULL);
 		return m_PlaylistItem;
 	}

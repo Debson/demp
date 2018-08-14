@@ -27,6 +27,7 @@
 #include "interface/md_interface.h"
 #include "audio/mp_audio.h"
 #include "sqlite/md_sqlite.h"
+#include "music_player_state.h"
 
 
 
@@ -40,7 +41,6 @@ namespace MP
 	namespace UI
 	{
 		std::vector<Interface::Movable*> mdMovableContainer;
-		std::vector<Interface::PlaylistItem*> mdItemContainer;
 		std::vector<Interface::Resizable*> mdResizableContainer;
 		std::vector<std::pair<Input::ButtonType, Interface::Button*>> mdButtonsContainer;
 		std::vector<std::pair<Input::ButtonType, Interface::Button*>> mdPlaylistButtonsContainer;
@@ -169,9 +169,13 @@ namespace MP
 		{
 			ImGui::Text("Songs loaded: %d", Audio::Object::GetSize());
 
+			ImGui::Text("Processed items count: %u", Audio::GetProccessedFileCount());
+
 			ImGui::Text("Current shuffle pos: %d", Playlist::GetCurrentShufflePos());
 
 			ImGui::Text("Shuffle container size: %d", Playlist::GetShuffleContainerSize());
+
+
 
 			if (ImGui::Button("Print Shuffled Pos") == true)
 			{
@@ -378,7 +382,9 @@ namespace MP
 			App::ProcessButton(Interface::mdInterfaceButtonContainer[i].second);
 
 
-		HandleInput();
+		
+		if(State::IsPlaylistEmpty == false)
+			HandleInput();
 
 	}
 
@@ -396,12 +402,6 @@ namespace MP
 			delete mdMovableContainer[i];
 		}
 		mdMovableContainer.clear();
-
-		for (size_t i = 0; i < mdItemContainer.size(); i++)
-		{
-			delete mdItemContainer[i];
-		}
-		mdItemContainer.clear();
 
 		for (size_t i = 0; i < mdResizableContainer.size(); i++)
 		{
@@ -474,34 +474,39 @@ namespace MP
 		}
 
 
-		for (s32 i = 0; i < mdItemContainer.size(); i++)
+		for (s32 i = 0; i < Audio::Object::GetSize(); i++)
 		{
 			std::vector<s32*>::iterator it;
+			s32 *currentPlaylistItemID = &Audio::Object::GetAudioObject(i)->GetID();
+
 			if (App::Input::IsKeyDown(App::KeyCode::LCtrl) && App::Input::IsKeyDown(App::KeyCode::A))
 			{
 				it = std::find(Graphics::MP::m_Playlist.multipleSelect.begin(),
 							   Graphics::MP::m_Playlist.multipleSelect.end(),
-							   &mdItemContainer[i]->mID);
+							   currentPlaylistItemID);
 
 				if(it == Graphics::MP::m_Playlist.multipleSelect.end())
-					Graphics::MP::m_Playlist.multipleSelect.push_back(&mdItemContainer[i]->mID);
+					Graphics::MP::m_Playlist.multipleSelect.push_back(
+						currentPlaylistItemID);
 			}
-			else if (mdItemContainer[i]->isPressed == true)
+			else if (Audio::Object::GetAudioObject(i)->GetPlaylistItem()->isPressed == true)
 			{
-				std::wstring x = mdItemContainer[i]->GetTitle();
+				std::wstring x = Audio::Object::GetAudioObject(i)->GetTitle();
 
 				clickDelayTimer.start();
-				mdItemContainer[i]->clickCount++;
+				Audio::Object::GetAudioObject(i)->GetPlaylistItem()->clickCount++;
+
+				std::cout << *currentPlaylistItemID << std::endl;
 
 				// Check if current's item position is in vector with selected item's positions
 				it = std::find(Graphics::MP::m_Playlist.multipleSelect.begin(),
 									Graphics::MP::m_Playlist.multipleSelect.end(),
-									&mdItemContainer[i]->mID);
-				// WHY LCTRL IS NOT WORKING??
+									&Audio::Object::GetAudioObject(i)->GetID());
+				
 				if (App::Input::IsKeyDown(App::KeyCode::LCtrl))
 				{
 					if(it == Graphics::MP::m_Playlist.multipleSelect.end())
-						Graphics::MP::m_Playlist.multipleSelect.push_back(&mdItemContainer[i]->mID);
+						Graphics::MP::m_Playlist.multipleSelect.push_back(currentPlaylistItemID);
 					else
 					{
 						Graphics::MP::m_Playlist.multipleSelect.erase(it);
@@ -511,19 +516,19 @@ namespace MP
 				{
 					if (Graphics::MP::m_Playlist.multipleSelect.size() < 1)
 					{
-						Graphics::MP::m_Playlist.multipleSelect.push_back(&mdItemContainer[i]->mID);
+						Graphics::MP::m_Playlist.multipleSelect.push_back(currentPlaylistItemID);
 					}
 					else
 					{
 						Graphics::MP::m_Playlist.multipleSelect.clear();
-						Graphics::MP::m_Playlist.multipleSelect.push_back(&mdItemContainer[i]->mID);
+						Graphics::MP::m_Playlist.multipleSelect.push_back(currentPlaylistItemID);
 					}
 				}
 
-				if (mdItemContainer[i]->clickCount > 1)
+				if (Audio::Object::GetAudioObject(i)->GetPlaylistItem()->clickCount > 1)
 				{
 					MP::musicPlayerState = MP::MusicPlayerState::kMusicChosen;
-					Playlist::RamLoadedMusic.load(Audio::Object::GetItem(i)->GetPath(), i);
+					Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(i)->GetPath(), i);
 					Playlist::PlayMusic();
 				}
 
@@ -531,7 +536,7 @@ namespace MP
 
 			//If time for second click expires, reset click count
 			if (clickDelayTimer.finished == true)
-				mdItemContainer[i]->clickCount = 0;
+				Audio::Object::GetAudioObject(i)->GetPlaylistItem()->clickCount = 0;
 
 		}
 
@@ -540,6 +545,7 @@ namespace MP
 		{
 			for (u16 j = 0; j < Graphics::MP::m_Playlist.multipleSelect.size(); j++)
 			{
+
 				Playlist::DeleteMusic(*Graphics::MP::m_Playlist.multipleSelect[j]);
 
 			}

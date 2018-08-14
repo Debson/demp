@@ -24,9 +24,12 @@ namespace Audio
 	public:
 		AudioObject();
 		explicit AudioObject(AudioProperties* ap);
+		~AudioObject();
 
+		void Init();
 
-		u32 GetID();
+		s32& GetID();
+		void DecreaseID();
 		std::wstring GetPath();
 		std::wstring GetFolderPath();
 		std::wstring GetArtist();

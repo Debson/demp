@@ -36,12 +36,6 @@ namespace MP
 		//Parser::ReadPathsFromFile(Strings::_PATHS_FILE);
 		Playlist::Start();
 
-		std::wstring path = L"C:\\Users\\michd\\Desktop\\house music 2017";
-
-
-		Audio::Test(path);
-
-
 		//Database::OpenDB();
 
 		//sqlite::PushToDatabase(path);

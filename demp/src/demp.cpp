@@ -49,5 +49,7 @@ int main(int argc, char** argv)
 
 	theApp.Run();
 
+	theApp.Close();
+
 	return 0;
 }

@@ -16,7 +16,6 @@ namespace mdEngine
 		struct WindowProperties;
 
 	}
-
 }
 
 namespace mdEngine
