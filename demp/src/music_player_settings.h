@@ -10,6 +10,7 @@
 #include "md_types.h"
 
 
+//#define NDEBUG // disable asserts
 // #define _EXTRACT_ID3_TAGS_ // For now extracting id3 tags are not that efficent, will be oprimized in near future
 
 
@@ -18,7 +19,11 @@
 #define MAX_EXTENSION_LENGTH 4
 #define MAX_FILEPATH_BUFFER_SIZE 65536
 #define MAX_FOLDERPATH_BUFFER_SIZE 512
+
+
 #define WAIT_TIME_BEFORE_NEXT_CALL 500
+#define MAX_PATH_WAIT_TIME 50
+#define LAST_EVENT_TIME 50
 
 namespace mdEngine
 {

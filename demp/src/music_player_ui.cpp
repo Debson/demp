@@ -51,6 +51,8 @@ namespace MP
 #ifdef _DEBUG_
 		b8 renderDebug = false;
 		glm::vec3 borderColor(0.f, 1.f, 0.f);
+
+		void DeleteAll();
 #endif
 		
 		b8 music_repeat = false;
@@ -74,6 +76,8 @@ namespace MP
 
 		void HandleInput();
 
+		void HandlePlaylistInput();
+
 		void PlaylistFileExplorer();
 
 		void DebugStart();
@@ -92,6 +96,19 @@ namespace MP
 #ifdef _DEBUG_
 		
 #endif
+	}
+
+	void UI::DeleteAll()
+	{
+		s32 len = Audio::Object::GetSize();
+
+		for (s32 j = 0; j < len; j++)
+		{
+
+			Playlist::DeleteMusic(0);
+
+		}
+		Graphics::MP::m_Playlist.multipleSelect.clear();
 	}
 
 	void UI::DebugRender()
@@ -160,6 +177,12 @@ namespace MP
 			ImGui::InputInt("Volume fade time", &Data::VolumeFadeTime, 20, 100);
 			Playlist::SetVolumeFadeTime(Data::VolumeFadeTime);
 
+
+			if (ImGui::Button("Delete All") == true)
+			{
+				std::thread t(UI::DeleteAll);
+				t.detach();
+			}
 
 
 			ImGui::TreePop();
@@ -382,9 +405,9 @@ namespace MP
 			App::ProcessButton(Interface::mdInterfaceButtonContainer[i].second);
 
 
-		
-		if(State::IsPlaylistEmpty == false)
-			HandleInput();
+		HandleInput();
+		/*if(State::IsPlaylistEmpty == false)
+			HandlePlaylistInput();*/
 
 	}
 
@@ -424,11 +447,9 @@ namespace MP
 
 		mdPlaylistButtonsContainer.clear();
 	}
-
-	/* Find Exit button and check if is pressed */
+	
 	void UI::HandleInput()
 	{
-		
 		if (Input::isButtonPressed(Input::ButtonType::Exit))
 		{
 			mdEngine::AppExit();
@@ -473,7 +494,10 @@ namespace MP
 			Playlist::LowerVolume(App::InputEvent::kScrollEvent);
 		}
 
+	}
 
+	void UI::HandlePlaylistInput()
+	{
 		for (s32 i = 0; i < Audio::Object::GetSize(); i++)
 		{
 			std::vector<s32*>::iterator it;
@@ -484,19 +508,18 @@ namespace MP
 				it = std::find(Graphics::MP::m_Playlist.multipleSelect.begin(),
 							   Graphics::MP::m_Playlist.multipleSelect.end(),
 							   currentPlaylistItemID);
-
 				if(it == Graphics::MP::m_Playlist.multipleSelect.end())
 					Graphics::MP::m_Playlist.multipleSelect.push_back(
 						currentPlaylistItemID);
 			}
 			else if (Audio::Object::GetAudioObject(i)->GetPlaylistItem()->isPressed == true)
 			{
-				std::wstring x = Audio::Object::GetAudioObject(i)->GetTitle();
+
 
 				clickDelayTimer.start();
 				Audio::Object::GetAudioObject(i)->GetPlaylistItem()->clickCount++;
 
-				std::cout << *currentPlaylistItemID << std::endl;
+				//std::cout << *currentPlaylistItemID << std::endl;
 
 				// Check if current's item position is in vector with selected item's positions
 				it = std::find(Graphics::MP::m_Playlist.multipleSelect.begin(),
@@ -543,7 +566,7 @@ namespace MP
 		// If delete pressed, delete every item on position from selected positions vector
 		if (App::Input::IsKeyPressed(App::KeyCode::Delete))
 		{
-			for (u16 j = 0; j < Graphics::MP::m_Playlist.multipleSelect.size(); j++)
+			for (s32 j = 0; j < Graphics::MP::m_Playlist.multipleSelect.size(); j++)
 			{
 
 				Playlist::DeleteMusic(*Graphics::MP::m_Playlist.multipleSelect[j]);

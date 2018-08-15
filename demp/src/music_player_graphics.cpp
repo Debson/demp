@@ -758,7 +758,8 @@ namespace Graphics
 	void MP::RenderPlaylistItems()
 	{
 
-		if (m_Playlist.IsToggled() && m_Playlist.IsEnabled() && State::IsPlaylistEmpty == false)
+		if (m_Playlist.IsToggled() && m_Playlist.IsEnabled() && 
+			State::IsPlaylistEmpty == false)
 		{
 			//RenderPlaylistButtons();
 
@@ -773,8 +774,8 @@ namespace Graphics
 			{
 				playlistCurrentOffsetY -= Data::PlaylistScrollStep;
 			}
-
-			s32 itemH = ::GetAudioObject(0)->GetPlaylistItem()->mSize.y;
+			
+			s32 itemH = Data::_PLAYLIST_ITEM_SIZE.y;
 			s32 displayedItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / itemH;
 			s32 maxItems = ::GetSize();
 
@@ -833,14 +834,16 @@ namespace Graphics
 			
 			playlistCurrentPos = (s32)(playlistCurrentOffsetY / Data::_PLAYLIST_ITEM_SIZE.y) * -1;
 
-			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kIdle)
+			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kIdle || State::IsDeletionFinished == true)
 			{
 				texturesLoaded = false;
 				
+				State::IsDeletionFinished = false;
 				if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kMusicDeleted)
 					mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kIdle;
 						
 			}
+
 			
 			s32 min = playlistCurrentPos - 2;
 			if (min < 0)
@@ -850,6 +853,11 @@ namespace Graphics
 				max = ::GetSize();
 			s32 visibleSpectrum = max - min;
 
+			for (s32 i = min; i < max; i++)
+			{
+				if (Audio::Object::GetAudioObject(i) == NULL)
+					return;
+			}
 
 			if (playlistFirstEnter && playlistCurrentOffsetY > 80)
 			{
@@ -863,6 +871,7 @@ namespace Graphics
 			{
 				for (u32 i = min; i < max; i++)
 				{
+					//assert(GetAudioObject(playlistIndex) != NULL);
 					if(playlistPreviousOffsetY - playlistCurrentOffsetY > 0)
 						::GetAudioObject(i)->GetPlaylistItem()->mPos.y -= abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
 					else
@@ -902,6 +911,7 @@ namespace Graphics
 				predefinedPos[0] = glm::vec2(itemStartPos.x, itemStartPos.y);
 				for (u16 i = min, t = 0; i < max; i++, t++)
 				{
+					//assert(GetAudioObject(playlistIndex) != NULL);
 					item = ::GetAudioObject(i)->GetPlaylistItem();
 					textTexture[t] = Text::LoadText(item->mFont,
 													item->GetTitle(),
@@ -917,18 +927,23 @@ namespace Graphics
 					}
 					
 				}
+
 				// Write predefined positions to playlist items that are currently displayed
-				for (u32 i = 0, t = 0; i < maxItems; i++)
+				for (u32 i = min, t = 0; i < max; i++)
 				{
-					if (i >= min && i < max)
+					//std::cout << i << std::endl;
+					//assert(GetAudioObject(playlistIndex) != NULL);
+					//if (i >= min && i < max)
 					{
 						::GetAudioObject(i)->GetPlaylistItem()->mPos = glm::vec2(predefinedPos[t].x, predefinedPos[t].y);
 						//std::cout << mdItemContainer[i]->mPos.y << "   " << playlistCurrentOffsetY << std::endl;
 						t++;
 					}
-					else
+					//else
 					{
-						::GetAudioObject(i)->GetPlaylistItem()->mPos = glm::vec2(INVALID);
+						//TODO
+						//gsdfgsgsgsdgsdgsgs error
+						//::GetAudioObject(i)->GetPlaylistItem()->mPos = glm::vec2(INVALID);
 					}
 					//std::cout << mdItemContainer[i]->mPos.y << "   " << playlistCurrentPos << "  " << playlistCurrentOffsetY << std::endl;
 				}
@@ -1017,6 +1032,7 @@ namespace Graphics
 				   do checked positions, so you will get index of actuall rendered item. */
 				Interface::PlaylistItem::mOffsetIndex = playlistCurrentPos;
 				Audio::AudioObject* aItem = ::GetAudioObject(playlistIndex);
+				assert(GetAudioObject(playlistIndex) != NULL);
 				Interface::PlaylistItem* pItem = ::GetAudioObject(playlistIndex)->GetPlaylistItem();
 				glm::vec3 itemColor;
 

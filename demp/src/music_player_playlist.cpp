@@ -15,6 +15,7 @@
 #include "music_player_string.h"
 #include "utf8_to_utf16.h"
 #include "audio/mp_audio.h"
+#include "music_player_state.h"
 
 #ifdef _WIN32_
 #define OUTPUT std::wcout
@@ -30,6 +31,8 @@ namespace MP
 	{
 		PathContainer mdPathContainer;
 		SongObject RamLoadedMusic;
+
+		Time::Timer lastDeletionTimer;
 
 		b8 mdNextRequest(false);
 		b8 mdPreviousRequest(false);
@@ -212,7 +215,6 @@ namespace MP
 		}
 #ifdef _WIN32_
 
-
 		b8 SongObject::load(std::wstring songPath, u32 id)
 		{
 			FILE* file = NULL;
@@ -299,7 +301,6 @@ namespace MP
 			return true;
 		}
 
-
 		HMUSIC& SongObject::get()
 		{
 			return mMusic;
@@ -328,6 +329,11 @@ namespace MP
 
 		void Playlist::UpdatePlaylist()
 		{
+			if (lastDeletionTimer.getTicksStart() > LAST_EVENT_TIME)
+			{
+				lastDeletionTimer.stop();
+				State::IsDeletionFinished = true;
+			}
 
 			if (mdNextRequest)
 			{
@@ -347,7 +353,7 @@ namespace MP
 				mdPreviousRequest = false;
 			}
 
-			if (MP::musicPlayerState == MP::MusicPlayerState::kMusicDeleted)
+			if (State::IsDeletionFinished == true)
 			{
 				ShuffleMusic();
 				MP::musicPlayerState = MP::MusicPlayerState::kIdle;
@@ -695,10 +701,10 @@ namespace MP
 
 		void DeleteMusic(s32 pos)
 		{
-			//std::wcout << UI::mdItemContainer[pos]->GetTitle() << std::endl;
-
 			if (pos < 0)
 				return;
+
+			lastDeletionTimer.start();
 		
 			Audio::PerformDeletion(pos);
 
@@ -718,7 +724,7 @@ namespace MP
 				Audio::Object::GetAudioObject(i)->DecreaseID();
 			}
 
-			MP::musicPlayerState = MP::MusicPlayerState::kMusicDeleted;
+			//MP::musicPlayerState = MP::MusicPlayerState::kMusicDeleted;
 		}
 
 		b8 IsLoaded()

@@ -24,25 +24,57 @@ namespace Audio
 {
 	static std::vector<AudioObject*> m_AudioObjectContainer;
 	static std::vector<std::wstring*> m_FolderContainer;
-	static std::vector<std::wstring*> m_PathContainer;
+	static std::vector<std::wstring> m_PathContainer;
+	static std::vector<std::wstring> m_PushedPaths;
 
-	static s32 itemCount = 0;
-	static u32 processedFileCount = 0;
-	static u32 currentPropetyFilePos = 0;
-	static u32 currentID3FilePos = 0;
+	static std::thread id3ProcessThread;
+	static std::thread infoProcessThread;
+
+	static s32 itemCount				= 0;
+	static u32 processedFileCount		= 0;
+	static u32 processedID3Tags			= 0;
+	static u32 currentPropetyFilePos	= 0;
+	static u32 currentID3FilePos		= 0;
 
 	Time::Timer lastFunctionCallTimer;
-	b8 startLoadingProperties(false);;
+	Time::Timer lastPathPushTimer;
+	b8 startLoadingProperties(false);
+	b8 startLoadingPaths(false);
 	b8 propertiesLoaded(true);
 
 
-	b8 AddAudioItem(const std::wstring path);
+	void PushToPlaylistWrap();
+	b8 AddAudioItem(std::wstring path);
 	void RetrieveInfo();
 	void RetrieveID3Info();
 }
 
+b8 Audio::SavePathFiles(std::wstring path)
+{
+	if (Info::CheckIfAlreadyLoaded(&m_PathContainer, path) == false)
+	{
+		lastPathPushTimer.start();
+		m_PushedPaths.push_back(path);
+		//m_PathContainer.push_back(path);
+	}
+	else
+	{
+		MD_ERROR("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
+			return false;
+	}
+}
 
-b8 Audio::PushToPlaylist(const std::wstring path)
+void Audio::PushToPlaylistWrap()
+{
+	for (s32 i = 0; i < m_PushedPaths.size(); i++)
+	{
+		PushToPlaylist(m_PushedPaths[i]);
+	}
+	m_PushedPaths.clear();
+
+}
+
+b8 Audio::PushToPlaylist(std::wstring path)
 {
 	lastFunctionCallTimer.start();
 
@@ -67,11 +99,13 @@ b8 Audio::PushToPlaylist(const std::wstring path)
 			{
 				if (Info::CheckIfAlreadyLoaded(&m_PathContainer, i.path().wstring()) == true)
 				{
-					MD_ERROR("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
-					return false;
+					MD_ERROR("Audio item at path \"" + i.path().string() + "\" already loaded!\n");
+				}
+				else
+				{
+					AddAudioItem(i.path().wstring());
 				}
 
-				AddAudioItem(i.path().wstring());
 				if (fs::is_directory(i.path().wstring()))
 					PushToPlaylist(i.path().wstring());
 			}
@@ -108,6 +142,20 @@ void Audio::UpdateAudioLogic()
 {
 	//std::cout << State::IsPlaylistEmpty << std::endl;
 
+	if (lastPathPushTimer.getTicksStart() > MAX_PATH_WAIT_TIME)
+	{
+		startLoadingPaths = true;
+		lastPathPushTimer.stop();
+	}
+
+	if (startLoadingPaths == true)
+	{
+		startLoadingPaths = false;
+		std::thread t(PushToPlaylistWrap);
+		t.detach();
+	}
+
+
 	if (lastFunctionCallTimer.getTicksStart() > WAIT_TIME_BEFORE_NEXT_CALL)
 	{
 		startLoadingProperties = true;
@@ -121,12 +169,15 @@ void Audio::UpdateAudioLogic()
 
 		State::IsPlaylistEmpty = false;
 
-		std::thread t(RetrieveInfo);
-		t.detach();
+
+		infoProcessThread = std::thread(RetrieveInfo);
+		infoProcessThread.detach();
+		//RetrieveInfo();
 
 #ifdef _EXTRACT_ID3_TAGS_
-		t = std::thread(RetrieveID3Info);
-		t.detach();
+		id3ProcessThread = std::thread(RetrieveID3Info);
+		id3ProcessThread.detach();
+		//RetrieveID3Info();
 #endif
 	}
 }
@@ -139,27 +190,41 @@ void Audio::OnUpdateAudio()
 
 void Audio::PerformDeletion(s32 index)
 {
+	assert(index >= 0);
 	// Won't happen that index will be less than 0, so dont have to check it
 	delete m_AudioObjectContainer.at(index);
 	m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + index);
 	m_PathContainer.erase(m_PathContainer.begin() + index);
 
-	if (m_AudioObjectContainer.size() == 0)
-		State::IsPlaylistEmpty = true;
-
+	processedFileCount--;
+	processedID3Tags--;
 	itemCount--;
+	if (processedFileCount < 0)
+		processedFileCount = 0;
+	if (processedID3Tags < 0)
+		processedID3Tags = 0;
+
+	if (m_AudioObjectContainer.size() == 0)
+	{
+		processedFileCount = 0;
+		processedID3Tags = 0;
+		itemCount = 0;
+		currentPropetyFilePos	= 0;
+		currentID3FilePos		= 0;
+		State::IsPlaylistEmpty = true;
+	}
 }
 
 void Audio::RetrieveInfo()
 {
 	s32 i = currentPropetyFilePos;
-	std::cout << "i: " << i << std::endl;
 	for (; i < m_AudioObjectContainer.size(); i++)
 	{
 		Info::GetInfo(&m_AudioObjectContainer[i]->GetAudioProperty()->info, 
 					   m_AudioObjectContainer[i]->GetPath());
 
-		std::cout << i << "/" << m_AudioObjectContainer.size() << std::endl;
+		//std::cout << i << "/" << m_AudioObjectContainer.size() << std::endl;
+		processedFileCount = i;
 	}
 	currentPropetyFilePos = i;
 }
@@ -179,9 +244,8 @@ void Audio::RetrieveID3Info()
 		{
 			item->info.title = Info::GetCompleteTitle(item->path);
 		}
-
-		std::cout << i << "/" << m_AudioObjectContainer.size() << std::endl;
-		processedFileCount = i;
+		//std::cout << i << "/" << m_AudioObjectContainer.size() << std::endl;;
+		processedID3Tags = i;
 	}
 	currentID3FilePos = i;
 }
@@ -214,8 +278,7 @@ b8 Audio::Folders::AddFolder(std::wstring name)
 
 	if (fs::exists(name))
 	{
-		std::wstring* p = new std::wstring(name);
-		m_FolderContainer.push_back(p);
+		m_FolderContainer.push_back(&name);
 		return true;
 	}
 
@@ -246,8 +309,14 @@ u32 Audio::Object::GetSize()
 	return m_AudioObjectContainer.size();
 }
 
+u32 Audio::Object::GetProcessedSize()
+{
+	u32 x = processedFileCount;
+	return x;
+}
 
-b8 Audio::AddAudioItem(const std::wstring path)
+
+b8 Audio::AddAudioItem(std::wstring path)
 {
 	if (Info::CheckIfAudio(path) == false)
 		return false;
@@ -271,7 +340,13 @@ b8 Audio::AddAudioItem(const std::wstring path)
 	itemCount++;
 	// Store path and folder references for processing purposes
 
-	m_PathContainer.push_back(&item->path);
+	fs::path f(item->path);
+	if (fs::is_regular_file(f) == false)
+	{
+		std::wcout << item->path << std::endl;
+	}
+
+	m_PathContainer.push_back(item->path);
 	m_FolderContainer.push_back(&item->folder);
 
 
@@ -300,7 +375,6 @@ void Audio::GetItemsInfo()
 		std::cout << "Size: " << m_AudioObjectContainer[i]->GetObjectSize() << std::endl;
 		std::cout << "Length: " << m_AudioObjectContainer[i]->GetLength() << "s" << std::endl;
 	}
-
 }
 
 u32 Audio::GetProccessedFileCount()
@@ -309,3 +383,8 @@ u32 Audio::GetProccessedFileCount()
 	return files;
 }
 
+u32 Audio::GetProcessedID3Tags()
+{
+	u32 files = processedID3Tags;
+	return files;
+}

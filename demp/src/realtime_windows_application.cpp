@@ -42,6 +42,7 @@ namespace mdEngine
 	SDL_GLContext gl_context;
 	SDL_SysWMinfo wmInfo;
 	HWND hwnd;
+	std::thread fileLoadThread;
 	std::thread graphicsThread, updateThread;
 
 #ifdef _DEBUG_
@@ -271,9 +272,11 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				State::PathLoadedFromFile = false;
 				std::wstring p(utf8_to_utf16(event.drop.file));
 				//std::cout << "Ticks before load: " << Time::GetTicks() << std::endl;
-				std::thread t(Audio::PushToPlaylist, p);
-				t.detach();
+				//fileLoadThread = std::thread(Audio::PushToPlaylist, p);
+				//fileLoadThread.join();
 				//Audio::PushToPlaylist(p);
+				Audio::SavePathFiles(p);
+
 #else
 				MP::PushToPlaylist(event.drop.file);
 #endif
@@ -319,7 +322,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		mdEngine::UpdateMouseState(current_mousestate);
 
 
-		//if (mdIsRunning == true && Window::windowProperties.mMouseWindowEvent == App::WindowEvent::kEnter)
+		if (mdIsRunning == true && Window::windowProperties.mMouseWindowEvent == App::WindowEvent::kEnter)
 		{
 			UpdateWindowSize();
 			mdApplicationHandler->OnRealtimeUpdate();

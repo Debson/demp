@@ -23,11 +23,14 @@ namespace Audio
 		std::vector<AudioObject*>& GetAudioObjectContainer();
 		AudioObject* GetAudioObject(s32 id);
 		u32 GetSize();
+		u32 GetProcessedSize();
 
 #ifdef _DEBUG_
 		//void PrintContent();
 #endif
 	}
+
+	b8 SavePathFiles(std::wstring path);
 
 	b8 PushToPlaylist(std::wstring path);
 
@@ -44,6 +47,8 @@ namespace Audio
 	void GetItemsInfo();
 
 	u32 GetProccessedFileCount();
+
+	u32 GetProcessedID3Tags();
 }
 
 #endif // !MP_AUDIO_H
