@@ -3,13 +3,13 @@
 #include <gtc/matrix_transform.hpp>
 #include <algorithm>
 
-#include "../graphics.h"
-#include "../music_player_ui.h"
-#include "../music_player_settings.h"
-#include "../music_player_playlist.h"
-#include "../utf8_to_utf16.h"
-#include "../md_text.h"
+#include "../settings/music_player_settings.h"
+#include "../playlist/music_player_playlist.h"
+#include "../graphics/graphics.h"
+#include "../ui/music_player_ui.h"
 #include "../audio/mp_audio.h"
+#include "../utility/utf8_to_utf16.h"
+#include "../utility/md_text.h"
 
 using namespace mdEngine::MP::UI;
 using namespace mdEngine::Graphics;
@@ -21,15 +21,11 @@ namespace mdEngine
 	{
 		std::vector<std::pair<const std::wstring, Button*>> mdInterfaceButtonContainer;
 
-
-
 	}
 	/* *************************************************** */
 	Interface::Movable::Movable(glm::vec2 size, glm::vec2 pos) : mSize(size), mPos(pos)
 	{
 		mdMovableContainer.push_back(this);
-
-	
 	}
 
 	/* *************************************************** */
@@ -65,23 +61,26 @@ namespace mdEngine
 		mdInterfaceButtonContainer.push_back(make_pair(name, this));
 	}
 
+	Interface::TextBoxItem::~TextBoxItem() { }
+
 
 	/* *************************************************** */
 	Interface::PlaylistItem::~PlaylistItem() { }
 
 	void Interface::PlaylistItem::InitFont()
 	{
+
 		mFont = MP::Data::_MUSIC_PLAYER_FONT;
 		if (mFont == NULL)
 		{
-			std::cout << "ERROR: initfont!\n";
+			md_log("ERROR: init font!\n");
 		}
 
 		mTextScale = 1.0f;
 
 	}
 
-	void Interface::PlaylistItem::InitItem()
+	void Interface::PlaylistItem::InitItem(s32 id)
 	{
 		mColor = glm::vec3(1.f);
 
@@ -92,18 +91,19 @@ namespace mdEngine
 
 		mTextColor = { 255, 255, 255 };
 
-		mID = mCount;
+		mID = id;
 
 		mTitle = Audio::Object::GetAudioObject(mID)->GetTitle();
+		//mTitle = L"test";
 
 		u16 len = mTitle.length();
 		mTitleC.resize(len + 1);
 		mTitleC = utf16_to_utf8(mTitle);
 
-		TTF_SizeText(mFont, mTitleC.c_str(), &mTextSize.x, &mTextSize.y);
+		//TTF_SizeText(mFont, mTitleC.c_str(), &mTextSize.x, &mTextSize.y);
 		
 		
-		mdPlaylistButtonsContainer.push_back(std::make_pair(Input::ButtonType::None, this));
+		mdPlaylistButtonsContainer.push_back(this);
 
 		mCount++;
 	}	

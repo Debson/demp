@@ -1,17 +1,16 @@
 #include "mp_channel_attrib.h"
 
 #include <algorithm>
+
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <bass.h>
 #include <taglib/tag.h>
 #include <taglib/fileref.h>
 
-
-#include "../music_player_settings.h"
+#include "../settings/music_player_settings.h"
 #include "mp_audio.h"
-#include "../utf8_to_utf16.h"
-
+#include "../utility/utf8_to_utf16.h"
 
 namespace fs = boost::filesystem;
 
@@ -108,7 +107,7 @@ namespace Audio
 
 	void Info::GetInfo(Info::ID3* info, std::wstring path)
 	{
-		HSTREAM stream;;
+		HSTREAM stream;
 
 		stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE | BASS_UNICODE);
 

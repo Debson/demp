@@ -3,9 +3,9 @@
 #include <filesystem>
 #include <sqlite3.h>
 
-#include "../md_util.h"
-#include "../music_player_string.h"
-#include "../utf8_to_utf16.h"
+#include "../settings/music_player_string.h"
+#include "../utility/md_util.h"
+#include "../utility/utf8_to_utf16.h"
 
 
 namespace fs = std::experimental::filesystem::v1;

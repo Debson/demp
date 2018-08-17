@@ -2,10 +2,10 @@
 #ifndef DEMP_H
 #define DEMP_H
 
-#include "application_handler_interface.h"
-#include "system_application_input.h"
-#include "realtime_application.h"
-#include "music_player.h"
+#include "app/application_handler_interface.h"
+#include "app/system_application_input.h"
+#include "app/realtime_application.h"
+#include "player/music_player.h"
 
 class Demp : public mdEngine::App::ApplicationHandlerInterface
 {

@@ -1,20 +1,20 @@
 #include "mp_audio.h"
 
 #include <thread>
-#include <map>
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
 
-#include "../utf8_to_utf16.h"
-#include "../sqlite/md_sqlite.h"
-#include "../md_util.h"
-#include "../md_time.h"
+#include "../utility/utf8_to_utf16.h"
+#include "../utility/md_util.h"
+#include "../utility/md_time.h"
+#include "../utility/md_types.h"
 #include "../interface/md_interface.h"
-#include "../music_player.h"
-#include "../md_types.h"
-#include "../music_player_state.h"
-#include "../music_player_settings.h"
+#include "../player/music_player.h"
+#include "../player/music_player_state.h"
+#include "../settings/music_player_settings.h"
+#include "../ui/music_player_ui.h"
 
+#define WORK_THREADS 4
 
 
 namespace fs = boost::filesystem;
@@ -24,8 +24,9 @@ namespace Audio
 {
 	static std::vector<AudioObject*> m_AudioObjectContainer;
 	static std::vector<std::wstring*> m_FolderContainer;
-	static std::vector<std::wstring> m_PathContainer;
-	static std::vector<std::wstring> m_PushedPaths;
+	static std::vector<std::wstring> m_LoadedPathContainer;
+	static std::vector<std::wstring> m_AddedFilesPathContainer;
+	static std::vector<std::wstring> m_InitPaths;
 
 	static std::thread id3ProcessThread;
 	static std::thread infoProcessThread;
@@ -36,6 +37,8 @@ namespace Audio
 	static u32 currentPropetyFilePos	= 0;
 	static u32 currentID3FilePos		= 0;
 
+	static s32 currentContainersSize = 0;
+
 	Time::Timer lastFunctionCallTimer;
 	Time::Timer lastPathPushTimer;
 	b8 startLoadingProperties(false);
@@ -44,17 +47,17 @@ namespace Audio
 
 
 	void PushToPlaylistWrap();
-	b8 AddAudioItem(std::wstring path);
-	void RetrieveInfo();
-	void RetrieveID3Info();
+	b8 AddAudioItem(std::wstring path, s32 id);
+	void AddAudioItemWrap(const s32 start, const s32 end);
+	void ResizeAllContainers(int size);
 }
 
 b8 Audio::SavePathFiles(std::wstring path)
 {
-	if (Info::CheckIfAlreadyLoaded(&m_PathContainer, path) == false)
+	if (Info::CheckIfAlreadyLoaded(&m_LoadedPathContainer, path) == false)
 	{
 		lastPathPushTimer.start();
-		m_PushedPaths.push_back(path);
+		m_InitPaths.push_back(path);
 		//m_PathContainer.push_back(path);
 	}
 	else
@@ -66,12 +69,11 @@ b8 Audio::SavePathFiles(std::wstring path)
 
 void Audio::PushToPlaylistWrap()
 {
-	for (s32 i = 0; i < m_PushedPaths.size(); i++)
+	for (s32 i = 0; i < m_InitPaths.size(); i++)
 	{
-		PushToPlaylist(m_PushedPaths[i]);
+		PushToPlaylist(m_InitPaths[i]);
 	}
-	m_PushedPaths.clear();
-
+	m_InitPaths.clear();
 }
 
 b8 Audio::PushToPlaylist(std::wstring path)
@@ -80,9 +82,9 @@ b8 Audio::PushToPlaylist(std::wstring path)
 
 	if (fs::exists(path))
 	{
-		if (Info::CheckIfAlreadyLoaded(&m_PathContainer, path) == true)
+		if (Info::CheckIfAlreadyLoaded(&m_LoadedPathContainer, path) == true)
 		{
-			MD_ERROR("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
+			md_log("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
 			return false;
 		}
 	
@@ -95,29 +97,40 @@ b8 Audio::PushToPlaylist(std::wstring path)
 				std::wstring* p = new std::wstring(path);
 				m_FolderContainer.push_back(p);
 			}
+
 			for (auto & i : fs::directory_iterator(path))
 			{
-				if (Info::CheckIfAlreadyLoaded(&m_PathContainer, i.path().wstring()) == true)
+				if (Info::CheckIfAlreadyLoaded(&m_LoadedPathContainer, i.path().wstring()) == true)
 				{
-					MD_ERROR("Audio item at path \"" + i.path().string() + "\" already loaded!\n");
+					md_log("Audio item at path \"" + i.path().string() + "\" already loaded!\n");
 				}
 				else
 				{
-					AddAudioItem(i.path().wstring());
+					if (fs::is_directory(i.path().wstring()))
+						PushToPlaylist(i.path().wstring());
+					else if(Info::CheckIfAudio(i.path().wstring()))
+						m_AddedFilesPathContainer.push_back(i.path().wstring());
+					//AddAudioItem(i.path().wstring());
 				}
 
-				if (fs::is_directory(i.path().wstring()))
-					PushToPlaylist(i.path().wstring());
 			}
 		}
 		else
 		{
-			AddAudioItem(path);
+			if (Info::CheckIfAlreadyLoaded(&m_LoadedPathContainer, path) == true)
+			{
+				md_log("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
+			}
+			else if (Info::CheckIfAudio(path))
+			{
+				m_AddedFilesPathContainer.push_back(path);
+			}
+			//AddAudioItem(path);
 		}
 	}
 	else
 	{
-		MD_ERROR("File at path \"" + utf16_to_utf8(path) + "\" does not exist!");
+		md_log("File at path \"" + utf16_to_utf8(path) + "\" does not exist!");
 	}
 
 	return true;
@@ -130,9 +143,10 @@ b8 Audio::DeallocateAudioItems()
 		delete m_AudioObjectContainer[i];
 	}
 
+
 	m_AudioObjectContainer.clear();
 	m_FolderContainer.clear();
-	m_PathContainer.clear();
+	m_LoadedPathContainer.clear();
 
 
 	return true;
@@ -151,8 +165,9 @@ void Audio::UpdateAudioLogic()
 	if (startLoadingPaths == true)
 	{
 		startLoadingPaths = false;
-		std::thread t(PushToPlaylistWrap);
-		t.detach();
+		PushToPlaylistWrap();
+		//std::thread t(PushToPlaylistWrap);
+		//t.detach();
 	}
 
 
@@ -169,16 +184,36 @@ void Audio::UpdateAudioLogic()
 
 		State::IsPlaylistEmpty = false;
 
+		// split the work between work threads
+		std::thread* tt = new std::thread[WORK_THREADS];
+		s32 toProcessCount = m_AddedFilesPathContainer.size();
+		s32 div = toProcessCount / WORK_THREADS;
 
-		infoProcessThread = std::thread(RetrieveInfo);
-		infoProcessThread.detach();
-		//RetrieveInfo();
+		// All vectors must be resized before any operations are performed on them
+		ResizeAllContainers(toProcessCount);
 
-#ifdef _EXTRACT_ID3_TAGS_
-		id3ProcessThread = std::thread(RetrieveID3Info);
-		id3ProcessThread.detach();
-		//RetrieveID3Info();
-#endif
+		// Keep track of size of containers
+		currentContainersSize = toProcessCount;
+
+		// In some cases division will leave a remainder
+		s8 rest = toProcessCount % WORK_THREADS;
+
+		for (s8 i = 0; i < WORK_THREADS; i++)
+		{
+			if (i == WORK_THREADS - 1)
+				tt[i] = std::thread(AddAudioItemWrap, div * i, div * (i + 1) + rest);
+			else
+				tt[i] = std::thread(AddAudioItemWrap, div * i, div * (i + 1));
+			std::cout << div * i << "    " << div * (i + 1) << std::endl;
+		}
+
+		for (s8 i = 0; i < WORK_THREADS; i++)
+		{
+			tt[i].detach();
+		}
+		
+
+		delete[] tt;
 	}
 }
 
@@ -193,8 +228,8 @@ void Audio::PerformDeletion(s32 index)
 	assert(index >= 0);
 	// Won't happen that index will be less than 0, so dont have to check it
 	delete m_AudioObjectContainer.at(index);
-	m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + index);
-	m_PathContainer.erase(m_PathContainer.begin() + index);
+	m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() - index);
+	m_LoadedPathContainer.erase(m_LoadedPathContainer.begin() + index);
 
 	processedFileCount--;
 	processedID3Tags--;
@@ -213,41 +248,6 @@ void Audio::PerformDeletion(s32 index)
 		currentID3FilePos		= 0;
 		State::IsPlaylistEmpty = true;
 	}
-}
-
-void Audio::RetrieveInfo()
-{
-	s32 i = currentPropetyFilePos;
-	for (; i < m_AudioObjectContainer.size(); i++)
-	{
-		Info::GetInfo(&m_AudioObjectContainer[i]->GetAudioProperty()->info, 
-					   m_AudioObjectContainer[i]->GetPath());
-
-		//std::cout << i << "/" << m_AudioObjectContainer.size() << std::endl;
-		processedFileCount = i;
-	}
-	currentPropetyFilePos = i;
-}
-
-void Audio::RetrieveID3Info()
-{
-	s32 i = currentID3FilePos;
-	for (; i < m_AudioObjectContainer.size(); i++)
-	{
-		AudioProperties* item = m_AudioObjectContainer[i]->GetAudioProperty();
-
-		if (item->info.format.compare(L"MP3") == 0)
-		{
-			Info::GetID3Info(&item->info, item->path);
-		}
-		else
-		{
-			item->info.title = Info::GetCompleteTitle(item->path);
-		}
-		//std::cout << i << "/" << m_AudioObjectContainer.size() << std::endl;;
-		processedID3Tags = i;
-	}
-	currentID3FilePos = i;
 }
 
 std::vector<std::wstring*>& Audio::Folders::GetAudioFoldersContainer()
@@ -299,14 +299,18 @@ std::vector<Audio::AudioObject*>& Audio::Object::GetAudioObjectContainer()
 Audio::AudioObject* Audio::Object::GetAudioObject(s32 id)
 {
 	if (id < m_AudioObjectContainer.size() && id >= 0)
+	{
+
 		return m_AudioObjectContainer.at(id);
+	}
 
 	return NULL;
 }
 
 u32 Audio::Object::GetSize()
 {
-	return m_AudioObjectContainer.size();
+	//return m_AudioObjectContainer.size();
+	return currentContainersSize;
 }
 
 u32 Audio::Object::GetProcessedSize()
@@ -315,26 +319,53 @@ u32 Audio::Object::GetProcessedSize()
 	return x;
 }
 
+void Audio::AddAudioItemWrap(const s32 beg, const s32 end)
+{
+	s32 i = beg;
+	for (; i < end; i++)
+	{
 
-b8 Audio::AddAudioItem(std::wstring path)
+		AddAudioItem(m_AddedFilesPathContainer[i], i);
+	}
+}
+
+b8 Audio::AddAudioItem(std::wstring path, s32 id)
 {
 	if (Info::CheckIfAudio(path) == false)
 		return false;
 
-	AudioObject* audioObject = NULL;
-	AudioProperties* item = NULL;
-		
+
 	// Need to retrieve basic properties on create time
-	item = new AudioProperties();
-	item->id = itemCount;
+	auto item = new AudioProperties();
+	item->id = id;
 	item->path = path;
 	item->folder = Info::GetFolder(path);
 	item->info.format = Info::GetExt(path);
 
 
-	audioObject = new AudioObject(item);
-	m_AudioObjectContainer.push_back(audioObject);
+	auto audioObject = new AudioObject(item);
+	m_AudioObjectContainer[id] = audioObject;
 	audioObject->Init(); // Create playlsit item AFTER audio object was push to the container
+
+	//std::cout << item->id << std::endl;
+	/* By getting info struct throught object of given ID I avoid attempts to retrieve info multiple times 
+	   for the same struct (hint 4 threads are working simultaneously)
+	*/
+	Info::GetInfo(&Object::GetAudioObject(id)->GetAudioProperty()->info, 
+				   Object::GetAudioObject(id)->GetPath());
+
+#ifdef _EXTRACT_ID3_TAGS_
+	if (Object::GetAudioObject(id)->GetAudioProperty()->info.format.compare(L"MP3") == 0)
+	{
+		Info::GetID3Info(&Object::GetAudioObject(id)->GetAudioProperty()->info, Object::GetAudioObject(id)->GetPath());
+	}
+	else
+	{
+		item->info.title = Info::GetCompleteTitle(Object::GetAudioObject(id)->GetPath());
+	}
+#endif
+
+
 
 	// Every created item has it's own unique id in ascending order
 	itemCount++;
@@ -346,8 +377,9 @@ b8 Audio::AddAudioItem(std::wstring path)
 		std::wcout << item->path << std::endl;
 	}
 
-	m_PathContainer.push_back(item->path);
-	m_FolderContainer.push_back(&item->folder);
+	m_LoadedPathContainer[id] = path;
+
+	//m_FolderContainer.push_back(&item->folder);
 
 
 	return true;
@@ -358,6 +390,7 @@ void Audio::GetItemsInfo()
 	
 	for (s32 i = 0; i < m_AudioObjectContainer.size(); i++)
 	{
+
 		std::cout << std::endl;
 		std::cout << "ID: " << m_AudioObjectContainer[i]->GetID() << std::endl;
 		std::cout << "Path: "<< utf16_to_utf8(m_AudioObjectContainer[i]->GetPath()) << std::endl;
@@ -377,14 +410,29 @@ void Audio::GetItemsInfo()
 	}
 }
 
+void Audio::ResizeAllContainers(int size)
+{
+	m_AudioObjectContainer.resize(size + currentContainersSize);
+	m_FolderContainer.resize(size + currentContainersSize);
+	m_LoadedPathContainer.resize(size + currentContainersSize);
+	MP::UI::mdPlaylistButtonsContainer.reserve(size + currentContainersSize);
+}
+
+
 u32 Audio::GetProccessedFileCount()
 {
-	u32 files = processedFileCount;
-	return files;
+	return processedFileCount;
 }
 
 u32 Audio::GetProcessedID3Tags()
 {
-	u32 files = processedID3Tags;
-	return files;
+	return processedID3Tags;
+}
+
+void Audio::PrintTest()
+{
+	for (int i = 0; i < m_AddedFilesPathContainer.size(); i++)
+	{
+		std::cout << utf16_to_utf8(m_LoadedPathContainer[i]) << std::endl;
+	}
 }

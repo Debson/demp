@@ -5,145 +5,150 @@ namespace Audio
 {
 
 }
-	Audio::AudioObject::AudioObject() { }
 
-	Audio::AudioObject::AudioObject(AudioProperties* ap) : m_AudioProperties(ap) { }
+Audio::AudioObject::AudioObject() { }
 
-	Audio::AudioObject::~AudioObject()
-	{
-		m_AudioProperties->path = L"";
-		m_AudioProperties->folder = L"";
-		delete m_AudioProperties;
-		delete m_PlaylistItem;
-	}
+Audio::AudioObject::AudioObject(AudioProperties* ap) : m_AudioProperties(ap) { }
 
-	void Audio::AudioObject::Init()
-	{
-		m_PlaylistItem = new Interface::PlaylistItem();
-		m_PlaylistItem->InitFont();
-		m_PlaylistItem->InitItem();
+Audio::AudioObject::~AudioObject()
+{
+	m_AudioProperties->path = L"";
+	m_AudioProperties->folder = L"";
+	delete m_AudioProperties;
+	delete m_PlaylistItem;
+}
 
-	}
+void Audio::AudioObject::Init()
+{
 
-	s32& Audio::AudioObject::GetID()
-	{
+	m_PlaylistItem = new Interface::PlaylistItem();
 
-		return m_AudioProperties->id;
-	}
+	m_PlaylistItem->InitFont();
 
-	void Audio::AudioObject::DecreaseID()
-	{
-		if(m_AudioProperties > 0)
-			m_AudioProperties->id--;
-	}
+	m_PlaylistItem->InitItem(m_AudioProperties->id);
 
-	std::wstring Audio::AudioObject::GetPath()
-	{
+}
 
-		return m_AudioProperties->path;
-	}
+s32& Audio::AudioObject::GetID() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->id;
+}
 
-	std::wstring Audio::AudioObject::GetFolderPath() 
-	{
+void Audio::AudioObject::DecreaseID() const
+{
+	assert(m_AudioProperties != NULL);
+	if(m_AudioProperties > 0)
+		m_AudioProperties->id--;
+}
 
-		return m_AudioProperties->folder;
-	}
+std::wstring Audio::AudioObject::GetPath() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->path;
+}
 
-	std::wstring Audio::AudioObject::GetArtist() 
-	{
+std::wstring Audio::AudioObject::GetFolderPath() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->folder;
+}
 
-		return m_AudioProperties->info.artist;
-	}
+std::wstring Audio::AudioObject::GetArtist() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->info.artist;
+}
 
-	std::wstring Audio::AudioObject::GetTitle() 
-	{
+std::wstring Audio::AudioObject::GetTitle() 
+{
+	assert(m_AudioProperties != NULL);
+	if (m_AudioProperties->info.title.compare(L"") == 0)
+		return Info::GetCompleteTitle(m_AudioProperties->path);
+		
+	return m_AudioProperties->info.title;
+}
 
-		if (m_AudioProperties->info.title.compare(L"") == 0)
-			return Info::GetCompleteTitle(m_AudioProperties->path);
-			
-		return m_AudioProperties->info.title;
-	}
+std::wstring Audio::AudioObject::GetTrackNum() const
+{
+	assert(m_AudioProperties != NULL);
+	if (m_AudioProperties->info.track_num.compare(L"0") == 0)
+		return L"";
 
-	std::wstring Audio::AudioObject::GetTrackNum() 
-	{
+	return m_AudioProperties->info.track_num;
+}
 
-		if (m_AudioProperties->info.track_num.compare(L"0") == 0)
-			return L"";
+std::wstring Audio::AudioObject::GetAlbum() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->info.album;
+}
 
-		return m_AudioProperties->info.track_num;
-	}
+std::wstring Audio::AudioObject::GetYear() const
+{
+	assert(m_AudioProperties != NULL);
+	if (m_AudioProperties->info.year.compare(L"0") == 0)
+		return L"";
 
-	std::wstring Audio::AudioObject::GetAlbum() 
-	{
+	return m_AudioProperties->info.year;
+}
 
-		return m_AudioProperties->info.album;
-	}
+std::wstring Audio::AudioObject::GetComment() const
+{
+	assert(m_AudioProperties != NULL);
+	if (m_AudioProperties->info.comment.compare(L"0") == 0)
+		return L"";
 
-	std::wstring Audio::AudioObject::GetYear() 
-	{
+	return m_AudioProperties->info.comment;
+}
 
-		if (m_AudioProperties->info.year.compare(L"0") == 0)
-			return L"";
+std::wstring Audio::AudioObject::GetGenre() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->info.genre;
+}
 
-		return m_AudioProperties->info.year;
-	}
+std::wstring Audio::AudioObject::GetFormat() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->info.format;
+}
 
-	std::wstring Audio::AudioObject::GetComment() 
-	{
+f32 Audio::AudioObject::GetFrequency() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->info.freq;
+}
 
-		if (m_AudioProperties->info.comment.compare(L"0") == 0)
-			return L"";
+f32 Audio::AudioObject::GetBitrate() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->info.bitrate;
+}
 
-		return m_AudioProperties->info.comment;
-	}
+s32 Audio::AudioObject::GetObjectSize() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->info.size;
+}
 
-	std::wstring Audio::AudioObject::GetGenre() 
-	{
-	
-		return m_AudioProperties->info.genre;
-	}
+f64 Audio::AudioObject::GetLength() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties->info.length;
+}
 
-	std::wstring Audio::AudioObject::GetFormat() 
-	{
+Audio::AudioProperties* Audio::AudioObject::GetAudioProperty() const
+{
+	assert(m_AudioProperties != NULL);
+	return m_AudioProperties;
+}
 
-		return m_AudioProperties->info.format;
-	}
+Interface::PlaylistItem* Audio::AudioObject::GetPlaylistItem() const
+{
 
-	f32 Audio::AudioObject::GetFrequency() 
-	{
+	assert(this != NULL);
+	assert(m_PlaylistItem != NULL);
 
-		return m_AudioProperties->info.freq;
-	}
-
-	f32 Audio::AudioObject::GetBitrate() 
-	{
-
-		return m_AudioProperties->info.bitrate;
-	}
-
-	s32 Audio::AudioObject::GetObjectSize() 
-	{
-
-		return m_AudioProperties->info.size;
-	}
-
-	f64 Audio::AudioObject::GetLength() 
-	{
-
-		return m_AudioProperties->info.length;
-	}
-
-	Audio::AudioProperties* Audio::AudioObject::GetAudioProperty() 
-	{
-		assert(m_AudioProperties != NULL);
-		return m_AudioProperties;
-	}
-
-	Interface::PlaylistItem* Audio::AudioObject::GetPlaylistItem() 
-	{
-
-		assert(this != NULL);
-		assert(m_PlaylistItem != NULL);
-
-		return m_PlaylistItem;
-	}
+	return m_PlaylistItem;
+}

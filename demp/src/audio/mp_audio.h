@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "mp_channel_attrib.h"
-
 #include "mp_audio_object.h"
 
 namespace Audio
@@ -20,7 +19,7 @@ namespace Audio
 
 	namespace Object
 	{
-		std::vector<AudioObject*>& GetAudioObjectContainer();
+		std::vector<Audio::AudioObject*>& GetAudioObjectContainer();
 		AudioObject* GetAudioObject(s32 id);
 		u32 GetSize();
 		u32 GetProcessedSize();
@@ -49,6 +48,8 @@ namespace Audio
 	u32 GetProccessedFileCount();
 
 	u32 GetProcessedID3Tags();
+
+	void PrintTest();
 }
 
 #endif // !MP_AUDIO_H

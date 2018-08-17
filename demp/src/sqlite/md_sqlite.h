@@ -2,7 +2,7 @@
 #ifndef MD_SQLITE_H
 #define MD_SQLITE_H
 
-#include "../md_types.h"
+#include "../utility/md_types.h"
 #include "../audio/mp_audio.h"
 
 namespace mdEngine

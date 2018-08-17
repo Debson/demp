@@ -4,7 +4,7 @@
 #include <iostream>
 #include <bass.h>
 
-#include "../md_types.h"
+#include "../utility/md_types.h"
 
 using namespace mdEngine;
 

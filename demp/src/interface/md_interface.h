@@ -5,8 +5,8 @@
 #include <SDL_ttf.h>
 #include <vector>
 
-#include "../md_shader.h"
-#include "../music_player_ui_input.h"
+#include "../utility/md_shader.h"
+#include "../ui/music_player_ui_input.h"
 
 using namespace mdEngine::MP::UI;
 
@@ -57,6 +57,7 @@ namespace mdEngine
 			TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos, 
 												 glm::vec2 textSize, glm::vec2 textPos,
 						GLuint tex);
+			virtual ~TextBoxItem();
 
 			glm::vec2 m_Pos;
 			glm::vec2 m_Size;
@@ -80,7 +81,7 @@ namespace mdEngine
 			static s32 mOffsetIndex;
 
 			void InitFont();
-			void InitItem();
+			void InitItem(s32 id);
 			void UpdateItem();
 			void SetColor(glm::vec3 color);
 			void DrawDottedBorder(s16 playpos);
