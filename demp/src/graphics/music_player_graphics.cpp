@@ -1263,7 +1263,7 @@ namespace Graphics
 
 		RenderMusicUI();
 
-		//RenderPlaylistItems();
+		RenderPlaylistItems();
 
 		RenderWindowControlButtons();
 

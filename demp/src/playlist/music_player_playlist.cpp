@@ -708,25 +708,13 @@ namespace MP
 		
 			Audio::PerformDeletion(pos);
 
-			UI::mdPlaylistButtonsContainer.erase(UI::mdPlaylistButtonsContainer.begin() + pos);
-			if (UI::mdPlaylistButtonsContainer.size() < 0)
-				UI::mdPlaylistButtonsContainer.clear();
-
-
-			Interface::PlaylistItem::mCount--;
-				
-
+			/*UI::mdPlaylistButtonsContainer.erase(UI::mdPlaylistButtonsContainer.begin() + pos);
+			
 			if (Graphics::MP::m_Playlist.GetPlayingID() == pos)
 				Graphics::MP::m_Playlist.SetPlayingID(-1);
 
 			if (Graphics::MP::m_Playlist.GetSelectedID() > Audio::Object::GetSize() - 1)
-				Graphics::MP::m_Playlist.SetSelectedID(Audio::Object::GetSize() - 1);
-
-
-			for (s32 i = pos; i < Audio::Object::GetSize(); i++)
-			{
-				Audio::Object::GetAudioObject(i)->DecreaseID();
-			}
+				Graphics::MP::m_Playlist.SetSelectedID(Audio::Object::GetSize() - 1);*/
 
 			//MP::musicPlayerState = MP::MusicPlayerState::kMusicDeleted;
 		}
@@ -919,7 +907,7 @@ namespace MP
 		void PrintLoadedPaths()
 		{
 			for (u32 i = 0; i < Audio::Object::GetSize(); i++)
-				std::wcout << Audio::Object::GetAudioObject(i)->GetPath() << std::endl;
+				std::cout << utf16_to_utf8(Audio::Object::GetAudioObject(i)->GetPath()) << std::endl;
 		}
 #endif
 

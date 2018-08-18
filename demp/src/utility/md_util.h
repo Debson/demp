@@ -7,7 +7,7 @@
 
 #define SAFE_DELETE(p) if (p) { delete p; p = NULL; }
 
-#ifdef _DEBUG_
+#ifdef _DEBUG_OUTPUT_
 #define MD_SDL_ERROR(x) (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, x, SDL_GetError(), nullptr))
 
 #define MD_BASS_ERROR(x) (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", x, nullptr))

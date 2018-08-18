@@ -101,7 +101,6 @@ namespace MP
 	void UI::DeleteAll()
 	{
 		s32 len = Audio::Object::GetSize();
-
 		for (s32 j = 0; j < len; j++)
 		{
 

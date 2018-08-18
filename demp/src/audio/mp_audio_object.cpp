@@ -35,7 +35,7 @@ s32& Audio::AudioObject::GetID() const
 	return m_AudioProperties->id;
 }
 
-void Audio::AudioObject::DecreaseID() const
+void Audio::AudioObject::DecrementID()
 {
 	assert(m_AudioProperties != NULL);
 	if(m_AudioProperties > 0)
