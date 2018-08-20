@@ -39,6 +39,11 @@ namespace Graphics
 			void setSize(glm::vec2 size);
 			glm::vec2 getPos();
 			glm::vec2 getSize();
+
+			/* multipleSelect vector stores pointers to the actual audio object ids, simply because 
+			   after item deletion every id greater than deleted index is decremented so by having
+			   pointers to ids vector has updated ids 
+			*/
 			std::vector<s32*> multipleSelect;
 
 		private:

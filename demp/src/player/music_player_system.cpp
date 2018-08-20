@@ -120,10 +120,10 @@ namespace MP
 	void UpdateLogic(void)
 	{
 		/* Update playlist state */
-		//Playlist::UpdatePlaylist();
+		Playlist::UpdatePlaylist();
 
 		/* Update the volume */
-		//Playlist::UpdateMusic();
+		Playlist::UpdateMusic();
 
 		UI::Update();
 

@@ -8,6 +8,7 @@ namespace mdEngine
 {
 	namespace State
 	{
+		extern b8 MusicFilesLoaded;
 		extern b8 IsPlaylistEmpty;
 		extern b8 PathLoadedFromFile;
 		extern b8 IsDeletionFinished;

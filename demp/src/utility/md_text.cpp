@@ -12,7 +12,6 @@ namespace mdEngine
 {
 	namespace Text
 	{
-		typedef std::basic_string<Uint16, std::char_traits<Uint16>, std::allocator<Uint16> > u16string;
 
 	}
 
@@ -20,20 +19,23 @@ namespace mdEngine
 	{
 		
 	}
-
+	static int count = 0;
 	GLuint Text::LoadText(TTF_Font* font, std::wstring string, SDL_Color color)
 	{
-		const Uint16* text = 0;
+		const Uint16* text = NULL;
 
-		assert(sizeof(Uint16) == sizeof(wchar_t));
-		text = reinterpret_cast<const Uint16*>(string.c_str());
+		//md_log(count);
+		count++;
+
+		//assert(sizeof(Uint16) == sizeof(wchar_t));
+		//text = reinterpret_cast<const Uint16*>(string.c_str());
 
 		GLuint colors;
 		GLuint textTexture;
 		SDL_Surface* textSurface;
 		GLenum format;
 
-		textSurface = TTF_RenderUNICODE_Blended(font, text, color);
+		textSurface = TTF_RenderUTF8_Blended(font, utf16_to_utf8(string).c_str(), color);
 		assert(textSurface != NULL);
 
 		colors = textSurface->format->BytesPerPixel;

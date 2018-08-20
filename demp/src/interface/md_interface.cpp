@@ -80,45 +80,32 @@ namespace mdEngine
 
 	}
 
-	void Interface::PlaylistItem::InitItem(s32 id)
+	void Interface::PlaylistItem::InitItem(s32* id)
 	{
 		mColor = glm::vec3(1.f);
 
 		mStartPos = Data::_PLAYLIST_ITEMS_SURFACE_POS;
 		mSize = Data::_PLAYLIST_ITEM_SIZE;
 
-		mPos = glm::vec2(mStartPos.x, mStartPos.y + mCount * (mSize.y + mOffsetY));
+		mID = *id;
+
+		mPos = glm::vec2(mStartPos.x, mStartPos.y + mID * (mSize.y + mOffsetY));
 
 		mTextColor = { 255, 255, 255 };
 
-		mID = id;
 
 		mTitle = Audio::Object::GetAudioObject(mID)->GetTitle();
-		//mTitle = L"test";
+		//mTitle = L"test test test test";
 
 		u16 len = mTitle.length();
 		mTitleC.resize(len + 1);
 		mTitleC = utf16_to_utf8(mTitle);
 
-		//TTF_SizeText(mFont, mTitleC.c_str(), &mTextSize.x, &mTextSize.y);
+		TTF_SizeUTF8(mFont, mTitleC.c_str(), &mTextSize.x, &mTextSize.y);
 		
-		
-		mdPlaylistButtonsContainer.push_back(this);
+		mdPlaylistButtonsContainer.push_back(std::make_pair(id, this));
 
-		mCount++;
 	}	
-
-	void Interface::PlaylistItem::UpdateItem()
-	{
-		/*mTitle = Playlist::GetTitle(mID);
-		u16 len = wcslen(mTitle.c_str());
-		mTitleC = new char[len + 1];
-		mTitleC[len] = '\0';
-		wcstombs(mTitleC, mTitle.c_str(), len);
-
-		TTF_SizeText(mFont, mTitleC, &mTextSize.x, &mTextSize.y);*/
-
-	}
 
 	void Interface::PlaylistItem::SetColor(glm::vec3 color)
 	{
@@ -175,9 +162,6 @@ namespace mdEngine
 	}
 
 	s32 Interface::PlaylistItem::mOffsetY = 0;
-
-	s32 Interface::PlaylistItem::mCount = 0;
-
 	s32 Interface::PlaylistItem::mOffsetIndex = 0;
 
 	/* *************************************************** */
@@ -299,17 +283,17 @@ namespace mdEngine
 		m_ItemsCount++;
 	}
 
-	glm::vec2 Interface::TextBox::GetPos()
+	glm::vec2 Interface::TextBox::GetPos() const
 	{
 		return m_Pos;
 	}
 
-	glm::vec2 Interface::TextBox::GetSize()
+	glm::vec2 Interface::TextBox::GetSize() const
 	{
 		return m_Size;
 	}
 
-	b8 Interface::TextBox::hasItemFocus(const std::wstring name)
+	b8 Interface::TextBox::hasItemFocus(const std::wstring name) const
 	{
 		auto item = std::find_if(mdInterfaceButtonContainer.begin(), mdInterfaceButtonContainer.end(),
 			[&](std::pair<const std::wstring, Button*> const & ref) { return ref.first.compare(name) == 0; });
@@ -317,7 +301,7 @@ namespace mdEngine
 		return item == mdInterfaceButtonContainer.end() ? false : item->second->hasFocus;
 	}
 
-	b8 Interface::TextBox::isItemPressed(const std::wstring name)
+	b8 Interface::TextBox::isItemPressed(const std::wstring name) const
 	{
 		auto item = std::find_if(mdInterfaceButtonContainer.begin(), mdInterfaceButtonContainer.end(),
 			[&](std::pair<const std::wstring, Button*> const & ref) { return ref.first.compare(name) == 0; });

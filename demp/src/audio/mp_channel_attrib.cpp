@@ -19,7 +19,6 @@ namespace Audio
 	namespace Info
 	{
 		
-
 	}
 
 	b8 Info::CheckIfAudio(std::wstring path)
@@ -107,8 +106,7 @@ namespace Audio
 
 	void Info::GetInfo(Info::ID3* info, std::wstring path)
 	{
-		HSTREAM stream;
-
+		HSTREAM stream;;
 		stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE | BASS_UNICODE);
 
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_FREQ, &info->freq);

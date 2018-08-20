@@ -25,8 +25,7 @@ void Audio::AudioObject::Init()
 
 	m_PlaylistItem->InitFont();
 
-	m_PlaylistItem->InitItem(m_AudioProperties->id);
-
+	m_PlaylistItem->InitItem(&m_AudioProperties->id);
 }
 
 s32& Audio::AudioObject::GetID() const
@@ -146,9 +145,8 @@ Audio::AudioProperties* Audio::AudioObject::GetAudioProperty() const
 
 Interface::PlaylistItem* Audio::AudioObject::GetPlaylistItem() const
 {
-
-	assert(this != NULL);
-	assert(m_PlaylistItem != NULL);
+	if (this == NULL)
+		return NULL;
 
 	return m_PlaylistItem;
 }

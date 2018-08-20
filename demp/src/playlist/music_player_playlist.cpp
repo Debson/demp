@@ -706,17 +706,23 @@ namespace MP
 
 			lastDeletionTimer.start();
 		
-			Audio::PerformDeletion(pos);
 
-			/*UI::mdPlaylistButtonsContainer.erase(UI::mdPlaylistButtonsContainer.begin() + pos);
+			auto it = std::find_if(UI::mdPlaylistButtonsContainer.begin(), UI::mdPlaylistButtonsContainer.end(), 
+				[&](const std::pair<s32*, Interface::Button*> & ref) { return *ref.first == pos; });
+			
+			assert(it != UI::mdPlaylistButtonsContainer.end());
+			UI::mdPlaylistButtonsContainer.erase(it);
+
+
+			Audio::PerformDeletion(pos);
 			
 			if (Graphics::MP::m_Playlist.GetPlayingID() == pos)
 				Graphics::MP::m_Playlist.SetPlayingID(-1);
 
 			if (Graphics::MP::m_Playlist.GetSelectedID() > Audio::Object::GetSize() - 1)
-				Graphics::MP::m_Playlist.SetSelectedID(Audio::Object::GetSize() - 1);*/
+				Graphics::MP::m_Playlist.SetSelectedID(Audio::Object::GetSize() - 1);
 
-			//MP::musicPlayerState = MP::MusicPlayerState::kMusicDeleted;
+			MP::musicPlayerState = MP::MusicPlayerState::kMusicDeleted;
 		}
 
 		b8 IsLoaded()

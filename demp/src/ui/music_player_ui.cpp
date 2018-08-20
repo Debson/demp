@@ -43,7 +43,7 @@ namespace MP
 		std::vector<Interface::Movable*> mdMovableContainer;
 		std::vector<Interface::Resizable*> mdResizableContainer;
 		std::vector<std::pair<Input::ButtonType, Interface::Button*>> mdButtonsContainer;
-		std::vector<Interface::Button*> mdPlaylistButtonsContainer;
+		std::vector<std::pair<s32*, Interface::Button*>> mdPlaylistButtonsContainer;
 
 		std::atomic<bool> fileBrowserFinished(false);
 		
@@ -300,12 +300,12 @@ namespace MP
 
 			for (u16 i = 0; i < mdPlaylistButtonsContainer.size(); i++)
 			{
-				if (mdPlaylistButtonsContainer[i]->mPos != glm::vec2(INVALID))
+				if (mdPlaylistButtonsContainer[i].second->mPos != glm::vec2(INVALID))
 				{
 					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(mdPlaylistButtonsContainer[i]->mPos, 1.f));
-					model = glm::scale(model, glm::vec3(mdPlaylistButtonsContainer[i]->mSize, 1.f));;
-					Shader::shaderDefault->setFloat("aspectXY", mdPlaylistButtonsContainer[i]->mSize.x / mdPlaylistButtonsContainer[i]->mSize.y);
+					model = glm::translate(model, glm::vec3(mdPlaylistButtonsContainer[i].second->mPos, 1.f));
+					model = glm::scale(model, glm::vec3(mdPlaylistButtonsContainer[i].second->mSize, 1.f));;
+					Shader::shaderDefault->setFloat("aspectXY", mdPlaylistButtonsContainer[i].second->mSize.x / mdPlaylistButtonsContainer[i].second->mSize.y);
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::Draw(Shader::shaderDefault);;
 				}
@@ -402,18 +402,22 @@ namespace MP
 			App::ProcessButton(mdButtonsContainer[i].second);
 
 		// Make sure that hitboxes that are not visible cannot be clicked
-		/*App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
+		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
 		for (u16 i = 0; i < mdPlaylistButtonsContainer.size(); i++)
-			App::ProcessButton(mdPlaylistButtonsContainer[i]);
-		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);*/
+		{
+			if (Audio::Object::GetAudioObject(i)->GetPlaylistItem() == NULL)
+				break;
+			App::ProcessButton(mdPlaylistButtonsContainer[i].second);
+		}
+		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
 
 		for (u16 i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
 			App::ProcessButton(Interface::mdInterfaceButtonContainer[i].second);
 
 
 		HandleInput();
-		/*if(State::IsPlaylistEmpty == false)
-			HandlePlaylistInput();*/
+		if(State::IsPlaylistEmpty == false)
+			HandlePlaylistInput();
 
 	}
 
@@ -424,35 +428,6 @@ namespace MP
 
 	}
 
-	void UI::Close()
-	{
-		for (size_t i = 0; i < mdMovableContainer.size(); i++)
-		{
-			delete mdMovableContainer[i];
-		}
-		mdMovableContainer.clear();
-
-		for (size_t i = 0; i < mdResizableContainer.size(); i++)
-		{
-			delete mdResizableContainer[i];
-		}
-		mdResizableContainer.clear();
-
-		for (size_t i = 0; i < mdButtonsContainer.size(); i++)
-		{
-			delete mdButtonsContainer[i].second;
-		}
-		mdButtonsContainer.clear();
-
-		for (size_t i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
-		{
-			delete Interface::mdInterfaceButtonContainer[i].second;
-		}
-		Interface::mdInterfaceButtonContainer.clear();
-
-
-		mdPlaylistButtonsContainer.clear();
-	}
 	
 	void UI::HandleInput()
 	{
@@ -506,6 +481,9 @@ namespace MP
 	{
 		for (s32 i = 0; i < Audio::Object::GetSize(); i++)
 		{
+			if (Audio::Object::GetAudioObject(i)->GetPlaylistItem() == NULL)
+				return;
+
 			std::vector<s32*>::iterator it;
 			s32 *currentPlaylistItemID = &Audio::Object::GetAudioObject(i)->GetID();
 
@@ -521,11 +499,9 @@ namespace MP
 			else if (Audio::Object::GetAudioObject(i)->GetPlaylistItem()->isPressed == true)
 			{
 
-
 				clickDelayTimer.start();
 				Audio::Object::GetAudioObject(i)->GetPlaylistItem()->clickCount++;
 
-				//std::cout << *currentPlaylistItemID << std::endl;
 
 				// Check if current's item position is in vector with selected item's positions
 				it = std::find(Graphics::MP::m_Playlist.multipleSelect.begin(),
@@ -543,15 +519,8 @@ namespace MP
 				}
 				else
 				{
-					if (Graphics::MP::m_Playlist.multipleSelect.size() < 1)
-					{
-						Graphics::MP::m_Playlist.multipleSelect.push_back(currentPlaylistItemID);
-					}
-					else
-					{
-						Graphics::MP::m_Playlist.multipleSelect.clear();
-						Graphics::MP::m_Playlist.multipleSelect.push_back(currentPlaylistItemID);
-					}
+					Graphics::MP::m_Playlist.multipleSelect.clear();
+					Graphics::MP::m_Playlist.multipleSelect.push_back(currentPlaylistItemID);
 				}
 
 				if (Audio::Object::GetAudioObject(i)->GetPlaylistItem()->clickCount > 1)
@@ -570,15 +539,31 @@ namespace MP
 		}
 
 		// If delete pressed, delete every item on position from selected positions vector
-		if (App::Input::IsKeyPressed(App::KeyCode::Delete))
+		if (App::Input::IsKeyPressed(App::KeyCode::Delete) && 
+			Graphics::MP::m_Playlist.multipleSelect.empty() == false)
 		{
+			/* If multiple items are selected, after deletion go back to the lowest position selected.
+			   e.g. (6, 2, 9, 12) selected, sort it and select first item (2) 
+			*/
+			std::sort(Graphics::MP::m_Playlist.multipleSelect.begin(), Graphics::MP::m_Playlist.multipleSelect.end(),
+				[&](const s32* first, const s32* second) -> bool { return *first < *second; });
+
+			s32 temp = *Graphics::MP::m_Playlist.multipleSelect[0];
 			for (s32 j = 0; j < Graphics::MP::m_Playlist.multipleSelect.size(); j++)
 			{
-
 				Playlist::DeleteMusic(*Graphics::MP::m_Playlist.multipleSelect[j]);
-
 			}
 			Graphics::MP::m_Playlist.multipleSelect.clear();
+			
+			if (Audio::Object::GetSize() <= temp && Audio::Object::GetAudioObjectContainer().empty() == false)
+			{
+				Graphics::MP::m_Playlist.multipleSelect.push_back(
+								&Audio::Object::GetAudioObject(Audio::Object::GetSize() - 1)->GetID());
+			}
+			else if (Audio::Object::GetAudioObject(temp) != NULL)
+			{
+				Graphics::MP::m_Playlist.multipleSelect.push_back(&Audio::Object::GetAudioObject(temp)->GetID());
+			}
 		}
 
 		PlaylistFileExplorer();
@@ -660,5 +645,34 @@ namespace MP
 
 	}
 
+	void UI::Close()
+	{
+		for (size_t i = 0; i < mdMovableContainer.size(); i++)
+		{
+			delete mdMovableContainer[i];
+		}
+		mdMovableContainer.clear();
+
+		for (size_t i = 0; i < mdResizableContainer.size(); i++)
+		{
+			delete mdResizableContainer[i];
+		}
+		mdResizableContainer.clear();
+
+		for (size_t i = 0; i < mdButtonsContainer.size(); i++)
+		{
+			delete mdButtonsContainer[i].second;
+		}
+		mdButtonsContainer.clear();
+
+		for (size_t i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
+		{
+			delete Interface::mdInterfaceButtonContainer[i].second;
+		}
+		Interface::mdInterfaceButtonContainer.clear();
+
+
+		mdPlaylistButtonsContainer.clear();
+	}
 }
 }

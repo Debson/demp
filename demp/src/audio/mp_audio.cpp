@@ -1,18 +1,19 @@
 #include "mp_audio.h"
 
 #include <thread>
+#include <mutex>
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
 
-#include "../utility/utf8_to_utf16.h"
-#include "../utility/md_util.h"
-#include "../utility/md_time.h"
-#include "../utility/md_types.h"
 #include "../interface/md_interface.h"
 #include "../player/music_player.h"
 #include "../player/music_player_state.h"
 #include "../settings/music_player_settings.h"
 #include "../ui/music_player_ui.h"
+#include "../utility/md_util.h"
+#include "../utility/md_time.h"
+#include "../utility/md_types.h"
+#include "../utility/utf8_to_utf16.h"
 
 #define WORK_THREADS 4
 
@@ -32,6 +33,9 @@ namespace Audio
 	static std::thread infoProcessThread;
 
 	static s32 currentContainersSize = 0;
+	static s32 currentlyLoadedItemsCount = 0;
+
+	std::mutex mutex;
 
 	Time::Timer lastFunctionCallTimer;
 	Time::Timer lastPathPushTimer;
@@ -81,7 +85,6 @@ b8 Audio::PushToPlaylist(std::wstring path)
 			return false;
 		}
 	
-		mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicAdded;
 
 		if (fs::is_directory(path))
 		{
@@ -155,8 +158,7 @@ void Audio::UpdateAudioLogic()
 	{
 		startLoadingProperties = false;
 
-		State::IsPlaylistEmpty = false;
-
+		mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicAdded;
 		// split the work between work threads
 		std::thread* tt = new std::thread[WORK_THREADS];
 		s32 toProcessCount = m_AddedFilesPathContainer.size();
@@ -184,19 +186,31 @@ void Audio::UpdateAudioLogic()
 				tt[i] = std::thread(AddAudioItemWrap, tempVec, div * i + currentContainersSize, 
 													  div * (i + 1) + currentContainersSize);
 
-			md_log(std::to_string(div * i) + "    " + std::to_string(div * (i + 1)) + "\n");
+			//md_log(std::to_string(div * i) + "    " + std::to_string(div * (i + 1)) + "\n");
 		}
 
 		for (s8 i = 0; i < WORK_THREADS; i++)
 		{
+			assert(tt[i].joinable());
 			tt[i].detach();
 		}
-		
+
 		// Keep track of size of containers
 		currentContainersSize += toProcessCount;
 		
 
 		delete[] tt;
+	}
+
+	if (m_AudioObjectContainer.empty() == false)
+	{
+		if (currentContainersSize == currentlyLoadedItemsCount)
+		{
+			State::MusicFilesLoaded = true;
+			State::IsPlaylistEmpty = false;
+		}
+		else
+			State::MusicFilesLoaded = false;
 	}
 }
 
@@ -212,15 +226,14 @@ void Audio::PerformDeletion(s32 index)
 	ResizeAllContainers(-1); // Is equal to current size - 1
 
 	currentContainersSize--;
-	if (currentContainersSize < 0)
-	{
-		currentContainersSize = 0;
-	}
+	currentlyLoadedItemsCount--;
 
-	if (m_AudioObjectContainer.empty())
-	{
-		State::IsPlaylistEmpty = true;
-	}
+	currentContainersSize < 0 ? (currentContainersSize = 0) : 0;
+	currentlyLoadedItemsCount < 0 ? (currentlyLoadedItemsCount = 0) : 0;
+
+	m_AudioObjectContainer.empty() == true ? (State::IsPlaylistEmpty = true) : 0;
+
+	
 }
 
 std::vector<std::wstring>& Audio::Folders::GetAudioFoldersContainer()
@@ -265,7 +278,7 @@ std::vector<Audio::AudioObject*>& Audio::Object::GetAudioObjectContainer()
 
 Audio::AudioObject* Audio::Object::GetAudioObject(s32 id)
 {
-	if (id < m_AudioObjectContainer.size() && id >= 0)
+	if (id < m_AudioObjectContainer.size() && id >= 0 && m_AudioObjectContainer.empty() == false)
 	{
 
 		return m_AudioObjectContainer.at(id);
@@ -292,13 +305,24 @@ void Audio::AddAudioItemWrap(const std::vector<std::wstring> vec, const s32 beg,
 	{
 		AddAudioItem(vec[i], i);
 	}
+	i = beg;
+
+	for (; i < end && i < currentContainersSize && !State::IsPlaylistEmpty; i++)
+	{
+		Info::GetInfo(&m_AudioObjectContainer[i]->GetAudioProperty()->info, 
+					   m_AudioObjectContainer[i]->GetAudioProperty()->path);
+	}
 }
 
 b8 Audio::AddAudioItem(std::wstring path, s32 id)
 {
+	// Lock the mutes
+	std::lock_guard<std::mutex> lockGuard(mutex);
+
 	if (Info::CheckIfAudio(path) == false)
 		return false;
 
+	m_LoadedPathContainer[id] = path;
 	// Need to get basic properties before creating audio object
 	auto item = new AudioProperties();
 	item->id = id;
@@ -314,12 +338,8 @@ b8 Audio::AddAudioItem(std::wstring path, s32 id)
 	*/
 	audioObject->Init(); 
 
-	//std::cout << item->id << std::endl;
-	/* By getting info struct throught object of given ID I avoid attempts to retrieve info multiple times 
-	   for the same struct (hint 4 threads are working simultaneously)
-	*/
-	Info::GetInfo(&Object::GetAudioObject(id)->GetAudioProperty()->info, 
-				   Object::GetAudioObject(id)->GetPath());
+	//md_log(item->id);
+	//Info::GetInfo(&item->info, path);
 
 #ifdef _EXTRACT_ID3_TAGS_
 	// TODO: not finished, should be run by different thread after advanced file informations are retrieved
@@ -331,10 +351,9 @@ b8 Audio::AddAudioItem(std::wstring path, s32 id)
 	{
 		item->info.title = Info::GetCompleteTitle(Object::GetAudioObject(id)->GetPath());
 	}
-#endif
+#endif	
 
-	
-	m_LoadedPathContainer[id] = path;
+	currentlyLoadedItemsCount++;
 
 	return true;
 }

@@ -52,6 +52,8 @@ namespace Graphics
 		b8 predefinedPosLoaded(false);
 
 		s32 allocatedCount = 0;
+		s32 max, min;
+
 
 		b8 shuffleActive(false);
 		b8 repeatActive(false);
@@ -68,11 +70,15 @@ namespace Graphics
 
 		b8 playlistFirstEnter(true);
 
+		b8 playlistFirstLoad(true);
+
 		s32 playlistPreviousOffsetY = 0;
 		f32 playlistCurrentOffsetY = 0;
 		s32 playlistCurrentPos = 0;
 		s32 playlistPreviousPos = 0;
 		s32 playlistIndex = 0;
+
+		s32 currentlyRenderedItems = 0;
 
 		f32 stretchPlaylistMultplier = 0.f;
 		f32 stretchMultiplier = 1.f;
@@ -757,8 +763,21 @@ namespace Graphics
 
 	void MP::RenderPlaylistItems()
 	{
+		/* Functions has guards if statements like 
 
-		if (m_Playlist.IsToggled() && m_Playlist.IsEnabled() && 
+				"if (GetAudioObject(i)->GetPlaylistItem() == NULL)
+					 return;"
+
+		   to prevent from accessing playlist element that was not loaded yet. Playlist items will be rendered by this functions
+		   only when flag "State::IsPlaylistEmpty" is false, meaning that files were added to the music player, but not every file
+		   may be loaded yet.
+		*/
+
+
+
+
+		if (m_Playlist.IsToggled() && 
+			m_Playlist.IsEnabled() && 
 			State::IsPlaylistEmpty == false)
 		{
 			//RenderPlaylistButtons();
@@ -817,7 +836,7 @@ namespace Graphics
 			if (playlistCurrentOffsetY > 0)
 				playlistCurrentOffsetY = 0;
 
-
+			//md_log(currentlyRenderedItems);
 			/* When playlist pos is different than top and low, keep resizing till it reaches end, then start roll out to the top */
 			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kResized &&
 				Window::windowProperties.mDeltaHeightResize > 0 &&
@@ -834,23 +853,41 @@ namespace Graphics
 			
 			playlistCurrentPos = (s32)(playlistCurrentOffsetY / Data::_PLAYLIST_ITEM_SIZE.y) * -1;
 
-			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kIdle || State::IsDeletionFinished == true)
+			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kIdle || 
+				State::IsDeletionFinished == true)
 			{
-				texturesLoaded = false;
-				
-				State::IsDeletionFinished = false;
+				if ((playlistCurrentPos + displayedItems > ::GetSize() ||
+					playlistFirstLoad == true ||
+					currentlyRenderedItems < displayedItems) && State::MusicFilesLoaded)
+				{
+					texturesLoaded = false;
+					playlistFirstLoad = false;
+
 				if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kMusicDeleted)
 					mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kIdle;
-						
+				}
+
+				State::IsDeletionFinished = false;
 			}
+
+			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicDeleted)
+			{
+				texturesLoaded = false;
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kIdle;
+			}
+
 
 			
 			if (playlistCurrentPos > ::GetSize())
 				playlistCurrentPos = GetSize();
-			s32 min = playlistCurrentPos - 2;
+			if (State::MusicFilesLoaded == true)
+			{
+				min = playlistCurrentPos - 2;
+				max = displayedItems + playlistCurrentPos + 2;
+			}
+
 			if (min < 0)
 				min = 0;
-			s32 max = displayedItems + playlistCurrentPos + 2;
 			if (max > ::GetSize())
 				max = ::GetSize();
 			s32 visibleSpectrum = max - min;
@@ -873,7 +910,9 @@ namespace Graphics
 			{
 				for (u32 i = min; i < max; i++)
 				{
-					//assert(GetAudioObject(playlistIndex) != NULL);
+					if (GetAudioObject(i)->GetPlaylistItem() == NULL)
+						return;
+
 					if(playlistPreviousOffsetY - playlistCurrentOffsetY > 0)
 						::GetAudioObject(i)->GetPlaylistItem()->mPos.y -= abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
 					else
@@ -898,34 +937,33 @@ namespace Graphics
 				if (predefinedPos != NULL)
 					delete[] predefinedPos;
 
+				currentlyRenderedItems = visibleSpectrum;
 				textTexture = new GLuint[visibleSpectrum];
 				predefinedPos = new glm::vec2[visibleSpectrum];
 
 				allocatedCount = visibleSpectrum;
 
-				
 				// Predefine positions user can actually see
 				Interface::PlaylistItem* item = NULL;
 				s32 itemsOffset = 0;
 				glm::vec2 itemStartPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, 
 												   Data::_PLAYLIST_ITEMS_SURFACE_POS.y + (min - 1) * itemH);
-				//std::cout << itemStartPos.y << std::endl;
-				
-
 
 				// BUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
 				predefinedPos[0] = glm::vec2(itemStartPos.x, itemStartPos.y);
 				for (u16 i = min, t = 0; i < max; i++, t++)
 				{
-					//assert(GetAudioObject(playlistIndex) != NULL);
+					if (GetAudioObject(i)->GetPlaylistItem() == NULL)
+						return;
+
 					item = ::GetAudioObject(i)->GetPlaylistItem();
+					//md_log(utf16_to_utf8(item->GetTitle()));
 					textTexture[t] = Text::LoadText(item->mFont,
 													item->GetTitle(),
 													item->mTextColor);
 
 					if (t != -1)
 					{
-
 						predefinedPos[t] = glm::vec2(itemStartPos.x, itemStartPos.y + Data::_PLAYLIST_ITEM_SIZE.y + item->mOffsetY);
 						itemStartPos = predefinedPos[t];
 						predefinedPos[t].y += playlistCurrentOffsetY;
@@ -937,8 +975,9 @@ namespace Graphics
 				// Write predefined positions to playlist items that are currently displayed
 				for (s32 i = 0, t = 0; i < Audio::Object::GetSize(); i++)
 				{
+					if (GetAudioObject(i)->GetPlaylistItem() == NULL)
+						return;
 					//std::cout << i << std::endl;
-					//assert(GetAudioObject(playlistIndex) != NULL);
 					if (i >= min && i < max)
 					{
 						::GetAudioObject(i)->GetPlaylistItem()->mPos = glm::vec2(predefinedPos[t].x, predefinedPos[t].y);
@@ -947,8 +986,6 @@ namespace Graphics
 					}
 					else
 					{
-						//TODO
-						//gsdfgsgsgsdgsdgsgs error
 						::GetAudioObject(i)->GetPlaylistItem()->mPos = glm::vec2(INVALID);
 					}
 					//std::cout << mdItemContainer[i]->mPos.y << "   " << playlistCurrentPos << "  " << playlistCurrentOffsetY << std::endl;
@@ -995,7 +1032,6 @@ namespace Graphics
 					playlistSliderActive = false;
 					playlistSliderFirstEnter = true;
 				}
-			
 
 				if (playlistSliderActive)
 				{
@@ -1020,7 +1056,7 @@ namespace Graphics
 				Shader::Draw(Shader::shaderDefault);
 			}
 
-			// Cut all items and item border if it is out of bou
+			// Cut all items and item border if is outside playlist bounds
 			Shader::shaderDefault->setBool("playlistCut", true);
 			Shader::shaderDefault->setFloat("playlistMinY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y);
 			Shader::shaderDefault->setFloat("playlistMaxY", Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
@@ -1037,6 +1073,10 @@ namespace Graphics
 				   it will check the focus on the wrong item(0 - maxItems). To prevent that, always add mOffsetIndex,
 				   do checked positions, so you will get index of actuall rendered item. */
 				Interface::PlaylistItem::mOffsetIndex = playlistCurrentPos;
+
+				if (GetAudioObject(playlistIndex)->GetPlaylistItem() == NULL)
+					return;
+
 				Audio::AudioObject* aItem = ::GetAudioObject(playlistIndex);
 				assert(GetAudioObject(playlistIndex) != NULL);
 				Interface::PlaylistItem* pItem = ::GetAudioObject(playlistIndex)->GetPlaylistItem();
@@ -1114,6 +1154,18 @@ namespace Graphics
 
 			Shader::shaderDefault->setVec3("color", Color::White);
 		}
+		else
+		{
+			currentlyRenderedItems = 0;
+			playlistPreviousOffsetY = 0;
+			playlistCurrentOffsetY = 0;
+			playlistCurrentPos = 0;
+			playlistPreviousPos = 0;
+			playlistIndex = 0;
+			playlistFirstLoad = true;
+		}
+
+
 	}
 
 	void MP::RenderPlaylistButtons()

@@ -14,6 +14,21 @@ namespace Audio
 	{
 		struct ID3
 		{
+			ID3() 
+			{ 
+				loaded = false;
+				title = L"";
+				artist = L"";
+				composer = L"";
+				encoded_by = L"";
+				track_num = L"";
+				album = L"";
+				year = L"";
+				comment = L"";
+				genre = L"";
+				format = L"";
+			}
+
 			std::wstring id;
 			std::wstring title;
 			std::wstring artist;
@@ -30,6 +45,8 @@ namespace Audio
 			f32 bitrate;
 			f32 size;	// in bytes
 			f64 length;	// in sec
+
+			b8 loaded;
 		};
 
 		b8 CheckIfAudio(std::wstring path);

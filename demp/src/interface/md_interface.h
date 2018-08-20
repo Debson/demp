@@ -77,12 +77,10 @@ namespace mdEngine
 			SDL_Color mTextColor;
 
 			static s32 mOffsetY;
-			static s32 mCount;
 			static s32 mOffsetIndex;
 
 			void InitFont();
-			void InitItem(s32 id);
-			void UpdateItem();
+			void InitItem(s32* id);
 			void SetColor(glm::vec3 color);
 			void DrawDottedBorder(s16 playpos);
 
@@ -112,7 +110,6 @@ namespace mdEngine
 			TextBox();
 			TextBox(MP::UI::Input::ButtonType code, glm::vec2 size, glm::vec2 pos, mdShader* shader);
 
-
 			void Render();
 			void UpdateItemPos();
 			void SetPos(glm::vec2 pos);
@@ -121,10 +118,10 @@ namespace mdEngine
 			void SetItemScale(f32 scale);
 			void SetItemSize(glm::vec2 itemSize);
 			void AddItem(const std::wstring itemName);
-			glm::vec2 GetPos();
-			glm::vec2 GetSize();
-			b8 hasItemFocus(const std::wstring name);
-			b8 isItemPressed(const std::wstring name);
+			glm::vec2 GetPos() const;
+			glm::vec2 GetSize() const;
+			b8 hasItemFocus(const std::wstring name) const;
+			b8 isItemPressed(const std::wstring name) const;
 
 		private:
 			mdShader* m_Shader;
