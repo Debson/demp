@@ -8,145 +8,128 @@ namespace Audio
 
 Audio::AudioObject::AudioObject() { }
 
-Audio::AudioObject::AudioObject(AudioProperties* ap) : m_AudioProperties(ap) { }
-
 Audio::AudioObject::~AudioObject()
 {
-	m_AudioProperties->path = L"";
-	m_AudioProperties->folder = L"";
-	delete m_AudioProperties;
-	delete m_PlaylistItem;
+	path = L"";
+	folder = L"";;
 }
 
 void Audio::AudioObject::Init()
 {
+	InitFont();
 
-	m_PlaylistItem = new Interface::PlaylistItem();
-
-	m_PlaylistItem->InitFont();
-
-	m_PlaylistItem->InitItem(&m_AudioProperties->id);
+	InitItem(&id);
 }
 
-s32& Audio::AudioObject::GetID() const
+s32& Audio::AudioObject::GetID()
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->id;
+	return id;
 }
 
 void Audio::AudioObject::DecrementID()
 {
-	assert(m_AudioProperties != NULL);
-	if(m_AudioProperties > 0)
-		m_AudioProperties->id--;
+	id > 0 ? id-- : 0;
 }
 
 std::wstring Audio::AudioObject::GetPath() const
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->path;
+	return path;
 }
 
 std::wstring Audio::AudioObject::GetFolderPath() const
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->folder;
+	return folder;
 }
 
 std::wstring Audio::AudioObject::GetArtist() const
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->info.artist;
+	return info.artist;
 }
 
 std::wstring Audio::AudioObject::GetTitle() 
 {
-	assert(m_AudioProperties != NULL);
-	if (m_AudioProperties->info.title.compare(L"") == 0)
-		return Info::GetCompleteTitle(m_AudioProperties->path);
+	if (info.title.compare(L"") == 0)
+		return Info::GetCompleteTitle(path);
 		
-	return m_AudioProperties->info.title;
+	return info.title;
 }
 
 std::wstring Audio::AudioObject::GetTrackNum() const
 {
-	assert(m_AudioProperties != NULL);
-	if (m_AudioProperties->info.track_num.compare(L"0") == 0)
+	if (info.track_num.compare(L"0") == 0)
 		return L"";
 
-	return m_AudioProperties->info.track_num;
+	return info.track_num;
 }
 
 std::wstring Audio::AudioObject::GetAlbum() const
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->info.album;
+	return info.album;
 }
 
 std::wstring Audio::AudioObject::GetYear() const
 {
-	assert(m_AudioProperties != NULL);
-	if (m_AudioProperties->info.year.compare(L"0") == 0)
+	if (info.year.compare(L"0") == 0)
 		return L"";
 
-	return m_AudioProperties->info.year;
+	return info.year;
 }
 
 std::wstring Audio::AudioObject::GetComment() const
 {
-	assert(m_AudioProperties != NULL);
-	if (m_AudioProperties->info.comment.compare(L"0") == 0)
+	if (info.comment.compare(L"0") == 0)
 		return L"";
 
-	return m_AudioProperties->info.comment;
+	return info.comment;
 }
 
 std::wstring Audio::AudioObject::GetGenre() const
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->info.genre;
+	return info.genre;
 }
 
 std::wstring Audio::AudioObject::GetFormat() const
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->info.format;
+	return info.format;
+}
+
+void Audio::AudioObject::SetID(s32 id)
+{
+	this->id = id;
+}
+
+void Audio::AudioObject::SetPath(std::wstring path)
+{
+	this->path = path;
+}
+
+void Audio::AudioObject::SetFolderPath(std::wstring path)
+{
+	this->folder = path;
 }
 
 f32 Audio::AudioObject::GetFrequency() const
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->info.freq;
+	return info.freq;
 }
 
 f32 Audio::AudioObject::GetBitrate() const
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->info.bitrate;
+	return info.bitrate;
 }
 
 s32 Audio::AudioObject::GetObjectSize() const
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->info.size;
+	return info.size;
 }
 
 f64 Audio::AudioObject::GetLength() const
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties->info.length;
+	return info.length;
 }
 
-Audio::AudioProperties* Audio::AudioObject::GetAudioProperty() const
+Audio::Info::ID3& Audio::AudioObject::GetID3Struct()
 {
-	assert(m_AudioProperties != NULL);
-	return m_AudioProperties;
+	return info;
 }
 
-Interface::PlaylistItem* Audio::AudioObject::GetPlaylistItem() const
-{
-	if (this == NULL)
-		return NULL;
-
-	return m_PlaylistItem;
-}

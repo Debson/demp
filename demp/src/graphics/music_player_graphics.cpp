@@ -19,6 +19,7 @@
 #include "../utility/md_parser.h"
 #include "../utility/md_math.h"
 #include "../utility/md_load_texture.h"
+#include "../utility/md_converter.h"
 
 using namespace mdEngine::Graphics;
 using namespace mdEngine::MP;
@@ -47,8 +48,8 @@ namespace Graphics
 
 
 		b8 texturesLoaded = false;
-		GLuint* textTexture = NULL;
-		glm::vec2* predefinedPos = NULL;
+		GLuint* textTexture;
+		glm::vec2* predefinedPos;
 		b8 predefinedPosLoaded(false);
 
 		s32 allocatedCount = 0;
@@ -71,6 +72,9 @@ namespace Graphics
 		b8 playlistFirstEnter(true);
 
 		b8 playlistFirstLoad(true);
+
+		b8 updatePlaylistInfo(false);
+		b8 updatePlaylistInfoPrevious(false);
 
 		s32 playlistPreviousOffsetY = 0;
 		f32 playlistCurrentOffsetY = 0;
@@ -114,8 +118,9 @@ namespace Graphics
 
 		void RenderWindowControlButtons();
 
-	}
+		void RenderPlaylistInfo();
 
+	}
 
 	MP::PlaylistObject::PlaylistObject()
 	{
@@ -140,12 +145,12 @@ namespace Graphics
 		m_Toggled = false;
 	}
 
-	b8 MP::PlaylistObject::IsEnabled()
+	b8 MP::PlaylistObject::IsEnabled() const
 	{
 		return m_Enabled;
 	}
 
-	b8 MP::PlaylistObject::IsToggled()
+	b8 MP::PlaylistObject::IsToggled() const
 	{
 		return m_Toggled;
 	}
@@ -160,43 +165,80 @@ namespace Graphics
 		m_PlayingID = id;
 	}
 
-	s32 MP::PlaylistObject::GetSelectedID()
+	s32 MP::PlaylistObject::GetSelectedID() const
 	{
 		return m_SelectedID;
 	}
 
-	s32 MP::PlaylistObject::GetPlayingID()
+	s32 MP::PlaylistObject::GetPlayingID() const
 	{
 		return mdEngine::MP::Playlist::RamLoadedMusic.get() != NULL ? mdEngine::MP::Playlist::RamLoadedMusic.mID : -1;
 	}
 
-	glm::vec2 MP::PlaylistObject::getPos()
+	glm::vec2 MP::PlaylistObject::GetPos() const
 	{
 		return m_Pos;
 	}
 
-	glm::vec2 MP::PlaylistObject::getSize()
+	glm::vec2 MP::PlaylistObject::GetSize() const
 	{
 		return m_Size;
 	}
 
-	void MP::PlaylistObject::setPos(glm::vec2 pos)
+	void MP::PlaylistObject::SetPos(glm::vec2 pos)
 	{
 		m_Pos = pos;
 	}
 
-	void MP::PlaylistObject::setSize(glm::vec2 size)
+	void MP::PlaylistObject::SetSize(glm::vec2 size)
 	{
 		m_Size = size;
 	}
 
-	b8 MP::PlaylistObject::hasFocus()
+	void MP::PlaylistObject::SetItemsSize(f64 itemsSize)
+	{
+		m_ItemsSize = itemsSize;
+		m_ItemsSizeStr = Converter::BytesToProperSizeFormat(itemsSize);
+	}
+
+	void MP::PlaylistObject::SetItemsDuration(f64 itemsDuration)
+	{
+		m_ItemsDuration = itemsDuration;
+		m_ItemsDurationStr = Converter::SecToProperTimeFormat(itemsDuration);
+	}
+
+	f64 MP::PlaylistObject::GetItemsSize() const
+	{
+		return m_ItemsSize;
+	}
+
+	f64 MP::PlaylistObject::GetItemsDuration() const
+	{
+		return m_ItemsDuration;
+	}
+
+	std::string MP::PlaylistObject::GetItemsSizeString() const
+	{
+		return m_ItemsSizeStr;
+	}
+
+	std::string MP::PlaylistObject::GetItemsDurationString() const
+	{
+		return m_ItemsDurationStr;
+	}
+
+	b8 MP::PlaylistObject::hasFocus() const
 	{
 		int mouseX, mouseY;
 		App::Input::GetMousePosition(&mouseX, &mouseY);
 
 		return mouseX > m_Pos.x && mouseX < m_Size.x &&
 			   mouseY > m_Pos.y && mouseY < m_Size.y;
+	}
+
+	MP::PlaylistObject* MP::GetPlaylistObject()
+	{
+		return &m_Playlist;
 	}
 
 	b8 MP::MainPlayerObject::hasFocus()
@@ -208,15 +250,21 @@ namespace Graphics
 			mouseY > m_Pos.y && mouseY < m_Size.y;
 	}
 
-	void MP::MainPlayerObject::setPos(glm::vec2 pos)
+	void MP::MainPlayerObject::SetPos(glm::vec2 pos)
 	{
 		m_Pos = pos;
 	}
 
-	void MP::MainPlayerObject::setSize(glm::vec2 size)
+	void MP::MainPlayerObject::SetSize(glm::vec2 size)
 	{
 		m_Size = size;
 	}
+
+	MP::MainPlayerObject* MP::GetMainPlayerObject()
+	{
+		return &m_MainPlayer;
+	}
+
 
 	void MP::InitializeTextBoxes()
 	{
@@ -247,10 +295,10 @@ namespace Graphics
 	{
 		static s32 toggledWindowHeight = Window::windowProperties.mApplicationHeight;
 
-		m_Playlist.setPos(glm::vec2(0.f, Data::_PLAYLIST_FOREGROUND_POS.y));
-		m_Playlist.setSize(glm::vec2(Window::windowProperties.mWindowWidth, Window::windowProperties.mApplicationHeight));
-		m_MainPlayer.setPos(glm::vec2(0.f, 0.f));
-		m_MainPlayer.setSize(Data::_DEFAULT_PLAYER_SIZE);
+		m_Playlist.SetPos(glm::vec2(0.f, Data::_PLAYLIST_FOREGROUND_POS.y));
+		m_Playlist.SetSize(glm::vec2(Window::windowProperties.mWindowWidth, Window::windowProperties.mApplicationHeight));
+		m_MainPlayer.SetPos(glm::vec2(0.f, 0.f));
+		m_MainPlayer.SetSize(Data::_DEFAULT_PLAYER_SIZE);
 
 		// If playlist button pressed, roll down/up playlist
 		if (Input::isButtonPressed(Input::ButtonType::Playlist) && interp > 1.f)
@@ -761,18 +809,35 @@ namespace Graphics
 		Shader::shaderDefault->setVec3("color", Color::White);		
 	}
 
+	void MP::RenderPlaylistInfo()
+	{
+	
+		if (m_Playlist.IsToggled() &&
+			m_Playlist.IsEnabled() &&
+			State::IsPlaylistEmpty == false)
+		{
+
+			//md_log(m_Playlist.GetItemsSizeString());
+			
+
+			glm::mat4 model;
+
+		}
+
+
+	}
+
 	void MP::RenderPlaylistItems()
 	{
 		/* Functions has guards if statements like 
 
-				"if (GetAudioObject(i)->GetPlaylistItem() == NULL)
+				"if (GetAudioObject(i) == NULL)
 					 return;"
 
 		   to prevent from accessing playlist element that was not loaded yet. Playlist items will be rendered by this functions
 		   only when flag "State::IsPlaylistEmpty" is false, meaning that files were added to the music player, but not every file
 		   may be loaded yet.
 		*/
-
 
 
 
@@ -812,8 +877,9 @@ namespace Graphics
 			f32 currentPos = 0;
 
 			currentPos = currentSongID * itemH * -1;
-			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicChanged ||
-				mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicAdded)
+			/* When song is changed, scope to song's position in the playlist */
+			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicChanged &&
+				mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicAddedFromFile)
 			{
 				while (currentPos + itemH > top)
 				{
@@ -831,16 +897,18 @@ namespace Graphics
 					playlistCurrentOffsetY -= itemH;
 				//if(currentPos <= (maxItems - 1) * itemH * -1)
 					//testOffsetY += itemH;
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kIdle;
 			}
 
 			if (playlistCurrentOffsetY > 0)
 				playlistCurrentOffsetY = 0;
 
-			//md_log(currentlyRenderedItems);
-			/* When playlist pos is different than top and low, keep resizing till it reaches end, then start roll out to the top */
+			/* When playlist pos is different than top and low, keep resizing till it reaches end, 
+			   then start roll out to the top 
+			*/
 			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kResized &&
 				Window::windowProperties.mDeltaHeightResize > 0 &&
-				playlistCurrentOffsetY <= (maxItems - displayedItems) * itemH * -1 &&
+				playlistCurrentOffsetY <= (maxItems - displayedItems + 2) * itemH * -1 &&
 				displayedItems < maxItems)
 			{
 				playlistCurrentOffsetY += Window::windowProperties.mDeltaHeightResize;
@@ -853,12 +921,17 @@ namespace Graphics
 			
 			playlistCurrentPos = (s32)(playlistCurrentOffsetY / Data::_PLAYLIST_ITEM_SIZE.y) * -1;
 
+
+			/* If playlist is resized and displayed items + 4 is greater than current rendered items,
+			   start rendering more items(prevent from updating textures and positions on every resize,
+			   only when it is needed).
+			*/
 			if (mdEngine::MP::musicPlayerState != mdEngine::MP::MusicPlayerState::kIdle || 
 				State::IsDeletionFinished == true)
 			{
 				if ((playlistCurrentPos + displayedItems > ::GetSize() ||
 					playlistFirstLoad == true ||
-					currentlyRenderedItems < displayedItems) && State::MusicFilesLoaded)
+					currentlyRenderedItems < displayedItems + 4) && State::MusicFilesLoaded)
 				{
 					texturesLoaded = false;
 					playlistFirstLoad = false;
@@ -877,9 +950,9 @@ namespace Graphics
 			}
 
 
-			
 			if (playlistCurrentPos > ::GetSize())
 				playlistCurrentPos = GetSize();
+
 			if (State::MusicFilesLoaded == true)
 			{
 				min = playlistCurrentPos - 2;
@@ -910,13 +983,13 @@ namespace Graphics
 			{
 				for (u32 i = min; i < max; i++)
 				{
-					if (GetAudioObject(i)->GetPlaylistItem() == NULL)
+					if (GetAudioObject(i) == NULL)
 						return;
 
 					if(playlistPreviousOffsetY - playlistCurrentOffsetY > 0)
-						::GetAudioObject(i)->GetPlaylistItem()->mPos.y -= abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
+						::GetAudioObject(i)->mPos.y -= abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
 					else
-						::GetAudioObject(i)->GetPlaylistItem()->mPos.y += abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
+						::GetAudioObject(i)->mPos.y += abs(playlistPreviousOffsetY - playlistCurrentOffsetY);
 				}
 				playlistPreviousOffsetY = playlistCurrentOffsetY;
 			}
@@ -949,15 +1022,13 @@ namespace Graphics
 				glm::vec2 itemStartPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, 
 												   Data::_PLAYLIST_ITEMS_SURFACE_POS.y + (min - 1) * itemH);
 
-				// BUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
 				predefinedPos[0] = glm::vec2(itemStartPos.x, itemStartPos.y);
 				for (u16 i = min, t = 0; i < max; i++, t++)
 				{
-					if (GetAudioObject(i)->GetPlaylistItem() == NULL)
+					if (GetAudioObject(i) == NULL)
 						return;
 
-					item = ::GetAudioObject(i)->GetPlaylistItem();
-					//md_log(utf16_to_utf8(item->GetTitle()));
+					item = ::GetAudioObject(i);
 					textTexture[t] = Text::LoadText(item->mFont,
 													item->GetTitle(),
 													item->mTextColor);
@@ -975,20 +1046,18 @@ namespace Graphics
 				// Write predefined positions to playlist items that are currently displayed
 				for (s32 i = 0, t = 0; i < Audio::Object::GetSize(); i++)
 				{
-					if (GetAudioObject(i)->GetPlaylistItem() == NULL)
+					if (GetAudioObject(i) == NULL)
 						return;
 					//std::cout << i << std::endl;
 					if (i >= min && i < max)
 					{
-						::GetAudioObject(i)->GetPlaylistItem()->mPos = glm::vec2(predefinedPos[t].x, predefinedPos[t].y);
-						//std::cout << mdItemContainer[i]->mPos.y << "   " << playlistCurrentOffsetY << std::endl;
+						::GetAudioObject(i)->mPos = glm::vec2(predefinedPos[t].x, predefinedPos[t].y);
 						t++;
 					}
 					else
 					{
-						::GetAudioObject(i)->GetPlaylistItem()->mPos = glm::vec2(INVALID);
+						::GetAudioObject(i)->mPos = glm::vec2(INVALID);
 					}
-					//std::cout << mdItemContainer[i]->mPos.y << "   " << playlistCurrentPos << "  " << playlistCurrentOffsetY << std::endl;
 				}
 
 				texturesLoaded = true;
@@ -1002,10 +1071,14 @@ namespace Graphics
 				f32 displayedItemsF = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / itemH;
 				f32 playlistSurface = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
 				f32 scaleY = playlistSurface  / (float)::GetSize() * displayedItemsF;
+				// Set minimum size for scroll bar and do calculations with changed size
+				if (scaleY < Data::_PLAYLIST_SCROLL_BAR_SIZE.y)
+					scaleY = Data::_PLAYLIST_SCROLL_BAR_SIZE.y;
 				f32 scrollSurface = playlistSurface - scaleY;
 				f32 scrollStep = (playlistCurrentOffsetY * scrollSurface) / ((maxItems - displayedItems) * itemH);
 				s32 newPosY = (Data::_PLAYLIST_SCROLL_BAR_POS.y - scrollStep);
 
+				//md_log(playlistCurrentOffsetY);
 
 				assert(m_PlaylistBarSlider != NULL);
 				
@@ -1040,8 +1113,7 @@ namespace Graphics
 					playlistCurrentOffsetY -= (deltaMouseY * maxItems / displayedItems);
 				}
 
-				if (m_PlaylistBarSlider->mSize.y < Data::_PLAYLIST_SCROLL_BAR_SIZE.y)
-					m_PlaylistBarSlider->mSize.y = Data::_PLAYLIST_SCROLL_BAR_SIZE.y;
+				
 				if (m_PlaylistBarSlider->mPos.y < Data::_PLAYLIST_SCROLL_BAR_POS.y)
 					m_PlaylistBarSlider->mPos.y = Data::_PLAYLIST_SCROLL_BAR_POS.y;
 				if (m_PlaylistBarSlider->mPos.y + m_PlaylistBarSlider->mSize.y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
@@ -1074,12 +1146,12 @@ namespace Graphics
 				   do checked positions, so you will get index of actuall rendered item. */
 				Interface::PlaylistItem::mOffsetIndex = playlistCurrentPos;
 
-				if (GetAudioObject(playlistIndex)->GetPlaylistItem() == NULL)
+				if (GetAudioObject(playlistIndex) == NULL)
 					return;
 
 				Audio::AudioObject* aItem = ::GetAudioObject(playlistIndex);
 				assert(GetAudioObject(playlistIndex) != NULL);
-				Interface::PlaylistItem* pItem = ::GetAudioObject(playlistIndex)->GetPlaylistItem();
+				Interface::PlaylistItem* pItem = ::GetAudioObject(playlistIndex);
 				glm::vec3 itemColor;
 
 				// Fint in vector with selected positions if current's id is inside
@@ -1292,7 +1364,36 @@ namespace Graphics
 
 	void MP::UpdateMainWindow()
 	{
+		/* On every file addition or deletion update the overall file durations and size
+		   (if more files are added, it will update only once, after all files are loaded)
+		*/
+		if ((State::MusicFilesLoaded == true && updatePlaylistInfoPrevious == false) ||
+			mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicDeleted)
+		{
+			updatePlaylistInfoPrevious = true;
+			updatePlaylistInfo = true;
+		}
 
+		updatePlaylistInfoPrevious = State::MusicFilesLoaded;
+
+		if (updatePlaylistInfo == true)
+		{
+			f64 duration = 0;
+			f64 size = 0;
+			for (s32 i = 0; i < Audio::Object::GetSize(); i++)
+			{
+				if (Audio::Object::GetAudioObject(i) == NULL)
+					return;
+
+				duration += Audio::Object::GetAudioObject(i)->GetLength();
+				size += Audio::Object::GetAudioObject(i)->GetObjectSize();
+			}
+
+			m_Playlist.SetItemsDuration(duration);
+			m_Playlist.SetItemsSize(size);
+
+			updatePlaylistInfo = false;
+		}
 	}
 
 	void MP::RenderMainWindow()
@@ -1314,6 +1415,8 @@ namespace Graphics
 		RenderMusicProgressBar();
 
 		RenderMusicUI();
+
+		RenderPlaylistInfo();
 
 		RenderPlaylistItems();
 

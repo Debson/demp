@@ -18,16 +18,15 @@ namespace Audio
 		Info::ID3 info;
 	};
 
-	class AudioObject
+	class AudioObject : private AudioProperties, public Interface::PlaylistItem
 	{
 	public:
 		AudioObject();
-		explicit AudioObject(AudioProperties* ap);
 		~AudioObject();
 
 		void Init();
 
-		s32& GetID() const;
+		s32& GetID();
 		void DecrementID();
 		std::wstring GetPath() const;
 		std::wstring GetFolderPath() const;
@@ -39,16 +38,16 @@ namespace Audio
 		std::wstring GetComment() const;
 		std::wstring GetGenre() const;
 		std::wstring GetFormat() const;
+		void SetID(s32 id);
+		void SetPath(std::wstring path);
+		void SetFolderPath(std::wstring path);
 		f32 GetFrequency() const;
 		f32 GetBitrate() const;
 		s32 GetObjectSize() const;
 		f64 GetLength() const;
-		AudioProperties* GetAudioProperty() const;
-		Interface::PlaylistItem* GetPlaylistItem() const;
+		Info::ID3& GetID3Struct();
 
 	private:
-		AudioProperties* m_AudioProperties;
-		Interface::PlaylistItem* m_PlaylistItem;
 
 
 	};

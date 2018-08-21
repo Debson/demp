@@ -107,7 +107,7 @@ namespace MP
 			Playlist::DeleteMusic(Audio::Object::GetSize() - 1);
 
 		}
-		Graphics::MP::m_Playlist.multipleSelect.clear();
+		Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
 	}
 
 	void UI::DebugRender()
@@ -218,9 +218,9 @@ namespace MP
 
 			if (ImGui::Button("Print selected IDs") == true)
 			{
-				for (u16 i = 0; i < Graphics::MP::m_Playlist.multipleSelect.size(); i++)
+				for (u16 i = 0; i < Graphics::MP::GetPlaylistObject()->multipleSelect.size(); i++)
 				{
-					std::cout << *Graphics::MP::m_Playlist.multipleSelect[i] << std::endl;
+					std::cout << *Graphics::MP::GetPlaylistObject()->multipleSelect[i] << std::endl;
 				}
 			}
 
@@ -405,7 +405,7 @@ namespace MP
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
 		for (u16 i = 0; i < mdPlaylistButtonsContainer.size(); i++)
 		{
-			if (Audio::Object::GetAudioObject(i)->GetPlaylistItem() == NULL)
+			if (Audio::Object::GetAudioObject(i) == NULL)
 				break;
 			App::ProcessButton(mdPlaylistButtonsContainer[i].second);
 		}
@@ -465,12 +465,12 @@ namespace MP
 			Playlist::RepeatMusic();
 		}
 
-		if (App::Input::IsScrollForwardActive() && Graphics::MP::m_MainPlayer.hasFocus())
+		if (App::Input::IsScrollForwardActive() && Graphics::MP::GetMainPlayerObject()->hasFocus())
 		{
 			Playlist::IncreaseVolume(App::InputEvent::kScrollEvent);
 		}
 
-		if (App::Input::IsScrollBackwardActive() && Graphics::MP::m_MainPlayer.hasFocus())
+		if (App::Input::IsScrollBackwardActive() && Graphics::MP::GetMainPlayerObject()->hasFocus())
 		{
 			Playlist::LowerVolume(App::InputEvent::kScrollEvent);
 		}
@@ -481,7 +481,7 @@ namespace MP
 	{
 		for (s32 i = 0; i < Audio::Object::GetSize(); i++)
 		{
-			if (Audio::Object::GetAudioObject(i)->GetPlaylistItem() == NULL)
+			if (Audio::Object::GetAudioObject(i) == NULL)
 				return;
 
 			std::vector<s32*>::iterator it;
@@ -489,41 +489,41 @@ namespace MP
 
 			if (App::Input::IsKeyDown(App::KeyCode::LCtrl) && App::Input::IsKeyDown(App::KeyCode::A))
 			{
-				it = std::find(Graphics::MP::m_Playlist.multipleSelect.begin(),
-							   Graphics::MP::m_Playlist.multipleSelect.end(),
+				it = std::find(Graphics::MP::GetPlaylistObject()->multipleSelect.begin(),
+							   Graphics::MP::GetPlaylistObject()->multipleSelect.end(),
 							   currentPlaylistItemID);
-				if(it == Graphics::MP::m_Playlist.multipleSelect.end())
-					Graphics::MP::m_Playlist.multipleSelect.push_back(
+				if(it == Graphics::MP::GetPlaylistObject()->multipleSelect.end())
+					Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(
 						currentPlaylistItemID);
 			}
-			else if (Audio::Object::GetAudioObject(i)->GetPlaylistItem()->isPressed == true)
+			else if (Audio::Object::GetAudioObject(i)->isPressed == true)
 			{
 
 				clickDelayTimer.start();
-				Audio::Object::GetAudioObject(i)->GetPlaylistItem()->clickCount++;
+				Audio::Object::GetAudioObject(i)->clickCount++;
 
 
 				// Check if current's item position is in vector with selected item's positions
-				it = std::find(Graphics::MP::m_Playlist.multipleSelect.begin(),
-									Graphics::MP::m_Playlist.multipleSelect.end(),
+				it = std::find(Graphics::MP::GetPlaylistObject()->multipleSelect.begin(),
+									Graphics::MP::GetPlaylistObject()->multipleSelect.end(),
 									&Audio::Object::GetAudioObject(i)->GetID());
 				
 				if (App::Input::IsKeyDown(App::KeyCode::LCtrl))
 				{
-					if(it == Graphics::MP::m_Playlist.multipleSelect.end())
-						Graphics::MP::m_Playlist.multipleSelect.push_back(currentPlaylistItemID);
+					if(it == Graphics::MP::GetPlaylistObject()->multipleSelect.end())
+						Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(currentPlaylistItemID);
 					else
 					{
-						Graphics::MP::m_Playlist.multipleSelect.erase(it);
+						Graphics::MP::GetPlaylistObject()->multipleSelect.erase(it);
 					}
 				}
 				else
 				{
-					Graphics::MP::m_Playlist.multipleSelect.clear();
-					Graphics::MP::m_Playlist.multipleSelect.push_back(currentPlaylistItemID);
+					Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
+					Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(currentPlaylistItemID);
 				}
 
-				if (Audio::Object::GetAudioObject(i)->GetPlaylistItem()->clickCount > 1)
+				if (Audio::Object::GetAudioObject(i)->clickCount > 1)
 				{
 					MP::musicPlayerState = MP::MusicPlayerState::kMusicChosen;
 					Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(i)->GetPath(), i);
@@ -534,35 +534,36 @@ namespace MP
 
 			//If time for second click expires, reset click count
 			if (clickDelayTimer.finished == true)
-				Audio::Object::GetAudioObject(i)->GetPlaylistItem()->clickCount = 0;
+				Audio::Object::GetAudioObject(i)->clickCount = 0;
 
 		}
 
 		// If delete pressed, delete every item on position from selected positions vector
 		if (App::Input::IsKeyPressed(App::KeyCode::Delete) && 
-			Graphics::MP::m_Playlist.multipleSelect.empty() == false)
+			Graphics::MP::GetPlaylistObject()->multipleSelect.empty() == false)
 		{
 			/* If multiple items are selected, after deletion go back to the lowest position selected.
 			   e.g. (6, 2, 9, 12) selected, sort it and select first item (2) 
 			*/
-			std::sort(Graphics::MP::m_Playlist.multipleSelect.begin(), Graphics::MP::m_Playlist.multipleSelect.end(),
+			std::sort(Graphics::MP::GetPlaylistObject()->multipleSelect.begin(), 
+					  Graphics::MP::GetPlaylistObject()->multipleSelect.end(),
 				[&](const s32* first, const s32* second) -> bool { return *first < *second; });
 
-			s32 temp = *Graphics::MP::m_Playlist.multipleSelect[0];
-			for (s32 j = 0; j < Graphics::MP::m_Playlist.multipleSelect.size(); j++)
+			s32 temp = *Graphics::MP::GetPlaylistObject()->multipleSelect[0];
+			for (s32 j = 0; j < Graphics::MP::GetPlaylistObject()->multipleSelect.size(); j++)
 			{
-				Playlist::DeleteMusic(*Graphics::MP::m_Playlist.multipleSelect[j]);
+				Playlist::DeleteMusic(*Graphics::MP::GetPlaylistObject()->multipleSelect[j]);
 			}
-			Graphics::MP::m_Playlist.multipleSelect.clear();
+			Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
 			
 			if (Audio::Object::GetSize() <= temp && Audio::Object::GetAudioObjectContainer().empty() == false)
 			{
-				Graphics::MP::m_Playlist.multipleSelect.push_back(
+				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(
 								&Audio::Object::GetAudioObject(Audio::Object::GetSize() - 1)->GetID());
 			}
 			else if (Audio::Object::GetAudioObject(temp) != NULL)
 			{
-				Graphics::MP::m_Playlist.multipleSelect.push_back(&Audio::Object::GetAudioObject(temp)->GetID());
+				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&Audio::Object::GetAudioObject(temp)->GetID());
 			}
 		}
 

@@ -1,16 +1,19 @@
 #include "mp_channel_attrib.h"
 
 #include <algorithm>
+#include <mutex>
 
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <bass.h>
 #include <taglib/tag.h>
 #include <taglib/fileref.h>
 
-#include "../settings/music_player_settings.h"
 #include "mp_audio.h"
+#include "../settings/music_player_settings.h"
 #include "../utility/utf8_to_utf16.h"
+#include "../utility/md_util.h"
 
 namespace fs = boost::filesystem;
 
@@ -18,7 +21,7 @@ namespace Audio
 {
 	namespace Info
 	{
-		
+		std::mutex mutex;
 	}
 
 	b8 Info::CheckIfAudio(std::wstring path)
@@ -104,15 +107,25 @@ namespace Audio
 		return p.wstring();
 	}
 
+	static s32 count = 0;
 	void Info::GetInfo(Info::ID3* info, std::wstring path)
 	{
+		std::lock_guard<std::mutex> lockGuard(mutex);
+
+		md_log(count);
+		count++;
+
 		HSTREAM stream;;
-		stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE | BASS_UNICODE);
+		stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE);
+
+		boost::intmax_t fileSize = boost::filesystem::file_size(path);
 
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_FREQ, &info->freq);
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_BITRATE, &info->bitrate);
-		info->size = BASS_ChannelGetLength(stream, BASS_POS_BYTE);
-		info->length = BASS_ChannelBytes2Seconds(stream, info->size);
+		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_MUSIC_ACTIVE, &info->channels);
+		f32 size = BASS_ChannelGetLength(stream, BASS_POS_BYTE);
+		info->length = BASS_ChannelBytes2Seconds(stream, size);
+		info->size = fileSize;
 
 		BASS_StreamFree(stream);
 	}

@@ -142,7 +142,7 @@ namespace MP
 		_MAIN_FOREGROUND_POS = glm::vec2(20.0f, 20.0f);
 		_MAIN_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight - 75.f);
 
-		_PLAYLIST_FOREGROUND_POS = glm::vec2(20.f, mdDefaultHeight - 20.f);
+		_PLAYLIST_FOREGROUND_POS = glm::vec2(20.f, mdDefaultHeight);
 		_PLAYLIST_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight);
 
 		_EXIT_BUTTON_POS = glm::vec2(mdDefaultWidth - 50.f, 5.f);
@@ -199,7 +199,7 @@ namespace MP
 
 		_PLAYLIST_ITEM_SIZE = glm::vec2(300.f, 30.f);
 
-		_PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdCurrentWidth - 60.f, mdCurrentHeight - (mdCurrentHeight - 350.f) - 20.f);
+		_PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdCurrentWidth - 60.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
 		_PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, 20.f);
 
 		_PLAYLIST_ADD_BUTTON_POS = glm::vec2(40.f, mdCurrentHeight - 20.f);
@@ -224,10 +224,10 @@ namespace MP
 
 		//_MAIN_BACKGROUND_SIZE = glm::vec2(mdDefaultWidth, mdCurrentHeight);
 
-		_PLAYLIST_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdCurrentHeight - _DEFAULT_PLAYER_SIZE.y - 15.f);
+		_PLAYLIST_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdCurrentHeight - _DEFAULT_PLAYER_SIZE.y - 30.f);
 
-		_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f) - 20.f);
-		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 100.f, mdCurrentHeight - 35.f);
+		_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
+		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 100.f, mdCurrentHeight - 30.f);
 		_PLAYLIST_ADD_BUTTON_POS = glm::vec2(40.f, mdCurrentHeight - 35.f);
 
 		_PLAYLIST_ADD_BUTTON_TEXTBOX_POS = glm::vec2(40.f, mdCurrentHeight - 20.f);

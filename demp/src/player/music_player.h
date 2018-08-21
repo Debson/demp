@@ -18,7 +18,8 @@ namespace mdEngine
 			kResized,
 			kMusicChosen,
 			kMusicDeleted,
-			kMusicAdded
+			kMusicAdded,
+			kMusicAddedFromFile
 		};
 
 		extern MusicPlayerState musicPlayerState;

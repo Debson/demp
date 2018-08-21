@@ -11,7 +11,7 @@ namespace Audio
 	namespace Folders
 	{
 		std::vector<std::wstring>& GetAudioFoldersContainer();
-		std::wstring* GetAudioFolder(s32 id);
+		std::wstring GetAudioFolder(s32 id);
 		u32 GetSize();
 		b8 AddFolder(std::wstring name);
 #ifdef _DEBUG_
@@ -33,13 +33,13 @@ namespace Audio
 
 	b8 SavePathFiles(std::wstring path);
 
+	b8 SavePathFiles(std::wstring path, const Info::ID3 id3);
+
 	b8 PushToPlaylist(std::wstring path);
 
 	void DeallocateAudioItems();
 
 	void UpdateAudioLogic();
-
-	//void OnUpdateAudio();
 	
 	void PerformDeletion(s32 index);
 

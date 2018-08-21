@@ -16,17 +16,23 @@ namespace Audio
 		{
 			ID3() 
 			{ 
-				loaded = false;
-				title = L"";
-				artist = L"";
-				composer = L"";
-				encoded_by = L"";
-				track_num = L"";
-				album = L"";
-				year = L"";
-				comment = L"";
-				genre = L"";
-				format = L"";
+				loaded		= false;
+				id			= L"";
+				title		= L"";
+				artist		= L"";
+				composer	= L"";
+				encoded_by	= L"";
+				track_num	= L"";
+				album		= L"";
+				year		= L"";
+				comment		= L"";
+				genre		= L"";
+				format		= L"";
+				bitrate		= 0;
+				channels	= 0;
+				freq		= 0;
+				size		= 0;
+				length		= 0;
 			}
 
 			std::wstring id;
@@ -41,8 +47,9 @@ namespace Audio
 			std::wstring genre;
 			std::wstring format;
 
-			f32 freq;
 			f32 bitrate;
+			f32 channels;
+			f32 freq;
 			f32 size;	// in bytes
 			f64 length;	// in sec
 
@@ -52,6 +59,8 @@ namespace Audio
 		b8 CheckIfAudio(std::wstring path);
 
 		b8 CheckIfHasItems(std::wstring path);
+
+
 		
 		b8 CheckIfAlreadyLoaded(std::vector<std::wstring>* v, std::wstring path);
 

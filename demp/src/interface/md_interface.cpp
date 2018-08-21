@@ -93,9 +93,7 @@ namespace mdEngine
 
 		mTextColor = { 255, 255, 255 };
 
-
 		mTitle = Audio::Object::GetAudioObject(mID)->GetTitle();
-		//mTitle = L"test test test test";
 
 		u16 len = mTitle.length();
 		mTitleC.resize(len + 1);
@@ -104,7 +102,6 @@ namespace mdEngine
 		TTF_SizeUTF8(mFont, mTitleC.c_str(), &mTextSize.x, &mTextSize.y);
 		
 		mdPlaylistButtonsContainer.push_back(std::make_pair(id, this));
-
 	}	
 
 	void Interface::PlaylistItem::SetColor(glm::vec3 color)

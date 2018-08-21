@@ -177,7 +177,7 @@ namespace MP
 						//Interface::PlaylistItem * item = new Interface::PlaylistItem();
 						//item->InitFont();
 						//item->InitItem();
-						Graphics::MP::m_Playlist.SetSelectedID(mID);
+						Graphics::MP::GetPlaylistObject()->SetSelectedID(mID);
 
 						mMusic = BASS_StreamCreateFile(TRUE, mData, 0, size, BASS_STREAM_AUTOFREE);
 						if (check_file() == false)
@@ -415,8 +415,8 @@ namespace MP
 					RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.mID)->GetPath(), RamLoadedMusic.mID);
 				mdMPStarted = true;
 			}
-			Graphics::MP::m_Playlist.SetPlayingID(RamLoadedMusic.mID);
-			Graphics::MP::m_Playlist.SetSelectedID(RamLoadedMusic.mID);
+			Graphics::MP::GetPlaylistObject()->SetPlayingID(RamLoadedMusic.mID);
+			Graphics::MP::GetPlaylistObject()->SetSelectedID(RamLoadedMusic.mID);
 
 			
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
@@ -716,11 +716,11 @@ namespace MP
 
 			Audio::PerformDeletion(pos);
 			
-			if (Graphics::MP::m_Playlist.GetPlayingID() == pos)
-				Graphics::MP::m_Playlist.SetPlayingID(-1);
+			if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == pos)
+				Graphics::MP::GetPlaylistObject()->SetPlayingID(-1);
 
-			if (Graphics::MP::m_Playlist.GetSelectedID() > Audio::Object::GetSize() - 1)
-				Graphics::MP::m_Playlist.SetSelectedID(Audio::Object::GetSize() - 1);
+			if (Graphics::MP::GetPlaylistObject()->GetSelectedID() > Audio::Object::GetSize() - 1)
+				Graphics::MP::GetPlaylistObject()->SetSelectedID(Audio::Object::GetSize() - 1);
 
 			MP::musicPlayerState = MP::MusicPlayerState::kMusicDeleted;
 		}
