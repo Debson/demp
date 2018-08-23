@@ -21,6 +21,7 @@ namespace Audio
 {
 	namespace Info
 	{
+		s32 LoadedItemsInfoCount = 0;
 		std::mutex mutex;
 	}
 
@@ -63,11 +64,19 @@ namespace Audio
 		return false;
 	}
 
-	std::wstring Info::GetFolder(std::wstring path)
+	std::wstring Info::GetFolderPath(std::wstring path)
 	{
 		fs::path p(path);
 
 		return p.remove_filename().wstring();
+	}
+
+	std::wstring Info::GetFolder(std::wstring path)
+	{
+		// Shouldn't be hardcoded!!! change it
+		s32 pos = path.find_last_of('\\');
+
+		return path.substr(pos + 1, path.length());
 	}
 
 	std::wstring Info::GetCompleteTitle(std::wstring path)
@@ -107,13 +116,10 @@ namespace Audio
 		return p.wstring();
 	}
 
-	static s32 count = 0;
+	
 	void Info::GetInfo(Info::ID3* info, std::wstring path)
 	{
 		std::lock_guard<std::mutex> lockGuard(mutex);
-
-		md_log(count);
-		count++;
 
 		HSTREAM stream;;
 		stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE);
@@ -126,6 +132,8 @@ namespace Audio
 		f32 size = BASS_ChannelGetLength(stream, BASS_POS_BYTE);
 		info->length = BASS_ChannelBytes2Seconds(stream, size);
 		info->size = fileSize;
+
+		LoadedItemsInfoCount++;
 
 		BASS_StreamFree(stream);
 	}

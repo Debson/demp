@@ -14,6 +14,7 @@ namespace MP
 		u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
 
 		TTF_Font* _MUSIC_PLAYER_FONT;
+		TTF_Font* _MUSIC_PLAYER_NUMBER_FONT;
 
 		glm::vec2 _MIN_PLAYER_SIZE;
 
@@ -93,6 +94,13 @@ namespace MP
 
 		s16 _TEXT_BOX_ITEM_HEIGHT;
 
+		glm::vec2 _TEXT_ITEMS_DURATION_POS;
+
+		glm::vec2 _TEXT_ITEMS_SIZE_POS;
+
+		glm::vec2 _TEXT_ITEMS_COUNT_POS;
+
+
 		f32 VolumeKeyMultiplier = 0.8f;
 		s32 VolumeScrollStep = 2.f;
 		s32 VolumeFadeTime = 500;
@@ -127,7 +135,8 @@ namespace MP
 
 		_PLAYLIST_CHOOSE_ITEM_DELAY = 400;
 
-		_MUSIC_PLAYER_FONT = TTF_OpenFont("assets/font/Raleway-Regular.ttf", 14);
+		_MUSIC_PLAYER_FONT = TTF_OpenFont("assets/font/Times New Roman.ttf", 14);
+		_MUSIC_PLAYER_NUMBER_FONT = TTF_OpenFont("assets/font/Times New Roman.ttf", 14);
 
 
 		_DEFAULT_PLAYER_POS = glm::vec2(0.f, 0.f);
@@ -209,6 +218,14 @@ namespace MP
 		_PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE = glm::vec2(120.f, 100);
 
 		_TEXT_BOX_ITEM_HEIGHT = 20;
+
+
+		_TEXT_ITEMS_DURATION_POS = glm::vec2(20, mdDefaultHeight - 30.f);
+
+		_TEXT_ITEMS_SIZE_POS = glm::vec2(170, mdDefaultHeight - 30.f);
+
+		_TEXT_ITEMS_COUNT_POS = glm::vec2(120, mdDefaultHeight - 30.f);
+
 	}
 
 	void Data::UpdateData()
@@ -232,6 +249,14 @@ namespace MP
 
 		_PLAYLIST_ADD_BUTTON_TEXTBOX_POS = glm::vec2(40.f, mdCurrentHeight - 20.f);
 
+	}
+
+	void Data::CloseData()
+	{
+		TTF_CloseFont(_MUSIC_PLAYER_FONT);
+		TTF_CloseFont(_MUSIC_PLAYER_NUMBER_FONT);
+		_MUSIC_PLAYER_FONT = NULL;
+		_MUSIC_PLAYER_NUMBER_FONT = NULL;
 	}
 }
 }

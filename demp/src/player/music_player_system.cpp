@@ -255,6 +255,7 @@ namespace MP
 
 		//Database::CloseDB();
 		Audio::DeallocateAudioItems();
+		Interface::CloseInterface();
 	}
 	/*
 	std::string get_ext(char* path)

@@ -707,11 +707,10 @@ namespace MP
 			lastDeletionTimer.start();
 		
 
-			auto it = std::find_if(UI::mdPlaylistButtonsContainer.begin(), UI::mdPlaylistButtonsContainer.end(), 
-				[&](const std::pair<s32*, Interface::Button*> & ref) { return *ref.first == pos; });
-			
-			assert(it != UI::mdPlaylistButtonsContainer.end());
-			UI::mdPlaylistButtonsContainer.erase(it);
+			// BUG: Can't erase pos in playlist button container
+			auto playlistButtonCon = Interface::PlaylistButton::GetContainer();
+			assert(Interface::PlaylistButton::GetButton(pos) != nullptr);
+			playlistButtonCon->erase(playlistButtonCon->begin() + pos);
 
 
 			Audio::PerformDeletion(pos);

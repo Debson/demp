@@ -296,19 +296,19 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				switch (event.window.event)
 				{
 				case (SDL_WINDOWEVENT_FOCUS_GAINED):
-					Window::windowProperties.mPlayerWindowEvent = App::WindowEvent::kFocusGained;
+					Window::windowProperties.mPlayerWindowEvent		= App::WindowEvent::kFocusGained;
 					break;
 				case (SDL_WINDOWEVENT_FOCUS_LOST):
-					Window::windowProperties.mPlayerWindowEvent = App::WindowEvent::kFocusLost;
+					Window::windowProperties.mPlayerWindowEvent		= App::WindowEvent::kFocusLost;
 					break;
 				case (SDL_WINDOWEVENT_ENTER):
-					Window::windowProperties.mMouseWindowEvent = App::WindowEvent::kEnter;
+					Window::windowProperties.mMouseWindowEvent		= App::WindowEvent::kEnter;
 					break;
 				case (SDL_WINDOWEVENT_LEAVE):
-					Window::windowProperties.mMouseWindowEvent = App::WindowEvent::kLeave;
+					Window::windowProperties.mMouseWindowEvent		= App::WindowEvent::kLeave;
 					break;
 				case(SDL_WINDOWEVENT_MINIMIZED):
-					Window::windowProperties.mPlayerWindowEvent = App::WindowEvent::kMinimized;
+					Window::windowProperties.mPlayerWindowEvent		= App::WindowEvent::kMinimized;
 					break;
 				}
 			}

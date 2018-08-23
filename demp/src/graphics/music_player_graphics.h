@@ -24,11 +24,11 @@ namespace Graphics
 		public:
 			PlaylistObject();
 		
-			b8 IsEnabled() const;
-			b8 IsToggled() const;
-			b8 hasFocus() const;
-			s32 GetSelectedID() const;
-			s32 GetPlayingID() const;
+			b8   IsEnabled()	 const;
+			b8   IsToggled()	 const;
+			b8   hasFocus()		 const;
+			s32  GetSelectedID() const;
+			s32  GetPlayingID()	 const;
 			void Enable();
 			void Toggle();
 			void UnToggle();
@@ -38,13 +38,19 @@ namespace Graphics
 			void SetSize(glm::vec2 size);
 			void SetItemsSize(f64 itemsSize);
 			void SetItemsDuration(f64 itemsDuration);
-			f64 GetItemsSize() const;
-			f64 GetItemsDuration() const;
+			void SetCurrentMinIndex(s32 min);
+			void SetCurrentMaxIndex(s32 max);
+			void SetCurrentOffset(s32 offset);
+			f64  GetItemsSize()		  const;
+			f64  GetItemsDuration()	  const;
+			s32  GetCurrentMinIndex() const;
+			s32  GetCurrentMaxIndex() const;
+			s32  GetCurrentOffset()	  const;
 
-			std::string GetItemsSizeString() const;
+			std::string GetItemsSizeString()	 const;
 			std::string GetItemsDurationString() const;
 
-			glm::vec2 GetPos() const;
+			glm::vec2 GetPos()  const;
 			glm::vec2 GetSize() const;
 
 			/* multipleSelect vector stores pointers to the actual audio object ids, simply because 
@@ -54,18 +60,21 @@ namespace Graphics
 			std::vector<s32*> multipleSelect;
 
 		private:
-			b8 m_Focus;
-			glm::vec2 m_Pos;
-			glm::vec2 m_Size;
-			f64 m_ItemsDuration;
-			f64 m_ItemsSize;
+			b8			m_Enabled;
+			b8			m_Toggled;
+			b8			m_Focus;
+			s32			m_SelectedID;
+			s32			m_PlayingID;
+			s32			m_CurrentMinIndex;
+			s32			m_CurrentMaxIndex;
+			s32			m_CurrentOffset;
+			f64			m_ItemsDuration;
+			f64			m_ItemsSize;
+			glm::vec2	m_Pos;
+			glm::vec2	m_Size;
 			std::string m_ItemsDurationStr;
 			std::string m_ItemsSizeStr;
 
-			s32 m_SelectedID;
-			s32 m_PlayingID;
-			b8 m_Enabled;
-			b8 m_Toggled;
 
 		};
 
@@ -73,7 +82,7 @@ namespace Graphics
 		{
 		public:
 
-			b8 hasFocus();
+			b8	 hasFocus();
 			void SetPos(glm::vec2 pos);
 			void SetSize(glm::vec2 size);
 
@@ -83,8 +92,8 @@ namespace Graphics
 
 		};
 
-		PlaylistObject* GetPlaylistObject();
-		MainPlayerObject* GetMainPlayerObject();
+		PlaylistObject*		GetPlaylistObject();
+		MainPlayerObject*	GetMainPlayerObject();
 
 		// TODO: It cant be an extern variable...
 		extern Interface::TextBox m_AddFileTextBox;

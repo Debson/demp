@@ -43,7 +43,6 @@ namespace MP
 		std::vector<Interface::Movable*> mdMovableContainer;
 		std::vector<Interface::Resizable*> mdResizableContainer;
 		std::vector<std::pair<Input::ButtonType, Interface::Button*>> mdButtonsContainer;
-		std::vector<std::pair<s32*, Interface::Button*>> mdPlaylistButtonsContainer;
 
 		std::atomic<bool> fileBrowserFinished(false);
 		
@@ -272,18 +271,18 @@ namespace MP
 			for (u16 i = 0; i < mdButtonsContainer.size(); i++)
 			{
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(mdButtonsContainer[i].second->mPos, 1.f));
-				model = glm::scale(model, glm::vec3(mdButtonsContainer[i].second->mSize, 1.f));;
-				Shader::shaderDefault->setFloat("aspectXY", mdButtonsContainer[i].second->mSize.x / mdButtonsContainer[i].second->mSize.y	);
+				model = glm::translate(model, glm::vec3(mdButtonsContainer[i].second->GetButtonPos(), 1.f));
+				model = glm::scale(model, glm::vec3(mdButtonsContainer[i].second->GetButtonSize(), 1.f));;
+				Shader::shaderDefault->setFloat("aspectXY", mdButtonsContainer[i].second->GetButtonSize().x / mdButtonsContainer[i].second->GetButtonSize().y	);
 				Shader::shaderDefault->setMat4("model", model);
 				Shader::Draw(Shader::shaderDefault);
 			}
 			for (u16 i = 0; i < mdMovableContainer.size(); i++)
 			{
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(mdMovableContainer[i]->mPos, 1.f));
-				model = glm::scale(model, glm::vec3(mdMovableContainer[i]->mSize, 1.f));;
-				Shader::shaderDefault->setFloat("aspectXY", mdMovableContainer[i]->mSize.x / mdMovableContainer[i]->mSize.y);
+				model = glm::translate(model, glm::vec3(mdMovableContainer[i]->m_Pos, 1.f));
+				model = glm::scale(model, glm::vec3(mdMovableContainer[i]->m_Size, 1.f));;
+				Shader::shaderDefault->setFloat("aspectXY", mdMovableContainer[i]->m_Size.x / mdMovableContainer[i]->m_Size.y);
 				Shader::shaderDefault->setMat4("model", model);
 				Shader::Draw(Shader::shaderDefault);
 			}
@@ -291,38 +290,45 @@ namespace MP
 			for (u16 i = 0; i < mdResizableContainer.size(); i++)
 			{
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(mdResizableContainer[i]->pos, 1.f));
-				model = glm::scale(model, glm::vec3(mdResizableContainer[i]->size, 1.f));;
-				Shader::shaderDefault->setFloat("aspectXY", mdResizableContainer[i]->size.x / mdResizableContainer[i]->size.y);
+				model = glm::translate(model, glm::vec3(mdResizableContainer[i]->m_Pos, 1.f));
+				model = glm::scale(model, glm::vec3(mdResizableContainer[i]->m_Size, 1.f));;
+				Shader::shaderDefault->setFloat("aspectXY", mdResizableContainer[i]->m_Size.x / mdResizableContainer[i]->m_Size.y);
 				Shader::shaderDefault->setMat4("model", model);
 				Shader::Draw(Shader::shaderDefault);
 			}
 
-			for (u16 i = 0; i < mdPlaylistButtonsContainer.size(); i++)
+			for (u16 i = 0; i < Interface::PlaylistButton::GetSize(); i++)
 			{
-				if (mdPlaylistButtonsContainer[i].second->mPos != glm::vec2(INVALID))
+				if (Interface::PlaylistButton::GetButton(i) != nullptr)
 				{
-					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(mdPlaylistButtonsContainer[i].second->mPos, 1.f));
-					model = glm::scale(model, glm::vec3(mdPlaylistButtonsContainer[i].second->mSize, 1.f));;
-					Shader::shaderDefault->setFloat("aspectXY", mdPlaylistButtonsContainer[i].second->mSize.x / mdPlaylistButtonsContainer[i].second->mSize.y);
-					Shader::shaderDefault->setMat4("model", model);
-					Shader::Draw(Shader::shaderDefault);;
+
+					if (Interface::PlaylistButton::GetButton(i)->GetButtonPos() != glm::vec2(INVALID))
+					{
+						model = glm::mat4();
+						model = glm::translate(model, glm::vec3(Interface::PlaylistButton::GetButton(i)->GetButtonPos(), 1.f));
+						model = glm::scale(model, glm::vec3(Interface::PlaylistButton::GetButton(i)->GetButtonSize(), 1.f));;
+						Shader::shaderDefault->setFloat("aspectXY", Interface::PlaylistButton::GetButton(i)->GetButtonSize().x / Interface::PlaylistButton::GetButton(i)->GetButtonSize().y);
+						Shader::shaderDefault->setMat4("model", model);
+						Shader::Draw(Shader::shaderDefault);;
+					}
 				}
 			}
 
-			for (u16 i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
+			/*for (u16 i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
 			{
-				if (Interface::mdInterfaceButtonContainer[i].second->mPos != glm::vec2(INVALID))
+				if (Interface::mdInterfaceButtonContainer[i].second != nullptr)
 				{
-					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(Interface::mdInterfaceButtonContainer[i].second->mPos, 1.f));
-					model = glm::scale(model, glm::vec3(Interface::mdInterfaceButtonContainer[i].second->mSize, 1.f));;
-					Shader::shaderDefault->setFloat("aspectXY", Interface::mdInterfaceButtonContainer[i].second->mSize.x / Interface::mdInterfaceButtonContainer[i].second->mSize.y);
-					Shader::shaderDefault->setMat4("model", model);
-					Shader::Draw(Shader::shaderDefault);;
+					if (Interface::mdInterfaceButtonContainer[i].second->GetButtonPos() != glm::vec2(INVALID))
+					{
+						model = glm::mat4();
+						model = glm::translate(model, glm::vec3(Interface::mdInterfaceButtonContainer[i].second->GetButtonPos(), 1.f));
+						model = glm::scale(model, glm::vec3(Interface::mdInterfaceButtonContainer[i].second->GetButtonSize(), 1.f));;
+						Shader::shaderDefault->setFloat("aspectXY", Interface::mdInterfaceButtonContainer[i].second->GetButtonSize().x / Interface::mdInterfaceButtonContainer[i].second->GetButtonSize().y);
+						Shader::shaderDefault->setMat4("model", model);
+						Shader::Draw(Shader::shaderDefault);;
+					}
 				}
-			}
+			}*/
 
 
 
@@ -403,21 +409,28 @@ namespace MP
 
 		// Make sure that hitboxes that are not visible cannot be clicked
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
-		for (u16 i = 0; i < mdPlaylistButtonsContainer.size(); i++)
+		for (u16 i = 0; i < Interface::PlaylistButton::GetSize(); i++)
 		{
-			if (Audio::Object::GetAudioObject(i) == NULL)
+			if (Interface::PlaylistButton::GetButton(i) == nullptr)
 				break;
-			App::ProcessButton(mdPlaylistButtonsContainer[i].second);
+
+			App::ProcessButton(Interface::PlaylistButton::GetButton(i));
 		}
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
 
-		for (u16 i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
+		/*for (u16 i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
+		{
+			assert(Interface::mdInterfaceButtonContainer[i].second != nullptr);
+
 			App::ProcessButton(Interface::mdInterfaceButtonContainer[i].second);
+		}*/
 
 
 		HandleInput();
 		if(State::IsPlaylistEmpty == false)
 			HandlePlaylistInput();
+
+		//PlaylistFileExplorer();
 
 	}
 
@@ -500,7 +513,7 @@ namespace MP
 			{
 
 				clickDelayTimer.start();
-				Audio::Object::GetAudioObject(i)->clickCount++;
+				Audio::Object::GetAudioObject(i)->Click();
 
 
 				// Check if current's item position is in vector with selected item's positions
@@ -523,7 +536,7 @@ namespace MP
 					Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(currentPlaylistItemID);
 				}
 
-				if (Audio::Object::GetAudioObject(i)->clickCount > 1)
+				if (Audio::Object::GetAudioObject(i)->GetClickCount() > 1)
 				{
 					MP::musicPlayerState = MP::MusicPlayerState::kMusicChosen;
 					Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(i)->GetPath(), i);
@@ -534,7 +547,7 @@ namespace MP
 
 			//If time for second click expires, reset click count
 			if (clickDelayTimer.finished == true)
-				Audio::Object::GetAudioObject(i)->clickCount = 0;
+				Audio::Object::GetAudioObject(i)->SetClickCount(0);
 
 		}
 
@@ -566,8 +579,6 @@ namespace MP
 				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&Audio::Object::GetAudioObject(temp)->GetID());
 			}
 		}
-
-		PlaylistFileExplorer();
 
 		// Update second click timer
 		clickDelayTimer.update();
@@ -651,29 +662,31 @@ namespace MP
 		for (size_t i = 0; i < mdMovableContainer.size(); i++)
 		{
 			delete mdMovableContainer[i];
+			mdMovableContainer[i] == nullptr;
 		}
 		mdMovableContainer.clear();
 
 		for (size_t i = 0; i < mdResizableContainer.size(); i++)
 		{
 			delete mdResizableContainer[i];
+			mdResizableContainer[i] = nullptr;
 		}
 		mdResizableContainer.clear();
 
 		for (size_t i = 0; i < mdButtonsContainer.size(); i++)
 		{
 			delete mdButtonsContainer[i].second;
+			mdButtonsContainer[i].second = nullptr;
 		}
 		mdButtonsContainer.clear();
 
 		for (size_t i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
 		{
 			delete Interface::mdInterfaceButtonContainer[i].second;
+			Interface::mdInterfaceButtonContainer[i].second = nullptr;
 		}
 		Interface::mdInterfaceButtonContainer.clear();
 
-
-		mdPlaylistButtonsContainer.clear();
 	}
 }
 }

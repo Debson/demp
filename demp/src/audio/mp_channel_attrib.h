@@ -56,14 +56,18 @@ namespace Audio
 			b8 loaded;
 		};
 
+		extern s32 LoadedItemsInfoCount;
+
 		b8 CheckIfAudio(std::wstring path);
 
 		b8 CheckIfHasItems(std::wstring path);
-
-
 		
 		b8 CheckIfAlreadyLoaded(std::vector<std::wstring>* v, std::wstring path);
 
+		// Returns a full path of a file folder(path without a filename)
+		std::wstring GetFolderPath(std::wstring path);
+
+		// Returns only a name of a file's folder
 		std::wstring GetFolder(std::wstring path);
 
 		std::wstring GetCompleteTitle(std::wstring path);

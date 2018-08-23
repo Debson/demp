@@ -29,6 +29,7 @@ namespace MP
 		extern u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
 
 		extern TTF_Font* _MUSIC_PLAYER_FONT;
+		extern TTF_Font* _MUSIC_PLAYER_NUMBER_FONT;
 
 		extern glm::vec2 _MIN_PLAYER_SIZE;
 
@@ -108,6 +109,12 @@ namespace MP
 
 		extern s16 _TEXT_BOX_ITEM_HEIGHT;
 
+		extern glm::vec2 _TEXT_ITEMS_DURATION_POS;
+
+		extern glm::vec2 _TEXT_ITEMS_SIZE_POS;
+
+		extern glm::vec2 _TEXT_ITEMS_COUNT_POS;
+
 		extern f32 VolumeKeyMultiplier;
 		extern s32 VolumeScrollStep;
 		extern s32 VolumeFadeTime;
@@ -141,6 +148,8 @@ namespace MP
 		void InitializeData();
 
 		void UpdateData();
+
+		void CloseData();
 	}
 
 

@@ -67,10 +67,10 @@ namespace mdEngine
 				//f32 scaleX, scaleY;
 				//GetWindowScale(&scaleX, &scaleY);
 
-				f32 xL = bar->mPos.x;
-				f32 xR = bar->mPos.x + bar->mSize.x;
-				f32 yU = bar->mPos.y;
-				f32 yD = bar->mPos.y + bar->mSize.y;
+				f32 xL = bar->m_Pos.x;
+				f32 xR = bar->m_Pos.x + bar->m_Size.x;
+				f32 yU = bar->m_Pos.y;
+				f32 yD = bar->m_Pos.y + bar->m_Size.y;
 
 				bool inside = insideX > xL && insideX < xR && insideY > yU && insideY < yD;
 
@@ -93,7 +93,7 @@ namespace mdEngine
 	void App::ProcessButton(Interface::Button* button)
 	{
 		// Check if button positions is valid
-		if (button->mPos == glm::vec2(INVALID))
+		if (button->GetButtonPos() == glm::vec2(INVALID))
 		{
 			return;
 		}
@@ -111,8 +111,8 @@ namespace mdEngine
 		bool inside = mouseX > xL && mouseX < xR &&
 			mouseY > yU && mouseY < yD;*/
 
-		bool inside = mouseX > button->mPos.x && mouseX < (button->mPos.x + button->mSize.x) &&
-			mouseY > button->mPos.y && mouseY < (button->mPos.y + button->mSize.y);
+		bool inside = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
+			mouseY > button->GetButtonPos().y && mouseY < (button->GetButtonPos().y + button->GetButtonSize().y);
 
 		bool check(true);
 		if (checkBounds)
@@ -144,12 +144,12 @@ namespace mdEngine
 		if (inside && Input::IsKeyDown(KeyCode::MouseLeft))
 		{
 			button->isDown = true;
-			button->mMousePos.x = mouseX;
+			button->GetInButtonMousePos().x = mouseX;
 		}
 		else
 		{
 			button->isDown = false;
-			button->mMousePos.y = mouseY;
+			button->GetInButtonMousePos().y = mouseY;
 		}
 
 
@@ -176,8 +176,8 @@ namespace mdEngine
 				deltaY = currentMouseY - prevMouseY;
 
 
-			b8 inside = mouseX > bar->pos.x && mouseX < (bar->pos.x + bar->size.x) &&
-				mouseY > bar->pos.y && mouseY < (bar->pos.y + bar->size.y);
+			b8 inside = mouseX > bar->m_Pos.x && mouseX < (bar->m_Pos.x + bar->m_Size.x) &&
+				mouseY > bar->m_Pos.y && mouseY < (bar->m_Pos.y + bar->m_Size.y);
 
 			if (inside)
 				wasInsideResizable = true;
@@ -193,11 +193,11 @@ namespace mdEngine
 				winSizeBeforeResize += deltaY;
 
 				firstMove = true;
-				bar->pos = glm::vec2(0, winSizeBeforeResize + deltaY - bar->size.y);
-				if (Window::windowProperties.mApplicationHeight - bar->size.y < MP::Data::_MIN_PLAYER_SIZE.y)
-					Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + bar->size.y;
-				if (bar->pos.y < MP::Data::_MIN_PLAYER_SIZE.y)
-					bar->pos.y = MP::Data::_MIN_PLAYER_SIZE.y;
+				bar->m_Pos = glm::vec2(0, winSizeBeforeResize + deltaY - bar->m_Size.y);
+				if (Window::windowProperties.mApplicationHeight - bar->m_Size.y < MP::Data::_MIN_PLAYER_SIZE.y)
+					Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + bar->m_Size.y;
+				if (bar->m_Pos.y < MP::Data::_MIN_PLAYER_SIZE.y)
+					bar->m_Pos.y = MP::Data::_MIN_PLAYER_SIZE.y;
 
 			}
 		}

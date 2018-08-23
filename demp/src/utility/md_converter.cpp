@@ -77,9 +77,6 @@ namespace mdEngine
 			time += std::to_string(seconds);
 		}
 
-		std::cout << time << std::endl;
-
-
 		return time;
 	}
 
@@ -98,7 +95,13 @@ namespace mdEngine
 		{
 			size += std::to_string(gb);
 			size += ".";
-			size += std::to_string((s32)mb);
+			if (mb > 0 && mb < 100)
+				size += "0";
+			mb /= 10;
+			if (mb > 100)
+				size += "99";
+			else
+				size += std::to_string((s32)mb);
 			size += " GB";
 		}
 		else
@@ -110,8 +113,10 @@ namespace mdEngine
 				precision = 4;
 			else
 				precision = 5;
+
 			ss << std::setprecision(precision) << mb;
 			ss >> size;
+
 			size += " MB";
 		}
 

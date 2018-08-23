@@ -7,19 +7,23 @@
 
 #include "../utility/md_shader.h"
 #include "../ui/music_player_ui_input.h"
+#include "../utility/md_text.h"
 
 using namespace mdEngine::MP::UI;
+using namespace mdEngine::Text;
 
 namespace mdEngine
 {
 	namespace Interface
 	{
+		void CloseInterface();
+
 		struct Movable
 		{
 			Movable(glm::vec2 size, glm::vec2 pos);;
 
-			glm::vec2 mSize;
-			glm::vec2 mPos;
+			glm::vec2 m_Size;
+			glm::vec2 m_Pos;
 
 		};
 
@@ -27,29 +31,37 @@ namespace mdEngine
 		{
 			Resizable(glm::vec2 size, glm::vec2 pos);;
 
-			glm::vec2 size;
-			glm::vec2 pos;
+			glm::vec2 m_Size;
+			glm::vec2 m_Pos;
 		};
 
-		struct Button
+		class Button
 		{
+		public:
 			Button();
-			virtual ~Button();
 			Button(glm::vec2 size, glm::vec2 pos);
 			Button(Input::ButtonType type, glm::vec2 size, glm::vec2 pos);
+			virtual ~Button();
 
-			glm::vec2 mSize;
-			glm::vec2 mPos;
 
-			glm::vec2 mMousePos;
+			virtual void SetButtonPos(glm::vec2 pos);
+			void SetButtonPosY(f32 posY);
+			void SetButtonSize(glm::vec2 size);
+
+			glm::vec2& GetButtonPos();
+			glm::vec2& GetButtonSize();
+			glm::vec2& GetInButtonMousePos();
 
 			b8 isPressed;
 			b8 isReleased;
 			b8 isDown;
 			b8 hasFocus;
 			b8 hasFocusTillRelease;
-
 			b8 wasDown;
+		protected:
+			glm::vec2 m_ButtonSize;
+			glm::vec2 m_ButtonPos;
+			glm::vec2 m_MousePos;
 		};
 
 		struct TextBoxItem : public Button
@@ -57,54 +69,62 @@ namespace mdEngine
 			TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos, 
 												 glm::vec2 textSize, glm::vec2 textPos,
 						GLuint tex);
-			virtual ~TextBoxItem();
 
-			glm::vec2 m_Pos;
-			glm::vec2 m_Size;
-			glm::vec2 m_TextPos;
-			glm::vec2 m_TextSize;
-			GLuint m_Tex;
-			s8 m_Index;
+			glm::vec2	m_Pos;
+			glm::vec2	m_Size;
+			glm::vec2	m_TextPos;
+			glm::vec2	m_TextSize;
+			GLuint		m_Texture;
+			s8			m_Index;
 
 		};
 
-		class PlaylistItem : public Button
+		class PlaylistItem : public Button, public TextObject
 		{
 		public:
+			PlaylistItem();
 			virtual ~PlaylistItem();
-			glm::vec3 mColor;
-			glm::vec2 mStartPos;
-			SDL_Color mTextColor;
+			static s32 OffsetIndex;
 
-			static s32 mOffsetY;
-			static s32 mOffsetIndex;
-
-			void InitFont();
-			void InitItem(s32* id);
-			void SetColor(glm::vec3 color);
 			void DrawDottedBorder(s16 playpos);
+			virtual void InitItem(s32* id);
+			virtual void SetButtonPos(glm::vec2 pos);
 
-			b8 IsPlaying();
+			void Click();
+			void SetAsFolderRep();
+			void SetClickCount(s8 count);
+			void SetItemColor(glm::vec3 color);
 
-			std::wstring GetTitle();
+			b8			 IsPlaying() const;
+			b8			 IsFolderRep() const;
+			u8			 GetClickCount() const;
+			glm::vec3	 GetItemColor() const;
+			std::wstring GetShortenTextString();
 
-			TTF_Font * mFont;
-			glm::ivec2 mTextSize;
-			f32 mTextScale;
-			u8 clickCount;
-		private:
-			s32 mID;
-			std::string mTitleC;
-			GLuint mTitleTexture;
-			std::wstring mTitle;
-			std::string mInfo;
-			std::wstring mPath;
-			std::string mLength;
-			u16 mFontSize;
+		protected:
+			b8			 m_FolderRep;
+			u8			 m_ClickCount;
+			s32			 m_ItemID;
+			glm::vec3	 m_ItemColor;
+			glm::vec2	 m_StartPos;
+			std::string  m_TitleC;
+			std::wstring m_Path;
 
 		};
 
-		class TextBox
+		class PlaylistSeparator : public PlaylistItem
+		{
+		public:
+			PlaylistSeparator();
+			PlaylistSeparator(std::wstring name);
+			
+			virtual void InitItem();
+
+		
+		};
+
+
+		class TextBox : public TextObject
 		{
 		public:
 			TextBox();
@@ -118,26 +138,44 @@ namespace mdEngine
 			void SetItemScale(f32 scale);
 			void SetItemSize(glm::vec2 itemSize);
 			void AddItem(const std::wstring itemName);
-			glm::vec2 GetPos() const;
-			glm::vec2 GetSize() const;
-			b8 hasItemFocus(const std::wstring name) const;
-			b8 isItemPressed(const std::wstring name) const;
+
+			b8			hasItemFocus(const std::wstring name) const;
+			b8			isItemPressed(const std::wstring name) const;
+			glm::vec2	GetPos() const;
+			glm::vec2	GetSize() const;
 
 		private:
-			mdShader* m_Shader;
-			std::vector<TextBoxItem*> m_Items;
-			MP::UI::Input::ButtonType m_Type;
-			glm::vec2 m_Pos;
-			glm::vec2 m_Size;
-			glm::vec3 m_Color;
-			f32 m_ItemScale;
-			glm::vec2 m_ItemSize;
-			u16 m_ItemsCount;
-			b8 m_Active;
+			mdShader*					m_Shader;
+			std::vector<TextBoxItem*>	m_Items;
+			MP::UI::Input::ButtonType	m_Type;
+			glm::vec2					m_Pos;
+			glm::vec2					m_Size;
+			glm::vec3					m_Color;
+			f32							m_ItemScale;
+			glm::vec2					m_ItemSize;
+			u16							m_ItemsCount;
+			b8							m_Active;
 
 		};
 
 
+		namespace Separator
+		{
+			std::vector<std::pair<std::wstring, PlaylistSeparator*>>* GetContainer();
+			PlaylistSeparator* GetSeparator(std::wstring text);
+			s32 GetSize();
+		}
+
+		namespace PlaylistButton
+		{
+			std::vector<std::pair<s32*, Interface::Button*>>* GetContainer();
+			Interface::Button* GetButton(s32 id);
+			s32 GetSize();
+		}
+
+
+
+		// TODO: It should not be an extern var...
 		extern std::vector<std::pair<const std::wstring, Button*>> mdInterfaceButtonContainer;
 	}
 }

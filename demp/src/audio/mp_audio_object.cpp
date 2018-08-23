@@ -16,8 +16,6 @@ Audio::AudioObject::~AudioObject()
 
 void Audio::AudioObject::Init()
 {
-	InitFont();
-
 	InitItem(&id);
 }
 
@@ -29,6 +27,11 @@ s32& Audio::AudioObject::GetID()
 void Audio::AudioObject::DecrementID()
 {
 	id > 0 ? id-- : 0;
+}
+
+void Audio::AudioObject::IncrementID()
+{
+	id++;
 }
 
 std::wstring Audio::AudioObject::GetPath() const

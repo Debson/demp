@@ -36,6 +36,7 @@ namespace mdEngine
 	void MP::MusicPlayer::Close()
 	{
 		MP::CloseMusicPlayer();
+		Data::CloseData();
 	}
 	
 }

@@ -19,17 +19,39 @@ namespace mdEngine
 {
 	namespace Interface
 	{
+		static std::vector<std::pair<std::wstring, PlaylistSeparator*>> m_PlaylistSeparatorContainer;
+		std::vector<std::pair<s32*, Interface::Button*>> m_PlaylistButtonsContainer;
+
 		std::vector<std::pair<const std::wstring, Button*>> mdInterfaceButtonContainer;
 
 	}
+
+	void Interface::CloseInterface()
+	{
+		for (s32 i = 0; i < m_PlaylistSeparatorContainer.size(); i++)
+		{
+			delete m_PlaylistSeparatorContainer[i].second;
+			m_PlaylistSeparatorContainer[i].second = nullptr;
+		}
+
+		for (s32 i = 0; i < m_PlaylistButtonsContainer.size(); i++)
+		{
+			//delete m_PlaylistButtonsContainer[i].second;
+			m_PlaylistButtonsContainer[i].second = nullptr;
+		}
+
+		m_PlaylistSeparatorContainer.clear();
+		m_PlaylistButtonsContainer.clear();
+	}
+
 	/* *************************************************** */
-	Interface::Movable::Movable(glm::vec2 size, glm::vec2 pos) : mSize(size), mPos(pos)
+	Interface::Movable::Movable(glm::vec2 size, glm::vec2 pos) : m_Size(size), m_Pos(pos)
 	{
 		mdMovableContainer.push_back(this);
 	}
 
 	/* *************************************************** */
-	Interface::Resizable::Resizable(glm::vec2 size, glm::vec2 pos) : size(size), pos(pos)
+	Interface::Resizable::Resizable(glm::vec2 size, glm::vec2 pos) : m_Size(size), m_Pos(pos)
 	{
 		mdResizableContainer.push_back(this);
 	}
@@ -39,79 +61,99 @@ namespace mdEngine
 
 	Interface::Button::~Button() { }
 
-	Interface::Button::Button(glm::vec2 size, glm::vec2 pos) : mSize(size), mPos(pos) { }
+	Interface::Button::Button(glm::vec2 size, glm::vec2 pos) : m_ButtonSize(size), m_ButtonPos(pos) { }
 
-	Interface::Button::Button(Input::ButtonType type, glm::vec2 size, glm::vec2 pos) : mSize(size), mPos(pos)
+	Interface::Button::Button(Input::ButtonType type, glm::vec2 size, glm::vec2 pos) : m_ButtonSize(size), m_ButtonPos(pos)
 	{
 		mdButtonsContainer.push_back(std::make_pair(type, this));
 	}
 
 
+	void Interface::Button::SetButtonPos(glm::vec2 pos)
+	{
+		m_ButtonPos = pos;
+	}
+
+	void Interface::Button::SetButtonPosY(f32 posY)
+	{
+		m_ButtonPos = glm::vec2(m_ButtonPos.x, posY);
+	}
+
+	void Interface::Button::SetButtonSize(glm::vec2 size)
+	{
+		m_ButtonSize = size;
+	}
+
+	glm::vec2& Interface::Button::GetButtonPos()
+	{
+		return m_ButtonPos;
+	}
+
+	glm::vec2& Interface::Button::GetButtonSize()
+	{
+		return m_ButtonSize;
+	}
+
+	glm::vec2& Interface::Button::GetInButtonMousePos()
+	{
+		return m_MousePos;
+	}
+
 	/* *************************************************** */
 	Interface::TextBoxItem::TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos,
 																 glm::vec2 textSize, glm::vec2 textPos,
-										GLuint tex) : m_Tex(tex)
+										GLuint tex) : m_Texture(tex)
 	{
 		m_Pos = itemPos;
 		m_Size = itemSize;
 		m_TextPos = textPos;
 		m_TextSize = textSize;
-		mPos = m_Pos;
-		mSize = m_Size;
+		m_Pos = m_Pos;
+		m_Size = m_Size;
 		mdInterfaceButtonContainer.push_back(make_pair(name, this));
 	}
 
-	Interface::TextBoxItem::~TextBoxItem() { }
-
 
 	/* *************************************************** */
-	Interface::PlaylistItem::~PlaylistItem() { }
 
-	void Interface::PlaylistItem::InitFont()
+	Interface::PlaylistItem::PlaylistItem()
 	{
-
-		mFont = MP::Data::_MUSIC_PLAYER_FONT;
-		if (mFont == NULL)
-		{
-			md_log("ERROR: init font!\n");
-		}
-
-		mTextScale = 1.0f;
-
+		m_FolderRep = false;
+		m_ClickCount = 0;
 	}
+
+	Interface::PlaylistItem::~PlaylistItem() { }
 
 	void Interface::PlaylistItem::InitItem(s32* id)
 	{
-		mColor = glm::vec3(1.f);
+		m_ItemColor = Color::White;
+		m_ButtonSize = Data::_PLAYLIST_ITEM_SIZE;
 
-		mStartPos = Data::_PLAYLIST_ITEMS_SURFACE_POS;
-		mSize = Data::_PLAYLIST_ITEM_SIZE;
+		m_ItemID = *id;
 
-		mID = *id;
+		// Button position is predefined in playlist items rendering algorithm anyway, but leave it for now
+		m_StartPos = Data::_PLAYLIST_ITEMS_SURFACE_POS;
+		m_ButtonPos = glm::vec2(m_StartPos.x, m_StartPos.y + m_ItemID * (m_ButtonSize.y));
+		m_TextPos = m_ButtonPos;
 
-		mPos = glm::vec2(mStartPos.x, mStartPos.y + mID * (mSize.y + mOffsetY));
+		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
+		m_TextScale = 1.f;
+		m_TextColor = SDLColor::Grey;
+		m_TextString = Audio::Object::GetAudioObject(m_ItemID)->GetTitle();
 
-		mTextColor = { 255, 255, 255 };
+		u16 len = m_TextString.length();
+		m_TitleC.resize(len + 1);
+		m_TitleC = utf16_to_utf8(m_TextString);
 
-		mTitle = Audio::Object::GetAudioObject(mID)->GetTitle();
+		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 
-		u16 len = mTitle.length();
-		mTitleC.resize(len + 1);
-		mTitleC = utf16_to_utf8(mTitle);
+		m_PlaylistButtonsContainer[*id] = std::make_pair(id, this);
 
-		TTF_SizeUTF8(mFont, mTitleC.c_str(), &mTextSize.x, &mTextSize.y);
-		
-		mdPlaylistButtonsContainer.push_back(std::make_pair(id, this));
-	}	
-
-	void Interface::PlaylistItem::SetColor(glm::vec3 color)
-	{
-		mTextColor = { u8(color.x * 255.f), u8(color.y * 255.f), u8(color.z * 255.f) };
 	}
 
 	void Interface::PlaylistItem::DrawDottedBorder(s16 playPos)
 	{
-		if (this->mPos == glm::vec2(INVALID))
+		if (this->m_ButtonPos == glm::vec2(INVALID))
 			return;
 
 		glm::mat4 model;
@@ -121,45 +163,123 @@ namespace mdEngine
 		f32 dotYOffset = 0.1;
 		Shader::shaderBorder->setFloat("xOffset", dotXOffset);
 		Shader::shaderBorder->setFloat("yOffset", dotYOffset);
-		model = glm::translate(model, glm::vec3(this->mPos, 0.9));
-		model = glm::scale(model, glm::vec3(this->mSize, 1.f));
+		model = glm::translate(model, glm::vec3(this->m_ButtonPos, 0.9));
+		model = glm::scale(model, glm::vec3(this->m_ButtonSize, 1.f));
 		Shader::shaderBorder->setMat4("model", model);
 		Shader::DrawDot();
 	}
 
-	std::wstring Interface::PlaylistItem::GetTitle()
-	{
-		s16 len = wcslen(mTitle.c_str());
-		f32 textSize = mTextSize.x * mTextScale;
 
-		if (textSize > this->mSize.x)
+	void Interface::PlaylistItem::SetButtonPos(glm::vec2 pos)
+	{
+		m_ButtonPos = pos;
+		m_TextPos = pos;
+	}
+
+	void Interface::PlaylistItem::Click()
+	{
+		m_ClickCount++;
+	}
+
+	void Interface::PlaylistItem::SetAsFolderRep()
+	{
+		m_FolderRep = true;
+	}
+
+	void Interface::PlaylistItem::SetClickCount(s8 count)
+	{
+		m_ClickCount = count;
+	}
+
+	void Interface::PlaylistItem::SetItemColor(glm::vec3 color)
+	{
+		m_ItemColor = color;
+	}
+
+	b8 Interface::PlaylistItem::IsPlaying() const
+	{
+		return MP::Playlist::RamLoadedMusic.mID == m_ItemID;
+	}
+
+	b8 Interface::PlaylistItem::IsFolderRep() const
+	{
+		return m_FolderRep;
+	}
+
+	u8 Interface::PlaylistItem::GetClickCount() const
+	{
+		return m_ClickCount;
+	}
+
+	glm::vec3 Interface::PlaylistItem::GetItemColor() const
+	{
+		return m_ItemColor;
+	}
+
+	std::wstring Interface::PlaylistItem::GetShortenTextString()
+	{
+		s16 len = wcslen(m_TextString.c_str());
+		f32 textSize = m_TextSize.x * m_TextScale;
+
+		if (textSize > this->m_ButtonSize.x)
 		{
 			float charSize = textSize / (float)len;
 			u16 i = 0;
 			u16 pos = 0;
-			while (i * charSize < this->mSize.x)
+			while (i * charSize < this->m_ButtonSize.x)
 				i++;
 
-			mTitle = mTitle.substr(0, i - 4);
-			mTitle += L"...";
+			m_TextString = m_TextString.substr(0, i - 4);
+			m_TextString += L"...";
 
-			len = mTitle.length();
-			mTitleC.resize(len + 1);
-			mTitleC = utf16_to_utf8(mTitle);
-			TTF_SizeText(mFont, mTitleC.c_str(), &mTextSize.x, &mTextSize.y);;
+			len = m_TextString.length();
+			m_TitleC.resize(len + 1);
+			m_TitleC = utf16_to_utf8(m_TextString);
+			TTF_SizeText(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);;
 		}
 
 
-		return mTitle;
+		return m_TextString;
 	}
 
-	b8 Interface::PlaylistItem::IsPlaying()
+
+	s32 Interface::PlaylistItem::OffsetIndex = 0;
+
+	/* *************************************************** */
+
+
+	Interface::PlaylistSeparator::PlaylistSeparator() { }
+
+	Interface::PlaylistSeparator::PlaylistSeparator(std::wstring name) 
+	{ 
+		m_TextString = name;
+	}
+
+	void Interface::PlaylistSeparator::InitItem()
 	{
-		return MP::Playlist::RamLoadedMusic.mID == mID;
+		m_ItemColor = Color::Blue;
+		m_ButtonSize = glm::vec2(Data::_PLAYLIST_ITEM_SIZE.x, Data::_PLAYLIST_ITEM_SIZE.y / 2);
+
+		// ID is irrelevant here
+		m_ItemID = -1;
+
+		m_ButtonPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, Data::_PLAYLIST_ITEMS_SURFACE_POS.y + 20.f);
+		m_TextPos = m_ButtonPos;
+
+		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
+		m_TextScale = 1.f;
+		m_TextColor = SDLColor::Grey;
+
+		u16 len = m_TextString.length();
+		m_TitleC.resize(len + 1);
+		m_TitleC = utf16_to_utf8(m_TextString);
+
+		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
+
+		m_PlaylistButtonsContainer.push_back(std::make_pair(&m_ItemID, this));
+		m_PlaylistSeparatorContainer.push_back(std::make_pair(m_TextString, this));
 	}
 
-	s32 Interface::PlaylistItem::mOffsetY = 0;
-	s32 Interface::PlaylistItem::mOffsetIndex = 0;
 
 	/* *************************************************** */
 	Interface::TextBox::TextBox() { }
@@ -205,7 +325,7 @@ namespace mdEngine
 			model = glm::translate(model, glm::vec3(item->m_TextPos, 0.8));
 			model = glm::scale(model, glm::vec3(item->m_TextSize, 1.0));;
 			m_Shader->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, item->m_Tex);
+			glBindTexture(GL_TEXTURE_2D, item->m_Texture);
 			Graphics::Shader::Draw(m_Shader);
 		}
 
@@ -216,7 +336,7 @@ namespace mdEngine
 		for (u16 i = 0; i < m_Items.size(); i++)
 		{
 			m_Items[i]->m_Pos = glm::vec2(m_Pos.x, m_Pos.y + m_Items[i]->m_Index * Data::_TEXT_BOX_ITEM_HEIGHT);
-			m_Items[i]->mPos = m_Items[i]->m_Pos;
+			m_Items[i]->m_Pos = m_Items[i]->m_Pos;
 			m_Items[i]->m_TextPos = glm::vec2(m_Items[i]->m_Pos.x + 40.f, m_Items[i]->m_Pos.y);
 		}
 	}
@@ -230,7 +350,7 @@ namespace mdEngine
 
 		if (item != mdButtonsContainer.end())
 		{
-			item->second->mPos = m_Pos;
+			item->second->SetButtonPos(m_Pos);
 		}
 
 	}
@@ -244,7 +364,7 @@ namespace mdEngine
 
 		if (item != mdButtonsContainer.end())
 		{
-			item->second->mSize = m_Size;
+			item->second->SetButtonSize(m_Size);
 		}
 	}
 
@@ -282,6 +402,8 @@ namespace mdEngine
 
 	glm::vec2 Interface::TextBox::GetPos() const
 	{
+		
+
 		return m_Pos;
 	}
 
@@ -307,4 +429,50 @@ namespace mdEngine
 	}
 
 	
+	std::vector<std::pair<std::wstring, Interface::PlaylistSeparator*>>*  Interface::Separator::GetContainer()
+	{
+		return &m_PlaylistSeparatorContainer;
+	}
+
+	Interface::PlaylistSeparator* Interface::Separator::GetSeparator(std::wstring text)
+	{
+		if (m_PlaylistSeparatorContainer.empty() == true)
+			return nullptr;
+
+		auto it = find_if(m_PlaylistSeparatorContainer.begin(), m_PlaylistSeparatorContainer.end(),
+			[&](std::pair<std::wstring, Interface::PlaylistSeparator*> const & ref) { return ref.first.compare(text) == 0; });
+
+		if (it == m_PlaylistSeparatorContainer.end())
+			return nullptr;
+
+		return it->second;
+	}
+
+	s32 Interface::Separator::GetSize()
+	{
+		return m_PlaylistSeparatorContainer.size();
+	}
+
+
+	std::vector<std::pair<s32*, Interface::Button*>>* Interface::PlaylistButton::GetContainer()
+	{
+		return &m_PlaylistButtonsContainer;
+	}
+
+	Interface::Button* Interface::PlaylistButton::GetButton(s32 id)
+	{
+		if (m_PlaylistButtonsContainer.empty() == true		|| 
+			m_PlaylistButtonsContainer[id].second == NULL	||
+			id > m_PlaylistButtonsContainer.size()			||
+			id < 0)
+			return nullptr;
+
+		return m_PlaylistButtonsContainer[id].second;
+	}
+
+	s32 Interface::PlaylistButton::GetSize()
+	{
+		return m_PlaylistButtonsContainer.size();
+	}
+
 }

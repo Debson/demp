@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdint.h>
 #include <glm.hpp>
+#include <SDL.h>
 
 #include "../settings/configuration.h"
 
@@ -45,7 +46,6 @@ namespace mdEngine
 
 	namespace Color
 	{
-
 		extern glm::vec3 White;
 		extern glm::vec3 Black;
 		extern glm::vec3 Grey;
@@ -53,6 +53,17 @@ namespace mdEngine
 		extern glm::vec3 Red;
 		extern glm::vec3 Green;
 		extern glm::vec3 Blue;
+	}
+
+	namespace SDLColor
+	{
+		extern SDL_Color White;
+		extern SDL_Color Black;
+		extern SDL_Color Grey;
+		extern SDL_Color DarkGrey;
+		extern SDL_Color Red;
+		extern SDL_Color Green;
+		extern SDL_Color Blue;
 	}
 }
 #endif // !MD_TYPES_H

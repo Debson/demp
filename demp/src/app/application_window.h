@@ -22,6 +22,12 @@ namespace App
 		FullScreen,
 	};
 
+	enum Event
+	{
+		kFileDropped	= SDL_DROPFILE
+
+	};
+
 	enum WindowEvent : u8
 	{
 		kFocusGained	= SDL_WINDOWEVENT_FOCUS_GAINED,
@@ -46,6 +52,7 @@ namespace App
 		s32 mWindowPositionY;
 		s32 mDeltaHeightResize;
 		WindowMode mWindowMode;
+		Event mEvent;
 		WindowEvent mActualWindowEvent;		// All music player events, like music changed etc. (this should be switched with mPlayerWindowevent)
 		WindowEvent mPlayerWindowEvent;		// Focus gained or regained
 		WindowEvent mMouseWindowEvent;		// Enter of leave, manages update of all controls

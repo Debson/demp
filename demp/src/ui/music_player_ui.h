@@ -20,7 +20,6 @@ namespace MP
 		extern std::vector<Interface::Movable*> mdMovableContainer;
 		extern std::vector<Interface::Resizable*> mdResizableContainer;
 		extern std::vector<std::pair<Input::ButtonType, Interface::Button*>> mdButtonsContainer;
-		extern std::vector<std::pair<s32*, Interface::Button*>> mdPlaylistButtonsContainer;
 
 
 		extern b8 fileBrowserActive;

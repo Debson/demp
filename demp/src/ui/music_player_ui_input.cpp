@@ -75,9 +75,9 @@ namespace mdEngine
 			glm::vec2 mousePos(-1.f);
 			if (item != mdButtonsContainer.end())
 			{
-				mousePos = item->second->mMousePos;
-				if (mousePos.x < item->second->mPos.x)
-					mousePos.x = item->second->mPos.x;
+				mousePos = item->second->GetInButtonMousePos();
+				if (mousePos.x < item->second->GetButtonPos().x)
+					mousePos.x = item->second->GetButtonPos().x;
 			}
 
 			return mousePos;

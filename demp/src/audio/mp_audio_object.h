@@ -28,6 +28,7 @@ namespace Audio
 
 		s32& GetID();
 		void DecrementID();
+		void IncrementID();
 		std::wstring GetPath() const;
 		std::wstring GetFolderPath() const;
 		std::wstring GetArtist() const;
