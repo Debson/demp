@@ -44,6 +44,19 @@ namespace mdEngine
 		m_PlaylistButtonsContainer.clear();
 	}
 
+	void Interface::PrintSeparatorAndItsSubFiles()
+	{
+		for (auto & i : m_PlaylistSeparatorContainer)
+		{
+			std::cout << utf16_to_utf8(i.second->GetSeparatorName()) << std::endl;
+			for (auto & k : *i.second->GetSubFilesContainer())
+			{
+				std::cout << "  ";
+				std::cout << utf16_to_utf8(k) << std::endl;
+			}
+		}
+	}
+
 	/* *************************************************** */
 	Interface::Movable::Movable(glm::vec2 size, glm::vec2 pos) : m_Size(size), m_Pos(pos)
 	{
@@ -153,7 +166,7 @@ namespace mdEngine
 
 	void Interface::PlaylistItem::DrawDottedBorder(s16 playPos)
 	{
-		if (this->m_ButtonPos == glm::vec2(INVALID))
+		if (this->m_ButtonPos == glm::vec2(POS_INVALID))
 			return;
 
 		glm::mat4 model;
@@ -253,19 +266,17 @@ namespace mdEngine
 	Interface::PlaylistSeparator::PlaylistSeparator(std::wstring name) 
 	{ 
 		m_TextString = name;
+		isVisible = false;
+		m_ButtonPos = glm::vec2(POS_INVALID);
+		m_TextPos = glm::vec2(POS_INVALID);
+		m_SepItemCount = 0;
+		SepItemDuration = 0;
+		m_ItemColor = Color::Blue;
+		m_ButtonSize = glm::vec2(Data::_PLAYLIST_ITEM_SIZE.x, Data::_PLAYLIST_ITEM_SIZE.y / 2);
 	}
 
 	void Interface::PlaylistSeparator::InitItem()
 	{
-		m_ItemColor = Color::Blue;
-		m_ButtonSize = glm::vec2(Data::_PLAYLIST_ITEM_SIZE.x, Data::_PLAYLIST_ITEM_SIZE.y / 2);
-
-		// ID is irrelevant here
-		m_ItemID = -1;
-
-		m_ButtonPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, Data::_PLAYLIST_ITEMS_SURFACE_POS.y + 20.f);
-		m_TextPos = m_ButtonPos;
-
 		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
 		m_TextColor = SDLColor::Grey;
@@ -276,10 +287,29 @@ namespace mdEngine
 
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 
-		m_PlaylistButtonsContainer.push_back(std::make_pair(&m_ItemID, this));
 		m_PlaylistSeparatorContainer.push_back(std::make_pair(m_TextString, this));
 	}
 
+	std::wstring Interface::PlaylistSeparator::GetSeparatorPath() const
+	{
+		return m_TextString;
+	}
+
+	std::wstring Interface::PlaylistSeparator::GetSeparatorName() const
+	{
+		return Audio::Info::GetFolder(m_TextString);
+	}
+
+	void Interface::PlaylistSeparator::AddSeparatorSubFile(std::wstring path)
+	{
+		m_SubFilesPaths.push_back(path);
+		m_SepItemCount++;
+	}
+
+	std::vector<std::wstring>* Interface::PlaylistSeparator::GetSubFilesContainer()
+	{
+		return &m_SubFilesPaths;
+	}
 
 	/* *************************************************** */
 	Interface::TextBox::TextBox() { }

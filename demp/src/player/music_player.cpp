@@ -1,7 +1,7 @@
 #include "music_player.h"
 
 #include "music_player_system.h"
-
+#include "music_player_state.h"
 
 namespace mdEngine
 {
@@ -26,6 +26,7 @@ namespace mdEngine
 		Data::UpdateData();
 		UpdateInput();
 		UpdateLogic();
+		State::ResetStateFlags();
 	}
 
 	void MP::MusicPlayer::Render()

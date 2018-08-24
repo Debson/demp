@@ -55,7 +55,6 @@ namespace Graphics
 		s32 allocatedCount = 0;
 		s32 max, min;
 
-
 		b8 shuffleActive(false);
 		b8 repeatActive(false);
 		b8 playActive(false);
@@ -89,10 +88,6 @@ namespace Graphics
 		s32 playlistIndex = 0;
 
 		s32 currentlyRenderedItems = 0;
-
-		f32 stretchPlaylistMultplier = 0.f;
-		f32 stretchMultiplier = 1.f;
-		f32 peekStretchMultiplier = 2.f;
 
 		s32 lastMousePos = 0;
 		s32 deltaVolumePos = 0;
@@ -136,6 +131,8 @@ namespace Graphics
 		m_Toggled = false;
 		m_SelectedID = -1;
 		m_PlayingID = -1;
+		m_CurrentMinIndex = 0;
+		m_CurrentMaxIndex = 0;
 	}
 
 	void MP::PlaylistObject::Enable()
@@ -872,6 +869,7 @@ namespace Graphics
 			itemsSizeText.DrawString();
 
 		}
+		
 	}
 
 	void MP::RenderPlaylistItems()
@@ -1118,7 +1116,7 @@ namespace Graphics
 					}
 					else
 					{
-						::GetAudioObject(i)->SetButtonPos(glm::vec2(INVALID));
+						::GetAudioObject(i)->SetButtonPos(glm::vec2(POS_INVALID));
 					}
 				}
 
@@ -1288,6 +1286,8 @@ namespace Graphics
 		}
 		else
 		{
+			m_Playlist.SetCurrentMinIndex(0);
+			m_Playlist.SetCurrentMaxIndex(0);
 			currentlyRenderedItems = 0;
 			playlistPreviousOffsetY = 0;
 			playlistCurrentOffsetY = 0;
@@ -1443,15 +1443,52 @@ namespace Graphics
 		{
 			f64 duration = 0;
 			f64 size = 0;
-			s32 audioObjectConSize = Audio::Object::GetSize();
+
+			// Still not accurate, its skipping files
+			auto audioObj = Audio::Object::GetAudioObject(0);
+			if (audioObj == nullptr)
+				return;
+			s32 k = 0;
+			auto sepCon = Interface::Separator::GetContainer();
+			auto itSep = Interface::Separator::GetSeparator(audioObj->GetFolderPath());
+			if (itSep == nullptr)
+				return;
+			itSep->SepItemDuration = 0;
+			for (auto & i : Audio::Object::GetAudioObjectContainer())
+			{
+				assert(i != nullptr);
+				assert(itSep != NULL);
+				
+				if (itSep->GetSeparatorPath().compare(i->GetFolderPath()) != 0)
+				{
+					itSep = Interface::Separator::GetSeparator(i->GetFolderPath());
+					k++;
+					if (k > Interface::Separator::GetSize())
+						break;
+					itSep->SepItemDuration = 0;
+				}
+				
+				if (itSep == nullptr)
+					break;
+
+				itSep->SepItemDuration += i->GetLength();
+
+				size += i->GetObjectSize();
+			}
+
+			for (auto & i : *Interface::Separator::GetContainer())
+			{
+				duration += i.second->SepItemDuration;
+			}
+
+			/*s32 audioObjectConSize = Audio::Object::GetSize();
 			for (s32 i = 0; i < audioObjectConSize; i++)
 			{
-				if (Audio::Object::GetAudioObject(i) == NULL)
-					return;
+				assert(Audio::Object::GetAudioObject(i) != NULL);
 
 				duration += Audio::Object::GetAudioObject(i)->GetLength();
 				size += Audio::Object::GetAudioObject(i)->GetObjectSize();
-			}
+			}*/
 
 			m_Playlist.SetItemsDuration(duration);
 			m_Playlist.SetItemsSize(size);

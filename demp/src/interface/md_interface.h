@@ -18,6 +18,8 @@ namespace mdEngine
 	{
 		void CloseInterface();
 
+		void PrintSeparatorAndItsSubFiles();
+
 		struct Movable
 		{
 			Movable(glm::vec2 size, glm::vec2 pos);;
@@ -117,9 +119,20 @@ namespace mdEngine
 		public:
 			PlaylistSeparator();
 			PlaylistSeparator(std::wstring name);
-			
+
 			virtual void InitItem();
 
+			std::wstring GetSeparatorPath() const;
+			std::wstring GetSeparatorName() const;
+			void AddSeparatorSubFile(std::wstring path);
+			std::vector<std::wstring>* GetSubFilesContainer();
+
+
+			b8 isVisible;
+			f64 SepItemDuration;
+		private:
+			s32 m_SepItemCount;
+			std::vector<std::wstring> m_SubFilesPaths;
 		
 		};
 
@@ -172,8 +185,6 @@ namespace mdEngine
 			Interface::Button* GetButton(s32 id);
 			s32 GetSize();
 		}
-
-
 
 		// TODO: It should not be an extern var...
 		extern std::vector<std::pair<const std::wstring, Button*>> mdInterfaceButtonContainer;

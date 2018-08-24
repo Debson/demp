@@ -93,7 +93,7 @@ namespace mdEngine
 	void App::ProcessButton(Interface::Button* button)
 	{
 		// Check if button positions is valid
-		if (button->GetButtonPos() == glm::vec2(INVALID))
+		if (button->GetButtonPos() == glm::vec2(POS_INVALID))
 		{
 			return;
 		}

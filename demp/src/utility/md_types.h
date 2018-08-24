@@ -9,7 +9,7 @@
 
 #include "../settings/configuration.h"
 
-#define INVALID (-1)
+#define POS_INVALID (-1)
 
 namespace mdEngine
 {

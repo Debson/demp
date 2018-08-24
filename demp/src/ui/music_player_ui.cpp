@@ -204,7 +204,6 @@ namespace MP
 				Audio::PrintTest();
 			}
 			
-
 			if (ImGui::Button("Print Shuffled Pos") == true)
 			{
 				Playlist::PrintShuffledPositions();
@@ -240,6 +239,11 @@ namespace MP
 			if (ImGui::Button("Print loaded folders") == true)
 			{
 				Audio::Folders::PrintContent();
+			}
+
+			if (ImGui::Button("Print folder sep and items") == true)
+			{
+				Interface::PrintSeparatorAndItsSubFiles();
 			}
 
 
@@ -302,7 +306,7 @@ namespace MP
 				if (Interface::PlaylistButton::GetButton(i) != nullptr)
 				{
 
-					if (Interface::PlaylistButton::GetButton(i)->GetButtonPos() != glm::vec2(INVALID))
+					if (Interface::PlaylistButton::GetButton(i)->GetButtonPos() != glm::vec2(POS_INVALID))
 					{
 						model = glm::mat4();
 						model = glm::translate(model, glm::vec3(Interface::PlaylistButton::GetButton(i)->GetButtonPos(), 1.f));
@@ -409,7 +413,8 @@ namespace MP
 
 		// Make sure that hitboxes that are not visible cannot be clicked
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
-		for (u16 i = 0; i < Interface::PlaylistButton::GetSize(); i++)
+		for (u16 i = Graphics::MP::GetPlaylistObject()->GetCurrentMinIndex();
+				 i < Graphics::MP::GetPlaylistObject()->GetCurrentMaxIndex(); i++)
 		{
 			if (Interface::PlaylistButton::GetButton(i) == nullptr)
 				break;
@@ -492,7 +497,8 @@ namespace MP
 
 	void UI::HandlePlaylistInput()
 	{
-		for (s32 i = 0; i < Audio::Object::GetSize(); i++)
+		for (s32 i = Graphics::MP::GetPlaylistObject()->GetCurrentMinIndex();
+				 i < Graphics::MP::GetPlaylistObject()->GetCurrentMaxIndex(); i++)
 		{
 			if (Audio::Object::GetAudioObject(i) == NULL)
 				return;

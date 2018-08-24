@@ -13,6 +13,8 @@ namespace mdEngine
 		extern b8 IsPlaylistEmpty;
 		extern b8 PathLoadedFromFile;
 		extern b8 IsDeletionFinished;
+
+		void ResetStateFlags();
 	}
 }
 
