@@ -94,6 +94,7 @@ namespace mdEngine
 
 			void Click();
 			void SetAsFolderRep();
+			void TakeFolderRep();
 			void SetClickCount(s8 count);
 			void SetItemColor(glm::vec3 color);
 
@@ -122,17 +123,21 @@ namespace mdEngine
 
 			virtual void InitItem();
 
-			std::wstring GetSeparatorPath() const;
+
+			void SetSeperatorPath(std::wstring path);
+			std::wstring GetSeparatorPath() const;;
 			std::wstring GetSeparatorName() const;
-			void AddSeparatorSubFile(std::wstring path);
-			std::vector<std::wstring>* GetSubFilesContainer();
+			void SeparatorSubFilePushBack(s32 id, std::wstring path);
+			void SeparatorSubFileInsert(s32 pos, std::wstring path);
+			void SeparatorSubFileErased();
+			std::vector<std::pair<s32, std::wstring>>* GetSubFilesContainer();
 
 
 			b8 isVisible;
 			f64 SepItemDuration;
 		private:
 			s32 m_SepItemCount;
-			std::vector<std::wstring> m_SubFilesPaths;
+			std::vector<std::pair<s32, std::wstring>> m_SubFilesPaths;
 		
 		};
 

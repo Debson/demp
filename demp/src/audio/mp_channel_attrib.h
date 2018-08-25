@@ -17,6 +17,7 @@ namespace Audio
 			ID3() 
 			{ 
 				loaded		= false;
+				folder_rep	= false;
 				id			= L"";
 				title		= L"";
 				artist		= L"";
@@ -33,6 +34,7 @@ namespace Audio
 				freq		= 0;
 				size		= 0;
 				length		= 0;
+
 			}
 
 			std::wstring id;
@@ -53,6 +55,7 @@ namespace Audio
 			f32 size;	// in bytes
 			f64 length;	// in sec
 
+			b8 folder_rep;
 			b8 loaded;
 		};
 

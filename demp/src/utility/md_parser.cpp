@@ -14,6 +14,7 @@
 #include "../app/realtime_system_application.h"
 #include "../audio/mp_audio.h"
 #include "../settings/music_player_string.h"
+#include "../interface/md_interface.h"
 #include "../graphics/music_player_graphics.h"
 #include "../playlist/music_player_playlist.h"
 #include "../player/music_player_system.h"
@@ -36,6 +37,7 @@
 #define POSITION_FREQUENCY	10
 #define POSITION_SIZE		11
 #define POSITION_LENGTH		12
+#define POSITION_FOLDER_REP	13
 
 
 namespace fs = boost::filesystem;
@@ -78,41 +80,43 @@ namespace mdEngine
 		file << SEPARATOR_CONTENT;
 		file << "\n";
 
-		for (u32 i = 0; i < Audio::Folders::GetSize(); i++)
+		for (auto & i : *Interface::Separator::GetContainer())
 		{
-			fs::path p(Audio::Folders::GetAudioFolder(i));
-			file << "-" << utf16_to_utf8(p.wstring()) << "\n";
-			for (u32 j = 0; j < Audio::Object::GetSize(); j++)
+			file << "-" << utf16_to_utf8(i.second->GetSeparatorPath()) << "\n";
+			for (auto k : *i.second->GetSubFilesContainer())
 			{
-				fs::path ps(Audio::Object::GetAudioObject(j)->GetPath());
-				if (p.wstring().compare(ps.branch_path().wstring()) == 0)
+				//fs::path ps(k.second);
+				//if (p.wstring().compare(ps.branch_path().wstring()) == 0)
 				{
 					// title, artist, album, genre, year, track num, composer, bitrate, channels, freq, size, length,  
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(j)->GetPath());
+					file << utf16_to_utf8(k.second);
+					//file << utf16_to_utf8(Audio::Object::GetAudioObject(k.first)->GetPath());
 					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(j)->GetID3Struct().title);
+					file << utf16_to_utf8(Audio::Object::GetAudioObject(k.first)->GetID3Struct().title);
 					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(j)->GetID3Struct().artist);
+					file << utf16_to_utf8(Audio::Object::GetAudioObject(k.first)->GetID3Struct().artist);
 					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(j)->GetID3Struct().album);
+					file << utf16_to_utf8(Audio::Object::GetAudioObject(k.first)->GetID3Struct().album);
 					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(j)->GetID3Struct().genre);
+					file << utf16_to_utf8(Audio::Object::GetAudioObject(k.first)->GetID3Struct().genre);
 					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(j)->GetID3Struct().year);
+					file << utf16_to_utf8(Audio::Object::GetAudioObject(k.first)->GetID3Struct().year);
 					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(j)->GetID3Struct().track_num);
+					file << utf16_to_utf8(Audio::Object::GetAudioObject(k.first)->GetID3Struct().track_num);
 					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(j)->GetID3Struct().composer);
+					file << utf16_to_utf8(Audio::Object::GetAudioObject(k.first)->GetID3Struct().composer);
 					file << SEPARATOR;
-					file << std::to_string(Audio::Object::GetAudioObject(j)->GetID3Struct().bitrate);
+					file << std::to_string(Audio::Object::GetAudioObject(k.first)->GetID3Struct().bitrate);
 					file << SEPARATOR;
-					file << std::to_string(Audio::Object::GetAudioObject(j)->GetID3Struct().channels);
+					file << std::to_string(Audio::Object::GetAudioObject(k.first)->GetID3Struct().channels);
 					file << SEPARATOR;
-					file << std::to_string(Audio::Object::GetAudioObject(j)->GetID3Struct().freq);
+					file << std::to_string(Audio::Object::GetAudioObject(k.first)->GetID3Struct().freq);
 					file << SEPARATOR;
-					file << std::to_string(Audio::Object::GetAudioObject(j)->GetID3Struct().size);
+					file << std::to_string(Audio::Object::GetAudioObject(k.first)->GetID3Struct().size);
 					file << SEPARATOR;
-					file << std::to_string(Audio::Object::GetAudioObject(j)->GetID3Struct().length);
+					file << std::to_string(Audio::Object::GetAudioObject(k.first)->GetID3Struct().length);
+					file << SEPARATOR;
+					file << Audio::Object::GetAudioObject(k.first)->IsFolderRep();
 					file << "\n";
 
 					/**/
@@ -164,19 +168,20 @@ namespace mdEngine
 					std::wstring path = utf8_to_utf16(input.substr(0, pos));
 					Audio::Info::ID3 info;
 
-					info.title = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_TITLE);
-					info.artist = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_ARTIST);
-					info.album = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_ALBUM);
-					info.genre = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_GENRE);
-					info.year = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_YEAR);
-					info.track_num = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),	POSITION_TRACK_NUM);
-					info.composer = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),	POSITION_COMPOSER);
-					info.bitrate = GetValueAtPos<f32>(input.substr(pos, input.length()),				POSITION_BITRATE);
-					info.channels = GetValueAtPos<s16>(input.substr(pos, input.length()),				POSITION_CHANNELS);
-					info.freq = GetValueAtPos<f32>(input.substr(pos, input.length()),					POSITION_FREQUENCY);
-					info.size = GetValueAtPos<f32>(input.substr(pos, input.length()),					POSITION_SIZE);
-					info.length = GetValueAtPos<f64>(input.substr(pos, input.length()),					POSITION_LENGTH);
-
+					info.title		= GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_TITLE);
+					info.artist		= GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_ARTIST);
+					info.album		= GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_ALBUM);
+					info.genre		= GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_GENRE);
+					info.year		= GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_YEAR);
+					info.track_num	= GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_TRACK_NUM);
+					info.composer	= GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())),		POSITION_COMPOSER);
+					info.bitrate	= GetValueAtPos<f32>(input.substr(pos, input.length()),					POSITION_BITRATE);
+					info.channels	= GetValueAtPos<s16>(input.substr(pos, input.length()),					POSITION_CHANNELS);
+					info.freq		= GetValueAtPos<f32>(input.substr(pos, input.length()),					POSITION_FREQUENCY);
+					info.size		= GetValueAtPos<f32>(input.substr(pos, input.length()),					POSITION_SIZE);
+					info.length		= GetValueAtPos<f64>(input.substr(pos, input.length()),					POSITION_LENGTH);
+					info.folder_rep = GetValueAtPos<b8>(input.substr(pos, input.length()),					POSITION_FOLDER_REP);
+					
 					/*std::cout << utf16_to_utf8(path) << std::endl;
 					std::wcout << info.title << std::endl;
 					std::wcout << info.artist << std::endl;

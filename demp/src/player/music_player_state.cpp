@@ -9,7 +9,7 @@ namespace mdEngine
 	b8 State::IsPlaylistEmpty(true);
 
 	// Restarted to false every frame
-	b8 State::PathLoadedFromFile(false);
+	b8 State::PathLoadedFromFile = false;
 
 	//
 	b8 State::IsDeletionFinished(false);

@@ -52,7 +52,7 @@ namespace mdEngine
 			for (auto & k : *i.second->GetSubFilesContainer())
 			{
 				std::cout << "  ";
-				std::cout << utf16_to_utf8(k) << std::endl;
+				std::cout << "ID: " << k.first  << "   Path: " << utf16_to_utf8(k.second) << std::endl;
 			}
 		}
 	}
@@ -199,6 +199,11 @@ namespace mdEngine
 		m_FolderRep = true;
 	}
 
+	void Interface::PlaylistItem::TakeFolderRep()
+	{
+		m_FolderRep = false;
+	}
+
 	void Interface::PlaylistItem::SetClickCount(s8 count)
 	{
 		m_ClickCount = count;
@@ -290,6 +295,11 @@ namespace mdEngine
 		m_PlaylistSeparatorContainer.push_back(std::make_pair(m_TextString, this));
 	}
 
+	void Interface::PlaylistSeparator::SetSeperatorPath(std::wstring path)
+	{
+		m_TextString = path;
+	}
+
 	std::wstring Interface::PlaylistSeparator::GetSeparatorPath() const
 	{
 		return m_TextString;
@@ -300,13 +310,24 @@ namespace mdEngine
 		return Audio::Info::GetFolder(m_TextString);
 	}
 
-	void Interface::PlaylistSeparator::AddSeparatorSubFile(std::wstring path)
+	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(s32 id, std::wstring path)
 	{
-		m_SubFilesPaths.push_back(path);
+		m_SubFilesPaths.push_back(std::make_pair(id, path));
 		m_SepItemCount++;
 	}
 
-	std::vector<std::wstring>* Interface::PlaylistSeparator::GetSubFilesContainer()
+	void Interface::PlaylistSeparator::SeparatorSubFileInsert(s32 pos, std::wstring path)
+	{
+		m_SubFilesPaths.insert(m_SubFilesPaths.begin() + pos, std::make_pair(pos, path));
+		m_SepItemCount++;
+	}
+
+	void Interface::PlaylistSeparator::SeparatorSubFileErased()
+	{
+		m_SepItemCount--;
+	}
+
+	std::vector<std::pair<s32, std::wstring>>* Interface::PlaylistSeparator::GetSubFilesContainer()
 	{
 		return &m_SubFilesPaths;
 	}

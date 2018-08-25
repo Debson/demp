@@ -50,6 +50,7 @@ namespace Audio
 	b8 insertFiles(false);
 	b8 firstFilesLoad(false);
 	b8 firstFileFolderRepChecked(true);
+	b8 filesLoadedFromFile(false);
 	s32 indexOfDroppedOnItem = -1;
 	s32 filesAddedCount = 0;
 
@@ -73,6 +74,8 @@ b8 Audio::SavePathFiles(std::wstring path)
 		MD_ERROR("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
 		return false;
 	}
+
+	filesLoadedFromFile = true;
 	
 	lastPathPushTimer.start();
 	m_InitPaths.push_back(path);
@@ -106,6 +109,7 @@ void Audio::CalculateDroppedPosInPlaylist()
 				//md_log(utf16_to_utf8(m_AudioObjectContainer[i]->GetTitle()));
 				indexOfDroppedOnItem = i;
 				insertFiles = true;
+				md_log("File dropped on index: " + std::to_string(i));
 			}
 		}
 
@@ -229,7 +233,9 @@ b8 Audio::PushToPlaylist(std::wstring path)
 
 void Audio::UpdateAudioLogic()
 {
-	//std::cout << State::IsPlaylistEmpty << std::endl;
+
+	if (State::PathLoadedFromFile == true)
+		filesLoadedFromFile = true;
 
 	if (lastPathPushTimer.getTicksStart() > MAX_PATH_WAIT_TIME)
 	{
@@ -269,18 +275,21 @@ void Audio::UpdateAudioLogic()
 		// split the work between work threads
 		s32 div = toProcessCount / threadsToUse;
 
-		// All used vectors must be resized before any operations are performed on them
-		ResizeAllContainers(toProcessCount);
-
 		std::vector<std::wstring> tempVec;
 		if (insertFiles == true)
 		{
+			if (indexOfDroppedOnItem < currentContainersSize)
+				indexOfDroppedOnItem++;
 			tempVec = std::vector<std::wstring>(indexOfDroppedOnItem);
 		}
 		else
 		{
 			tempVec = std::vector<std::wstring>(currentContainersSize);
 		}
+
+		// All used vectors must be resized before any operations are performed on them
+		ResizeAllContainers(toProcessCount);
+
 
 		for (s32 i = 0; i < toProcessCount; i++)
 			tempVec.push_back(m_AddedFilesPathContainer[i]);
@@ -339,6 +348,9 @@ void Audio::UpdateAudioLogic()
 		if(m_AddedFilesFoldersPathContainer.empty() == false)
 			foldersRepSet = false;
 		
+		if(filesLoadedFromFile == true)
+			foldersRepSet = true;
+
 
 		delete[] tt;
 	}
@@ -394,11 +406,13 @@ void Audio::PerformDeletion(s32 index)
 	auto sepCont = Interface::Separator::GetContainer();
 	auto sepIter = Interface::Separator::GetSeparator(folderPath);
 	auto sepSubCont = sepIter->GetSubFilesContainer();
-	std::vector<std::wstring>::iterator it = std::find(sepSubCont->begin(), sepSubCont->end(), filePath);
+	auto it = std::find_if(sepSubCont->begin(), sepSubCont->end(),
+		[&](std::pair<s32, std::wstring> & ref) { return ref.second.compare(filePath) == 0;});
 	for (auto i : *sepCont)
 	{
 		sepSubCont = i.second->GetSubFilesContainer();
-		it = std::find(sepSubCont->begin(), sepSubCont->end(), filePath);
+		it = std::find_if(sepSubCont->begin(), sepSubCont->end(),
+			[&](std::pair<s32, std::wstring> & ref) { return ref.second.compare(filePath) == 0; });;
 		if (it != sepSubCont->end() && sepSubCont->empty() == false)
 		{
 			sepSubCont->erase(it);
@@ -428,8 +442,8 @@ void Audio::PerformDeletion(s32 index)
 					sepContainer->erase(sepContainer->begin() + i);
 			}
 		}
-		if(m_FolderContainer.empty() == false)
-			m_FolderContainer.erase(itFolder);
+		/*if(m_FolderContainer.empty() == false)
+			m_FolderContainer.erase(itFolder);*/
 	}
 
 	// This is equal to: (current size - 1)
@@ -449,6 +463,7 @@ void Audio::PerformDeletion(s32 index)
 	if (m_AudioObjectContainer.empty() == true)
 	{
 		State::IsPlaylistEmpty = true;
+		firstFilesLoad = false;
 		m_FolderContainer.clear();
 		indexOfDroppedOnItem = -1;
 	}
@@ -532,7 +547,7 @@ void Audio::AddAudioItemWrap(const std::vector<std::wstring> vec, const s32 beg,
 	i = beg;
 	for (; i < end; i++)
 	{
-		if (State::PathLoadedFromFile == false)
+		if (filesLoadedFromFile == false)
 			Info::GetInfo(&m_AudioObjectContainer[i]->GetID3Struct(), vec[i]);
 	}
 }
@@ -548,10 +563,11 @@ b8 Audio::AddAudioItem(std::wstring path, s32 id)
 	m_LoadedPathContainer[id] = path;
 	// Need to get basic properties before creating audio object
 	auto audioObject = new AudioObject();
-	if (State::PathLoadedFromFile == true)
+	if (filesLoadedFromFile == true)
 	{
 		mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicAddedFromFile;
 		audioObject->GetID3Struct() = m_ID3Container[id];
+		m_ID3Container[id].folder_rep == true ? audioObject->SetAsFolderRep() : (void)0;
 	}
 
 	audioObject->SetID(id);
@@ -582,6 +598,36 @@ b8 Audio::AddAudioItem(std::wstring path, s32 id)
 
 void Audio::SetFoldersRep()
 {
+	if (filesLoadedFromFile)
+	{
+		/*	All files are loaded in a proper order as they should be in separators. Just create new separators for every fodler path
+			and add sub files to it
+		*/
+		
+		std::wstring previousFolderPath = L"";
+		Interface::PlaylistSeparator* ps = nullptr;
+		s32 counter = 0;
+		for (auto & i : m_AddedFilesPathContainer)
+		{
+			std::wstring currentFolderPath = Info::GetFolderPath(i);
+
+			if (currentFolderPath.compare(previousFolderPath) != 0)
+			{
+				ps = new Interface::PlaylistSeparator(currentFolderPath);
+				ps->InitItem();
+			}
+			
+			previousFolderPath = currentFolderPath;
+
+			ps->SeparatorSubFilePushBack(counter, i);
+
+			counter++;
+		}
+		
+		filesLoadedFromFile = false;
+	}
+
+
 	if (foldersRepSet == false)
 	{
 		/* Every file's folder added to the playlist IN ONE EVENT is stored in m_AddedFilesFoldersPathContainer.
@@ -592,6 +638,20 @@ void Audio::SetFoldersRep()
 				 as folder's path of dropped audio file(or folder with audio files), don't set an another folder repesentant
 				 (because file on which audio files were dropped is that folder's rep or another file from that folder is 
 				 already a folder representant).
+
+			(1) -> If playlist is not empty and first file(s) folder is set(firstFileFolderRepChecked, because most 
+					of the cases some weird things are happening only to the first file(s) of drag&drop event. Rest of the
+					folders from that event are pretty straight forward) then find the folder path of file on which new
+					files were dropped and check if first file of drag&drop event has the same folder as file on which new files
+					were dropped. If yes, it means that all files from drag&drop event associated with first file's folder
+					from drag&drop event are from the same folder as file on which files from drag&drop event were dropped.
+					Then set if statement logic, that add folder's rep to false in that case(don't create a new folder rep)
+
+			(2) -> If playlist is not empty and file right beneath file on which files from drop&event were dropped
+					has the same folder'path as first file from drag&drop event, then take away folder's rep from that file
+					give it to the first file from that drag&drop event and reassign playlist separator of file, from which
+					folder rep was taken to a new file.
+
 		*/
 
 		s32 start = 0;
@@ -601,23 +661,69 @@ void Audio::SetFoldersRep()
 
 			Interface::PlaylistSeparator *ps = nullptr;
 			b8 folderRepSet(false);
+			b8 folderRepTakenAway(false);
+			b8 filesFromTheSameFolder(false);
+			s32 insertIndex = 0;
 			for (s32 k = start; k < m_AddedFilesPathContainer.size(); k++)
 			{
 				std::wstring filePath = m_AddedFilesPathContainer[k];
 				b8 statementLogic(false);
-				if (indexOfDroppedOnItem >= 0 && firstFileFolderRepChecked == false && folderRepSet == false)
+
+				s32 indexTemp = indexOfDroppedOnItem - 1;
+				if (indexTemp < 0)
+					indexTemp = 0;
+
+				std::wstring droppedOnFolderPath = m_AudioObjectContainer[indexTemp]->GetFolderPath();
+				
+				// (1)
+				if (indexOfDroppedOnItem >= 0)
 				{
-					std::wstring droppedOnFolderPath = m_AudioObjectContainer[indexOfDroppedOnItem + filesAddedCount]->GetFolderPath();
 					statementLogic = Info::GetFolderPath(filePath).compare(droppedOnFolderPath) != 0;
+					filesFromTheSameFolder = Info::GetFolderPath(filePath).compare(droppedOnFolderPath) == 0;
+					// (2)
+					if (statementLogic == true && m_AddedFilesFoldersPathContainer.size() <= 1)
+					{
+						if (m_AudioObjectContainer.size() > indexTemp + filesAddedCount + 1)
+						{
+							std::wstring pathOfFileBeneath = m_AudioObjectContainer[indexTemp + filesAddedCount + 1]->GetFolderPath();
+							if (m_AudioObjectContainer[indexTemp + filesAddedCount + 1]->IsFolderRep() == true &&
+								folderPath.compare(pathOfFileBeneath) == 0)
+							{
+								m_AudioObjectContainer[indexTemp + filesAddedCount + 1]->TakeFolderRep();
+								folderRepTakenAway = true;
+							}
+						}
+					}
+					
+
+					// (4)
 					firstFileFolderRepChecked = true;
-					//break;
+					if (filesFromTheSameFolder == true)
+					{
+						for (auto & s : *Interface::Separator::GetContainer())
+						{
+							auto sepSubCon = s.second->GetSubFilesContainer();
+							auto it = std::find_if(sepSubCon->begin(), sepSubCon->end(), 
+								[&](std::pair<s32, std::wstring> & ref)
+							{ return ref.second.compare(m_AudioObjectContainer[indexTemp]->GetPath()) == 0; });
+							if (it != sepSubCon->end())
+							{
+								ps = s.second;
+								break;
+							}
+						}
+					}
+
+					if(folderRepTakenAway == true)
+						ps = Interface::Separator::GetSeparator(folderPath);
+
 				}
 				else if(folderRepSet == false)
 				{
 					statementLogic = folderPath.compare(Info::GetFolderPath(filePath)) == 0;
 				}
 
-				if (statementLogic == true && folderRepSet == false)
+				if (statementLogic == true && folderRepSet == false && filesFromTheSameFolder == false)
 				{
 					for (s32 t = k; t < m_AudioObjectContainer.size(); t++)
 					{
@@ -628,22 +734,47 @@ void Audio::SetFoldersRep()
 
 							audioObj->SetAsFolderRep();
 
-							ps = new Interface::PlaylistSeparator(folderPath);
-							ps->InitItem();
+							if (folderRepTakenAway == false)
+							{
+								ps = new Interface::PlaylistSeparator(folderPath);
+								ps->InitItem();
+							}
 							folderRepSet = true;
 							break;
 						}
 					}
 				}
 
-
+				// insert file to separator sub files container in the same order as it is in audio object's container
 				if (ps != nullptr && folderPath.compare(Info::GetFolderPath(filePath)) == 0)
 				{
-					ps->AddSeparatorSubFile(filePath);
+					auto subCon = ps->GetSubFilesContainer();
+					if (filesFromTheSameFolder == true && firstFilesLoad == true && subCon->empty() == false && 
+						indexOfDroppedOnItem + filesAddedCount < m_AudioObjectContainer.size())
+					{
+						std::wstring filePathBeneathDroppedOn = m_AudioObjectContainer[indexOfDroppedOnItem + filesAddedCount]->GetPath();
+
+						for (s32 t = 0; t < subCon->size(); t++)
+						{
+							if (subCon->at(t).second.compare(filePathBeneathDroppedOn) == 0)
+							{
+								ps->SeparatorSubFileInsert(t, filePath);
+								insertIndex++;
+								break;
+							}
+						}
+					}
+					else
+					{
+						s32 index = firstFilesLoad == false ? k : indexOfDroppedOnItem + k;
+						ps->SeparatorSubFilePushBack(index, filePath);
+					}
+
 
 				}
 				else
 				{
+					// Next folder's files will start from k position(last file in previous folder)
 					start = k;
 					break;
 				}
@@ -651,13 +782,80 @@ void Audio::SetFoldersRep()
 			}
 		}
 
+
 		// Add label to the first item of the second part
-		if (indexOfDroppedOnItem >= 0 && indexOfDroppedOnItem < previousContainerSize - 1 &&
-			filesAddedCount > 1)
+		if (indexOfDroppedOnItem >= 0 && indexOfDroppedOnItem < previousContainerSize)
 		{
-			m_AudioObjectContainer[indexOfDroppedOnItem + filesAddedCount]->SetAsFolderRep();
+
+			s32 index = indexOfDroppedOnItem + filesAddedCount;
+			std::wstring folderPathTemp = m_AudioObjectContainer[index]->GetFolderPath();
+			std::wstring nextFolderPath = m_AudioObjectContainer[index]->GetFolderPath();
+			std::wstring nextFilePath = m_AudioObjectContainer[index]->GetPath();
+
+			if (m_AudioObjectContainer[indexOfDroppedOnItem ]->GetFolderPath().compare(nextFolderPath) != 0)
+			{
+				// Set first file of second half as a folder rep
+				m_AudioObjectContainer[index]->SetAsFolderRep();
+
+				auto sepCon = Interface::Separator::GetContainer();
+				std::vector<std::wstring>::iterator it;
+				[&]
+				{
+					// find a separator sub files container that has file which is a first file of second half
+					for (auto i : *sepCon)
+					{
+						// Find a first file of second half
+						auto sepSubCon = i.second->GetSubFilesContainer();
+						for (s32 k = 0; k < sepSubCon->size(); k++)
+						{
+							if (sepSubCon->at(k).second.compare(nextFilePath) == 0)
+							{
+								// Delete files from first half that are part of second half
+								s32 size = sepSubCon->size();
+								for (s32 p = k; p < size; p++)
+								{
+									sepSubCon->pop_back();
+									i.second->SeparatorSubFileErased();
+								}
+								return;
+							}
+						}
+					}
+				}();
+
+
+				// Create a new playlist separator for second half and rewrite files that belong to second half
+				auto ps = new Interface::PlaylistSeparator(folderPathTemp);
+				ps->InitItem();
+				while (folderPathTemp.compare(nextFolderPath) == 0 && index < m_AudioObjectContainer.size())
+				{
+					nextFolderPath = m_AudioObjectContainer[index]->GetFolderPath();
+					nextFilePath = m_AudioObjectContainer[index]->GetPath();
+					ps->GetSubFilesContainer()->resize(index + 1);
+					ps->SeparatorSubFileInsert(index, nextFilePath);
+					index++;
+				}
+			}
 		}
 
+		/*	Separator sub files container size is determined by the highest position of the file from that 
+			sub files continaer in audio objects container. It will create files in proper order but leave 
+			also empty fields. Delete these fields.
+		*/
+		auto sepCon = Interface::Separator::GetContainer();
+		for (auto i : *sepCon)
+		{
+			for (s32 k = i.second->GetSubFilesContainer()->size() - 1; k >= 0; k--)
+			{
+				auto con = i.second->GetSubFilesContainer();
+				if (con->at(k).second.empty() == true)
+					con->erase(con->begin() + k);
+			}
+		}
+
+		auto test = Interface::Separator::GetContainer();
+
+		
 		m_AddedFilesFoldersPathContainer.clear();
 		m_AddedFilesPathContainer.clear();
 		foldersRepSet = true;
