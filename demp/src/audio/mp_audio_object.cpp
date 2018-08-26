@@ -24,6 +24,11 @@ s32& Audio::AudioObject::GetID()
 	return id;
 }
 
+s32* Audio::AudioObject::GetIDP()
+{
+	return &id;
+}
+
 void Audio::AudioObject::DecrementID()
 {
 	id > 0 ? id-- : 0;

@@ -27,6 +27,7 @@ namespace Audio
 		void Init();
 
 		s32& GetID();
+		s32* GetIDP();
 		void DecrementID();
 		void IncrementID();
 		std::wstring GetPath() const;

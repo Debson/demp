@@ -994,6 +994,12 @@ namespace Graphics
 				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kIdle;
 			}
 
+			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kContainersResized)
+			{
+				texturesLoaded = false;
+				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kIdle;
+			}
+
 
 			if (playlistCurrentPos > ::GetSize())
 				playlistCurrentPos = GetSize();
@@ -1243,6 +1249,7 @@ namespace Graphics
 					itemColor = Color::Blue;
 
 
+
 				// Draw border for every selected item
 				if (it != m_Playlist.multipleSelect.end())
 				{
@@ -1269,6 +1276,34 @@ namespace Graphics
 				glBindTexture(GL_TEXTURE_2D, main_foreground);
 				Shader::Draw(Shader::shaderDefault);
 				Shader::shaderDefault->setVec3("color", Color::White);
+
+				glm::vec3 col = Color::DarkGrey * itemColor;
+				if (pItem->topHasFocus)
+				{
+					model = glm::mat4();
+					model = glm::translate(model, glm::vec3(pItem->GetButtonPos().x, pItem->GetButtonPos().y, 0.6f));
+					model = glm::scale(model, glm::vec3(glm::vec2(pItem->GetButtonSize().x, pItem->GetButtonSize().y / 2.f), 1.0f));
+					Shader::shaderDefault->setMat4("model", model);
+					Shader::shaderDefault->setVec3("color", col);
+					glBindTexture(GL_TEXTURE_2D, main_foreground);
+					Shader::Draw(Shader::shaderDefault);
+					Shader::shaderDefault->setVec3("color", Color::White);
+
+				}
+
+				if (pItem->bottomHasFocus)
+				{
+					model = glm::mat4();
+					model = glm::translate(model, glm::vec3(pItem->GetButtonPos().x, pItem->GetButtonPos().y + pItem->GetButtonSize().y / 2.f, 0.6f));
+					model = glm::scale(model, glm::vec3(glm::vec2(pItem->GetButtonSize().x, pItem->GetButtonSize().y / 2.f), 1.0f));
+					Shader::shaderDefault->setMat4("model", model);
+					Shader::shaderDefault->setVec3("color", col);
+					glBindTexture(GL_TEXTURE_2D, main_foreground);
+					Shader::Draw(Shader::shaderDefault);
+					Shader::shaderDefault->setVec3("color", Color::White);
+				}
+
+
 
 				if (pItem->GetButtonPos().y < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
 				{
@@ -1463,6 +1498,7 @@ namespace Graphics
 				{
 					itSep = Interface::Separator::GetSeparator(i->GetFolderPath());
 					k++;
+					assert(itSep != NULL);
 					if (k > Interface::Separator::GetSize())
 						break;
 					itSep->SepItemDuration = 0;
@@ -1481,14 +1517,6 @@ namespace Graphics
 				duration += i.second->SepItemDuration;
 			}
 
-			/*s32 audioObjectConSize = Audio::Object::GetSize();
-			for (s32 i = 0; i < audioObjectConSize; i++)
-			{
-				assert(Audio::Object::GetAudioObject(i) != NULL);
-
-				duration += Audio::Object::GetAudioObject(i)->GetLength();
-				size += Audio::Object::GetAudioObject(i)->GetObjectSize();
-			}*/
 
 			m_Playlist.SetItemsDuration(duration);
 			m_Playlist.SetItemsSize(size);

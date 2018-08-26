@@ -98,24 +98,40 @@ namespace mdEngine
 			return;
 		}
 
-		int mouseX, mouseY;
-		Input::GetMousePosition(&mouseX, &mouseY);
-		/*f32 scaleX, scaleY;
-		GetWindowScale(&scaleX, &scaleY);
 
-		f32 xL = (float)button->xL * scaleX;
-		f32 xR = (float)button->xR * scaleX;
-		f32 yU = (float)button->yU * scaleY;
-		f32 yD = (float)button->yD * scaleY;
+		s32 mouseX, mouseY;
 
-		bool inside = mouseX > xL && mouseX < xR &&
-			mouseY > yU && mouseY < yD;*/
+		s32 x, y;
+		s32 winX, winY;
+		Input::GetGlobalMousePosition(&x, &y);
+		Window::GetWindowPos(&winX, &winY);
+		
+		if (checkBounds == true)
+		{
+			mouseX = x - winX;
+			mouseY = y - winY;
+		}
+		else
+		{
+			Input::GetMousePosition(&mouseX, &mouseY);
+		}
+
+		if (checkBounds == true)
+		{
+			button->topHasFocus = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
+								  mouseY > button->GetButtonPos().y && mouseY < (button->GetButtonPos().y + button->GetButtonSize().y / 2.f);
+
+			button->bottomHasFocus = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
+									 mouseY > (button->GetButtonPos().y + button->GetButtonSize().y / 2.f) && 
+									 mouseY < (button->GetButtonPos().y + button->GetButtonSize().y);
+		}
+
 
 		bool inside = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
 			mouseY > button->GetButtonPos().y && mouseY < (button->GetButtonPos().y + button->GetButtonSize().y);
 
 		bool check(true);
-		if (checkBounds)
+		if (checkBounds == true)
 		{
 			check = mouseY > boundLow && mouseY < boundHigh;
 		}

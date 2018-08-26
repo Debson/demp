@@ -52,7 +52,7 @@ namespace mdEngine
 			for (auto & k : *i.second->GetSubFilesContainer())
 			{
 				std::cout << "  ";
-				std::cout << "ID: " << k.first  << "   Path: " << utf16_to_utf8(k.second) << std::endl;
+				std::cout << "ID: " << *k.first  << "   Path: " << utf16_to_utf8(k.second) << std::endl;
 			}
 		}
 	}
@@ -268,7 +268,7 @@ namespace mdEngine
 
 	Interface::PlaylistSeparator::PlaylistSeparator() { }
 
-	Interface::PlaylistSeparator::PlaylistSeparator(std::wstring name) 
+	Interface::PlaylistSeparator::PlaylistSeparator(std::wstring name)
 	{ 
 		m_TextString = name;
 		isVisible = false;
@@ -280,7 +280,7 @@ namespace mdEngine
 		m_ButtonSize = glm::vec2(Data::_PLAYLIST_ITEM_SIZE.x, Data::_PLAYLIST_ITEM_SIZE.y / 2);
 	}
 
-	void Interface::PlaylistSeparator::InitItem()
+	void Interface::PlaylistSeparator::InitItem(s32 posOfFirstFile)
 	{
 		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
@@ -292,6 +292,8 @@ namespace mdEngine
 
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 
+
+		//InsertInProperOrder(posOfFirstFile);
 		m_PlaylistSeparatorContainer.push_back(std::make_pair(m_TextString, this));
 	}
 
@@ -310,16 +312,21 @@ namespace mdEngine
 		return Audio::Info::GetFolder(m_TextString);
 	}
 
-	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(s32 id, std::wstring path)
+	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(s32* fileIndex, std::wstring path)
 	{
-		m_SubFilesPaths.push_back(std::make_pair(id, path));
+		m_SubFilesPaths.push_back(std::make_pair(fileIndex, path));
 		m_SepItemCount++;
 	}
 
-	void Interface::PlaylistSeparator::SeparatorSubFileInsert(s32 pos, std::wstring path)
+	void Interface::PlaylistSeparator::SeparatorSubFileInsert(s32 pos, std::wstring path, s32* fileIndex)
 	{
-		m_SubFilesPaths.insert(m_SubFilesPaths.begin() + pos, std::make_pair(pos, path));
+		assert(pos < m_SubFilesPaths.size());
+		m_SubFilesPaths.insert(m_SubFilesPaths.begin() + pos, std::make_pair(fileIndex, path));
 		m_SepItemCount++;
+		for (s32 i = pos + 1; i < m_SubFilesPaths.size(); i++)
+		{
+			m_SubFilesPaths[i].first++;
+		}
 	}
 
 	void Interface::PlaylistSeparator::SeparatorSubFileErased()
@@ -327,9 +334,31 @@ namespace mdEngine
 		m_SepItemCount--;
 	}
 
-	std::vector<std::pair<s32, std::wstring>>* Interface::PlaylistSeparator::GetSubFilesContainer()
+	std::vector<std::pair<s32*, std::wstring>>* Interface::PlaylistSeparator::GetSubFilesContainer()
 	{
 		return &m_SubFilesPaths;
+	}
+
+	void Interface::PlaylistSeparator::InsertInProperOrder(s32 posOfFirstFile)
+	{
+
+		if (m_PlaylistSeparatorContainer.empty() == true)
+		{
+			m_PlaylistSeparatorContainer.push_back(std::make_pair(m_TextString, this));
+			return;
+		}
+
+		s32 minPos = INT_MAX;
+		/*for (auto & i : m_PlaylistSeparatorContainer)
+		{
+			auto subCon = i.second->GetSubFilesContainer();
+			if (subCon->at(0).first < minPos && posOfFirstFile > subCon->at(0).first)
+			{
+				minPos = subCon->at(0).first;
+			}
+		}*/
+
+
 	}
 
 	/* *************************************************** */
@@ -497,6 +526,40 @@ namespace mdEngine
 			return nullptr;
 
 		return it->second;
+	}
+
+	void Interface::Separator::SortSeparatorContainer()
+	{
+		// Delete all playlist separators that has empty sub files containers
+		for (s32 i = 0; i < m_PlaylistSeparatorContainer.size(); i++)
+		{
+			auto subCon = m_PlaylistSeparatorContainer[i].second->GetSubFilesContainer();
+			if (subCon->empty() == true)
+			{
+				delete m_PlaylistSeparatorContainer[i].second;
+				m_PlaylistSeparatorContainer.erase(m_PlaylistSeparatorContainer.begin() + i);
+			}
+		}
+
+		std::sort(m_PlaylistSeparatorContainer.begin(), m_PlaylistSeparatorContainer.end(),
+			[&](const std::pair<std::wstring, PlaylistSeparator*>  a, const std::pair<std::wstring, PlaylistSeparator*> b)
+		{
+			return *a.second->GetSubFilesContainer()->at(0).first < *b.second->GetSubFilesContainer()->at(0).first;
+		});
+	}
+
+	void Interface::Separator::ReassignSubContainersIDs()
+	{
+		s32 index = 0; 
+		for (auto & i : m_PlaylistSeparatorContainer)
+		{
+			auto subCon = i.second->GetSubFilesContainer();
+			for (auto & k : *subCon)
+			{
+				*k.first = index;
+				index++;
+			}
+		}
 	}
 
 	s32 Interface::Separator::GetSize()

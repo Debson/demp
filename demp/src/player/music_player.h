@@ -14,11 +14,12 @@ namespace mdEngine
 		enum MusicPlayerState
 		{
 			kIdle,
-			kMusicChanged,
 			kResized,
+			kMusicAdded,
 			kMusicChosen,
 			kMusicDeleted,
-			kMusicAdded,
+			kMusicChanged,
+			kContainersResized,
 			kMusicAddedFromFile
 		};
 

@@ -57,6 +57,8 @@ namespace mdEngine
 			b8 isPressed;
 			b8 isReleased;
 			b8 isDown;
+			b8 topHasFocus;
+			b8 bottomHasFocus;
 			b8 hasFocus;
 			b8 hasFocusTillRelease;
 			b8 wasDown;
@@ -121,24 +123,25 @@ namespace mdEngine
 			PlaylistSeparator();
 			PlaylistSeparator(std::wstring name);
 
-			virtual void InitItem();
+			virtual void InitItem(s32 posOfFirstFile);
 
 
 			void SetSeperatorPath(std::wstring path);
 			std::wstring GetSeparatorPath() const;;
 			std::wstring GetSeparatorName() const;
-			void SeparatorSubFilePushBack(s32 id, std::wstring path);
-			void SeparatorSubFileInsert(s32 pos, std::wstring path);
+			void SeparatorSubFilePushBack(s32* fileIndex, std::wstring path);
+			void SeparatorSubFileInsert(s32 pos, std::wstring path, s32* fileIndex);
 			void SeparatorSubFileErased();
-			std::vector<std::pair<s32, std::wstring>>* GetSubFilesContainer();
+			std::vector<std::pair<s32*, std::wstring>>* GetSubFilesContainer();
 
 
 			b8 isVisible;
 			f64 SepItemDuration;
 		private:
 			s32 m_SepItemCount;
-			std::vector<std::pair<s32, std::wstring>> m_SubFilesPaths;
-		
+			std::vector<std::pair<s32*, std::wstring>> m_SubFilesPaths;
+
+			void InsertInProperOrder(s32 posOfFirstFile);
 		};
 
 
@@ -181,6 +184,9 @@ namespace mdEngine
 		{
 			std::vector<std::pair<std::wstring, PlaylistSeparator*>>* GetContainer();
 			PlaylistSeparator* GetSeparator(std::wstring text);
+			void SortSeparatorContainer();
+			// Will assign ids for every item in sub containers in proper order
+			void ReassignSubContainersIDs();
 			s32 GetSize();
 		}
 

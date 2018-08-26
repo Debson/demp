@@ -321,6 +321,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		mdEngine::UpdateMouseState(current_mousestate);
 
 
+
 		//if (mdIsRunning == true && Window::windowProperties.mMouseWindowEvent == App::WindowEvent::kEnter)
 		{
 			UpdateWindowSize();

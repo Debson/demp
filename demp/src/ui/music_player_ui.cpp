@@ -401,6 +401,7 @@ namespace MP
 
 	void UI::Update()
 	{
+
 		/* Collect user input for buttons and movable */
 		for(u16 i = 0; i < mdMovableContainer.size(); i++)
 			App::ProcessMovable(mdMovableContainer[i]);
@@ -420,6 +421,10 @@ namespace MP
 				break;
 
 			App::ProcessButton(Interface::PlaylistButton::GetButton(i));
+			/*if (Interface::PlaylistButton::GetButton(i)->topHasFocus == true)
+				md_log("Playlist Button top: " + std::to_string(i) + " has focus.");
+			if (Interface::PlaylistButton::GetButton(i)->bottomHasFocus == true)
+				md_log("Playlist Button bottom: " + std::to_string(i) + " has focus.");*/
 		}
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
 
@@ -668,7 +673,7 @@ namespace MP
 		for (size_t i = 0; i < mdMovableContainer.size(); i++)
 		{
 			delete mdMovableContainer[i];
-			mdMovableContainer[i] == nullptr;
+			mdMovableContainer[i] = nullptr;
 		}
 		mdMovableContainer.clear();
 
