@@ -39,6 +39,8 @@ namespace Audio
 	static s32 previousContainerSize = 0;
 	static s32 currentlyLoadedItemsCount = 0;
 
+	static s32 filesAddedCount = 0;
+
 	static std::mutex mutex;
 
 	Time::Timer lastFunctionCallTimer;
@@ -51,8 +53,9 @@ namespace Audio
 	b8 firstFilesLoaded(false);
 	b8 firstFileFolderRepChecked(true);
 	b8 filesLoadedFromFile(false);
+	b8 droppedOnTop(false);
 	s32 indexOfDroppedOnItem = -1;
-	s32 filesAddedCount = 0;
+
 
 
 
@@ -83,7 +86,6 @@ b8 Audio::SavePathFiles(std::wstring path)
 	return true;
 }
 
-
 void Audio::CalculateDroppedPosInPlaylist()
 {
 	
@@ -96,10 +98,23 @@ void Audio::CalculateDroppedPosInPlaylist()
 	
 	*/
 
-	//if (m_AudioObjectContainer.empty() == false)
+	if (State::PathLoadedFromFile == false)
 	{
 		s32 min = Graphics::MP::GetPlaylistObject()->GetCurrentMinIndex();
 		s32 max = Graphics::MP::GetPlaylistObject()->GetCurrentMaxIndex();
+
+		s32 mouseX, mouseY;
+		s32 winX, winY;
+		App::Input::GetMousePosition(&mouseX, &mouseY);
+		if (mouseY < MP::Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
+		{
+			MP::UI::DeleteAllFiles();
+			indexOfDroppedOnItem = 0;
+			firstFilesLoaded = false;
+			droppedOnTop = false;
+			md_log("File dropped on main player");
+			return;
+		}
 
 
 		for (s32 i = min; i < max; i++)
@@ -109,19 +124,28 @@ void Audio::CalculateDroppedPosInPlaylist()
 				//md_log(utf16_to_utf8(m_AudioObjectContainer[i]->GetTitle()));
 				indexOfDroppedOnItem = i;
 				insertFiles = true;
+				droppedOnTop = true;
 				md_log("File dropped on index: " + std::to_string(i));
+				return;
 			}
 			if (m_AudioObjectContainer[i]->bottomHasFocus)
 			{
 				//md_log(utf16_to_utf8(m_AudioObjectContainer[i]->GetTitle()));
 				indexOfDroppedOnItem = i + 1;
 				insertFiles = true;
+				droppedOnTop = false;
 				md_log("File dropped on index: " + std::to_string(i));
+				return;
 			}
-			
+
 		}
 
+		indexOfDroppedOnItem = m_AudioObjectContainer.size();
+		insertFiles = true;
+		droppedOnTop = false;
+		md_log("File not dropped on playlist items");
 	}
+	
 }
 
 b8 Audio::SavePathFiles(std::wstring path, const Info::ID3 id3)
@@ -257,8 +281,6 @@ void Audio::UpdateAudioLogic()
 		startLoadingProperties = true;
 		lastFunctionCallTimer.stop();
 	}
-
-
 	if (startLoadingPaths == true)
 	{
 		startLoadingPaths = false;
@@ -286,23 +308,15 @@ void Audio::UpdateAudioLogic()
 
 		std::vector<std::wstring> tempVec;
 		if (insertFiles == true)
-		{
-			//if (indexOfDroppedOnItem < currentContainersSize)
-				//indexOfDroppedOnItem++;
 			tempVec = std::vector<std::wstring>(indexOfDroppedOnItem);
-		}
 		else
-		{
 			tempVec = std::vector<std::wstring>(currentContainersSize);
-		}
 
 		// All used vectors must be resized before any operations are performed on them
 		ResizeAllContainers(toProcessCount);
 
-
 		for (s32 i = 0; i < toProcessCount; i++)
 			tempVec.push_back(m_AddedFilesPathContainer[i]);
-
 
 		std::thread* tt = new std::thread[threadsToUse];
 
@@ -323,7 +337,6 @@ void Audio::UpdateAudioLogic()
 				{
 					tt[i] = std::thread(AddAudioItemWrap, tempVec, div * i + indexOfDroppedOnItem,
 						div * (i + 1) + rest + indexOfDroppedOnItem);
-
 				}
 			}
 			else
@@ -337,7 +350,6 @@ void Audio::UpdateAudioLogic()
 				{
 					tt[i] = std::thread(AddAudioItemWrap, tempVec, div * i + indexOfDroppedOnItem,
 						div * (i + 1) + indexOfDroppedOnItem);
-
 				}
 			}
 		}
@@ -391,10 +403,48 @@ void Audio::UpdateAudioLogic()
 void Audio::PerformDeletion(s32 index)
 {
 	assert(index >= 0);
+	assert(index < m_AudioObjectContainer.size());
 
-	std::wstring filePath = m_AudioObjectContainer.at(index)->GetPath();
-	delete m_AudioObjectContainer.at(index);
-	m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + index);
+	auto sepCont = Interface::Separator::GetContainer();
+
+	// Find separator sub files container that has id of deleted index
+	s32 sepIndex = -1;
+	s32 sepSubIndex = -1;
+	for (s32 i = 0; i < sepCont->size(); i++)
+	{
+		auto sepSubCont = sepCont->at(i).second->GetSubFilesContainer();
+		if (*sepSubCont->at(0).first <= index && *sepSubCont->at(0).first + sepSubCont->size() > index)
+		{
+			for (s32 k = 0; k < sepSubCont->size(); k++)
+			{
+				if (*sepSubCont->at(k).first == index)
+				{
+					sepSubIndex = k;
+					break;
+				}
+			}
+			sepIndex = i;
+			break;
+		}
+	}
+
+	assert(sepIndex != -1);
+	assert(sepSubIndex != -1);
+	// erase item form sep sub files container that has the same index as deleted index
+	auto sepSubCont = sepCont->at(sepIndex).second->GetSubFilesContainer();
+	sepSubCont->erase(sepSubCont->begin() + sepSubIndex);
+
+	// Delete playlist separators that have empty sub files containers
+	for (s32 i = 0; i < sepCont->size(); i++)
+	{
+		auto sepSubCon = sepCont->at(i).second->GetSubFilesContainer();
+		if (sepSubCon->empty() == true)
+		{
+			delete sepCont->at(i).second;
+			sepCont->erase(sepCont->begin() + i);
+		}
+	}
+
 
 	/* Decrement all playlist item indexes that are greater than deleted pos
 	   (to keep all indexes in in continuous ascending fashion)
@@ -402,61 +452,12 @@ void Audio::PerformDeletion(s32 index)
 	for (s32 i = index; i < m_AudioObjectContainer.size(); i++)
 		m_AudioObjectContainer[i]->DecrementID();
 
-
-	// Get deleted item folder's path before deleting it's path 
-	std::wstring folderPath = Info::GetFolderPath(m_LoadedPathContainer[index]);
+	delete m_AudioObjectContainer.at(index);
+	m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + index);
 
 	// Delete that path from loaded paths container
 	m_LoadedPathContainer.erase(m_LoadedPathContainer.begin() + index);
 
-
-	// Check if any of audio object's folder path is the same as deleted item' folder path
-
-	auto sepCont = Interface::Separator::GetContainer();
-	auto sepIter = Interface::Separator::GetSeparator(folderPath);
-	auto sepSubCont = sepIter->GetSubFilesContainer();
-	auto it = std::find_if(sepSubCont->begin(), sepSubCont->end(),
-		[&](std::pair<s32*, std::wstring> & ref) { return ref.second.compare(filePath) == 0;});
-	for (auto i : *sepCont)
-	{
-		sepSubCont = i.second->GetSubFilesContainer();
-		it = std::find_if(sepSubCont->begin(), sepSubCont->end(),
-			[&](std::pair<s32*, std::wstring> & ref) { return ref.second.compare(filePath) == 0; });;
-		if (it != sepSubCont->end() && sepSubCont->empty() == false)
-		{
-			sepSubCont->erase(it);
-			break;
-		}
-
-	}
-
-
-
-	/* Finally check if there is no audio items from that folder's path, then erase this folder's path
-	   and delete Interface's Playlist Separator associated with that folder path
-	*/
-	if (sepSubCont->empty() == true)
-	{
-		auto sepContainer = Interface::Separator::GetContainer();
-		auto itFolder = std::find(m_FolderContainer.begin(), m_FolderContainer.end(), folderPath);
-		
-		for (s32 i = 0; i < sepContainer->size(); i++)
-		{
-			if (sepContainer->at(i).first.compare(folderPath) == 0 &&
-				sepContainer->at(i).second->GetSubFilesContainer()->empty() == true)
-			{
-				delete sepContainer->at(i).second;
-				sepContainer->at(i).second = nullptr;
-				if(sepContainer->empty() == false)
-					sepContainer->erase(sepContainer->begin() + i);
-			}
-		}
-		/*if(m_FolderContainer.empty() == false)
-			m_FolderContainer.erase(itFolder);*/
-	}
-
-	// This is equal to: (current size - 1)
-	ResizeAllContainers(-1);
 
 	// Decrement variables that manages the size of all containers and currently loaded items
 	currentContainersSize--;
@@ -569,6 +570,7 @@ b8 Audio::AddAudioItem(std::wstring path, s32 id)
 	if (Info::CheckIfAudio(path) == false)
 		return false;
 
+	mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicAdded;
 	m_LoadedPathContainer[id] = path;
 	// Need to get basic properties before creating audio object
 	auto audioObject = new AudioObject();
@@ -632,6 +634,8 @@ void Audio::SetFoldersRep()
 			ps->SeparatorSubFilePushBack(m_AudioObjectContainer[counter]->GetIDP(), i);
 
 			counter++;
+			if(filesLoadedFromFile == true)
+				Info::LoadedItemsInfoCount++;
 		}
 		
 
@@ -689,8 +693,12 @@ void Audio::SetFoldersRep()
 				s32 indexTemp = indexOfDroppedOnItem - 1;
 				if (indexTemp < 0)
 					indexTemp = 0;
-
-				std::wstring droppedOnFolderPath = m_AudioObjectContainer[indexTemp]->GetFolderPath();
+			
+				std::wstring droppedOnFolderPath = L"";
+				if (droppedOnTop == true)
+					droppedOnFolderPath = m_AudioObjectContainer[indexTemp + filesAddedCount + 1]->GetFolderPath();
+				else
+					droppedOnFolderPath = m_AudioObjectContainer[indexTemp]->GetFolderPath();
 				
 				// (1)
 				if (indexOfDroppedOnItem >= 0 && folderRepSet == false)
@@ -720,6 +728,8 @@ void Audio::SetFoldersRep()
 					{
 
 						std::wstring pathOfFile = L"";
+						if (droppedOnTop == true)
+							indexTemp += filesAddedCount + 1;
 						if(filesFromTheSameFolder == true)
 							pathOfFile = m_AudioObjectContainer[indexTemp]->GetPath();
 						else if(folderRepTakenAway)
@@ -729,7 +739,7 @@ void Audio::SetFoldersRep()
 						{
 							auto sepSubCon = s.second->GetSubFilesContainer();
 							auto it = std::find_if(sepSubCon->begin(), sepSubCon->end(), 
-								[&](std::pair<s32*, std::wstring> & ref)
+								[&](std::pair<const s32*, std::wstring> & ref)
 							{ return ref.second.compare(pathOfFile) == 0; });
 							if (it != sepSubCon->end())
 							{
@@ -750,6 +760,7 @@ void Audio::SetFoldersRep()
 					s32 index = start;
 					if (indexOfDroppedOnItem >= 0)
 						index = indexOfDroppedOnItem + start;
+					assert(index < m_AudioObjectContainer.size());
 					auto audioObj = m_AudioObjectContainer[index];
 
 					audioObj->SetAsFolderRep();
@@ -783,7 +794,7 @@ void Audio::SetFoldersRep()
 							if (subCon->at(t).second.compare(filePathBeneathDroppedOn) == 0)
 							{
 								
-								ps->SeparatorSubFileInsert(t, filePath, fileIndex);
+								ps->SeparatorSubFileInsert(fileIndex, filePath, t);
 								insertIndex++;
 								break;
 							}
@@ -860,7 +871,7 @@ void Audio::SetFoldersRep()
 					nextFilePath = m_AudioObjectContainer[index]->GetPath();
 					ps->GetSubFilesContainer()->resize(index + 1);
 
-					ps->SeparatorSubFileInsert(index, nextFilePath, m_AudioObjectContainer[index]->GetIDP());
+					ps->SeparatorSubFileInsert(m_AudioObjectContainer[index]->GetIDP(), nextFilePath, index);
 					index++;
 					if (index >= m_AudioObjectContainer.size())
 						break;
@@ -908,6 +919,7 @@ void Audio::ResizeAllContainers(int size)
 		{
 			/* Create a space between indexOfDroppedOnItem and preceding item.
 			*/
+			
 
 			s32 newSize = currentContainersSize + size;
 			std::vector<std::wstring> tempLoadedPathsVec(newSize);
@@ -995,6 +1007,11 @@ void Audio::GetItemsInfo()
 		std::cout << "Size: " << m_AudioObjectContainer[i]->GetObjectSize() << std::endl;
 		std::cout << "Length: " << m_AudioObjectContainer[i]->GetLength() << "s" << std::endl;
 	}
+}
+
+s32 Audio::GetFilesAddedCount()
+{
+	return filesAddedCount + indexOfDroppedOnItem;
 }
 
 u32 Audio::GetProccessedFileCount()

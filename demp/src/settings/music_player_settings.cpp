@@ -100,6 +100,8 @@ namespace MP
 
 		glm::vec2 _TEXT_ITEMS_COUNT_POS;
 
+		glm::vec2 _TEXT_LOADED_ITEMS_COUNT_POS;
+
 
 		f32 VolumeKeyMultiplier = 0.8f;
 		s32 VolumeScrollStep = 2.f;
@@ -225,6 +227,8 @@ namespace MP
 		_TEXT_ITEMS_SIZE_POS = glm::vec2(170, mdDefaultHeight - 30.f);
 
 		_TEXT_ITEMS_COUNT_POS = glm::vec2(120, mdDefaultHeight - 30.f);
+
+		_TEXT_LOADED_ITEMS_COUNT_POS = glm::vec2(400, mdDefaultHeight - 30.f);
 
 	}
 

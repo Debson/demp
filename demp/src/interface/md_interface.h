@@ -129,17 +129,17 @@ namespace mdEngine
 			void SetSeperatorPath(std::wstring path);
 			std::wstring GetSeparatorPath() const;;
 			std::wstring GetSeparatorName() const;
-			void SeparatorSubFilePushBack(s32* fileIndex, std::wstring path);
-			void SeparatorSubFileInsert(s32 pos, std::wstring path, s32* fileIndex);
+			void SeparatorSubFilePushBack(const s32* fileIndex, const std::wstring path);
+			void SeparatorSubFileInsert(const s32* fileIndex, const std::wstring path, s32 pos);
 			void SeparatorSubFileErased();
-			std::vector<std::pair<s32*, std::wstring>>* GetSubFilesContainer();
+			std::vector<std::pair<const s32*, std::wstring>>* GetSubFilesContainer();
 
 
 			b8 isVisible;
 			f64 SepItemDuration;
 		private:
 			s32 m_SepItemCount;
-			std::vector<std::pair<s32*, std::wstring>> m_SubFilesPaths;
+			std::vector<std::pair<const s32*, std::wstring>> m_SubFilesPaths;
 
 			void InsertInProperOrder(s32 posOfFirstFile);
 		};

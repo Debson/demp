@@ -115,6 +115,8 @@ namespace MP
 
 		extern glm::vec2 _TEXT_ITEMS_COUNT_POS;
 
+		extern glm::vec2 _TEXT_LOADED_ITEMS_COUNT_POS;
+
 		extern f32 VolumeKeyMultiplier;
 		extern s32 VolumeScrollStep;
 		extern s32 VolumeFadeTime;

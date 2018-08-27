@@ -259,29 +259,26 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			case (SDL_QUIT):
 				mdIsRunning = false;
 				break;
+
+			case (SDL_DROPBEGIN):
+				Window::windowProperties.mEvent = App::Event::kFileDropBegin;
+				break;
 			case (SDL_DROPFILE):
 			{
 #ifdef _WIN32_
-				//std::wstring* path = new std::wstring();
-				//path = utf8_to_utf16p(event.drop.file);
-
-				//std::thread tt(MP::PushToPlaylist, path);
-				//tt.detach();
-				//MP::PushToPlaylist(path);
+				Window::windowProperties.mEvent = App::Event::kFileDropped;
 				State::PathLoadedFromFile = false;
 				std::wstring p(utf8_to_utf16(event.drop.file));
-				//std::cout << "Ticks before load: " << Time::GetTicks() << std::endl;
-				//fileLoadThread = std::thread(Audio::PushToPlaylist, p);
-				//fileLoadThread.join();
 				Audio::PushToPlaylist(p);
-				//Audio::SavePathFiles(p);
-
 #else
 				MP::PushToPlaylist(event.drop.file);
 #endif
 				SDL_free(SDL_GetClipboardText());
 				break;
 			}
+			case (SDL_DROPCOMPLETE):
+				Window::windowProperties.mEvent = App::Event::kFileDropComplete;
+				break;
 			case (SDL_MOUSEWHEEL):
 				UpdateScrollPosition(event.wheel.x, event.wheel.y);
 				break;
@@ -320,7 +317,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		const u32 current_mousestate = SDL_GetMouseState(NULL, NULL);
 		mdEngine::UpdateMouseState(current_mousestate);
 
-
+		UpdateRelativeMousePosition();
 
 		//if (mdIsRunning == true && Window::windowProperties.mMouseWindowEvent == App::WindowEvent::kEnter)
 		{

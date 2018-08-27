@@ -50,8 +50,6 @@ namespace MP
 #ifdef _DEBUG_
 		b8 renderDebug = false;
 		glm::vec3 borderColor(0.f, 1.f, 0.f);
-
-		void DeleteAll();
 #endif
 		
 		b8 music_repeat = false;
@@ -97,14 +95,13 @@ namespace MP
 #endif
 	}
 
-	void UI::DeleteAll()
+	void UI::DeleteAllFiles()
 	{
 		s32 len = Audio::Object::GetSize();
-		for (s32 j = 0; j < len; j++)
+		while(Audio::Object::GetSize() > 0)
 		{
 
 			Playlist::DeleteMusic(Audio::Object::GetSize() - 1);
-
 		}
 		Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
 	}
@@ -181,7 +178,7 @@ namespace MP
 				//std::thread t(UI::DeleteAll);
 				//t.detach();
 
-				UI::DeleteAll();
+				UI::DeleteAllFiles();
 			}
 
 

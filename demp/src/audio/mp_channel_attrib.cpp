@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <mutex>
+#include <string>
 
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
@@ -159,5 +160,18 @@ namespace Audio
 		info->genre = file.tag()->genre().toWString();
 
 
+	}
+
+	std::wstring Info::GetLoadedItemsCountStr()
+	{
+		std::wstring str = L" ";
+		if (Audio::Object::GetSize() > 0 && LoadedItemsInfoCount > 0)
+		{
+			f32 perc = (f32)LoadedItemsInfoCount / (f32)Audio::Object::GetSize();
+			str = std::to_wstring(s32(perc * 100));
+			str += L"%";
+		}
+
+		return str;
 	}
 }

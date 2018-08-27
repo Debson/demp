@@ -289,6 +289,8 @@ namespace Input
 	
 	void GetGlobalMousePosition(s32* mouseX, s32* mouseY);
 
+	void GetRelavtiveMousePosition(s32* mouseX, s32* mouseY);
+
 	b8 GetMouseMovement(s32* mouseX, s32* mouseY);
 
 	void SetMousePosition(s32 mouseX, s32 mouseY);

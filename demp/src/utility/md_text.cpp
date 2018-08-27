@@ -25,6 +25,7 @@ namespace mdEngine
 		m_Font = NULL;
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
+		m_TextTexture = 0;
 	}
 
 	Text::TextObject::TextObject(TTF_Font* font, glm::vec3 col)
@@ -39,6 +40,7 @@ namespace mdEngine
 		m_TextString = L"";
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
+		m_TextTexture = 0;
 		TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
@@ -54,6 +56,7 @@ namespace mdEngine
 		m_TextString = text;
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
+		m_TextTexture = 0;
 		TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
@@ -61,6 +64,8 @@ namespace mdEngine
 
 	void Text::TextObject::InitTextTexture()
 	{
+		if (m_TextTexture > 0)
+			glDeleteTextures(1, &m_TextTexture);
 		TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
 		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColor);
 	}
@@ -177,6 +182,8 @@ namespace mdEngine
 		GLuint textTexture;
 		SDL_Surface* textSurface;
 		GLenum format;
+
+
 
 		textSurface = TTF_RenderUTF8_Blended(font, utf16_to_utf8(string).c_str(), color);
 		assert(textSurface != NULL);

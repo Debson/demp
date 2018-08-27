@@ -31,6 +31,7 @@ namespace Audio
 #endif
 	}
 
+
 	b8 SavePathFiles(std::wstring path);
 
 	b8 SavePathFiles(std::wstring path, const Info::ID3 id3);
@@ -46,6 +47,9 @@ namespace Audio
 #ifdef _DEBUG_
 
 	void GetItemsInfo();
+
+	// Returns amount of added items to he playlist from event + index in playlist on which files were dropped
+	s32 GetFilesAddedCount();
 
 	u32 GetProccessedFileCount();
 

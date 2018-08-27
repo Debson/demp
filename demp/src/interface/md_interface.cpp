@@ -312,21 +312,17 @@ namespace mdEngine
 		return Audio::Info::GetFolder(m_TextString);
 	}
 
-	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(s32* fileIndex, std::wstring path)
+	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(const s32* fileIndex, std::wstring path)
 	{
 		m_SubFilesPaths.push_back(std::make_pair(fileIndex, path));
 		m_SepItemCount++;
 	}
 
-	void Interface::PlaylistSeparator::SeparatorSubFileInsert(s32 pos, std::wstring path, s32* fileIndex)
+	void Interface::PlaylistSeparator::SeparatorSubFileInsert(const s32* fileIndex, const std::wstring path, s32 pos)
 	{
 		assert(pos < m_SubFilesPaths.size());
 		m_SubFilesPaths.insert(m_SubFilesPaths.begin() + pos, std::make_pair(fileIndex, path));
 		m_SepItemCount++;
-		for (s32 i = pos + 1; i < m_SubFilesPaths.size(); i++)
-		{
-			m_SubFilesPaths[i].first++;
-		}
 	}
 
 	void Interface::PlaylistSeparator::SeparatorSubFileErased()
@@ -334,7 +330,7 @@ namespace mdEngine
 		m_SepItemCount--;
 	}
 
-	std::vector<std::pair<s32*, std::wstring>>* Interface::PlaylistSeparator::GetSubFilesContainer()
+	std::vector<std::pair<const s32*, std::wstring>>* Interface::PlaylistSeparator::GetSubFilesContainer()
 	{
 		return &m_SubFilesPaths;
 	}
@@ -531,7 +527,7 @@ namespace mdEngine
 	void Interface::Separator::SortSeparatorContainer()
 	{
 		// Delete all playlist separators that has empty sub files containers
-		for (s32 i = 0; i < m_PlaylistSeparatorContainer.size(); i++)
+		for (s32 i = m_PlaylistSeparatorContainer.size() - 1; i >= 0; i--)
 		{
 			auto subCon = m_PlaylistSeparatorContainer[i].second->GetSubFilesContainer();
 			if (subCon->empty() == true)
@@ -546,20 +542,6 @@ namespace mdEngine
 		{
 			return *a.second->GetSubFilesContainer()->at(0).first < *b.second->GetSubFilesContainer()->at(0).first;
 		});
-	}
-
-	void Interface::Separator::ReassignSubContainersIDs()
-	{
-		s32 index = 0; 
-		for (auto & i : m_PlaylistSeparatorContainer)
-		{
-			auto subCon = i.second->GetSubFilesContainer();
-			for (auto & k : *subCon)
-			{
-				*k.first = index;
-				index++;
-			}
-		}
 	}
 
 	s32 Interface::Separator::GetSize()

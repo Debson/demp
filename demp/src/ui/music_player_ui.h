@@ -21,11 +21,12 @@ namespace MP
 		extern std::vector<Interface::Resizable*> mdResizableContainer;
 		extern std::vector<std::pair<Input::ButtonType, Interface::Button*>> mdButtonsContainer;
 
-
 		extern b8 fileBrowserActive;
 
 		/* useless */
 		extern ImVec4 ClearColor;
+
+		void DeleteAllFiles();
 
 		void Start();
 

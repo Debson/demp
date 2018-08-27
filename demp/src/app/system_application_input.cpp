@@ -9,6 +9,8 @@ namespace mdEngine
 
 	static s32 mdCurrentMouseX = 0;
 	static s32 mdCurrentMouseY = 0;
+	static s32 mdRelativeMouseX = 0;
+	static s32 mdRelativeMouseY = 0;
 	static s32 mdPreviousMouseX = 0;
 	static s32 mdPreviousMouseY = 0;
 
@@ -78,6 +80,11 @@ namespace mdEngine
 		mdCurrentMouseY = mouseY;;
 	}
 
+	void UpdateRelativeMousePosition()
+	{
+		SDL_GetRelativeMouseState(&mdRelativeMouseX, &mdRelativeMouseY);
+	}
+
 	void UpdateScrollPosition(s32 scrollX, s32 scrollY)
 	{
 		mdCurrentScrollX = scrollX;
@@ -114,6 +121,12 @@ namespace mdEngine
 	void App::Input::GetGlobalMousePosition(s32* mouseX, s32* mouseY)
 	{
 		SDL_GetGlobalMouseState(mouseX, mouseY);
+	}
+
+	void App::Input::GetRelavtiveMousePosition(s32* mouseX, s32* mouseY)
+	{
+		*mouseX = mdRelativeMouseX;
+		*mouseY = mdRelativeMouseY;
 	}
 
 

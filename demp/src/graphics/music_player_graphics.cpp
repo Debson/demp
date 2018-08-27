@@ -76,6 +76,7 @@ namespace Graphics
 		Text::TextObject durationText;
 		Text::TextObject itemsSizeText;
 		Text::TextObject itemsCountText;
+		Text::TextObject loadedItemsCountText;
 
 		
 		b8 updatePlaylistInfo(false);
@@ -303,13 +304,15 @@ namespace Graphics
 
 	void MP::InitializeText()
 	{
-		durationText	= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
-		itemsSizeText	= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
-		itemsCountText	= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
+		durationText			= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
+		itemsSizeText			= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
+		itemsCountText			= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
+		loadedItemsCountText	= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
 
 		durationText.SetTextPos(Data::_TEXT_ITEMS_DURATION_POS);
 		itemsSizeText.SetTextPos(Data::_TEXT_ITEMS_SIZE_POS);
 		itemsCountText.SetTextPos(Data::_TEXT_ITEMS_COUNT_POS);
+		loadedItemsCountText.SetTextPos(Data::_TEXT_LOADED_ITEMS_COUNT_POS);
 
 	}
 
@@ -858,7 +861,6 @@ namespace Graphics
 
 	void MP::RenderPlaylistInfo()
 	{
-	
 		if (m_Playlist.IsToggled() &&
 			m_Playlist.IsEnabled() &&
 			State::IsPlaylistEmpty == false)
@@ -867,6 +869,14 @@ namespace Graphics
 			durationText.DrawString();
 			itemsCountText.DrawString();
 			itemsSizeText.DrawString();
+
+			if (State::MusicFilesInfoLoaded == false)
+			{
+				//md_log(utf16_to_utf8(Audio::Info::GetLoadedItemsCountStr()));
+				loadedItemsCountText.SetTextString(Audio::Info::GetLoadedItemsCountStr());
+				loadedItemsCountText.InitTextTexture();
+				loadedItemsCountText.DrawString();
+			}
 
 		}
 		
@@ -891,9 +901,6 @@ namespace Graphics
 			State::IsPlaylistEmpty == false)
 		{
 			//RenderPlaylistButtons();
-
-			if (::GetSize() == 0)
-				return;
 
 			if (mdEngine::App::Input::IsScrollForwardActive() && m_Playlist.hasFocus())
 			{
@@ -1019,11 +1026,11 @@ namespace Graphics
 			m_Playlist.SetCurrentMinIndex(min);
 			m_Playlist.SetCurrentMaxIndex(max);
 
-			for (s32 i = min; i < max; i++)
+			/*for (s32 i = min; i < max; i++)
 			{
 				if (Audio::Object::GetAudioObject(i) == NULL)
 					return;
-			}
+			}*/
 
 			if (playlistFirstEnter && playlistCurrentOffsetY > 80)
 			{
@@ -1040,19 +1047,20 @@ namespace Graphics
 			{
 				for (u32 i = min; i < max; i++)
 				{
+					s32 index = i;
 					if (GetAudioObject(i) == NULL)
-						return;
+						index = i + Audio::GetFilesAddedCount();
 
 					if (playlistPreviousOffsetY - playlistCurrentOffsetY > 0)
 					{
-						::GetAudioObject(i)->SetButtonPos(
+						::GetAudioObject(index)->SetButtonPos(
 									glm::vec2(::GetAudioObject(i)->GetButtonPos().x,
 											  ::GetAudioObject(i)->GetButtonPos().y - 
 												abs(playlistPreviousOffsetY - playlistCurrentOffsetY)));
 					}
 					else
 					{
-						::GetAudioObject(i)->SetButtonPos(
+						::GetAudioObject(index)->SetButtonPos(
 									glm::vec2(::GetAudioObject(i)->GetButtonPos().x,
 											  ::GetAudioObject(i)->GetButtonPos().y + 
 												abs(playlistPreviousOffsetY - playlistCurrentOffsetY)));
@@ -1064,7 +1072,7 @@ namespace Graphics
 			if (playlistCurrentPos != playlistPreviousPos)
 				texturesLoaded = false;
 
-			if (texturesLoaded == false)
+			if (texturesLoaded == false && State::MusicFilesLoaded == true)
 			{
 				playlistPreviousPos = playlistCurrentPos;
 				// Load all textures that are in in display range 
@@ -1212,12 +1220,28 @@ namespace Graphics
 				   do checked positions, so you will get index of actuall rendered item. */
 				Interface::PlaylistItem::OffsetIndex = playlistCurrentPos;
 
-				if (GetAudioObject(playlistIndex) == NULL)
-					return;
+				//if (GetAudioObject(playlistIndex) == NULL)
+					//return;
 
-				Audio::AudioObject* aItem = ::GetAudioObject(playlistIndex);
-				assert(GetAudioObject(playlistIndex) != NULL);
-				Interface::PlaylistItem* pItem = ::GetAudioObject(playlistIndex);
+				Audio::AudioObject* aItem = nullptr; 
+				//assert(GetAudioObject(playlistIndex) != NULL);
+
+				Interface::PlaylistItem* pItem = nullptr;
+				if (State::MusicFilesLoaded == false && Audio::Object::GetSize() > playlistIndex + Audio::GetFilesAddedCount())
+				{
+					auto test = Audio::Object::GetAudioObjectContainer();
+					s32 testIndex = Audio::GetFilesAddedCount();
+					pItem = ::GetAudioObject(playlistIndex + Audio::GetFilesAddedCount());
+					aItem = ::GetAudioObject(playlistIndex + Audio::GetFilesAddedCount());
+					assert(GetAudioObject(playlistIndex + Audio::GetFilesAddedCount()) != NULL);
+				}
+				else
+				{
+					aItem = ::GetAudioObject(playlistIndex);
+					pItem = ::GetAudioObject(playlistIndex);
+				}
+
+
 				glm::vec3 itemColor;
 
 				// Fint in vector with selected positions if current's id is inside
@@ -1530,6 +1554,8 @@ namespace Graphics
 			itemsCountText.InitTextTexture();
 
 			updatePlaylistInfo = false;
+
+			mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicAdded;
 		}
 	}
 

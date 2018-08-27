@@ -83,6 +83,8 @@ namespace Audio
 
 		void GetID3Info(Info::ID3* info, std::wstring path);
 
+		std::wstring GetLoadedItemsCountStr();
+
 
 	}
 }

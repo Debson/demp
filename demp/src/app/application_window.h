@@ -24,7 +24,9 @@ namespace App
 
 	enum Event
 	{
-		kFileDropped	= SDL_DROPFILE
+		kFileDropBegin	= SDL_DROPBEGIN,
+		kFileDropped	= SDL_DROPFILE,
+		kFileDropComplete = SDL_DROPCOMPLETE
 
 	};
 

@@ -10,14 +10,9 @@ namespace mdEngine
 	namespace App
 	{
 		s32 globalMouseX, globalMouseY;
-		s32 currentMouseX = 0, currentMouseY = 0;
-		s32 prevMouseX = 0, prevMouseY = 0;
+		s32 currentMouseX, currentMouseY;
 		s32 startX, startY;
-		s32 winSizeBeforeResize = 0;
-		s32 prevWinSize = 0;
-		s32 currWinSize = 0;
-
-		s32 deltaResize = 0;
+		s32 winSizeBeforeResize;
 
 		s32 boundLow;
 		s32 boundHigh;
@@ -25,10 +20,6 @@ namespace mdEngine
 
 		b8 wasInsideMovable(false);
 		b8 wasInsideResizable(false);
-		b8 firstMove(false);
-
-		s32 newWindowHeight;
-
 	}
 
 	App::WindowProperties::WindowProperties() :
@@ -64,9 +55,6 @@ namespace mdEngine
 				int newWX = startX - deltaX;
 				int newWY = startY - deltaY;
 
-				//f32 scaleX, scaleY;
-				//GetWindowScale(&scaleX, &scaleY);
-
 				f32 xL = bar->m_Pos.x;
 				f32 xR = bar->m_Pos.x + bar->m_Size.x;
 				f32 yU = bar->m_Pos.y;
@@ -83,6 +71,8 @@ namespace mdEngine
 			else
 			{
 				// TODO: dont call it every frame?
+				//relMouseXSum = 0;
+				//relMouseYSum = 0;
 				wasInsideMovable = false;
 				Input::GetGlobalMousePosition(&globalMouseX, &globalMouseY);
 				Window::GetWindowPos(&startX, &startY);
@@ -176,21 +166,11 @@ namespace mdEngine
 	{
 		if (Input::IsKeyDown(KeyCode::MouseLeft))
 		{
-			prevWinSize = currWinSize;
-			currWinSize = winSizeBeforeResize;
-
-
-			prevMouseY = currentMouseY;
-			Input::GetGlobalMousePosition(&currentMouseX, &currentMouseY);
-
 			s32 mouseX, mouseY;
-
 			Input::GetMousePosition(&mouseX, &mouseY);
 
-			s32 deltaY = 0;
-			if (firstMove == true)
-				deltaY = currentMouseY - prevMouseY;
-
+			int relX = 0, relY = 0;
+			Input::GetRelavtiveMousePosition(&relX, &relY);
 
 			b8 inside = mouseX > bar->m_Pos.x && mouseX < (bar->m_Pos.x + bar->m_Size.x) &&
 				mouseY > bar->m_Pos.y && mouseY < (bar->m_Pos.y + bar->m_Size.y);
@@ -203,13 +183,12 @@ namespace mdEngine
 			{
 				Window::windowProperties.mActualWindowEvent = WindowEvent::kResize;
 				MP::musicPlayerState = MP::MusicPlayerState::kResized;
-				Window::windowProperties.mDeltaHeightResize = deltaY;
+				Window::windowProperties.mDeltaHeightResize = relY;
 
-				Window::windowProperties.mApplicationHeight = winSizeBeforeResize + deltaY;
-				winSizeBeforeResize += deltaY;
+				Window::windowProperties.mApplicationHeight = winSizeBeforeResize + relY;
+				winSizeBeforeResize += relY;
 
-				firstMove = true;
-				bar->m_Pos = glm::vec2(0, winSizeBeforeResize + deltaY - bar->m_Size.y);
+				bar->m_Pos = glm::vec2(0, winSizeBeforeResize + relY - bar->m_Size.y);
 				if (Window::windowProperties.mApplicationHeight - bar->m_Size.y < MP::Data::_MIN_PLAYER_SIZE.y)
 					Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + bar->m_Size.y;
 				if (bar->m_Pos.y < MP::Data::_MIN_PLAYER_SIZE.y)
@@ -219,12 +198,9 @@ namespace mdEngine
 		}
 		else
 		{	
-			
 			Window::windowProperties.mActualWindowEvent = WindowEvent::kNone;
 			winSizeBeforeResize = Window::windowProperties.mApplicationHeight;
 			wasInsideResizable = false;
-			firstMove = false;
-			Input::GetGlobalMousePosition(&globalMouseX, &globalMouseY);
 		}
 	}
 
