@@ -11,9 +11,16 @@ namespace mdEngine
 		extern b8 MusicFilesLoaded;
 		extern b8 MusicFilesInfoLoaded;
 		extern b8 IsPlaylistEmpty;
-		extern b8 PathLoadedFromFile;
+
+		// This flag is reseted every frame to false
+		extern b8 PathLoadedFromFileVolatile;
+
+		// This flag is set on start of the application and hold its value till file is loaded
+		extern b8 PathLoadedFromFileConst;
+
 		extern b8 IsDeletionFinished;
 
+		// Flags that NEED to be restarted at end of the frame
 		void ResetStateFlags();
 	}
 }

@@ -31,6 +31,7 @@ namespace Audio
 #endif
 	}
 
+	void StartAudio();
 
 	b8 SavePathFiles(std::wstring path);
 
@@ -44,16 +45,20 @@ namespace Audio
 	
 	void PerformDeletion(s32 index);
 
-#ifdef _DEBUG_
-
-	void GetItemsInfo();
 
 	// Returns amount of added items to he playlist from event + index in playlist on which files were dropped
 	s32 GetFilesAddedCount();
 
+	s32 GetDroppedOnIndex();
+
 	u32 GetProccessedFileCount();
 
 	u32 GetProcessedID3Tags();
+
+#ifdef _DEBUG_
+
+	void GetItemsInfo();
+
 
 	void PrintTest();
 #endif

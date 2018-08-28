@@ -448,7 +448,6 @@ namespace MP
 
 	}
 
-	
 	void UI::HandleInput()
 	{
 		if (Input::isButtonPressed(Input::ButtonType::Exit))

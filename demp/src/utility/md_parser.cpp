@@ -52,6 +52,8 @@ namespace mdEngine
 		template <typename T>
 		b8 AddToFile(std::fstream* file, std::string name, T param);
 
+		
+
 		template <typename T>
 		T GetValueAtPos(std::string path, s32 pos);
 
@@ -60,7 +62,7 @@ namespace mdEngine
 
 	b8 Parser::SavePathsToFile(const std::string& fileName)
 	{
-		std::ofstream file;
+		std::fstream file;
 		file.open(fileName, std::ios::out | std::ios::binary);
 		if (file.is_open() == false)
 		{
@@ -72,10 +74,12 @@ namespace mdEngine
 		*/
 
 		file << "#-----SUMMARY-----#\n";
-		file << "ContentDuration=" << std::to_string(Graphics::MP::GetPlaylistObject()->GetItemsDuration()) << std::endl;
-		file << "ContentFiles=" << Audio::Object::GetSize() << std::endl;
-		file << "ContentSize=" << std::to_string(Graphics::MP::GetPlaylistObject()->GetItemsSize()) << std::endl;
-		file << "PlaybackCursor=" << MP::Playlist::RamLoadedMusic.mID << std::endl;
+		AddToFile(&file, Strings::_CONTENT_DURATION, std::to_string(Graphics::MP::GetPlaylistObject()->GetItemsDuration()));
+		AddToFile(&file, Strings::_CONTENT_FILES, Audio::Object::GetSize());
+		AddToFile(&file, Strings::_CONTENT_SIZE, std::to_string(Graphics::MP::GetPlaylistObject()->GetItemsSize()));
+		AddToFile(&file, Strings::_CONTENT_LOADED, Audio::Info::GetProcessedItemsCount() == Audio::Object::GetSize());
+		AddToFile(&file, Strings::_PLAYBACK_CURSOR, MP::Playlist::RamLoadedMusic.mID);
+
 		file << "\n\n";
 		file << SEPARATOR_CONTENT;
 		file << "\n";
@@ -85,42 +89,35 @@ namespace mdEngine
 			file << "-" << utf16_to_utf8(i.second->GetSeparatorPath()) << "\n";
 			for (auto k : *i.second->GetSubFilesContainer())
 			{
-				//fs::path ps(k.second);
-				//if (p.wstring().compare(ps.branch_path().wstring()) == 0)
-				{
-					// title, artist, album, genre, year, track num, composer, bitrate, channels, freq, size, length,  
-					file << utf16_to_utf8(k.second);
-					//file << utf16_to_utf8(Audio::Object::GetAudioObject(k.first)->GetPath());
-					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().title);
-					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().artist);
-					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().album);
-					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().genre);
-					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().year);
-					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().track_num);
-					file << SEPARATOR;
-					file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().composer);
-					file << SEPARATOR;
-					file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().bitrate);
-					file << SEPARATOR;
-					file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().channels);
-					file << SEPARATOR;
-					file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().freq);
-					file << SEPARATOR;
-					file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().size);
-					file << SEPARATOR;
-					file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().length);
-					file << SEPARATOR;
-					file << Audio::Object::GetAudioObject(*k.first)->IsFolderRep();
-					file << "\n";
-
-					/**/
-				}
+				// title, artist, album, genre, year, track num, composer, bitrate, channels, freq, size, length,  
+				file << utf16_to_utf8(k.second);
+				file << SEPARATOR;
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().title);
+				file << SEPARATOR;
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().artist);
+				file << SEPARATOR;
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().album);
+				file << SEPARATOR;
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().genre);
+				file << SEPARATOR;
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().year);
+				file << SEPARATOR;
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().track_num);
+				file << SEPARATOR;
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().composer);
+				file << SEPARATOR;
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().bitrate);
+				file << SEPARATOR;
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().channels);
+				file << SEPARATOR;
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().freq);
+				file << SEPARATOR;
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().size);
+				file << SEPARATOR;
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().length);
+				file << SEPARATOR;
+				file << Audio::Object::GetAudioObject(*k.first)->IsFolderRep();
+				file << "\n";
 			}
 		}
 
@@ -163,7 +160,9 @@ namespace mdEngine
 					/* Read path and file properties from file, save it to ID3 structure and send it to the
 					   function that will process sent informations
 					*/
-					State::PathLoadedFromFile = true;
+					State::PathLoadedFromFileVolatile = true;
+					State::PathLoadedFromFileConst = true;
+
 					s32 pos = input.find_first_of(SEPARATOR);
 					std::wstring path = utf8_to_utf16(input.substr(0, pos));
 					Audio::Info::ID3 info;

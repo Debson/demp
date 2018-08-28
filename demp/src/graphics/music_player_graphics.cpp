@@ -338,6 +338,11 @@ namespace Graphics
 		repeatActive = Parser::GetInt(file, Strings::_REPEAT_STATE);
 		Parser::GetInt(file, Strings::_PLAYLIST_STATE) == 1 ? (m_Playlist.Toggle(), m_Playlist.Enable()) : m_Playlist.UnToggle();
 
+		file = Strings::_PATHS_FILE;
+		m_Playlist.SetItemsDuration(Parser::GetFloat(file, Strings::_CONTENT_DURATION));
+		m_Playlist.SetItemsSize(Parser::GetFloat(file, Strings::_CONTENT_SIZE));
+
+
 		mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicAdded;
 	}
 
@@ -873,7 +878,7 @@ namespace Graphics
 			if (State::MusicFilesInfoLoaded == false)
 			{
 				//md_log(utf16_to_utf8(Audio::Info::GetLoadedItemsCountStr()));
-				loadedItemsCountText.SetTextString(Audio::Info::GetLoadedItemsCountStr());
+				loadedItemsCountText.SetTextString(Audio::Info::GetProcessedItemsCountStr());
 				loadedItemsCountText.InitTextTexture();
 				loadedItemsCountText.DrawString();
 			}
@@ -1223,24 +1228,24 @@ namespace Graphics
 				//if (GetAudioObject(playlistIndex) == NULL)
 					//return;
 
-				Audio::AudioObject* aItem = nullptr; 
-				//assert(GetAudioObject(playlistIndex) != NULL);
+				Audio::AudioObject* aItem = nullptr;
+				aItem = ::GetAudioObject(playlistIndex);
 
-				Interface::PlaylistItem* pItem = nullptr;
-				if (State::MusicFilesLoaded == false && Audio::Object::GetSize() > playlistIndex + Audio::GetFilesAddedCount())
+				// It will prevent from accessing wrong audio object
+				if (State::MusicFilesLoaded == false && Audio::GetDroppedOnIndex() <= playlistIndex)
 				{
+					b8 testBool = State::MusicFilesLoaded;
 					auto test = Audio::Object::GetAudioObjectContainer();
 					s32 testIndex = Audio::GetFilesAddedCount();
-					pItem = ::GetAudioObject(playlistIndex + Audio::GetFilesAddedCount());
-					aItem = ::GetAudioObject(playlistIndex + Audio::GetFilesAddedCount());
-					assert(GetAudioObject(playlistIndex + Audio::GetFilesAddedCount()) != NULL);
+					aItem = ::GetAudioObject(Audio::GetFilesAddedCount() + playlistIndex);
+					int a = 5;
 				}
 				else
 				{
 					aItem = ::GetAudioObject(playlistIndex);
-					pItem = ::GetAudioObject(playlistIndex);
 				}
 
+				assert(aItem != NULL);
 
 				glm::vec3 itemColor;
 
@@ -1252,7 +1257,7 @@ namespace Graphics
 				if (m_Playlist.GetPlayingID() && it != m_Playlist.multipleSelect.end())
 				{
 					itemColor *= Color::Red * Color::Grey;
-					pItem->DrawDottedBorder(playlistCurrentPos);
+					aItem->DrawDottedBorder(playlistCurrentPos);
 				}
 				else if (aItem->GetID() == m_Playlist.GetPlayingID())
 				{
@@ -1261,11 +1266,11 @@ namespace Graphics
 				else if (it != m_Playlist.multipleSelect.end())
 				{
 					itemColor = Color::Grey;
-					pItem->DrawDottedBorder(playlistCurrentPos);
+					aItem->DrawDottedBorder(playlistCurrentPos);
 				}
 				else
 				{
-					itemColor = pItem->GetItemColor();;
+					itemColor = aItem->GetItemColor();;
 				}
 
 				// Render all folder's reps in blue
@@ -1280,21 +1285,22 @@ namespace Graphics
 					if (aItem->GetID() == m_Playlist.GetPlayingID())
 					{
 						itemColor = Color::Red * Color::Grey;
-						pItem->DrawDottedBorder(playlistCurrentPos);
+						aItem->DrawDottedBorder(playlistCurrentPos);
 					}
 					else
 					{
 						itemColor = Color::Grey;
-						pItem->DrawDottedBorder(playlistCurrentPos);
+						aItem->DrawDottedBorder(playlistCurrentPos);
 					}
 				}
 				//if (item->clickCount == 1)
 					//std::cout << (float)item->mTextSize.x * item->mTextScale << std::endl;
 			
+				
 				Shader::shaderDefault->use();
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(pItem->GetButtonPos().x, pItem->GetButtonPos().y, 0.5f));
-				model = glm::scale(model, glm::vec3(pItem->GetButtonSize(), 1.0f));
+				model = glm::translate(model, glm::vec3(aItem->GetButtonPos().x, aItem->GetButtonPos().y, 0.5f));
+				model = glm::scale(model, glm::vec3(aItem->GetButtonSize(), 1.0f));
 				Shader::shaderDefault->setMat4("model", model);
 				Shader::shaderDefault->setVec3("color", itemColor);
 				glBindTexture(GL_TEXTURE_2D, main_foreground);
@@ -1302,11 +1308,11 @@ namespace Graphics
 				Shader::shaderDefault->setVec3("color", Color::White);
 
 				glm::vec3 col = Color::DarkGrey * itemColor;
-				if (pItem->topHasFocus)
+				if (aItem->topHasFocus)
 				{
 					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(pItem->GetButtonPos().x, pItem->GetButtonPos().y, 0.6f));
-					model = glm::scale(model, glm::vec3(glm::vec2(pItem->GetButtonSize().x, pItem->GetButtonSize().y / 2.f), 1.0f));
+					model = glm::translate(model, glm::vec3(aItem->GetButtonPos().x, aItem->GetButtonPos().y, 0.6f));
+					model = glm::scale(model, glm::vec3(glm::vec2(aItem->GetButtonSize().x, aItem->GetButtonSize().y / 2.f), 1.0f));
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::shaderDefault->setVec3("color", col);
 					glBindTexture(GL_TEXTURE_2D, main_foreground);
@@ -1315,11 +1321,11 @@ namespace Graphics
 
 				}
 
-				if (pItem->bottomHasFocus)
+				if (aItem->bottomHasFocus)
 				{
 					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(pItem->GetButtonPos().x, pItem->GetButtonPos().y + pItem->GetButtonSize().y / 2.f, 0.6f));
-					model = glm::scale(model, glm::vec3(glm::vec2(pItem->GetButtonSize().x, pItem->GetButtonSize().y / 2.f), 1.0f));
+					model = glm::translate(model, glm::vec3(aItem->GetButtonPos().x, aItem->GetButtonPos().y + aItem->GetButtonSize().y / 2.f, 0.6f));
+					model = glm::scale(model, glm::vec3(glm::vec2(aItem->GetButtonSize().x, aItem->GetButtonSize().y / 2.f), 1.0f));
 					Shader::shaderDefault->setMat4("model", model);
 					Shader::shaderDefault->setVec3("color", col);
 					glBindTexture(GL_TEXTURE_2D, main_foreground);
@@ -1329,10 +1335,10 @@ namespace Graphics
 
 
 
-				if (pItem->GetButtonPos().y < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+				if (aItem->GetButtonPos().y < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
 				{
-					pItem->SetTextOffset(glm::vec2(5.f, 8.f));
-					pItem->DrawString(textTexture[texIndex]);
+					aItem->SetTextOffset(glm::vec2(5.f, 8.f));
+					aItem->DrawString(textTexture[texIndex]);
 				}
 
 				texIndex++;
@@ -1489,7 +1495,7 @@ namespace Graphics
 		   (if more files are added, it will update only once, after all files are loaded)
 		*/
 		if ((State::MusicFilesInfoLoaded == true && updatePlaylistInfoPrevious == false) ||
-			(State::MusicFilesLoaded == true && State::PathLoadedFromFile == true && updatePlaylistInfoPrevious == false) ||
+			(State::MusicFilesLoaded == true && State::PathLoadedFromFileVolatile == true && updatePlaylistInfoPrevious == false) ||
 			mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicDeleted)
 		{
 			updatePlaylistInfoPrevious = true;
@@ -1498,6 +1504,8 @@ namespace Graphics
 
 		updatePlaylistInfoPrevious = State::MusicFilesInfoLoaded;
 
+		// Load items duration and size form file is commented right now
+		//if (updatePlaylistInfo == true && State::PathLoadedFromFileConst == false)
 		if (updatePlaylistInfo == true)
 		{
 			f64 duration = 0;
@@ -1557,6 +1565,24 @@ namespace Graphics
 
 			mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicAdded;
 		}
+		/*else if (updatePlaylistInfo == true && State::PathLoadedFromFileConst == true)
+		{
+
+			m_Playlist.SetItemsDuration(m_Playlist.GetItemsDuration());
+			m_Playlist.SetItemsSize(m_Playlist.GetItemsSize());
+
+			durationText.SetTextString(utf8_to_utf16(m_Playlist.GetItemsDurationString()));
+			itemsSizeText.SetTextString(utf8_to_utf16(m_Playlist.GetItemsSizeString()));
+			itemsCountText.SetTextString(std::to_wstring(Audio::Object::GetSize()));
+
+			durationText.InitTextTexture();
+			itemsSizeText.InitTextTexture();
+			itemsCountText.InitTextTexture();
+
+			updatePlaylistInfo = false;
+
+			mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicAdded;
+		}*/
 	}
 
 	void MP::RenderMainWindow()

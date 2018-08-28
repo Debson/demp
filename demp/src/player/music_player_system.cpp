@@ -33,6 +33,7 @@ namespace MP
 		UI::Start();
 		Parser::ReadPathsFromFile(Strings::_PATHS_FILE);
 		Playlist::Start();
+		Audio::StartAudio();
 
 		//Database::OpenDB();
 

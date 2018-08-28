@@ -2,6 +2,8 @@
 
 #include <gtc/matrix_transform.hpp>
 #include <algorithm>
+#include <random>
+
 
 #include "../settings/music_player_settings.h"
 #include "../playlist/music_player_playlist.h"
@@ -152,16 +154,15 @@ namespace mdEngine
 		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
 		m_TextColor = SDLColor::Grey;
+
 		m_TextString = Audio::Object::GetAudioObject(m_ItemID)->GetTitle();
 
-		u16 len = m_TextString.length();
-		m_TitleC.resize(len + 1);
-		m_TitleC = utf16_to_utf8(m_TextString);
+		assert(Audio::Object::GetAudioObject(m_ItemID) != nullptr);
 
+		m_TitleC = utf16_to_utf8(m_TextString);
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 
 		m_PlaylistButtonsContainer[*id] = std::make_pair(id, this);
-
 	}
 
 	void Interface::PlaylistItem::DrawDottedBorder(s16 playPos)
@@ -255,7 +256,6 @@ namespace mdEngine
 			m_TitleC = utf16_to_utf8(m_TextString);
 			TTF_SizeText(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);;
 		}
-
 
 		return m_TextString;
 	}

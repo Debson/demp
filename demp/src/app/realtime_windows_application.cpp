@@ -29,6 +29,7 @@
 #include "../player/music_player_state.h"
 #include "../ui/music_player_ui.h"
 #include "../audio/mp_audio.h"
+#include "../audio/mp_channel_attrib.h"
 #include "../graphics/graphics.h"
 #include "../sqlite/md_sqlite.h";
 #include "../utility/md_time.h"
@@ -50,6 +51,7 @@ namespace mdEngine
 #endif
 
 	b8 mdIsRunning(false);
+	b8 mdAppClosing(false);
 	b8 mdHasApplication(false);
 	b8 mdIsActiveWindow(false);
 
@@ -73,12 +75,7 @@ namespace mdEngine
 
 	void UpdateWindowSize();
 
-	void Test();
-}
-
-void mdEngine::Test()
-{
-	std::cout << "elo\n";
+	void ProceedToSafeClose();
 }
 
 void mdEngine::SetupSDL()
@@ -124,8 +121,6 @@ void mdEngine::SetupSDL()
 
 	SetLayeredWindowAttributes(hwnd, RGB(0xFF, 0xFE, 0xFF), 0, LWA_COLORKEY);
 
-
-
 #endif
 
 }
@@ -145,8 +140,6 @@ void mdEngine::SetupOpenGL()
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	
-	
-
 }
 
 void mdEngine::SetupImGui()
@@ -181,6 +174,13 @@ void mdEngine::UpdateWindowSize()
 	{
 		SDL_GetWindowSize(mdWindow, &Window::windowProperties.mWindowWidth, &Window::windowProperties.mWindowHeight);
 	}
+}
+
+void mdEngine::ProceedToSafeClose()
+{
+	Audio::Info::WaitTillFileInfoLoaded();
+
+	mdIsRunning = false;
 }
 
 void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
@@ -221,6 +221,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
 	mdIsRunning = true;
+	mdAppClosing = false;
 
 	SDL_Event event;
 
@@ -248,7 +249,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		previousFrame = currentFrame;
 
 
-
 		if (SDL_PollEvent(&event))
 		{
 #ifdef _DEBUG_
@@ -257,7 +257,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			switch (event.type)
 			{
 			case (SDL_QUIT):
-				mdIsRunning = false;
+				ProceedToSafeClose();
 				break;
 
 			case (SDL_DROPBEGIN):
@@ -267,7 +267,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			{
 #ifdef _WIN32_
 				Window::windowProperties.mEvent = App::Event::kFileDropped;
-				State::PathLoadedFromFile = false;
+				State::PathLoadedFromFileVolatile = false;
 				std::wstring p(utf8_to_utf16(event.drop.file));
 				Audio::PushToPlaylist(p);
 #else
@@ -392,7 +392,16 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 
 void mdEngine::AppExit()
 {
+	mdAppClosing = true;
+
+	Audio::Info::WaitTillFileInfoLoaded();
+
 	mdIsRunning = false;
+}
+
+b8 mdEngine::IsAppClosing()
+{
+	return mdAppClosing;
 }
 
 void mdEngine::SetWindowProperties(const App::WindowProperties& windowProperties)

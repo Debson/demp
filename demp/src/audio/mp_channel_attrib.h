@@ -59,6 +59,7 @@ namespace Audio
 			b8 loaded;
 		};
 
+		extern b8 SingleItemInfoLoaded;
 		extern s32 LoadedItemsInfoCount;
 
 		b8 CheckIfAudio(std::wstring path);
@@ -83,7 +84,11 @@ namespace Audio
 
 		void GetID3Info(Info::ID3* info, std::wstring path);
 
-		std::wstring GetLoadedItemsCountStr();
+		std::wstring GetProcessedItemsCountStr();
+
+		s32 GetProcessedItemsCount();
+
+		void WaitTillFileInfoLoaded();
 
 
 	}

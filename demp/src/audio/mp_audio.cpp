@@ -10,11 +10,13 @@
 #include "../player/music_player.h"
 #include "../player/music_player_state.h"
 #include "../settings/music_player_settings.h"
+#include "../settings/music_player_string.h"
 #include "../graphics/music_player_graphics.h"
 #include "../ui/music_player_ui.h"
 #include "../utility/md_util.h"
 #include "../utility/md_time.h"
 #include "../utility/md_types.h"
+#include "../utility/md_parser.h"
 #include "../utility/utf8_to_utf16.h"
 
 #define WORK_THREADS 4
@@ -54,6 +56,10 @@ namespace Audio
 	b8 firstFileFolderRepChecked(true);
 	b8 filesLoadedFromFile(false);
 	b8 droppedOnTop(false);
+
+	// Flag that says if music files loaded from text are scanned for detailed info
+	b8 filesInfoScanned(false);
+
 	s32 indexOfDroppedOnItem = -1;
 
 
@@ -68,6 +74,13 @@ namespace Audio
 	void CalculateDroppedPosInPlaylist();
 
 
+}
+
+void Audio::StartAudio()
+{
+	std::string file = Strings::_PATHS_FILE;
+	filesInfoScanned = Parser::GetInt(file, Strings::_CONTENT_LOADED);
+	
 }
 
 b8 Audio::SavePathFiles(std::wstring path)
@@ -98,7 +111,7 @@ void Audio::CalculateDroppedPosInPlaylist()
 	
 	*/
 
-	if (State::PathLoadedFromFile == false)
+	if (State::PathLoadedFromFileVolatile == false)
 	{
 		s32 min = Graphics::MP::GetPlaylistObject()->GetCurrentMinIndex();
 		s32 max = Graphics::MP::GetPlaylistObject()->GetCurrentMaxIndex();
@@ -267,7 +280,7 @@ b8 Audio::PushToPlaylist(std::wstring path)
 void Audio::UpdateAudioLogic()
 {
 
-	if (State::PathLoadedFromFile == true)
+	if (State::PathLoadedFromFileVolatile == true)
 		filesLoadedFromFile = true;
 
 	if (lastPathPushTimer.getTicksStart() > MAX_PATH_WAIT_TIME)
@@ -394,6 +407,7 @@ void Audio::UpdateAudioLogic()
 		if (currentContainersSize == Info::LoadedItemsInfoCount)
 		{
 			State::MusicFilesInfoLoaded = true;
+			Info::SingleItemInfoLoaded = true;
 		}
 		else
 			State::MusicFilesInfoLoaded = false;
@@ -529,7 +543,7 @@ Audio::AudioObject* Audio::Object::GetAudioObject(s32 id)
 		return m_AudioObjectContainer.at(id);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 u32 Audio::Object::GetSize()
@@ -554,17 +568,27 @@ void Audio::AddAudioItemWrap(const std::vector<std::wstring> vec, const s32 beg,
 	/* Start loading files info after audio objects are created.
 	   It will display items much faster on the screen.
 	*/
-	i = beg;
-	for (; i < end; i++)
+	if (filesLoadedFromFile == false || filesInfoScanned == false)
 	{
-		if (filesLoadedFromFile == false)
-			Info::GetInfo(&m_AudioObjectContainer[i]->GetID3Struct(), vec[i]);
+		i = beg;
+		for (; i < end; i++)
+		{
+			if (mdEngine::IsAppClosing() == false)
+			{
+				Info::SingleItemInfoLoaded = false;
+				Info::GetInfo(&m_AudioObjectContainer[i]->GetID3Struct(), vec[i]);
+			}
+		}
+
 	}
 }
 
 b8 Audio::AddAudioItem(std::wstring path, s32 id)
 {
 	// Lock the mutes
+
+	std::wstring p = path;
+
 	std::lock_guard<std::mutex> lockGuard(mutex);
 
 	if (Info::CheckIfAudio(path) == false)
@@ -586,6 +610,7 @@ b8 Audio::AddAudioItem(std::wstring path, s32 id)
 	audioObject->SetFolderPath(Info::GetFolderPath(path));
 	audioObject->GetID3Struct().format = Info::GetExt(path);
 	m_AudioObjectContainer[id] = audioObject;
+
 
 	audioObject->Init();
 
@@ -634,7 +659,7 @@ void Audio::SetFoldersRep()
 			ps->SeparatorSubFilePushBack(m_AudioObjectContainer[counter]->GetIDP(), i);
 
 			counter++;
-			if(filesLoadedFromFile == true)
+			if(filesLoadedFromFile == true && filesInfoScanned == true)
 				Info::LoadedItemsInfoCount++;
 		}
 		
@@ -671,6 +696,9 @@ void Audio::SetFoldersRep()
 					folder rep was taken to a new file.
 
 		*/
+
+		// New files are loaded to the playlist
+		State::PathLoadedFromFileConst = false;
 
 		s32 start = 0;
 		for (s32 i = 0; i < m_AddedFilesFoldersPathContainer.size(); i++)
@@ -1011,7 +1039,12 @@ void Audio::GetItemsInfo()
 
 s32 Audio::GetFilesAddedCount()
 {
-	return filesAddedCount + indexOfDroppedOnItem;
+	return filesAddedCount;
+}
+
+s32 Audio::GetDroppedOnIndex()
+{
+	return indexOfDroppedOnItem;
 }
 
 u32 Audio::GetProccessedFileCount()

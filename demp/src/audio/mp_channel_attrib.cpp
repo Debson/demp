@@ -23,6 +23,7 @@ namespace Audio
 	namespace Info
 	{
 		s32 LoadedItemsInfoCount = 0;
+		b8 SingleItemInfoLoaded(false);
 		std::mutex mutex;
 	}
 
@@ -137,6 +138,8 @@ namespace Audio
 		LoadedItemsInfoCount++;
 
 		BASS_StreamFree(stream);
+
+		SingleItemInfoLoaded = true;
 	}
 
 	void Info::GetID3Info(Info::ID3* info, std::wstring path)
@@ -162,7 +165,7 @@ namespace Audio
 
 	}
 
-	std::wstring Info::GetLoadedItemsCountStr()
+	std::wstring Info::GetProcessedItemsCountStr()
 	{
 		std::wstring str = L" ";
 		if (Audio::Object::GetSize() > 0 && LoadedItemsInfoCount > 0)
@@ -173,5 +176,16 @@ namespace Audio
 		}
 
 		return str;
+	}
+
+	s32 Info::GetProcessedItemsCount()
+	{
+		return LoadedItemsInfoCount;
+	}
+
+	void Info::WaitTillFileInfoLoaded()
+	{
+
+		md_log(LoadedItemsInfoCount);
 	}
 }

@@ -27,6 +27,7 @@ namespace mdEngine
 	void SetWindowProperties(const App::WindowProperties &windowProperties);
 
 	void AppExit();
+	b8 IsAppClosing();
 
 	namespace Window
 	{

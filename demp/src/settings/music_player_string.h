@@ -21,6 +21,13 @@ namespace mdEngine
 		const std::string _SONG_POSITION		= "song_position";
 		const std::string _PLAYLIST_STATE		= "playlist_state";
 		const std::string _APP_HEIGHT			= "app_height";
+
+		const std::string _CONTENT_DURATION		= "content_duration";
+		const std::string _CONTENT_FILES		= "content_files";
+		const std::string _CONTENT_SIZE			= "content_size";
+		const std::string _CONTENT_LOADED		= "content_loaded";
+		const std::string _PLAYBACK_CURSOR		= "playback_cursor";
+
 		const std::wstring _PLAYLIST_ADD_FILE	= L"Files";
 		const std::wstring _PLAYLIST_ADD_FOLDER = L"Folder";
 
