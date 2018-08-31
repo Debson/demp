@@ -4,6 +4,7 @@
 #include "../player/music_player.h"
 #include "../settings/music_player_settings.h"
 #include "../settings/music_player_settings.h"
+#include "../player/music_player_state.h"
 
 namespace mdEngine
 {
@@ -29,9 +30,6 @@ namespace mdEngine
 						mWindowPositionX(600),
 						mWindowPositionY(100),
 						mWindowMode(WindowMode::Windowed),
-						mActualWindowEvent(WindowEvent::kFocusGained),
-						mPlayerWindowEvent(WindowEvent::kEnter),
-						mMouseWindowEvent(WindowEvent::kEnter),
 						mVerticalSync(true)
 	{ }
 
@@ -65,7 +63,7 @@ namespace mdEngine
 				if (inside && !MP::UI::Input::GetButtonExtraState())
 					wasInsideMovable = true;
 
-				if (wasInsideMovable && Window::windowProperties.mActualWindowEvent != App::WindowEvent::kResize)
+				if (wasInsideMovable && State::CheckState(State::Window::Resized) == false)
 					Window::SetWindowPos(newWX, newWY);
 			}
 			else
@@ -181,8 +179,7 @@ namespace mdEngine
 
 			if (wasInsideResizable && !MP::UI::Input::GetButtonExtraState())
 			{
-				Window::windowProperties.mActualWindowEvent = WindowEvent::kResize;
-				MP::musicPlayerState = MP::MusicPlayerState::kResized;
+				State::SetState(State::Window::Resized);
 				Window::windowProperties.mDeltaHeightResize = relY;
 
 				Window::windowProperties.mApplicationHeight = winSizeBeforeResize + relY;
@@ -198,7 +195,7 @@ namespace mdEngine
 		}
 		else
 		{	
-			Window::windowProperties.mActualWindowEvent = WindowEvent::kNone;
+			State::ResetState(State::Window::Resized);
 			winSizeBeforeResize = Window::windowProperties.mApplicationHeight;
 			wasInsideResizable = false;
 		}

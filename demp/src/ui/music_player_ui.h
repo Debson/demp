@@ -17,9 +17,15 @@ namespace MP
 {
 	namespace UI
 	{
-		extern std::vector<Interface::Movable*> mdMovableContainer;
-		extern std::vector<Interface::Resizable*> mdResizableContainer;
-		extern std::vector<std::pair<Input::ButtonType, Interface::Button*>> mdButtonsContainer;
+
+		typedef std::vector<std::pair<Input::ButtonType, Interface::Button*>>	ButtonContainer;
+		typedef std::vector<Interface::Resizable*>								ResizableContainer;
+		typedef std::vector<Interface::Movable*>								MovableContainer;
+
+		
+		extern ButtonContainer		mdButtonsContainer;
+		extern ResizableContainer	mdResizableContainer;
+		extern MovableContainer		mdMovableContainer;
 
 		extern b8 fileBrowserActive;
 

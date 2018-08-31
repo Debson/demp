@@ -1,17 +1,25 @@
 #include "music_player_state.h"
 
+#include <iostream>
 
 namespace mdEngine
 {
-	b8 State::MusicFilesLoaded(false);
-	b8 State::MusicFilesInfoLoaded(false);
-	b8 State::IsPlaylistEmpty(true);
-	b8 State::PathLoadedFromFileVolatile = false;
-	b8 State::PathLoadedFromFileConst(false);
-	b8 State::IsDeletionFinished(false);
+	u32 State::m_currentState = State::None | State::PlaylistEmpty;
+
 
 	void State::ResetStateFlags()
 	{
-		PathLoadedFromFileVolatile = false;
+		State::ResetState(State::PathLoadedFromFileVolatile);
+	}
+
+	void State::ResetMusicPlayerState()
+	{
+		ResetState(Window::Resized);
+		ResetState(AudioAdded);
+		ResetState(AudioDeleted);
+		ResetState(AudioChosen);
+		ResetState(AudioChanged);
+		ResetState(ContainersResized);
+		ResetState(FileDropped);
 	}
 }

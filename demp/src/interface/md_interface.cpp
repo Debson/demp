@@ -21,10 +21,9 @@ namespace mdEngine
 {
 	namespace Interface
 	{
-		static std::vector<std::pair<std::wstring, PlaylistSeparator*>> m_PlaylistSeparatorContainer;
-		std::vector<std::pair<s32*, Interface::Button*>> m_PlaylistButtonsContainer;
-
-		std::vector<std::pair<const std::wstring, Button*>> mdInterfaceButtonContainer;
+		static PlaylistSeparatorContainer	m_PlaylistSeparatorContainer;
+		static PlaylistButtonContainer		m_PlaylistButtonsContainer;
+		InterfaceButtonContainer			m_InterfaceButtonContainer;
 
 	}
 
@@ -114,19 +113,6 @@ namespace mdEngine
 		return m_MousePos;
 	}
 
-	/* *************************************************** */
-	Interface::TextBoxItem::TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos,
-																 glm::vec2 textSize, glm::vec2 textPos,
-										GLuint tex) : m_Texture(tex)
-	{
-		m_Pos = itemPos;
-		m_Size = itemSize;
-		m_TextPos = textPos;
-		m_TextSize = textSize;
-		m_Pos = m_Pos;
-		m_Size = m_Size;
-		mdInterfaceButtonContainer.push_back(make_pair(name, this));
-	}
 
 
 	/* *************************************************** */
@@ -182,7 +168,6 @@ namespace mdEngine
 		Shader::shaderBorder->setMat4("model", model);
 		Shader::DrawDot();
 	}
-
 
 	void Interface::PlaylistItem::SetButtonPos(glm::vec2 pos)
 	{
@@ -260,12 +245,9 @@ namespace mdEngine
 		return m_TextString;
 	}
 
-
 	s32 Interface::PlaylistItem::OffsetIndex = 0;
 
 	/* *************************************************** */
-
-
 	Interface::PlaylistSeparator::PlaylistSeparator() { }
 
 	Interface::PlaylistSeparator::PlaylistSeparator(std::wstring name)
@@ -292,8 +274,6 @@ namespace mdEngine
 
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 
-
-		//InsertInProperOrder(posOfFirstFile);
 		m_PlaylistSeparatorContainer.push_back(std::make_pair(m_TextString, this));
 	}
 
@@ -330,31 +310,28 @@ namespace mdEngine
 		m_SepItemCount--;
 	}
 
-	std::vector<std::pair<const s32*, std::wstring>>* Interface::PlaylistSeparator::GetSubFilesContainer()
+	Interface::SeparatorSubContainer* Interface::PlaylistSeparator::GetSubFilesContainer()
 	{
 		return &m_SubFilesPaths;
 	}
 
-	void Interface::PlaylistSeparator::InsertInProperOrder(s32 posOfFirstFile)
+	/* *************************************************** */
+	Interface::TextBoxItem::TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos,
+																 glm::vec2 textSize, glm::vec2 textPos,
+										GLuint tex)
 	{
+		m_ButtonPos = itemPos;
+		m_ButtonSize = itemSize;
+		m_TextPos = textPos;
+		m_TextSize = textSize;
+		m_TextTexture = tex;
+		m_InterfaceButtonContainer.push_back(make_pair(name, this));
+	}
 
-		if (m_PlaylistSeparatorContainer.empty() == true)
-		{
-			m_PlaylistSeparatorContainer.push_back(std::make_pair(m_TextString, this));
-			return;
-		}
-
-		s32 minPos = INT_MAX;
-		/*for (auto & i : m_PlaylistSeparatorContainer)
-		{
-			auto subCon = i.second->GetSubFilesContainer();
-			if (subCon->at(0).first < minPos && posOfFirstFile > subCon->at(0).first)
-			{
-				minPos = subCon->at(0).first;
-			}
-		}*/
-
-
+	void Interface::TextBoxItem::UpdateTextBoxItemPos(glm::vec2 pos)
+	{
+		m_ButtonPos = glm::vec2(pos.x, pos.y + m_Index * Data::_TEXT_BOX_ITEM_HEIGHT);
+		m_TextPos = glm::vec2(m_ButtonPos.x + 40.f, m_ButtonPos.y);
 	}
 
 	/* *************************************************** */
@@ -390,8 +367,8 @@ namespace mdEngine
 			TextBoxItem* item = m_Items[i];
 			//render item rect
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(item->m_Pos, 0.7));
-			model = glm::scale(model, glm::vec3(item->m_Size, 1.0));;
+			model = glm::translate(model, glm::vec3(item->m_ButtonPos, 0.7));
+			model = glm::scale(model, glm::vec3(item->m_ButtonSize, 1.0));;
 			m_Shader->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, 0);
 			Graphics::Shader::Draw(m_Shader);
@@ -401,7 +378,7 @@ namespace mdEngine
 			model = glm::translate(model, glm::vec3(item->m_TextPos, 0.8));
 			model = glm::scale(model, glm::vec3(item->m_TextSize, 1.0));;
 			m_Shader->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, item->m_Texture);
+			glBindTexture(GL_TEXTURE_2D, item->m_TextTexture);
 			Graphics::Shader::Draw(m_Shader);
 		}
 
@@ -411,9 +388,7 @@ namespace mdEngine
 	{
 		for (u16 i = 0; i < m_Items.size(); i++)
 		{
-			m_Items[i]->m_Pos = glm::vec2(m_Pos.x, m_Pos.y + m_Items[i]->m_Index * Data::_TEXT_BOX_ITEM_HEIGHT);
-			m_Items[i]->m_Pos = m_Items[i]->m_Pos;
-			m_Items[i]->m_TextPos = glm::vec2(m_Items[i]->m_Pos.x + 40.f, m_Items[i]->m_Pos.y);
+			m_Items[i]->UpdateTextBoxItemPos(m_Pos);
 		}
 	}
 
@@ -468,7 +443,7 @@ namespace mdEngine
 		std::string name = utf16_to_utf8(itemName);
 		TTF_SizeText(Data::_MUSIC_PLAYER_FONT, name.c_str(), &textSize.x, &textSize.y);
 
-		TextBoxItem * item = new TextBoxItem(itemName, glm::vec2(m_Size.x, Data::_TEXT_BOX_ITEM_HEIGHT), glm::vec2(m_Pos.x, m_Pos.y + m_ItemsCount * Data::_TEXT_BOX_ITEM_HEIGHT),
+		TextBoxItem* item = new TextBoxItem(itemName, glm::vec2(m_Size.x, Data::_TEXT_BOX_ITEM_HEIGHT), glm::vec2(m_Pos.x, m_Pos.y + m_ItemsCount * Data::_TEXT_BOX_ITEM_HEIGHT),
 													   glm::vec2(textSize) * m_ItemScale, glm::vec2(m_Pos.x + 40.f, m_Pos.y + m_ItemsCount * textSize.y * m_ItemScale),
 											 tex);
 		item->m_Index = m_ItemsCount;
@@ -478,8 +453,6 @@ namespace mdEngine
 
 	glm::vec2 Interface::TextBox::GetPos() const
 	{
-		
-
 		return m_Pos;
 	}
 
@@ -490,22 +463,22 @@ namespace mdEngine
 
 	b8 Interface::TextBox::hasItemFocus(const std::wstring name) const
 	{
-		auto item = std::find_if(mdInterfaceButtonContainer.begin(), mdInterfaceButtonContainer.end(),
+		auto item = std::find_if(m_InterfaceButtonContainer.begin(), m_InterfaceButtonContainer.end(),
 			[&](std::pair<const std::wstring, Button*> const & ref) { return ref.first.compare(name) == 0; });
 
-		return item == mdInterfaceButtonContainer.end() ? false : item->second->hasFocus;
+		return item == m_InterfaceButtonContainer.end() ? false : item->second->hasFocus;
 	}
 
 	b8 Interface::TextBox::isItemPressed(const std::wstring name) const
 	{
-		auto item = std::find_if(mdInterfaceButtonContainer.begin(), mdInterfaceButtonContainer.end(),
+		auto item = std::find_if(m_InterfaceButtonContainer.begin(), m_InterfaceButtonContainer.end(),
 			[&](std::pair<const std::wstring, Button*> const & ref) { return ref.first.compare(name) == 0; });
 
-		return item == mdInterfaceButtonContainer.end() ? false : item->second->isPressed;
+		return item == m_InterfaceButtonContainer.end() ? false : item->second->isPressed;
 	}
 
 	
-	std::vector<std::pair<std::wstring, Interface::PlaylistSeparator*>>*  Interface::Separator::GetContainer()
+	Interface::PlaylistSeparatorContainer*  Interface::Separator::GetContainer()
 	{
 		return &m_PlaylistSeparatorContainer;
 	}
@@ -550,7 +523,7 @@ namespace mdEngine
 	}
 
 
-	std::vector<std::pair<s32*, Interface::Button*>>* Interface::PlaylistButton::GetContainer()
+	Interface::PlaylistButtonContainer* Interface::PlaylistButton::GetContainer()
 	{
 		return &m_PlaylistButtonsContainer;
 	}
@@ -570,5 +543,6 @@ namespace mdEngine
 	{
 		return m_PlaylistButtonsContainer.size();
 	}
+
 
 }

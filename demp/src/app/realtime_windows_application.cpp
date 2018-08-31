@@ -170,7 +170,7 @@ void mdEngine::SetupImGui()
 
 void mdEngine::UpdateWindowSize()
 {
-	if (Window::windowProperties.mActualWindowEvent == App::WindowEvent::kResize)
+	if (State::CheckState(State::Window::Resized) == true)
 	{
 		SDL_GetWindowSize(mdWindow, &Window::windowProperties.mWindowWidth, &Window::windowProperties.mWindowHeight);
 	}
@@ -214,6 +214,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	mdApplicationHandler->OnWindowOpen();
 	Graphics::StartGraphics();
 
+	SDL_CaptureMouse(SDL_TRUE);
 
 	glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 }
@@ -259,15 +260,11 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			case (SDL_QUIT):
 				ProceedToSafeClose();
 				break;
-
-			case (SDL_DROPBEGIN):
-				Window::windowProperties.mEvent = App::Event::kFileDropBegin;
-				break;
 			case (SDL_DROPFILE):
 			{
 #ifdef _WIN32_
-				Window::windowProperties.mEvent = App::Event::kFileDropped;
-				State::PathLoadedFromFileVolatile = false;
+				State::SetState(State::FileDropped);
+				State::ResetState(State::PathLoadedFromFileVolatile);
 				std::wstring p(utf8_to_utf16(event.drop.file));
 				Audio::PushToPlaylist(p);
 #else
@@ -276,9 +273,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				SDL_free(SDL_GetClipboardText());
 				break;
 			}
-			case (SDL_DROPCOMPLETE):
-				Window::windowProperties.mEvent = App::Event::kFileDropComplete;
-				break;
 			case (SDL_MOUSEWHEEL):
 				UpdateScrollPosition(event.wheel.x, event.wheel.y);
 				break;
@@ -293,19 +287,19 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				switch (event.window.event)
 				{
 				case (SDL_WINDOWEVENT_FOCUS_GAINED):
-					Window::windowProperties.mPlayerWindowEvent		= App::WindowEvent::kFocusGained;
+					State::SetState(State::Window::HasFocus);
 					break;
 				case (SDL_WINDOWEVENT_FOCUS_LOST):
-					Window::windowProperties.mPlayerWindowEvent		= App::WindowEvent::kFocusLost;
+					State::ResetState(State::Window::HasFocus);;
 					break;
 				case (SDL_WINDOWEVENT_ENTER):
-					Window::windowProperties.mMouseWindowEvent		= App::WindowEvent::kEnter;
+					State::SetState(State::Window::MouseEnter);
 					break;
 				case (SDL_WINDOWEVENT_LEAVE):
-					Window::windowProperties.mMouseWindowEvent		= App::WindowEvent::kLeave;
+					State::ResetState(State::Window::MouseEnter);;
 					break;
 				case(SDL_WINDOWEVENT_MINIMIZED):
-					Window::windowProperties.mPlayerWindowEvent		= App::WindowEvent::kMinimized;
+					State::SetState(State::Window::Minimized);
 					break;
 				}
 			}
@@ -331,7 +325,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		if (Window::windowProperties.mPlayerWindowEvent != App::WindowEvent::kMinimized)
+		if (State::CheckState(State::Window::Minimized) == false)
 		{
 			Graphics::RenderGraphics();
 			mdApplicationHandler->OnRealtimeRender();

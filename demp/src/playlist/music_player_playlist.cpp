@@ -125,94 +125,7 @@ namespace MP
 			mMusic = NULL;
 			mData = NULL;
 		}
-
-#ifdef _WIN32_
-		b8 SongObject::init(std::wstring songPath)
-		{
-			//std::wifstream file(songPath, std::ios::binary | std::ios::ate);
-			FILE* file = NULL;
-			if (_wfopen_s(&file, songPath.c_str(), L"rb+") != 0)
-			{
-				OUTPUT << "ERROR: could not open file at path \"" << songPath << "\"\n";
-				std::cout << stderr << std::endl;;
-				return false;
-			}
-#else
-		b8 SongObject::init(const char* songPath)
-		{
-			FILE* file = fopen(songPath, "rb+");
-			if (file == NULL)
-			{
-				std::cout << "ERROR: could not open file at path \"" << songPath << "\"\n";
-				std::cout << stderr << std::endl;;
-				return false;
-			}
-
-#endif
-			else
-			{
-				fseek(file, 0L, SEEK_END);
-				size_t size = ftell(file); // size of opened file
-				fseek(file, 0L, SEEK_SET); // set cursor at the beginning
-
-				mPath = songPath;
-				mID = 0;
-				mSize = size;
-
-
-				delete[] mData;
-				BASS_StreamFree(mMusic);
-				mData = NULL;
-				mMusic = NULL;
-
-
-				if (check_size(mSize) == true)
-				{
-					mData = new char[size];
-					size_t newLen = fread(mData, sizeof(char), mSize, file);
-					if (ferror(file) == 0)
-					{
-						fclose(file);
-						//Playlist::mdPathContainer.push_back(songPath);
-						//Interface::PlaylistItem * item = new Interface::PlaylistItem();
-						//item->InitFont();
-						//item->InitItem();
-						Graphics::MP::GetPlaylistObject()->SetSelectedID(mID);
-
-						mMusic = BASS_StreamCreateFile(TRUE, mData, 0, size, BASS_STREAM_AUTOFREE);
-						if (check_file() == false)
-						{
-							return false;
-						}
-					}
-					else
-					{
-						fclose(file);;
-						OUTPUT << "ERROR: could not read file at path \"" << songPath << "\"\n";
-						std::cout << stderr << std::endl;;
-						return false;
-					}
-				}
-				else
-				{
-					delete[] mData;
-					mData = NULL;
-#ifdef _WIN32_
-					mMusic = BASS_StreamCreateFile(FALSE, mPath.c_str(), 0, 0, 0);
-#else
-					mMusic = BASS_StreamCreateFile(FALSE, mPath, 0, 0, 0);
-#endif
-
-					if (check_file() == false)
-					{
-						return false;
-					}
-				}
-			}
-
-			return true;
-
-		}
+   
 #ifdef _WIN32_
 
 		b8 SongObject::load(std::wstring songPath, u32 id)
@@ -332,7 +245,7 @@ namespace MP
 			if (lastDeletionTimer.getTicksStart() > LAST_EVENT_TIME)
 			{
 				lastDeletionTimer.stop();
-				State::IsDeletionFinished = true;
+				State::SetState(State::DeletionFinished);
 			}
 
 			if (mdNextRequest)
@@ -353,10 +266,10 @@ namespace MP
 				mdPreviousRequest = false;
 			}
 
-			if (State::IsDeletionFinished == true)
+			if (State::CheckState(State::DeletionFinished) == true)
 			{
 				ShuffleMusic();
-				MP::musicPlayerState = MP::MusicPlayerState::kIdle;
+				State::ResetMusicPlayerState();
 			}
 		}
 
@@ -463,7 +376,7 @@ namespace MP
 			{
 				BASS_ChannelStop(RamLoadedMusic.get());
 
-				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicChanged;
+				State::SetState(State::AudioChanged);
 
 				/* If shuffle is enabled, try to load next song basing on shuffled positions container.
 
@@ -521,7 +434,7 @@ namespace MP
 			{
 				BASS_ChannelStop(RamLoadedMusic.get());
 
-				mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicChanged;
+				State::SetState(State::AudioChanged);
 
 				/*	If shuffle is enabled, try to load next song basing on shuffled positions container.
 				
@@ -679,12 +592,12 @@ namespace MP
 			   played automatically. Check if next music was selected by user 
 			*/
 			if (mdMPStarted == true && IsPlaying() == false && mdRepeatMusic == false && 
-				MP::musicPlayerState != MP::MusicPlayerState::kMusicChosen)
+				State::CheckState(State::AudioChosen) == false)
 			{
 				NextMusic();
 			}
 
-			if (mdEngine::MP::musicPlayerState == mdEngine::MP::MusicPlayerState::kMusicAdded && mdShuffleMusic == true)
+			if (State::CheckState(State::AudioAdded) == true && mdShuffleMusic == true)
 			{
 				ShuffleMusicProcedure();
 			}
@@ -721,7 +634,7 @@ namespace MP
 			if (Graphics::MP::GetPlaylistObject()->GetSelectedID() > Audio::Object::GetSize() - 1)
 				Graphics::MP::GetPlaylistObject()->SetSelectedID(Audio::Object::GetSize() - 1);
 
-			MP::musicPlayerState = MP::MusicPlayerState::kMusicDeleted;
+			State::SetState(State::AudioDeleted);
 		}
 
 		b8 IsLoaded()

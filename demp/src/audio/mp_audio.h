@@ -8,9 +8,21 @@
 
 namespace Audio
 {
+	// Stores pointers to created audio objects
+	typedef std::vector<AudioObject*> AudioObjectContainer;
+	// Stores only paths to folders
+	typedef std::vector<std::wstring> FolderContainer; // Stores only paths to folders
+	// Stores all paths of supported files	that are currently loaded into playlist
+	typedef std::vector<std::wstring> LoadedPathContainer;
+	// Stores all unique valid paths of supported file formats just from one event(drag and drop, file expl. folder expl.)
+	typedef std::vector<std::wstring> AddedFilesPathContainer;
+	// Stores all unqiue folders paths of supported file formats just from one event(drag and drop, file expl. folder expl.)
+	typedef std::vector<std::wstring> AddedFilesFolderContainer;
+	typedef std::vector<std::pair<std::wstring, Interface::PlaylistSeparator*>> PlaylistItemFolderContainer;
+
 	namespace Folders
 	{
-		std::vector<std::wstring>& GetAudioFoldersContainer();
+		FolderContainer& GetAudioFoldersContainer();
 		std::wstring GetAudioFolder(s32 id);
 		u32 GetSize();
 		b8 AddFolder(std::wstring name);
@@ -21,7 +33,7 @@ namespace Audio
 
 	namespace Object
 	{
-		std::vector<Audio::AudioObject*>& GetAudioObjectContainer();
+		AudioObjectContainer& GetAudioObjectContainer();
 		AudioObject* GetAudioObject(s32 id);
 		u32 GetSize();
 		u32 GetProcessedSize();
@@ -31,7 +43,10 @@ namespace Audio
 #endif
 	}
 
+
 	void StartAudio();
+
+	void FilesAddedByFileBrowser(b8 val);
 
 	b8 SavePathFiles(std::wstring path);
 

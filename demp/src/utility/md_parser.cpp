@@ -160,8 +160,8 @@ namespace mdEngine
 					/* Read path and file properties from file, save it to ID3 structure and send it to the
 					   function that will process sent informations
 					*/
-					State::PathLoadedFromFileVolatile = true;
-					State::PathLoadedFromFileConst = true;
+					State::SetState(State::PathLoadedFromFileVolatile);
+					State::SetState(State::PathLoadedFromFile);
 
 					s32 pos = input.find_first_of(SEPARATOR);
 					std::wstring path = utf8_to_utf16(input.substr(0, pos));

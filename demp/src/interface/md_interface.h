@@ -68,20 +68,6 @@ namespace mdEngine
 			glm::vec2 m_MousePos;
 		};
 
-		struct TextBoxItem : public Button
-		{
-			TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos, 
-												 glm::vec2 textSize, glm::vec2 textPos,
-						GLuint tex);
-
-			glm::vec2	m_Pos;
-			glm::vec2	m_Size;
-			glm::vec2	m_TextPos;
-			glm::vec2	m_TextSize;
-			GLuint		m_Texture;
-			s8			m_Index;
-
-		};
 
 		class PlaylistItem : public Button, public TextObject
 		{
@@ -117,6 +103,7 @@ namespace mdEngine
 
 		};
 
+		typedef std::vector<std::pair<const s32*, std::wstring>> SeparatorSubContainer;
 		class PlaylistSeparator : public PlaylistItem
 		{
 		public:
@@ -132,7 +119,7 @@ namespace mdEngine
 			void SeparatorSubFilePushBack(const s32* fileIndex, const std::wstring path);
 			void SeparatorSubFileInsert(const s32* fileIndex, const std::wstring path, s32 pos);
 			void SeparatorSubFileErased();
-			std::vector<std::pair<const s32*, std::wstring>>* GetSubFilesContainer();
+			SeparatorSubContainer* GetSubFilesContainer();
 
 
 			b8 isVisible;
@@ -141,9 +128,20 @@ namespace mdEngine
 			s32 m_SepItemCount;
 			std::vector<std::pair<const s32*, std::wstring>> m_SubFilesPaths;
 
-			void InsertInProperOrder(s32 posOfFirstFile);
 		};
 
+		struct TextBoxItem : public Button, public TextObject
+		{
+			friend class TextBox;
+			TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos, 
+												 glm::vec2 textSize, glm::vec2 textPos,
+						GLuint tex);
+
+			
+			s8			m_Index;
+			void UpdateTextBoxItemPos(glm::vec2 pos);
+
+		};
 
 		class TextBox : public TextObject
 		{
@@ -180,9 +178,18 @@ namespace mdEngine
 		};
 
 
+
+		typedef std::vector<std::pair<std::wstring, PlaylistSeparator*>> PlaylistSeparatorContainer;
+		typedef std::vector<std::pair<s32*, Interface::Button*>> PlaylistButtonContainer;
+		typedef std::vector<std::pair<const std::wstring, Button*>> InterfaceButtonContainer;
+
+		// TODO: It should not be an extern var...
+		extern InterfaceButtonContainer m_InterfaceButtonContainer;
+
+
 		namespace Separator
 		{
-			std::vector<std::pair<std::wstring, PlaylistSeparator*>>* GetContainer();
+			PlaylistSeparatorContainer* GetContainer();
 			PlaylistSeparator* GetSeparator(std::wstring text);
 			void SortSeparatorContainer();
 			// Will assign ids for every item in sub containers in proper order
@@ -192,13 +199,13 @@ namespace mdEngine
 
 		namespace PlaylistButton
 		{
-			std::vector<std::pair<s32*, Interface::Button*>>* GetContainer();
+			PlaylistButtonContainer* GetContainer();
 			Interface::Button* GetButton(s32 id);
 			s32 GetSize();
 		}
 
-		// TODO: It should not be an extern var...
-		extern std::vector<std::pair<const std::wstring, Button*>> mdInterfaceButtonContainer;
+
+
 	}
 }
 #endif // !MD_INTERFACE_H

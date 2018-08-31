@@ -11,20 +11,6 @@ namespace mdEngine
 {
 	namespace MP
 	{
-		enum MusicPlayerState
-		{
-			kIdle,
-			kResized,
-			kMusicAdded,
-			kMusicChosen,
-			kMusicDeleted,
-			kMusicChanged,
-			kContainersResized,
-			kMusicAddedFromFile
-		};
-
-		extern MusicPlayerState musicPlayerState;
-
 		class MusicPlayer
 		{
 		public:

@@ -7,12 +7,12 @@ namespace mdEngine
 {
 	namespace MP
 	{
-		MusicPlayerState musicPlayerState;
+		
 	}
 
 	MP::MusicPlayer::~MusicPlayer() 
 	{ 
-		musicPlayerState = MusicPlayerState::kIdle; 
+		
 	}
 
 	void MP::MusicPlayer::Start()

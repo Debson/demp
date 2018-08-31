@@ -40,13 +40,12 @@ namespace MP
 {
 	namespace UI
 	{
-		std::vector<Interface::Movable*> mdMovableContainer;
-		std::vector<Interface::Resizable*> mdResizableContainer;
-		std::vector<std::pair<Input::ButtonType, Interface::Button*>> mdButtonsContainer;
+		MovableContainer	mdMovableContainer;
+		ResizableContainer	mdResizableContainer;
+		ButtonContainer		mdButtonsContainer;
 
 		std::atomic<bool> fileBrowserFinished(false);
 		
-
 #ifdef _DEBUG_
 		b8 renderDebug = false;
 		glm::vec3 borderColor(0.f, 1.f, 0.f);
@@ -315,21 +314,21 @@ namespace MP
 				}
 			}
 
-			/*for (u16 i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
+			for (u16 i = 0; i < Interface::m_InterfaceButtonContainer.size(); i++)
 			{
-				if (Interface::mdInterfaceButtonContainer[i].second != nullptr)
+				if (Interface::m_InterfaceButtonContainer[i].second != nullptr)
 				{
-					if (Interface::mdInterfaceButtonContainer[i].second->GetButtonPos() != glm::vec2(INVALID))
+					if (Interface::m_InterfaceButtonContainer[i].second->GetButtonPos() != glm::vec2(POS_INVALID))
 					{
 						model = glm::mat4();
-						model = glm::translate(model, glm::vec3(Interface::mdInterfaceButtonContainer[i].second->GetButtonPos(), 1.f));
-						model = glm::scale(model, glm::vec3(Interface::mdInterfaceButtonContainer[i].second->GetButtonSize(), 1.f));;
-						Shader::shaderDefault->setFloat("aspectXY", Interface::mdInterfaceButtonContainer[i].second->GetButtonSize().x / Interface::mdInterfaceButtonContainer[i].second->GetButtonSize().y);
+						model = glm::translate(model, glm::vec3(Interface::m_InterfaceButtonContainer[i].second->GetButtonPos(), 1.f));
+						model = glm::scale(model, glm::vec3(Interface::m_InterfaceButtonContainer[i].second->GetButtonSize(), 1.f));;
+						Shader::shaderDefault->setFloat("aspectXY", Interface::m_InterfaceButtonContainer[i].second->GetButtonSize().x / Interface::m_InterfaceButtonContainer[i].second->GetButtonSize().y);
 						Shader::shaderDefault->setMat4("model", model);
 						Shader::Draw(Shader::shaderDefault);;
 					}
 				}
-			}*/
+			}
 
 
 
@@ -398,7 +397,6 @@ namespace MP
 
 	void UI::Update()
 	{
-
 		/* Collect user input for buttons and movable */
 		for(u16 i = 0; i < mdMovableContainer.size(); i++)
 			App::ProcessMovable(mdMovableContainer[i]);
@@ -425,19 +423,19 @@ namespace MP
 		}
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
 
-		/*for (u16 i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
+		for (u16 i = 0; i < Interface::m_InterfaceButtonContainer.size(); i++)
 		{
-			assert(Interface::mdInterfaceButtonContainer[i].second != nullptr);
+			assert(Interface::m_InterfaceButtonContainer[i].second != nullptr);
 
-			App::ProcessButton(Interface::mdInterfaceButtonContainer[i].second);
-		}*/
+			App::ProcessButton(Interface::m_InterfaceButtonContainer[i].second);
+		}
 
 
 		HandleInput();
-		if(State::IsPlaylistEmpty == false)
+		if(State::CheckState(State::PlaylistEmpty) == false)
 			HandlePlaylistInput();
 
-		//PlaylistFileExplorer();
+		PlaylistFileExplorer();
 
 	}
 
@@ -545,7 +543,7 @@ namespace MP
 
 				if (Audio::Object::GetAudioObject(i)->GetClickCount() > 1)
 				{
-					MP::musicPlayerState = MP::MusicPlayerState::kMusicChosen;
+					State::SetState(State::AudioChosen);
 					Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(i)->GetPath(), i);
 					Playlist::PlayMusic();
 				}
@@ -619,6 +617,7 @@ namespace MP
 			t.detach();
 		}
 
+
 		if (fileBrowserFinished)
 		{
 			fileBrowserActive = false;
@@ -642,8 +641,7 @@ namespace MP
 
 			if (nlCount == 0)
 			{
-				std::wstring * path = new std::wstring(dir);
-				MP::PushToPlaylist(path);
+				Audio::PushToPlaylist(dir);;
 			}
 			else
 			{
@@ -654,8 +652,7 @@ namespace MP
 					title += dir + L"\\";
 					title += fileNames.substr(0, titlePos);
 					fileNames = fileNames.substr(titlePos + 1, fileNames.length());;
-					std::wstring * path = new std::wstring(title);
-					MP::PushToPlaylist(path);
+					Audio::PushToPlaylist(title);
 				}
 			}
 
@@ -687,12 +684,12 @@ namespace MP
 		}
 		mdButtonsContainer.clear();
 
-		for (size_t i = 0; i < Interface::mdInterfaceButtonContainer.size(); i++)
+		for (size_t i = 0; i < Interface::m_InterfaceButtonContainer.size(); i++)
 		{
-			delete Interface::mdInterfaceButtonContainer[i].second;
-			Interface::mdInterfaceButtonContainer[i].second = nullptr;
+			delete Interface::m_InterfaceButtonContainer[i].second;
+			Interface::m_InterfaceButtonContainer[i].second = nullptr;
 		}
-		Interface::mdInterfaceButtonContainer.clear();
+		Interface::m_InterfaceButtonContainer.clear();
 
 	}
 }
