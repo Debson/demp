@@ -72,6 +72,8 @@ namespace Graphics
 
 		b8 playlistWasEmpty(false);
 
+		b8 scrollBarAtBottom(false);
+
 
 		Text::TextObject durationText;
 		Text::TextObject itemsSizeText;
@@ -82,7 +84,7 @@ namespace Graphics
 		b8 updatePlaylistInfo(false);
 		b8 updatePlaylistInfoPrevious(false);
 
-		s32 playlistPreviousOffsetY = 0;
+		f32 playlistPreviousOffsetY = 0;
 		f32 playlistCurrentOffsetY = 0;
 		s32 playlistCurrentPos = 0;
 		s32 playlistPreviousPos = 0;
@@ -115,6 +117,8 @@ namespace Graphics
 		void RenderMusicProgressBar();
 
 		void RenderMusicUI();
+
+		void RenderScrollBar();
 
 		void RenderPlaylistItems();
 
@@ -898,6 +902,98 @@ namespace Graphics
 		
 	}
 
+	void MP::RenderScrollBar()
+	{
+		s32 itemH = Data::_PLAYLIST_ITEM_SIZE.y;
+		s32 displayedItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / itemH;
+		s32 maxItems = Audio::Object::GetSize();
+
+		// SCROLL BAR
+		glm::mat4 model;
+		if (displayedItems < Audio::Object::GetSize())
+		{
+			f32 displayedItemsF = float(Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / (float)itemH;
+			f32 playlistSurface = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
+			f32 scaleY = playlistSurface / (float)Audio::Object::GetSize() * displayedItemsF;
+			// Set minimum size for scroll bar and do calculations with changed size
+			if (scaleY < Data::_PLAYLIST_SCROLL_BAR_SIZE.y)
+				scaleY = Data::_PLAYLIST_SCROLL_BAR_SIZE.y;
+			f32 scrollSurface = playlistSurface - scaleY;
+			f32 scrollStep = (playlistCurrentOffsetY * scrollSurface) / ((maxItems - displayedItemsF) * itemH);
+			f32 newPosY = (Data::_PLAYLIST_SCROLL_BAR_POS.y - scrollStep);
+
+			assert(m_PlaylistBarSlider != NULL);
+
+			m_PlaylistBarSlider->GetButtonSize().y = scaleY;
+			m_PlaylistBarSlider->GetButtonPos().y = newPosY;
+
+			if (App::Input::IsKeyDown(App::KeyCode::MouseLeft))
+			{
+				App::Input::GetGlobalMousePosition(&mouseX, &mouseY);
+
+				if (Input::hasFocus(Input::ButtonType::SliderPlaylist))
+				{
+					playlistSliderActive = true;
+
+					if (playlistSliderFirstEnter)
+					{
+						lastMouseY = mouseY;
+						playlistSliderFirstEnter = false;
+					}
+				}
+			}
+			else
+			{
+				playlistSliderActive = false;
+				playlistSliderFirstEnter = true;
+			}
+
+			if (playlistSliderActive)
+			{
+				s32 relX, relY;
+				App::Input::GetRelavtiveMousePosition(&relX, &relY);
+
+				if (relY > 0 &&
+					scrollBarAtBottom == true)
+				{
+					relY = 0;
+				}
+				playlistCurrentOffsetY -= (relY * maxItems / displayedItems);
+
+				//md_log_compare(playlistCurrentOffsetY, (maxItems - displayedItems) * itemH * -1 + (displayedItemsF - displayedItems) * itemH);
+
+				// Lock PLAYLIST at the same time as scroll bar at the bottom
+				if (playlistCurrentOffsetY < (maxItems - displayedItems) * itemH * -1 + (displayedItemsF - displayedItems) * itemH)
+				{
+					playlistCurrentOffsetY = (maxItems - displayedItems) * itemH * -1 + (displayedItemsF - displayedItems) * itemH;
+				}
+			}
+
+			if (m_PlaylistBarSlider->GetButtonPos().y < Data::_PLAYLIST_SCROLL_BAR_POS.y)
+				m_PlaylistBarSlider->GetButtonPos().y = Data::_PLAYLIST_SCROLL_BAR_POS.y;
+
+			if (m_PlaylistBarSlider->GetButtonPos().y + m_PlaylistBarSlider->GetButtonSize().y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+			{
+				m_PlaylistBarSlider->GetButtonPos().y = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - m_PlaylistBarSlider->GetButtonSize().y;
+				scrollBarAtBottom = true;
+			}
+			else
+			{
+				scrollBarAtBottom = false;
+			}
+
+
+			model = glm::mat4();
+			model = glm::translate(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_POS.x, m_PlaylistBarSlider->GetButtonPos().y, 0.9f));
+			model = glm::scale(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_SIZE.x, m_PlaylistBarSlider->GetButtonSize().y, 1.f));
+			Shader::shaderDefault->setVec3("color", Color::Black);
+			Shader::shaderDefault->setMat4("model", model);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			Shader::Draw(Shader::shaderDefault);
+		}
+
+	}
+
 	void MP::RenderPlaylistItems()
 	{
 		/* Functions has guards if statements like 
@@ -937,6 +1033,7 @@ namespace Graphics
 			
 			s32 itemH = Data::_PLAYLIST_ITEM_SIZE.y;
 			s32 displayedItems = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / itemH;
+			f32 displayedItemsF = float(Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / (float)itemH;
 			s32 maxItems = Audio::Object::GetSize();
 
 			if (displayedItems > maxItems)
@@ -982,20 +1079,19 @@ namespace Graphics
 			/* When playlist pos is different than top and low, keep resizing till it reaches end, 
 			   then start roll out to the top 
 			*/
+			
+			//md_log(playlistCurrentOffsetY);
 			if (State::CheckState(State::Window::Resized) == true &&
-				Window::windowProperties.mDeltaHeightResize > 0 &&
-				playlistCurrentOffsetY <= (maxItems - displayedItems + 2) * itemH * -1 &&
-				displayedItems < maxItems)
+				abs(Window::windowProperties.mDeltaHeightResize) > 0 &&
+				playlistCurrentOffsetY <= (maxItems - displayedItems - 1) * itemH * -1 &&
+				displayedItems < maxItems - 2 )
 			{
 				playlistCurrentOffsetY += Window::windowProperties.mDeltaHeightResize;
 			}
-			else if(State::CheckState(State::Window::Resized) == false)
-			{
-				if (playlistCurrentOffsetY < (maxItems - displayedItems) * itemH * -1)
-					playlistCurrentOffsetY = (maxItems - displayedItems) * itemH * -1;
-			}
 			
 			playlistCurrentPos = (s32)(playlistCurrentOffsetY / Data::_PLAYLIST_ITEM_SIZE.y) * -1;
+
+			
 
 
 			/* If playlist is resized and displayed items + 4 is greater than current rendered items,
@@ -1020,7 +1116,8 @@ namespace Graphics
 			}
 
 			if (State::CheckState(State::AudioDeleted) == true ||
-				State::CheckState(State::ContainersResized) == true)
+				State::CheckState(State::ContainersResized) == true ||
+				State::CheckState(State::Window::Resized) == true)
 			{
 				texturesLoaded = false;
 				State::ResetMusicPlayerState();
@@ -1045,23 +1142,15 @@ namespace Graphics
 			m_Playlist.SetCurrentMinIndex(min);
 			m_Playlist.SetCurrentMaxIndex(max);
 
-			/*for (s32 i = min; i < max; i++)
-			{
-				if (Audio::Object::GetAudioObject(i) == NULL)
-					return;
-			}*/
 
-			if (playlistFirstEnter && playlistCurrentOffsetY > 80)
+			// Make sure that by using scroll playlist doesn't go lower than using scroll bar
+			if (playlistCurrentOffsetY < (maxItems - displayedItems) * itemH * -1 + (displayedItemsF - displayedItems) * itemH &&
+				maxItems * itemH > (displayedItemsF - displayedItems) * itemH)
 			{
-				playlistPreviousPos = playlistCurrentPos;
-				playlistPreviousOffsetY = playlistCurrentOffsetY;
-				
-				playlistFirstEnter = false;
+				playlistCurrentOffsetY = (maxItems - displayedItems) * itemH * -1 + (displayedItemsF - displayedItems) * itemH;
 			}
 
-
-
-
+			
 			if (abs(playlistPreviousOffsetY - playlistCurrentOffsetY) > 0)
 			{
 				for (u32 i = min; i < max; i++)
@@ -1088,8 +1177,10 @@ namespace Graphics
 				playlistPreviousOffsetY = playlistCurrentOffsetY;
 			}
 
+			
 			if (playlistCurrentPos != playlistPreviousPos)
 				texturesLoaded = false;
+
 
 			if (texturesLoaded == false && State::CheckState(State::FilesLoaded) == true)
 			{
@@ -1120,20 +1211,26 @@ namespace Graphics
 				predefinedPos[0] = glm::vec2(itemStartPos.x, itemStartPos.y);
 				for (u16 i = min, t = 0; i < max; i++, t++)
 				{
-					if (Audio::Object::GetAudioObject(i) == NULL)
-						return;
+				if (Audio::Object::GetAudioObject(i) == NULL)
+					return;
+				
 
-					item = Audio::Object::GetAudioObject(i);
-					textTexture[t] = item->GetLoadedTexture();
+				item = Audio::Object::GetAudioObject(i);
+				textTexture[t] = item->GetLoadedTexture();
 
-					if (t != -1)
-					{
-						predefinedPos[t] = glm::vec2(itemStartPos.x, itemStartPos.y + Data::_PLAYLIST_ITEM_SIZE.y);
-						itemStartPos = predefinedPos[t];
-						predefinedPos[t].y += playlistCurrentOffsetY;
-	
-					}
-					
+				if (item->IsFolderRep() == true)
+				{
+					itemStartPos.y += itemH / 2.f;
+				}
+
+				if (t != -1)
+				{
+					predefinedPos[t] = glm::vec2(itemStartPos.x, itemStartPos.y + Data::_PLAYLIST_ITEM_SIZE.y);
+					itemStartPos = predefinedPos[t];
+					predefinedPos[t].y += playlistCurrentOffsetY;
+
+				}
+
 				}
 
 				// Write predefined positions to playlist items that are currently displayed
@@ -1157,69 +1254,11 @@ namespace Graphics
 			}
 
 
-			// SCROLL BAR
-			glm::mat4 model;
-			if (displayedItems < Audio::Object::GetSize())
-			{
-				f32 displayedItemsF = (Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / itemH;
-				f32 playlistSurface = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
-				f32 scaleY = playlistSurface  / (float)Audio::Object::GetSize() * displayedItemsF;
-				// Set minimum size for scroll bar and do calculations with changed size
-				if (scaleY < Data::_PLAYLIST_SCROLL_BAR_SIZE.y)
-					scaleY = Data::_PLAYLIST_SCROLL_BAR_SIZE.y;
-				f32 scrollSurface = playlistSurface - scaleY;
-				f32 scrollStep = (playlistCurrentOffsetY * scrollSurface) / ((maxItems - displayedItems) * itemH);
-				s32 newPosY = (Data::_PLAYLIST_SCROLL_BAR_POS.y - scrollStep);
+			RenderScrollBar();
 
-				//md_log(playlistCurrentOffsetY);
 
-				assert(m_PlaylistBarSlider != NULL);
-				
-				m_PlaylistBarSlider->GetButtonSize().y = scaleY;
-				m_PlaylistBarSlider->GetButtonPos().y = newPosY;
 
-				if (App::Input::IsKeyDown(App::KeyCode::MouseLeft))
-				{
-					App::Input::GetGlobalMousePosition(&mouseX, &mouseY);
-
-					if (Input::hasFocus(Input::ButtonType::SliderPlaylist))
-					{
-						playlistSliderActive = true;
-
-						if (playlistSliderFirstEnter)
-						{
-							lastMouseY = mouseY;
-							playlistSliderFirstEnter = false;
-						}
-					}
-				}
-				else
-				{
-					playlistSliderActive = false;
-					playlistSliderFirstEnter = true;
-				}
-
-				if (playlistSliderActive)
-				{
-					deltaMouseY = mouseY - lastMouseY;
-					lastMouseY = mouseY;
-					playlistCurrentOffsetY -= (deltaMouseY * maxItems / displayedItems);
-				}
-
-				
-				if (m_PlaylistBarSlider->GetButtonPos().y < Data::_PLAYLIST_SCROLL_BAR_POS.y)
-					m_PlaylistBarSlider->GetButtonPos().y = Data::_PLAYLIST_SCROLL_BAR_POS.y;
-				if (m_PlaylistBarSlider->GetButtonPos().y + m_PlaylistBarSlider->GetButtonSize().y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
-					m_PlaylistBarSlider->GetButtonPos().y = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - m_PlaylistBarSlider->GetButtonSize().y;
-
-				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_POS.x, m_PlaylistBarSlider->GetButtonPos().y, 0.9f));
-				model = glm::scale(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_SIZE.x, m_PlaylistBarSlider->GetButtonSize().y, 1.f));
-				Shader::shaderDefault->setVec3("color", Color::Black);
-				Shader::shaderDefault->setMat4("model", model);
-				glBindTexture(GL_TEXTURE_2D, 0);
-				Shader::Draw(Shader::shaderDefault);
-			}
+			//std::cout << playlistCurrentOffsetY << "   " << displayedItems << std::endl;
 
 			// Cut all items and item border if is outside playlist bounds
 			Shader::shaderDefault->setBool("playlistCut", true);
@@ -1311,7 +1350,7 @@ namespace Graphics
 			
 				
 				Shader::shaderDefault->use();
-				model = glm::mat4();
+				glm::mat4 model;
 				model = glm::translate(model, glm::vec3(aItem->GetButtonPos().x, aItem->GetButtonPos().y, 0.5f));
 				model = glm::scale(model, glm::vec3(aItem->GetButtonSize(), 1.0f));
 				Shader::shaderDefault->setMat4("model", model);

@@ -21,6 +21,9 @@
 #define MD_ERROR(x) (std::cout << "ERROR: " << x << std::endl)
 
 #define md_log(x) (std::cout << "LOG: " << x << std::endl);
+
+#define md_log_compare(x, y) (std::cout << "LOG: " << x << "   -   " << y << std::endl); 
+
 #endif
 
 #endif // !MD_UTIL_H

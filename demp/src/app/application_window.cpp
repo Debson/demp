@@ -17,6 +17,7 @@ namespace mdEngine
 
 		s32 boundLow;
 		s32 boundHigh;
+		b8 changeBarSize(false);
 		b8 checkBounds(false);
 
 		b8 wasInsideMovable(false);
@@ -60,7 +61,9 @@ namespace mdEngine
 
 				bool inside = insideX > xL && insideX < xR && insideY > yU && insideY < yD;
 
-				if (inside && !MP::UI::Input::GetButtonExtraState())
+				if (inside &&
+					Input::IsKeyPressed(KeyCode::MouseLeft) &&
+					!MP::UI::Input::GetButtonExtraState())
 					wasInsideMovable = true;
 
 				if (wasInsideMovable && State::CheckState(State::Window::Resized) == false)
@@ -69,8 +72,6 @@ namespace mdEngine
 			else
 			{
 				// TODO: dont call it every frame?
-				//relMouseXSum = 0;
-				//relMouseYSum = 0;
 				wasInsideMovable = false;
 				Input::GetGlobalMousePosition(&globalMouseX, &globalMouseY);
 				Window::GetWindowPos(&startX, &startY);
@@ -170,15 +171,21 @@ namespace mdEngine
 			int relX = 0, relY = 0;
 			Input::GetRelavtiveMousePosition(&relX, &relY);
 
+
 			b8 inside = mouseX > bar->m_Pos.x && mouseX < (bar->m_Pos.x + bar->m_Size.x) &&
 				mouseY > bar->m_Pos.y && mouseY < (bar->m_Pos.y + bar->m_Size.y);
 
-			if (inside)
-				wasInsideResizable = true;
-			
-
-			if (wasInsideResizable && !MP::UI::Input::GetButtonExtraState())
+			if (inside == true &&
+				Input::IsKeyPressed(KeyCode::MouseLeft) == true)
 			{
+				wasInsideResizable = true;
+			}
+
+			
+			if (wasInsideResizable == true && 
+				MP::UI::Input::GetButtonExtraState() == false)
+			{
+
 				State::SetState(State::Window::Resized);
 				Window::windowProperties.mDeltaHeightResize = relY;
 
@@ -186,15 +193,15 @@ namespace mdEngine
 				winSizeBeforeResize += relY;
 
 				bar->m_Pos = glm::vec2(0, winSizeBeforeResize + relY - bar->m_Size.y);
+
 				if (Window::windowProperties.mApplicationHeight - bar->m_Size.y < MP::Data::_MIN_PLAYER_SIZE.y)
 					Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + bar->m_Size.y;
 				if (bar->m_Pos.y < MP::Data::_MIN_PLAYER_SIZE.y)
 					bar->m_Pos.y = MP::Data::_MIN_PLAYER_SIZE.y;
-
 			}
 		}
 		else
-		{	
+		{
 			State::ResetState(State::Window::Resized);
 			winSizeBeforeResize = Window::windowProperties.mApplicationHeight;
 			wasInsideResizable = false;

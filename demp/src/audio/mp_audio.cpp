@@ -19,7 +19,6 @@
 #include "../utility/md_parser.h"
 #include "../utility/utf8_to_utf16.h"
 
-#include "../testy/test.h"
 
 #define WORK_THREADS 4
 
@@ -674,7 +673,10 @@ void Audio::SetFoldersRep()
 
 			
 				std::wstring droppedOnFolderPath = L"";
-				if(droppedOnTop == true)
+				// Find proper folder path on which files were dropped. It's different when dropped on first file on the playlist.
+				if(droppedOnTop == true && indexOfDroppedOnItem > 0)
+					droppedOnFolderPath = m_AudioObjectContainer[indexTemp + filesAddedCount + 1]->GetFolderPath();
+				else if(droppedOnTop == true)
 					droppedOnFolderPath = m_AudioObjectContainer[indexTemp + filesAddedCount]->GetFolderPath();
 				else
 					droppedOnFolderPath = m_AudioObjectContainer[indexTemp]->GetFolderPath();
@@ -705,11 +707,9 @@ void Audio::SetFoldersRep()
 					firstFileFolderRepChecked = true;
 					if (filesFromTheSameFolder == true || folderRepTakenAway == true)
 					{
-
 						std::wstring pathOfFile = L"";
 						if(droppedOnTop == true)
 							indexTemp += filesAddedCount;
-
 						
 						pathOfFile = m_AudioObjectContainer[indexTemp]->GetPath();
 
@@ -753,8 +753,6 @@ void Audio::SetFoldersRep()
 					folderRepSet = true;
 				}
 				
-
-
 				assert(ps != nullptr);
 
 				// insert file to separator sub files container in the same order as it is in audio object's container
@@ -785,8 +783,6 @@ void Audio::SetFoldersRep()
 						s32 index = firstFilesLoaded == false ? k : indexTemp + k + 1;
 						ps->SeparatorSubFilePushBack(fileIndex, filePath);
 					}
-
-
 				}
 				else
 				{
@@ -794,7 +790,6 @@ void Audio::SetFoldersRep()
 					start = k;
 					break;
 				}
-
 			}
 		}
 
@@ -839,7 +834,6 @@ void Audio::SetFoldersRep()
 						}
 					}
 				}();
-
 
 				// Create a new playlist separator for second half and rewrite files that belong to second half
 				auto ps = new Interface::PlaylistSeparator(folderPathTemp);
@@ -1065,7 +1059,6 @@ void Audio::GetItemsInfo()
 		std::cout << "Length: " << m_AudioObjectContainer[i]->GetLength() << "s" << std::endl;
 	}
 }
-
 
 u32 Audio::GetProccessedFileCount()
 {

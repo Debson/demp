@@ -36,14 +36,14 @@ namespace mdEngine
 		{
 			enum WindowEvent : u32
 			{
-				HasFocus = (1u << 14),
-				Resized = (1u << 15),
-				Minimized = (1u << 16),
-				Shown = (1u << 17),
-				Hidden = (1u << 18),
-				Exposed = (1u << 19),
-				MouseEnter = (1u << 20),
-				MouseLeave = (1u << 21)
+				HasFocus	= (1u << 14),
+				Resized		= (1u << 15),
+				Minimized	= (1u << 16),
+				Shown		= (1u << 17),
+				Hidden		= (1u << 18),
+				Exposed		= (1u << 19),
+				MouseEnter	= (1u << 20),
+				MouseLeave	= (1u << 21)
 			};
 		};
 
