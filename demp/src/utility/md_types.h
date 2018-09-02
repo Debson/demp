@@ -53,6 +53,7 @@ namespace mdEngine
 		extern glm::vec3 Red;
 		extern glm::vec3 Green;
 		extern glm::vec3 Blue;
+		extern glm::vec3 Pink;
 	}
 
 	namespace SDLColor

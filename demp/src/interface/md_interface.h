@@ -81,6 +81,7 @@ namespace mdEngine
 			virtual void SetButtonPos(glm::vec2 pos);
 
 			void Click();
+			void HidePlaylistItem(b8 val);
 			void SetAsFolderRep();
 			void TakeFolderRep();
 			void SetClickCount(s8 count);
@@ -88,11 +89,13 @@ namespace mdEngine
 
 			b8			 IsPlaying() const;
 			b8			 IsFolderRep() const;
+			b8			 IsPlaylistItemHidden() const;
 			u8			 GetClickCount() const;
 			glm::vec3	 GetItemColor() const;
 			std::wstring GetShortenTextString();
 
 		protected:
+			b8			 m_PlaylistItemHidden;
 			b8			 m_FolderRep;
 			u8			 m_ClickCount;
 			s32			 m_ItemID;
@@ -103,7 +106,7 @@ namespace mdEngine
 
 		};
 
-		typedef std::vector<std::pair<const s32*, std::wstring>> SeparatorSubContainer;
+		typedef std::vector<std::pair<s32*, std::wstring>> SeparatorSubContainer;
 		class PlaylistSeparator : public PlaylistItem
 		{
 		public:
@@ -112,21 +115,28 @@ namespace mdEngine
 
 			virtual void InitItem(s32 posOfFirstFile);
 
-
-			void SetSeperatorPath(std::wstring path);
-			std::wstring GetSeparatorPath() const;;
-			std::wstring GetSeparatorName() const;
-			void SeparatorSubFilePushBack(const s32* fileIndex, const std::wstring path);
-			void SeparatorSubFileInsert(const s32* fileIndex, const std::wstring path, s32 pos);
-			void SeparatorSubFileErased();
+			void			SetSeperatorPath(std::wstring path);
+			void			SeparatorSubFilePushBack(s32* fileIndex, const std::wstring path);
+			void			SeparatorSubFileInsert(s32* fileIndex, const std::wstring path, s32 pos);
+			void			SeparatorSubFileErased();
+			b8				IsVisible() const;
+			b8				IsSeparatorHidden() const;
+			b8				IsSelected()		const;
+			void			Visible(b8 val);
+			void			HideSeparator(b8 val);
+			void			Select(b8 val);
+			std::wstring	GetSeparatorPath() const;;
+			std::wstring	GetSeparatorName() const;
 			SeparatorSubContainer* GetSubFilesContainer();
 
-
-			b8 isVisible;
 			f64 SepItemDuration;
 		private:
+			b8 m_SeparatorSelected;
+			b8 m_SeparatorHidden;
+			b8 m_Visible;
 			s32 m_SepItemCount;
-			std::vector<std::pair<const s32*, std::wstring>> m_SubFilesPaths;
+			std::wstring m_Path;
+			SeparatorSubContainer m_SubFilesPaths;
 
 		};
 
@@ -191,9 +201,8 @@ namespace mdEngine
 		{
 			PlaylistSeparatorContainer* GetContainer();
 			PlaylistSeparator* GetSeparator(std::wstring text);
+			PlaylistSeparator* GetSeparatorByID(s32 id);
 			void SortSeparatorContainer();
-			// Will assign ids for every item in sub containers in proper order
-			void ReassignSubContainersIDs();
 			s32 GetSize();
 		}
 

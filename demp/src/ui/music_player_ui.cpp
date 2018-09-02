@@ -62,6 +62,14 @@ namespace MP
 		f32 mdCurrentHeight;
 		f32 mdProjectionHeight;
 
+
+		s32 hiddenSeparatorsCount;
+		b8 folderItemsHidden(false);
+		b8 itemsHidden(false);
+		b8 selectAllItemsInFolder(false);
+		b8 playlistItemSelected(false);
+
+
 		b8 fileBrowserActive(false);
 
 		std::string title = "none";
@@ -73,6 +81,8 @@ namespace MP
 		void HandleInput();
 
 		void HandlePlaylistInput();
+
+		void HandleSeparatorInput();
 
 		void PlaylistFileExplorer();
 
@@ -423,6 +433,15 @@ namespace MP
 		}
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
 
+		// Process playlist separator buttons
+		auto sepCon = Interface::Separator::GetContainer();
+		for (u16 i = 0; i < Interface::Separator::GetSize(); i++)
+		{
+			if(sepCon->at(i).second->IsVisible() == true)
+				App::ProcessButton(sepCon->at(i).second);
+		}
+
+		// Proces interface buttons
 		for (u16 i = 0; i < Interface::m_InterfaceButtonContainer.size(); i++)
 		{
 			assert(Interface::m_InterfaceButtonContainer[i].second != nullptr);
@@ -430,13 +449,15 @@ namespace MP
 			App::ProcessButton(Interface::m_InterfaceButtonContainer[i].second);
 		}
 
-
 		HandleInput();
-		if(State::CheckState(State::PlaylistEmpty) == false)
+		if (State::CheckState(State::PlaylistEmpty) == false)
+		{
 			HandlePlaylistInput();
+			HandleSeparatorInput();
+			clickDelayTimer.update();
+		}
 
 		PlaylistFileExplorer();
-
 	}
 
 	void UI::Render()
@@ -516,10 +537,9 @@ namespace MP
 			}
 			else if (Audio::Object::GetAudioObject(i)->isPressed == true)
 			{
-
 				clickDelayTimer.start();
 				Audio::Object::GetAudioObject(i)->Click();
-
+				playlistItemSelected = true;
 
 				// Check if current's item position is in vector with selected item's positions
 				it = std::find(Graphics::MP::GetPlaylistObject()->multipleSelect.begin(),
@@ -552,7 +572,9 @@ namespace MP
 
 			//If time for second click expires, reset click count
 			if (clickDelayTimer.finished == true)
+			{
 				Audio::Object::GetAudioObject(i)->SetClickCount(0);
+			}
 
 		}
 
@@ -584,9 +606,109 @@ namespace MP
 				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&Audio::Object::GetAudioObject(temp)->GetID());
 			}
 		}
+	}
 
-		// Update second click timer
-		clickDelayTimer.update();
+	void UI::HandleSeparatorInput()
+	{
+		// On deletion reset flag, so it will be able to select
+		if (State::CheckState(State::AudioDeleted) == true)
+		{
+			selectAllItemsInFolder = false;
+		}
+
+		auto sepCon = Interface::Separator::GetContainer();
+		for (auto & i : *sepCon)
+		{
+			if (i.second->IsVisible() == true &&
+				i.second->isPressed == true)
+			{
+				clickDelayTimer.start();
+				i.second->Click();
+
+
+				if(playlistItemSelected == true)
+					i.second->Select(false);
+
+				auto sepSubCon = i.second->GetSubFilesContainer();
+				if (i.second->GetClickCount() > 0 &&
+					i.second->IsSelected() == false)
+				{
+					for (auto & k : *sepSubCon)
+					{
+						Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(k.first);
+					}
+					i.second->Select(true);
+					playlistItemSelected = false;
+				}
+				else if(i.second->GetClickCount() > 0)
+				{
+					for (auto & k : *sepSubCon)
+					{
+						Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
+					}
+					i.second->Select(false);
+				}
+
+				/*if (i.second->GetClickCount() > 1)
+				{
+					//md_log(std::to_string(i.second->GetClickCount()));
+					folderItemsHidden = true;
+				}
+
+				auto audioCon = Audio::Object::GetAudioObjectContainer();
+				if (folderItemsHidden == true)
+				{
+					b8 firstItem = false;
+					if (i.second->IsSeparatorHidden() == false)
+					{
+						for (auto & k : *sepSubCon)
+						{
+							if (firstItem == true)
+							{
+								audioCon[*k.first]->HidePlaylistItem(true);
+								State::SetState(State::AudioHidden);
+							}
+							firstItem = true;
+						}
+						i.second->HideSeparator(true);
+					}
+					else
+					{
+						for (auto & k : *sepSubCon)
+						{
+							if (firstItem == true)
+							{
+								audioCon[*k.first]->HidePlaylistItem(false);
+								State::SetState(State::AudioHidden);
+							}
+							firstItem = true;
+						}
+						i.second->HideSeparator(false);
+					}
+
+				}
+				folderItemsHidden = false;
+
+				if(i.second->IsSeparatorHidden() == true)
+					Graphics::MP::GetPlaylistObject()->SetHiddenSeparatorCount(hiddenSeparatorsCount);*/
+
+
+			}
+
+			if (clickDelayTimer.finished == true)
+				i.second->SetClickCount(0);
+		}
+
+		s32 hiddenSeparators = 0;
+		for (auto & i : *sepCon)
+		{
+			if (i.second->IsSeparatorHidden() == true)
+			{
+				hiddenSeparators++;
+			}
+		}
+		Graphics::MP::GetPlaylistObject()->SetHiddenSeparatorCount(hiddenSeparators);
+
 	}
 
 	void UI::OpenFileBrowserWrap()

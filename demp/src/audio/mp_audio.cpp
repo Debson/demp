@@ -465,11 +465,17 @@ void Audio::PerformDeletion(s32 index)
 		if (sepSubCon->empty() == true)
 		{
 			delete sepCont->at(i).second;
+			sepCont->at(i).second = nullptr;
 			sepCont->erase(sepCont->begin() + i);
 		}
 	}
 
 
+	if (m_AudioObjectContainer.at(index)->IsFolderRep() == true &&
+		index + 1 < m_AudioObjectContainer.size())
+	{
+		m_AudioObjectContainer.at(index + 1)->SetAsFolderRep();
+	}
 	/* Decrement all playlist item indexes that are greater than deleted pos
 	   (to keep all indexes in in continuous ascending fashion)
 	*/
@@ -477,6 +483,7 @@ void Audio::PerformDeletion(s32 index)
 		m_AudioObjectContainer[i]->DecrementID();
 
 	delete m_AudioObjectContainer.at(index);
+	m_AudioObjectContainer.at(index) = nullptr;
 	m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + index);
 
 	// Delete that path from loaded paths container
@@ -717,7 +724,7 @@ void Audio::SetFoldersRep()
 						{
 							auto sepSubCon = s.second->GetSubFilesContainer();
 							auto it = std::find_if(sepSubCon->begin(), sepSubCon->end(), 
-								[&](std::pair<const s32*, std::wstring> & ref)
+								[&](std::pair<s32*, std::wstring> & ref)
 							{ return ref.second.compare(pathOfFile) == 0; });
 							if (it != sepSubCon->end())
 							{

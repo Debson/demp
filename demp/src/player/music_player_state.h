@@ -18,32 +18,33 @@ namespace mdEngine
 			AudioDeleted				= (1u << 4),
 			AudioChosen					= (1u << 5),
 			AudioChanged				= (1u << 6),
-			FilesLoaded					= (1u << 7),
-			FilesInfoLoaded				= (1u << 8),
-			PathLoadedFromFile			= (1u << 9),
-			PathLoadedFromFileVolatile	= (1u << 10),
-			DeletionFinished			= (1u << 11)
+			AudioHidden					= (1u << 7),
+			FilesLoaded					= (1u << 8),
+			FilesInfoLoaded				= (1u << 9),
+			PathLoadedFromFile			= (1u << 10),
+			PathLoadedFromFileVolatile	= (1u << 11),
+			DeletionFinished			= (1u << 12)
 
 		};
 
 		enum MusicPlayerState : u32
 		{
-			FileDropped			= (1u << 12),
-			ContainersResized	= (1u << 13)
+			FileDropped			= (1u << 13),
+			ContainersResized	= (1u << 14)
 		};
 
 		namespace Window
 		{
 			enum WindowEvent : u32
 			{
-				HasFocus	= (1u << 14),
-				Resized		= (1u << 15),
-				Minimized	= (1u << 16),
-				Shown		= (1u << 17),
-				Hidden		= (1u << 18),
-				Exposed		= (1u << 19),
-				MouseEnter	= (1u << 20),
-				MouseLeave	= (1u << 21)
+				HasFocus	= (1u << 15),
+				Resized		= (1u << 16),
+				Minimized	= (1u << 17),
+				Shown		= (1u << 18),
+				Hidden		= (1u << 19),
+				Exposed		= (1u << 20),
+				MouseEnter	= (1u << 21),
+				MouseLeave	= (1u << 22)
 			};
 		};
 

@@ -13,6 +13,8 @@ namespace Graphics
 {
 	namespace MP
 	{
+
+		typedef std::vector<Interface::PlaylistSeparator*> SeparatorsToRender;
 		enum class PlaylistMovement
 		{
 			Up,
@@ -41,11 +43,13 @@ namespace Graphics
 			void SetCurrentMinIndex(s32 min);
 			void SetCurrentMaxIndex(s32 max);
 			void SetCurrentOffset(s32 offset);
-			f64  GetItemsSize()		  const;
-			f64  GetItemsDuration()	  const;
-			s32  GetCurrentMinIndex() const;
-			s32  GetCurrentMaxIndex() const;
-			s32  GetCurrentOffset()	  const;
+			void SetHiddenSeparatorCount(s32 count);
+			f64  GetItemsSize()				const;
+			f64  GetItemsDuration()			const;
+			s32  GetCurrentMinIndex()		const;
+			s32  GetCurrentMaxIndex()		const;
+			s32  GetCurrentOffset()			const;
+			s32  GetHiddenSeparatorCount()  const;
 
 			std::string GetItemsSizeString()	 const;
 			std::string GetItemsDurationString() const;
@@ -68,6 +72,7 @@ namespace Graphics
 			s32			m_CurrentMinIndex;
 			s32			m_CurrentMaxIndex;
 			s32			m_CurrentOffset;
+			s32			m_HiddenSeparatorCount;
 			f64			m_ItemsDuration;
 			f64			m_ItemsSize;
 			glm::vec2	m_Pos;
@@ -94,6 +99,7 @@ namespace Graphics
 
 		PlaylistObject*		GetPlaylistObject();
 		MainPlayerObject*	GetMainPlayerObject();
+		SeparatorsToRender* GetSeparatorsToRender();
 
 		// TODO: It cant be an extern variable...
 		extern Interface::TextBox m_AddFileTextBox;

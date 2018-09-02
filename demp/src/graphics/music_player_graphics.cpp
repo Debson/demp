@@ -45,8 +45,13 @@ namespace Graphics
 		GLuint music_progress_bar;
 
 
+		SeparatorsToRender playlistSeparatorToRenderVec;
+
+		std::vector<s32> playlistSeparatorsIDsVec;
+
 		b8 texturesLoaded = false;
 		GLuint* textTexture;
+		GLuint* separatorTextTexture;
 		glm::vec2* predefinedPos;
 		b8 predefinedPosLoaded(false);
 
@@ -232,6 +237,11 @@ namespace Graphics
 		m_CurrentOffset = offset;
 	}
 
+	void MP::PlaylistObject::SetHiddenSeparatorCount(s32 count)
+	{
+		m_HiddenSeparatorCount = count;
+	}
+
 	f64 MP::PlaylistObject::GetItemsSize() const
 	{
 		return m_ItemsSize;
@@ -265,6 +275,11 @@ namespace Graphics
 	s32 MP::PlaylistObject::GetCurrentOffset() const
 	{
 		return m_CurrentOffset;
+	}
+
+	s32  MP::PlaylistObject::GetHiddenSeparatorCount()  const
+	{
+		return m_HiddenSeparatorCount;
 	}
 
 	b8 MP::PlaylistObject::hasFocus() const
@@ -305,6 +320,10 @@ namespace Graphics
 		return &m_MainPlayer;
 	}
 
+	MP::SeparatorsToRender* MP::GetSeparatorsToRender()
+	{
+		return &playlistSeparatorToRenderVec;
+	}
 
 	void MP::InitializeText()
 	{
@@ -1037,10 +1056,16 @@ namespace Graphics
 			s32 maxItems = Audio::Object::GetSize();
 
 			if (displayedItems > maxItems)
+			{
 				displayedItems = maxItems;
+				displayedItemsF = maxItems;
+			}
 
 			if (displayedItems < 0)
+			{
 				displayedItems = 0;
+				displayedItemsF = 0;
+			}
 
 			s32 currentSongID = mdEngine::MP::Playlist::RamLoadedMusic.mID;
 
@@ -1115,9 +1140,15 @@ namespace Graphics
 				State::ResetState(State::DeletionFinished);
 			}
 
+			if (State::CheckState(State::AudioDeleted) == true)
+			{
+				playlistSeparatorToRenderVec.clear();
+			}
+
 			if (State::CheckState(State::AudioDeleted) == true ||
 				State::CheckState(State::ContainersResized) == true ||
-				State::CheckState(State::Window::Resized) == true)
+				State::CheckState(State::Window::Resized) == true ||
+				State::CheckState(State::AudioHidden) == true)
 			{
 				texturesLoaded = false;
 				State::ResetMusicPlayerState();
@@ -1139,18 +1170,35 @@ namespace Graphics
 				max = Audio::Object::GetSize();
 			s32 visibleSpectrum = max - min;
 
+			s32 hiddenItemsOffsetY = 0;
+			s32 hiddenItemsCount = 0;
+			/*for (u32 i = min; i < max; i++)
+			{
+				if (Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == true)
+				{
+					min++;
+					max++;
+					hiddenItemsOffsetY += itemH;
+					hiddenItemsCount++;
+				}
+			}*/
+
+
 			m_Playlist.SetCurrentMinIndex(min);
 			m_Playlist.SetCurrentMaxIndex(max);
 
+			/*if (playlistCurrentOffsetY < (maxItems - displayedItems) * itemH * -1)
+				playlistCurrentOffsetY = (maxItems - displayedItems) * itemH * -1;*/
 
 			// Make sure that by using scroll playlist doesn't go lower than using scroll bar
 			if (playlistCurrentOffsetY < (maxItems - displayedItems) * itemH * -1 + (displayedItemsF - displayedItems) * itemH &&
-				maxItems * itemH > (displayedItemsF - displayedItems) * itemH)
+				playlistCurrentOffsetY != 0)
 			{
 				playlistCurrentOffsetY = (maxItems - displayedItems) * itemH * -1 + (displayedItemsF - displayedItems) * itemH;
 			}
 
-			
+
+
 			if (abs(playlistPreviousOffsetY - playlistCurrentOffsetY) > 0)
 			{
 				for (u32 i = min; i < max; i++)
@@ -1174,6 +1222,36 @@ namespace Graphics
 												abs(playlistPreviousOffsetY - playlistCurrentOffsetY)));
 					}
 				}
+
+				
+				for (s32 i = 0; i < playlistSeparatorToRenderVec.size(); i++)
+				{
+					auto sep = playlistSeparatorToRenderVec[i];
+					/* Check if any of items in the vectors are NULL. If it's NULL it means that this
+					   separator was empty and was deleted */
+
+				
+
+					if (sep == nullptr)
+						playlistSeparatorToRenderVec.erase(playlistSeparatorToRenderVec.begin() + i);
+						
+					if (playlistSeparatorToRenderVec.empty() == true)
+						break;
+
+					if (playlistPreviousOffsetY - playlistCurrentOffsetY > 0)
+					{
+						sep->SetButtonPos(glm::vec2(sep->GetButtonPos().x,
+													sep->GetButtonPos().y -
+														abs(playlistPreviousOffsetY - playlistCurrentOffsetY)));
+					}
+					else
+					{
+						sep->SetButtonPos(glm::vec2(sep->GetButtonPos().x,
+													sep->GetButtonPos().y +
+														abs(playlistPreviousOffsetY - playlistCurrentOffsetY)));
+					}
+				}
+
 				playlistPreviousOffsetY = playlistCurrentOffsetY;
 			}
 
@@ -1195,9 +1273,43 @@ namespace Graphics
 				if (predefinedPos != NULL)
 					delete[] predefinedPos;
 
-				currentlyRenderedItems = visibleSpectrum;
-				textTexture = new GLuint[visibleSpectrum];
-				predefinedPos = new glm::vec2[visibleSpectrum];
+				if (separatorTextTexture != NULL)
+					delete[] separatorTextTexture;
+
+				auto sepCon = Interface::Separator::GetContainer();
+				for (auto & i : *sepCon)
+				{
+					i.second->Visible(false);
+				}
+				playlistSeparatorToRenderVec.clear();
+
+				s32 visibleSeparators = 0;
+				for (u16 i = min; i < max; i++)
+				{
+					if (Audio::Object::GetAudioObject(i)->IsFolderRep() == true)
+						visibleSeparators++;
+				}
+
+				if (hiddenItemsOffsetY > 0)
+				{
+					hiddenItemsOffsetY -= Data::_PLAYLIST_SEPARATOR_SIZE.y * m_Playlist.GetHiddenSeparatorCount();
+				}
+
+				playlistSeparatorsIDsVec.clear();
+
+				/*for (auto k : Audio::Object::GetAudioObjectContainer())
+				{
+					if (k->IsFolderRep() == true)
+						playlistSeparatorsIDsVec.push_back(k->GetID());
+				}*/
+
+
+
+				currentlyRenderedItems	= visibleSpectrum;
+				textTexture				= new GLuint[visibleSpectrum];
+				separatorTextTexture	= new GLuint[visibleSeparators];
+				predefinedPos			= new glm::vec2[visibleSpectrum];
+
 
 				allocatedCount = visibleSpectrum;
 
@@ -1205,33 +1317,49 @@ namespace Graphics
 				Audio::AudioObject* item = NULL;
 				s32 itemsOffset = 0;
 				glm::vec2 itemStartPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x, 
-												   Data::_PLAYLIST_ITEMS_SURFACE_POS.y + (min - 1) * itemH);
+												   Data::_PLAYLIST_ITEMS_SURFACE_POS.y + (min - 1) * itemH - hiddenItemsOffsetY);
 
+
+			
 
 				predefinedPos[0] = glm::vec2(itemStartPos.x, itemStartPos.y);
-				for (u16 i = min, t = 0; i < max; i++, t++)
+				for (u16 i = min, t = 0, k = 0; i < max; i++, t++)
 				{
-				if (Audio::Object::GetAudioObject(i) == NULL)
-					return;
+						
+					if (Audio::Object::GetAudioObject(i) == NULL)
+						return;
+
+					item = Audio::Object::GetAudioObject(i);
+					textTexture[t] = item->GetLoadedTexture();
+
 				
+					if (item->IsFolderRep() == true)
+					{
+						auto playlistSeparator = Interface::Separator::GetSeparatorByID(i);
+						assert(playlistSeparator != nullptr);
 
-				item = Audio::Object::GetAudioObject(i);
-				textTexture[t] = item->GetLoadedTexture();
+						s32 pSepPos = itemStartPos.y + Data::_PLAYLIST_ITEM_SIZE.y + playlistCurrentOffsetY;
 
-				if (item->IsFolderRep() == true)
-				{
-					itemStartPos.y += itemH / 2.f;
+						playlistSeparator->SetButtonPos(glm::vec2(itemStartPos.x, pSepPos));
+						playlistSeparator->Visible(true);
+						playlistSeparatorToRenderVec.push_back(playlistSeparator);
+						itemStartPos.y += playlistSeparator->GetButtonSize().y;
+
+						// Load separator texture
+						separatorTextTexture[k] = playlistSeparator->GetLoadedTexture();
+						k++;
+					}
+
+
+					if (t != -1)
+					{
+						predefinedPos[t] = glm::vec2(itemStartPos.x, itemStartPos.y + Data::_PLAYLIST_ITEM_SIZE.y);
+						itemStartPos = predefinedPos[t];
+						predefinedPos[t].y += playlistCurrentOffsetY;
+					}
 				}
 
-				if (t != -1)
-				{
-					predefinedPos[t] = glm::vec2(itemStartPos.x, itemStartPos.y + Data::_PLAYLIST_ITEM_SIZE.y);
-					itemStartPos = predefinedPos[t];
-					predefinedPos[t].y += playlistCurrentOffsetY;
-
-				}
-
-				}
+				s32 size = playlistSeparatorToRenderVec.size();
 
 				// Write predefined positions to playlist items that are currently displayed
 				for (s32 i = 0, t = 0; i < Audio::Object::GetSize(); i++)
@@ -1270,6 +1398,7 @@ namespace Graphics
 
 			u16 texIndex = 0;
 			playlistIndex = min;
+
 			while (playlistIndex < max)
 			{
 				/* Playlist items are rendered on the same positions as positions of the first(0 - maxItems), 
@@ -1326,8 +1455,6 @@ namespace Graphics
 				}
 
 				// Render all folder's reps in blue
-				if (aItem->IsFolderRep() == true)
-					itemColor = Color::Blue;
 
 
 
@@ -1348,49 +1475,75 @@ namespace Graphics
 				//if (item->clickCount == 1)
 					//std::cout << (float)item->mTextSize.x * item->mTextScale << std::endl;
 			
-				
+				if (aItem->IsFolderRep() == true)
+					itemColor *= Color::Blue;
+
 				Shader::shaderDefault->use();
 				glm::mat4 model;
-				model = glm::translate(model, glm::vec3(aItem->GetButtonPos().x, aItem->GetButtonPos().y, 0.5f));
-				model = glm::scale(model, glm::vec3(aItem->GetButtonSize(), 1.0f));
-				Shader::shaderDefault->setMat4("model", model);
-				Shader::shaderDefault->setVec3("color", itemColor);
-				glBindTexture(GL_TEXTURE_2D, main_foreground);
-				Shader::Draw(Shader::shaderDefault);
-				Shader::shaderDefault->setVec3("color", Color::White);
 
-				glm::vec3 col = Color::DarkGrey * itemColor;
-				if (aItem->topHasFocus)
+				for (s32 i = 0; i < playlistSeparatorToRenderVec.size(); i++)
 				{
+					auto sep = playlistSeparatorToRenderVec[i];
 					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(aItem->GetButtonPos().x, aItem->GetButtonPos().y, 0.6f));
-					model = glm::scale(model, glm::vec3(glm::vec2(aItem->GetButtonSize().x, aItem->GetButtonSize().y / 2.f), 1.0f));
+					model = glm::translate(model, glm::vec3(sep->GetButtonPos().x, sep->GetButtonPos().y, 0.6f));
+					model = glm::scale(model, glm::vec3(sep->GetButtonSize(), 1.0f));
 					Shader::shaderDefault->setMat4("model", model);
-					Shader::shaderDefault->setVec3("color", col);
+					Shader::shaderDefault->setVec3("color", Color::Pink);
 					glBindTexture(GL_TEXTURE_2D, main_foreground);
 					Shader::Draw(Shader::shaderDefault);
 					Shader::shaderDefault->setVec3("color", Color::White);
 
+					sep->SetTextOffset(glm::vec2(5.f, s32(sep->GetButtonSize().y - sep->GetTextSize().y) / 2));
+					sep->DrawString(separatorTextTexture[i]);
+					
 				}
 
-				if (aItem->bottomHasFocus)
+		
+				//if (aItem->IsPlaylistItemHidden() == false)
 				{
 					model = glm::mat4();
-					model = glm::translate(model, glm::vec3(aItem->GetButtonPos().x, aItem->GetButtonPos().y + aItem->GetButtonSize().y / 2.f, 0.6f));
-					model = glm::scale(model, glm::vec3(glm::vec2(aItem->GetButtonSize().x, aItem->GetButtonSize().y / 2.f), 1.0f));
+					model = glm::translate(model, glm::vec3(aItem->GetButtonPos().x, aItem->GetButtonPos().y, 0.5f));
+					model = glm::scale(model, glm::vec3(aItem->GetButtonSize(), 1.0f));
 					Shader::shaderDefault->setMat4("model", model);
-					Shader::shaderDefault->setVec3("color", col);
+					Shader::shaderDefault->setVec3("color", itemColor);
 					glBindTexture(GL_TEXTURE_2D, main_foreground);
 					Shader::Draw(Shader::shaderDefault);
 					Shader::shaderDefault->setVec3("color", Color::White);
-				}
+
+
+					glm::vec3 col = Color::DarkGrey * itemColor;
+					if (aItem->topHasFocus)
+					{
+						model = glm::mat4();
+						model = glm::translate(model, glm::vec3(aItem->GetButtonPos().x, aItem->GetButtonPos().y, 0.6f));
+						model = glm::scale(model, glm::vec3(glm::vec2(aItem->GetButtonSize().x, aItem->GetButtonSize().y / 2.f), 1.0f));
+						Shader::shaderDefault->setMat4("model", model);
+						Shader::shaderDefault->setVec3("color", col);
+						glBindTexture(GL_TEXTURE_2D, main_foreground);
+						Shader::Draw(Shader::shaderDefault);
+						Shader::shaderDefault->setVec3("color", Color::White);
+
+					}
+
+					if (aItem->bottomHasFocus)
+					{
+						model = glm::mat4();
+						model = glm::translate(model, glm::vec3(aItem->GetButtonPos().x, aItem->GetButtonPos().y + aItem->GetButtonSize().y / 2.f, 0.6f));
+						model = glm::scale(model, glm::vec3(glm::vec2(aItem->GetButtonSize().x, aItem->GetButtonSize().y / 2.f), 1.0f));
+						Shader::shaderDefault->setMat4("model", model);
+						Shader::shaderDefault->setVec3("color", col);
+						glBindTexture(GL_TEXTURE_2D, main_foreground);
+						Shader::Draw(Shader::shaderDefault);
+						Shader::shaderDefault->setVec3("color", Color::White);
+					}
 
 
 
-				if (aItem->GetButtonPos().y < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
-				{
-					aItem->SetTextOffset(glm::vec2(5.f, 8.f));
-					aItem->DrawString(textTexture[texIndex]);
+					if (aItem->GetButtonPos().y < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+					{
+						aItem->SetTextOffset(glm::vec2(5.f, 8.f));
+						aItem->DrawString(textTexture[texIndex]);
+					}
 				}
 
 				texIndex++;

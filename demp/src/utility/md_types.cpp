@@ -10,6 +10,7 @@ namespace mdEngine
 	glm::vec3 Color::Red(1.f, 0.f, 0.f);
 	glm::vec3 Color::Green(0.f, 1.f, 0.f);
 	glm::vec3 Color::Blue(0.f, 0.f, 1.f);
+	glm::vec3 Color::Pink(1.f, 0.0784f, 0.576f);
 
 
 	SDL_Color SDLColor::White		= { 255, 255, 255 };

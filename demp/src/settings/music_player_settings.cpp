@@ -82,6 +82,7 @@ namespace MP
 		glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 
 		glm::vec2 _PLAYLIST_ITEM_SIZE;
+		glm::vec2 _PLAYLIST_SEPARATOR_SIZE;
 
 		glm::vec2 _PLAYLIST_SCROLL_BAR_POS;
 		glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE;
@@ -135,7 +136,7 @@ namespace MP
 		s16 musicUIOffsetY = 35;
 		s16 musicProgressBarOffsetY = 10;
 
-		_PLAYLIST_CHOOSE_ITEM_DELAY = 400;
+		_PLAYLIST_CHOOSE_ITEM_DELAY = 300;
 
 		_MUSIC_PLAYER_FONT = TTF_OpenFont("assets/font/Times New Roman.ttf", 14);
 		_MUSIC_PLAYER_NUMBER_FONT = TTF_OpenFont("assets/font/Times New Roman.ttf", 14);
@@ -209,6 +210,7 @@ namespace MP
 		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 30.f);
 
 		_PLAYLIST_ITEM_SIZE = glm::vec2(300.f, 30.f);
+		_PLAYLIST_SEPARATOR_SIZE = glm::vec2(300.f, 20.f);
 
 		_PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdCurrentWidth - 60.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
 		_PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, 20.f);

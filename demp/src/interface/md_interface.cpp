@@ -129,6 +129,8 @@ namespace mdEngine
 	{
 		m_ItemColor = Color::White;
 		m_ButtonSize = Data::_PLAYLIST_ITEM_SIZE;
+		m_ClickCount = 0;
+		m_PlaylistItemHidden = false;
 
 		m_ItemID = *id;
 
@@ -180,6 +182,11 @@ namespace mdEngine
 		m_ClickCount++;
 	}
 
+	void Interface::PlaylistItem::HidePlaylistItem(b8 val)
+	{
+		m_PlaylistItemHidden = val;
+	}
+
 	void Interface::PlaylistItem::SetAsFolderRep()
 	{
 		m_FolderRep = true;
@@ -208,6 +215,11 @@ namespace mdEngine
 	b8 Interface::PlaylistItem::IsFolderRep() const
 	{
 		return m_FolderRep;
+	}
+
+	b8 Interface::PlaylistItem::IsPlaylistItemHidden() const
+	{
+		return m_PlaylistItemHidden;
 	}
 
 	u8 Interface::PlaylistItem::GetClickCount() const
@@ -252,14 +264,15 @@ namespace mdEngine
 
 	Interface::PlaylistSeparator::PlaylistSeparator(std::wstring name)
 	{ 
-		m_TextString = name;
-		isVisible = false;
+		m_Path = name;
+		m_TextString = Audio::Info::GetFolder(name);
+		m_Visible = false;
 		m_ButtonPos = glm::vec2(POS_INVALID);
 		m_TextPos = glm::vec2(POS_INVALID);
 		m_SepItemCount = 0;
 		SepItemDuration = 0;
 		m_ItemColor = Color::Blue;
-		m_ButtonSize = glm::vec2(Data::_PLAYLIST_ITEM_SIZE.x, Data::_PLAYLIST_ITEM_SIZE.y / 2);
+		m_ButtonSize = Data::_PLAYLIST_SEPARATOR_SIZE;
 	}
 
 	void Interface::PlaylistSeparator::InitItem(s32 posOfFirstFile)
@@ -267,6 +280,8 @@ namespace mdEngine
 		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
 		m_TextColor = SDLColor::Grey;
+		m_SeparatorHidden = false;
+		m_SeparatorSelected = false;
 
 		u16 len = m_TextString.length();
 		m_TitleC.resize(len + 1);
@@ -279,26 +294,16 @@ namespace mdEngine
 
 	void Interface::PlaylistSeparator::SetSeperatorPath(std::wstring path)
 	{
-		m_TextString = path;
+		m_Path = path;
 	}
 
-	std::wstring Interface::PlaylistSeparator::GetSeparatorPath() const
-	{
-		return m_TextString;
-	}
-
-	std::wstring Interface::PlaylistSeparator::GetSeparatorName() const
-	{
-		return Audio::Info::GetFolder(m_TextString);
-	}
-
-	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(const s32* fileIndex, std::wstring path)
+	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(s32* fileIndex, std::wstring path)
 	{
 		m_SubFilesPaths.push_back(std::make_pair(fileIndex, path));
 		m_SepItemCount++;
 	}
 
-	void Interface::PlaylistSeparator::SeparatorSubFileInsert(const s32* fileIndex, const std::wstring path, s32 pos)
+	void Interface::PlaylistSeparator::SeparatorSubFileInsert(s32* fileIndex, const std::wstring path, s32 pos)
 	{
 		assert(pos < m_SubFilesPaths.size());
 		m_SubFilesPaths.insert(m_SubFilesPaths.begin() + pos, std::make_pair(fileIndex, path));
@@ -309,6 +314,47 @@ namespace mdEngine
 	{
 		m_SepItemCount--;
 	}
+	
+	b8 Interface::PlaylistSeparator::IsVisible() const
+	{
+		return m_Visible;
+	}
+
+	b8 Interface::PlaylistSeparator::IsSeparatorHidden() const
+	{
+		return m_SeparatorHidden;
+	}
+
+	b8 Interface::PlaylistSeparator::IsSelected() const
+	{
+		return m_SeparatorSelected;
+	}
+
+	void Interface::PlaylistSeparator::Visible(b8 val)
+	{
+		m_Visible = val;
+	}
+
+	void Interface::PlaylistSeparator::HideSeparator(b8 val)
+	{
+		m_SeparatorHidden = val;
+	}
+
+	void Interface::PlaylistSeparator::Select(b8 val)
+	{
+		m_SeparatorSelected = val;
+	}
+
+	std::wstring Interface::PlaylistSeparator::GetSeparatorPath() const
+	{
+		return m_Path;
+	}
+
+	std::wstring Interface::PlaylistSeparator::GetSeparatorName() const
+	{
+		return m_TextString;
+	}
+
 
 	Interface::SeparatorSubContainer* Interface::PlaylistSeparator::GetSubFilesContainer()
 	{
@@ -495,6 +541,24 @@ namespace mdEngine
 			return nullptr;
 
 		return it->second;
+	}
+
+	Interface::PlaylistSeparator* Interface::Separator::GetSeparatorByID(s32 id)
+	{
+		if (m_PlaylistSeparatorContainer.empty() == true)
+			return nullptr;
+
+		for (auto & i : m_PlaylistSeparatorContainer)
+		{
+			auto subCon = i.second->GetSubFilesContainer();
+			if (*subCon->at(0).first <= id &&
+				*subCon->back().first >= id)
+			{
+				return i.second;
+			}
+		}
+
+		return nullptr;
 	}
 
 	void Interface::Separator::SortSeparatorContainer()

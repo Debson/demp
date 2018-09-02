@@ -21,5 +21,6 @@ namespace mdEngine
 		ResetState(AudioChanged);
 		ResetState(ContainersResized);
 		ResetState(FileDropped);
+		ResetState(AudioHidden);
 	}
 }
