@@ -97,6 +97,8 @@ namespace MP
 		extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 
 		extern glm::vec2 _PLAYLIST_ITEM_SIZE;
+
+		extern glm::vec2 _PLAYLIST_SEPARATOR_POS_OFFSET;
 		extern glm::vec2 _PLAYLIST_SEPARATOR_SIZE;
 
 		extern glm::vec2 _PLAYLIST_SCROLL_BAR_POS;

@@ -76,7 +76,8 @@ namespace mdEngine
 			virtual ~PlaylistItem();
 			static s32 OffsetIndex;
 
-			void DrawDottedBorder(s16 playpos);
+			void DrawDottedBorder() const;
+			virtual void DrawItem(GLuint texture);
 			virtual void InitItem(s32* id);
 			virtual void SetButtonPos(glm::vec2 pos);
 
@@ -114,6 +115,7 @@ namespace mdEngine
 			PlaylistSeparator(std::wstring name);
 
 			virtual void InitItem(s32 posOfFirstFile);
+			virtual void DrawItem(GLuint texture);
 
 			void			SetSeperatorPath(std::wstring path);
 			void			SeparatorSubFilePushBack(s32* fileIndex, const std::wstring path);
@@ -202,8 +204,11 @@ namespace mdEngine
 			PlaylistSeparatorContainer* GetContainer();
 			PlaylistSeparator* GetSeparator(std::wstring text);
 			PlaylistSeparator* GetSeparatorByID(s32 id);
-			void SortSeparatorContainer();
 			s32 GetSize();
+
+#ifdef _DEBUG_
+			void PrintSeparatorInfo();
+#endif
 		}
 
 		namespace PlaylistButton

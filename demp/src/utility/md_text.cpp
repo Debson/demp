@@ -36,7 +36,7 @@ namespace mdEngine
 						   };
 
 		m_Font = font;
-		m_TextColor = color;
+		SetTextColor(col);
 		m_TextString = L"";
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
@@ -52,7 +52,7 @@ namespace mdEngine
 						  };
 
 		m_Font = font;
-		m_TextColor = color;
+		SetTextColor(col);
 		m_TextString = text;
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
@@ -60,26 +60,52 @@ namespace mdEngine
 		TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
-	Text::TextObject::~TextObject() { }
+	Text::TextObject::~TextObject() 
+	{ 
+		DeleteTexture();
+	}
 
 	void Text::TextObject::InitTextTexture()
 	{
-		if (m_TextTexture > 0)
-			glDeleteTextures(1, &m_TextTexture);
+		if (m_TextTexture == 0)
+		{
+			TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
+			m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
+		}
+	}
+
+	void Text::TextObject::ReloadTextTexture()
+	{
+		DeleteTexture();
+
 		TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
-		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColor);
+		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
+	}
+
+	void Text::TextObject::DeleteTexture()
+	{
+		if (m_TextTexture > 0)
+		{
+			glDeleteTextures(1, &m_TextTexture);
+			m_TextTexture = 0;
+		}
 	}
 
 	void Text::TextObject::DrawString() const
 	{
 		Graphics::Shader::shaderDefault->use();
 		glm::mat4 model;
-		model = glm::translate(model, glm::vec3(m_TextPos, 0.9));
+		model = glm::translate(model,
+			glm::vec3(glm::vec2(m_TextPos.x + m_TextOffset.x,
+				m_TextPos.y + m_TextOffset.y),
+				0.9)
+		);
 		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.0));
 		Graphics::Shader::shaderDefault->setMat4("model", model);
+		Graphics::Shader::shaderDefault->setVec3("color", m_TextColorVec.r, m_TextColorVec.g, m_TextColorVec.b);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, m_TextTexture);
-		Graphics::Shader::Draw(Graphics::Shader::shaderDefault);
+		Graphics::Shader::Draw(Graphics::Shader::shaderDefault);;
 	}
 
 	void Text::TextObject::DrawString(GLuint tex) const
@@ -110,7 +136,8 @@ namespace mdEngine
 							static_cast<Uint8>(255 * col.z)
 						  };
 
-		m_TextColor = color;
+		m_TextColorSDL = color;
+		m_TextColorVec = col;
 	}
 
 	void Text::TextObject::SetTextString(std::wstring str)
@@ -135,7 +162,7 @@ namespace mdEngine
 
 	GLuint Text::TextObject::GetLoadedTexture()
 	{
-		GLuint tempText = LoadText(m_Font, m_TextString, m_TextColor);
+		GLuint tempText = LoadText(m_Font, m_TextString, m_TextColorSDL);
 
 		return tempText;
 	}
@@ -162,7 +189,7 @@ namespace mdEngine
 
 	SDL_Color Text::TextObject::GetTextColor() const
 	{
-		return m_TextColor;
+		return m_TextColorSDL;
 	}
 
 

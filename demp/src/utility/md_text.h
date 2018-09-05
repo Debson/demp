@@ -22,18 +22,20 @@ namespace mdEngine
 			virtual ~TextObject();
 
 
-			void InitTextTexture();
-			void DrawString() const;
+			virtual void InitTextTexture();
+			virtual void ReloadTextTexture();
+			virtual void DeleteTexture();
+			virtual void DrawString() const;
 
 			// Draw text string with specific texture 
-			void DrawString(GLuint tex) const;
+			virtual void DrawString(GLuint tex) const;
 
-			void SetTextScale(f32 scale);
-			void SetTextColor(glm::vec3 col);
-			void SetTextString(std::wstring str);
-			void SetTextPos(glm::vec2 pos);
-			void SetTextSize(glm::vec2 size);
-			void SetTextOffset(glm::vec2 offset);
+			virtual void SetTextScale(f32 scale);
+			virtual void SetTextColor(glm::vec3 col);
+			virtual void SetTextString(std::wstring str);
+			virtual void SetTextPos(glm::vec2 pos);
+			virtual void SetTextSize(glm::vec2 size);
+			virtual void SetTextOffset(glm::vec2 offset);
 
 			/* Initializes and returns a texture(does not initialize any class members, memory safe)*/
 			GLuint		GetLoadedTexture();
@@ -47,9 +49,10 @@ namespace mdEngine
 			f32			 m_TextScale;
 			GLuint		 m_TextTexture;
 			TTF_Font*	 m_Font;
-			SDL_Color	 m_TextColor;
+			SDL_Color	 m_TextColorSDL;
 			glm::vec2	 m_TextOffset;
 			glm::vec2	 m_TextPos;
+			glm::vec3	 m_TextColorVec;
 			glm::ivec2	 m_TextSize;
 			std::wstring m_TextString;
 

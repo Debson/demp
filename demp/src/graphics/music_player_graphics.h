@@ -40,14 +40,16 @@ namespace Graphics
 			void SetSize(glm::vec2 size);
 			void SetItemsSize(f64 itemsSize);
 			void SetItemsDuration(f64 itemsDuration);
+			void SetIndexesToRender(std::vector<s32> indexesVec);
 			void SetCurrentMinIndex(s32 min);
 			void SetCurrentMaxIndex(s32 max);
 			void SetCurrentOffset(s32 offset);
 			void SetHiddenSeparatorCount(s32 count);
 			f64  GetItemsSize()				const;
 			f64  GetItemsDuration()			const;
-			s32  GetCurrentMinIndex()		const;
-			s32  GetCurrentMaxIndex()		const;
+			std::vector<s32> GetIndexesToRender() const;
+			//s32  GetCurrentMinIndex()		const;
+			//s32  GetCurrentMaxIndex()		const;
 			s32  GetCurrentOffset()			const;
 			s32  GetHiddenSeparatorCount()  const;
 
@@ -79,6 +81,7 @@ namespace Graphics
 			glm::vec2	m_Size;
 			std::string m_ItemsDurationStr;
 			std::string m_ItemsSizeStr;
+			std::vector<s32> indexesToRender;
 
 
 		};
@@ -111,6 +114,14 @@ namespace Graphics
 		void RenderMainWindow();
 
 		void CloseMainWindow();
+
+#ifdef _DEBUG_
+		void PrintVisibleItemsInfo();
+		
+		void PrintAudioObjectInfo();
+
+		void PrintIndexesToRender();
+#endif
 
 	}
 }

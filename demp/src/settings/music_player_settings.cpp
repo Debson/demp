@@ -82,6 +82,8 @@ namespace MP
 		glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 
 		glm::vec2 _PLAYLIST_ITEM_SIZE;
+
+		glm::vec2 _PLAYLIST_SEPARATOR_POS_OFFSET;
 		glm::vec2 _PLAYLIST_SEPARATOR_SIZE;
 
 		glm::vec2 _PLAYLIST_SCROLL_BAR_POS;
@@ -109,7 +111,7 @@ namespace MP
 		s32 VolumeFadeTime = 500;
 		s32 PlaylistRollMultiplier = 500;
 
-		f32 PlaylistScrollStep = 50.f;
+		f32 PlaylistScrollStep = 5.f;
 
 		// private
 		f32 mdDefaultWidth;
@@ -210,7 +212,9 @@ namespace MP
 		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 400.f, mdCurrentHeight - 30.f);
 
 		_PLAYLIST_ITEM_SIZE = glm::vec2(300.f, 30.f);
-		_PLAYLIST_SEPARATOR_SIZE = glm::vec2(300.f, 20.f);
+
+		_PLAYLIST_SEPARATOR_POS_OFFSET = glm::vec2(10.f, 0.f);
+		_PLAYLIST_SEPARATOR_SIZE = glm::vec2(300.f + _PLAYLIST_SEPARATOR_POS_OFFSET.x, 20.f);
 
 		_PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdCurrentWidth - 60.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
 		_PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, 20.f);

@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <random>
 
-
 #include "../settings/music_player_settings.h"
 #include "../playlist/music_player_playlist.h"
 #include "../graphics/graphics.h"
+#include "../graphics/music_player_graphics.h"
 #include "../ui/music_player_ui.h"
 #include "../audio/mp_audio.h"
 #include "../utility/utf8_to_utf16.h"
@@ -131,6 +131,7 @@ namespace mdEngine
 		m_ButtonSize = Data::_PLAYLIST_ITEM_SIZE;
 		m_ClickCount = 0;
 		m_PlaylistItemHidden = false;
+		m_ItemColor = Color::White;
 
 		m_ItemID = *id;
 
@@ -141,7 +142,7 @@ namespace mdEngine
 
 		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
-		m_TextColor = SDLColor::Grey;
+		SetTextColor(Color::White);
 
 		m_TextString = Audio::Object::GetAudioObject(m_ItemID)->GetTitle();
 
@@ -153,11 +154,8 @@ namespace mdEngine
 		m_PlaylistButtonsContainer[*id] = std::make_pair(id, this);
 	}
 
-	void Interface::PlaylistItem::DrawDottedBorder(s16 playPos)
+	void Interface::PlaylistItem::DrawDottedBorder() const
 	{
-		if (this->m_ButtonPos == glm::vec2(POS_INVALID))
-			return;
-
 		glm::mat4 model;
 		Shader::shaderBorder->use();
 		Shader::shaderBorder->setVec3("color", Color::Grey);
@@ -165,10 +163,52 @@ namespace mdEngine
 		f32 dotYOffset = 0.1;
 		Shader::shaderBorder->setFloat("xOffset", dotXOffset);
 		Shader::shaderBorder->setFloat("yOffset", dotYOffset);
-		model = glm::translate(model, glm::vec3(this->m_ButtonPos, 0.9));
-		model = glm::scale(model, glm::vec3(this->m_ButtonSize, 1.f));
+		model = glm::translate(model, glm::vec3(m_ButtonPos, 0.9));
+		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.f));
 		Shader::shaderBorder->setMat4("model", model);
 		Shader::DrawDot();
+	}
+
+	void Interface::PlaylistItem::DrawItem(GLuint texture)
+	{
+		glm::mat4 model;
+		glm::vec3 originalColor = m_ItemColor;
+		glm::vec3 halvesColor = Color::DarkGrey;
+
+		if (topHasFocus == true)
+		{
+			model = glm::translate(model, glm::vec3(m_ButtonPos, 0.5f));
+			model = glm::scale(model, glm::vec3(m_ButtonSize.x, m_ButtonSize.y / 2.f, 1.0f));
+			Shader::shaderDefault->setMat4("model", model);
+			Shader::shaderDefault->setVec3("color", halvesColor);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			Shader::Draw(Shader::shaderDefault);
+		}
+
+
+		if (bottomHasFocus == true)
+		{
+			model = glm::translate(model, glm::vec3(m_ButtonPos.x, m_ButtonPos.y + m_ButtonSize.y / 2.f, 0.5f));
+			model = glm::scale(model, glm::vec3(m_ButtonSize.x, m_ButtonSize.y / 2.f, 1.0f));
+			Shader::shaderDefault->setMat4("model", model);
+			Shader::shaderDefault->setVec3("color", halvesColor);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			Shader::Draw(Shader::shaderDefault);
+		}
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(m_ButtonPos, 0.5f));
+		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.0f));
+		Shader::shaderDefault->setMat4("model", model);
+		Shader::shaderDefault->setVec3("color", m_ItemColor);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		Shader::Draw(Shader::shaderDefault);
+
+		// Draw String
+		s32 offsetY = (m_ButtonSize.y - m_TextSize.y) / 2;
+		SetTextOffset(glm::vec2(5.f, offsetY));
+		DrawString();
+		//m_ItemColor = originalColor;
 	}
 
 	void Interface::PlaylistItem::SetButtonPos(glm::vec2 pos)
@@ -279,7 +319,9 @@ namespace mdEngine
 	{
 		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
-		m_TextColor = SDLColor::Grey;
+		m_ItemColor = Color::Pink;
+		SetTextColor(Color::Grey);
+
 		m_SeparatorHidden = false;
 		m_SeparatorSelected = false;
 
@@ -289,7 +331,23 @@ namespace mdEngine
 
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 
-		m_PlaylistSeparatorContainer.push_back(std::make_pair(m_TextString, this));
+		m_PlaylistSeparatorContainer.push_back(std::make_pair(m_Path, this));
+	}
+
+	void Interface::PlaylistSeparator::DrawItem(GLuint texture)
+	{
+		glm::mat4 model;
+		model = glm::translate(model, glm::vec3(m_ButtonPos, 0.5f));
+		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.0f));
+		Shader::shaderDefault->setMat4("model", model);
+		Shader::shaderDefault->setVec3("color", m_ItemColor);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		Shader::Draw(Shader::shaderDefault);
+
+		// Draw String
+		s32 offsetY = (m_ButtonSize.y - m_TextSize.y) / 2;
+		SetTextOffset(glm::vec2(5.f, offsetY));
+		DrawString();
 	}
 
 	void Interface::PlaylistSeparator::SetSeperatorPath(std::wstring path)
@@ -337,11 +395,41 @@ namespace mdEngine
 
 	void Interface::PlaylistSeparator::HideSeparator(b8 val)
 	{
+		auto audioCon = Audio::Object::GetAudioObjectContainer();
+		if (val == true)
+		{
+			for (auto i : m_SubFilesPaths)
+			{
+				audioCon[*i.first]->HidePlaylistItem(true);
+			}
+		}
+		else
+		{
+			for (auto i : m_SubFilesPaths)
+			{
+				audioCon[*i.first]->HidePlaylistItem(false);
+			}
+		}
 		m_SeparatorHidden = val;
 	}
 
 	void Interface::PlaylistSeparator::Select(b8 val)
 	{
+		auto playlist = Graphics::MP::GetPlaylistObject();
+		assert(playlist != NULL);
+
+		if (val == true)
+		{
+			for (auto i : m_SubFilesPaths)
+			{
+				playlist->multipleSelect.push_back(i.first);
+			}
+		}
+		else
+		{
+			playlist->multipleSelect.clear();
+		}
+
 		m_SeparatorSelected = val;
 	}
 
@@ -561,31 +649,42 @@ namespace mdEngine
 		return nullptr;
 	}
 
-	void Interface::Separator::SortSeparatorContainer()
-	{
-		// Delete all playlist separators that has empty sub files containers
-		for (s32 i = m_PlaylistSeparatorContainer.size() - 1; i >= 0; i--)
-		{
-			auto subCon = m_PlaylistSeparatorContainer[i].second->GetSubFilesContainer();
-			if (subCon->empty() == true)
-			{
-				delete m_PlaylistSeparatorContainer[i].second;
-				m_PlaylistSeparatorContainer.erase(m_PlaylistSeparatorContainer.begin() + i);
-			}
-		}
-
-		std::sort(m_PlaylistSeparatorContainer.begin(), m_PlaylistSeparatorContainer.end(),
-			[&](const std::pair<std::wstring, PlaylistSeparator*>  a, const std::pair<std::wstring, PlaylistSeparator*> b)
-		{
-			return *a.second->GetSubFilesContainer()->at(0).first < *b.second->GetSubFilesContainer()->at(0).first;
-		});
-	}
-
 	s32 Interface::Separator::GetSize()
 	{
 		return m_PlaylistSeparatorContainer.size();
 	}
 
+#ifdef _DEBUG_
+	void Interface::Separator::PrintSeparatorInfo()
+	{
+		s32 maxNameLen = 40;
+		for (auto i : m_PlaylistSeparatorContainer)
+		{
+			std::cout << "Name: ";
+			std::cout << utf16_to_utf8(i.second->GetSeparatorName());
+			for(s32 k = utf16_to_utf8(i.second->GetSeparatorName()).length(); k < maxNameLen; k++)
+				std::cout << " ";
+			std::cout << " || ";
+			std::cout << "Visible: ";
+			std::cout << i.second->IsVisible();
+			std::cout << " || ";;
+			std::cout << "Hidden: ";
+			std::cout << i.second->IsSeparatorHidden();
+			std::cout << " || ";
+			std::cout << "Sub items: ";
+			std::cout << i.second->GetSubFilesContainer()->size();
+			std::cout << " || ";
+			std::cout << "Pos X: ";
+			std::cout << i.second->GetButtonPos().x;
+			std::cout << " || ";
+			std::cout << "Pos Y: ";
+			std::cout << i.second->GetButtonPos().y;
+
+			std::cout << std::endl;
+		}
+
+	}
+#endif
 
 	Interface::PlaylistButtonContainer* Interface::PlaylistButton::GetContainer()
 	{
@@ -607,6 +706,7 @@ namespace mdEngine
 	{
 		return m_PlaylistButtonsContainer.size();
 	}
+
 
 
 }
