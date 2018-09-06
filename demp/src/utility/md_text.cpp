@@ -160,6 +160,14 @@ namespace mdEngine
 		m_TextOffset = offset;
 	}
 
+	b8 Text::TextObject::HasTexture() const
+	{
+		if (m_TextTexture > 0)
+			return true;
+
+		return false;
+	}
+
 	GLuint Text::TextObject::GetLoadedTexture()
 	{
 		GLuint tempText = LoadText(m_Font, m_TextString, m_TextColorSDL);

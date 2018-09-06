@@ -124,6 +124,7 @@ namespace MP
 		extern s32 VolumeScrollStep;
 		extern s32 VolumeFadeTime;
 		extern s32 PlaylistRollMultiplier;
+		extern s32 PlaylistBarMovableZoneXOffset;
 
 		extern f32 PlaylistScrollStep;
 

@@ -111,7 +111,9 @@ namespace MP
 		s32 VolumeFadeTime = 500;
 		s32 PlaylistRollMultiplier = 500;
 
-		f32 PlaylistScrollStep = 5.f;
+		f32 PlaylistScrollStep = 30.f;
+
+		s32 PlaylistBarMovableZoneXOffset = 150;
 
 		// private
 		f32 mdDefaultWidth;

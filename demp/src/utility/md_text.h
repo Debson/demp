@@ -37,6 +37,7 @@ namespace mdEngine
 			virtual void SetTextSize(glm::vec2 size);
 			virtual void SetTextOffset(glm::vec2 offset);
 
+			b8 HasTexture() const;
 			/* Initializes and returns a texture(does not initialize any class members, memory safe)*/
 			GLuint		GetLoadedTexture();
 			TTF_Font*	GetTextFont()  const;

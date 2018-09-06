@@ -13,6 +13,7 @@
 #define TEMPLATE template <typename T>
 
 
+
 #ifdef _DEBUG_OUTPUT_
 #define MD_SDL_ERROR(x) (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, x, SDL_GetError(), nullptr))
 

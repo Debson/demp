@@ -166,6 +166,7 @@ namespace mdEngine
 		model = glm::translate(model, glm::vec3(m_ButtonPos, 0.9));
 		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.f));
 		Shader::shaderBorder->setMat4("model", model);
+		glBindTexture(GL_TEXTURE_2D, 0);
 		Shader::DrawDot();
 	}
 
@@ -175,6 +176,13 @@ namespace mdEngine
 		glm::vec3 originalColor = m_ItemColor;
 		glm::vec3 halvesColor = Color::DarkGrey;
 
+		if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == m_ItemID)
+		{
+			m_ItemColor *= Color::Red;
+		}
+
+		Shader::shaderDefault->use();
+		halvesColor *= m_ItemColor;
 		if (topHasFocus == true)
 		{
 			model = glm::translate(model, glm::vec3(m_ButtonPos, 0.5f));
@@ -196,6 +204,7 @@ namespace mdEngine
 			Shader::Draw(Shader::shaderDefault);
 		}
 
+
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(m_ButtonPos, 0.5f));
 		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.0f));
@@ -208,7 +217,7 @@ namespace mdEngine
 		s32 offsetY = (m_ButtonSize.y - m_TextSize.y) / 2;
 		SetTextOffset(glm::vec2(5.f, offsetY));
 		DrawString();
-		//m_ItemColor = originalColor;
+		m_ItemColor = originalColor;
 	}
 
 	void Interface::PlaylistItem::SetButtonPos(glm::vec2 pos)
@@ -336,6 +345,7 @@ namespace mdEngine
 
 	void Interface::PlaylistSeparator::DrawItem(GLuint texture)
 	{
+		Shader::shaderDefault->use();
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(m_ButtonPos, 0.5f));
 		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.0f));
@@ -693,11 +703,17 @@ namespace mdEngine
 
 	Interface::Button* Interface::PlaylistButton::GetButton(s32 id)
 	{
-		if (m_PlaylistButtonsContainer.empty() == true		|| 
-			m_PlaylistButtonsContainer[id].second == NULL	||
-			id > m_PlaylistButtonsContainer.size()			||
+		if (m_PlaylistButtonsContainer.empty() == true		||
+			id > m_PlaylistButtonsContainer.size() - 1		||
 			id < 0)
 			return nullptr;
+
+		if (id < m_PlaylistButtonsContainer.size() ||
+			id >= 0)
+		{
+			if (m_PlaylistButtonsContainer[id].second == NULL)
+				return nullptr;
+		}
 
 		return m_PlaylistButtonsContainer[id].second;
 	}

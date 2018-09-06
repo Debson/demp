@@ -30,21 +30,22 @@ namespace mdEngine
 		enum MusicPlayerState : u32
 		{
 			FileDropped			= (1u << 13),
-			ContainersResized	= (1u << 14)
+			ContainersResized	= (1u << 14),
+			PlaylistMovement	= (1u << 15)
 		};
 
 		namespace Window
 		{
 			enum WindowEvent : u32
 			{
-				HasFocus	= (1u << 15),
-				Resized		= (1u << 16),
-				Minimized	= (1u << 17),
-				Shown		= (1u << 18),
-				Hidden		= (1u << 19),
-				Exposed		= (1u << 20),
-				MouseEnter	= (1u << 21),
-				MouseLeave	= (1u << 22)
+				HasFocus	= (1u << 16),
+				Resized		= (1u << 17),
+				Minimized	= (1u << 18),
+				Shown		= (1u << 19),
+				Hidden		= (1u << 20),
+				Exposed		= (1u << 21),
+				MouseEnter	= (1u << 22),
+				MouseLeave	= (1u << 23)
 			};
 		};
 

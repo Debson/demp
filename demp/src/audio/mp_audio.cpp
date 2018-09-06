@@ -604,7 +604,6 @@ void Audio::SetFoldersRep()
 		sepCon->clear();
 
 
-		glm::vec2 startPos = glm::vec2(MP::Data::_PLAYLIST_ITEMS_SURFACE_POS);
 		std::wstring previousFolderPath = L"";
 		Interface::PlaylistSeparator* ps = nullptr;
 		s32 counter = 0;
@@ -626,21 +625,6 @@ void Audio::SetFoldersRep()
 			counter++;
 			if(filesLoadedFromFile == true && filesInfoScanned == true)
 				Info::LoadedItemsInfoCount++;
-
-			/*if (i->IsFolderRep() == true)
-			{
-				auto playlistSeparator = Interface::Separator::GetSeparatorByID(i->GetID());
-				assert(playlistSeparator != nullptr);
-
-				startPos.y += playlistSeparator->GetButtonSize().y;
-				playlistSeparator->SetButtonPos(glm::vec2(startPos.x - MP::Data::_PLAYLIST_SEPARATOR_POS_OFFSET.x,
-					startPos.y));
-			}
-
-			i->SetButtonPos(startPos);
-			i->DeleteTexture();
-
-			startPos.y += MP::Data::_PLAYLIST_ITEM_SIZE.y;*/
 
 		}
 		

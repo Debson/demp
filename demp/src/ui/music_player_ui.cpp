@@ -272,6 +272,11 @@ namespace MP
 			{
 				Graphics::MP::PrintAudioObjectInfo();
 			}
+
+			if (ImGui::Button("Print indexes to render") == true)
+			{
+				Graphics::MP::PrintIndexesToRender();
+			}
 			
 
 
@@ -537,6 +542,18 @@ namespace MP
 			Playlist::LowerVolume(App::InputEvent::kScrollEvent);
 		}
 
+
+		if(App::Input::IsKeyDown(App::KeyCode::LCtrl) == true && 
+		   App::Input::IsKeyDown(App::KeyCode::A) == true)
+		{
+			auto audioCon = Audio::Object::GetAudioObjectContainer();
+			Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
+			for (auto & i : audioCon)
+			{
+				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&i->GetID());
+			}
+		}
+
 	}
 
 	void UI::HandlePlaylistInput()
@@ -550,16 +567,7 @@ namespace MP
 			std::vector<s32*>::iterator it;
 			s32 *currentPlaylistItemID = &Audio::Object::GetAudioObject(i)->GetID();
 
-			if (App::Input::IsKeyDown(App::KeyCode::LCtrl) && App::Input::IsKeyDown(App::KeyCode::A))
-			{
-				it = std::find(Graphics::MP::GetPlaylistObject()->multipleSelect.begin(),
-							   Graphics::MP::GetPlaylistObject()->multipleSelect.end(),
-							   currentPlaylistItemID);
-				if(it == Graphics::MP::GetPlaylistObject()->multipleSelect.end())
-					Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(
-						currentPlaylistItemID);
-			}
-			else if (Audio::Object::GetAudioObject(i)->isPressed == true)
+			if (Audio::Object::GetAudioObject(i)->isPressed == true)
 			{
 				clickDelayTimer.start();
 				Audio::Object::GetAudioObject(i)->Click();

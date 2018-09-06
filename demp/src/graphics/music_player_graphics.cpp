@@ -87,10 +87,13 @@ namespace Graphics
 
 		f32 playlistPositionOffset;
 		f32 playlistPositionOffsetPrevious;
-		s32 minVisiblePosPrevious, maxVisiblePosPrevious;
 		MP::PlaylistMovement playlistMove;
-		
-
+		s32 playlistCursorPosition;
+		s32 minPosToRender, maxPosToRender;
+		s32 mouseXPosPrevious, mouseYPosPrevious;
+		s32 sliderYPosPrevious;
+		b8 scrollBarMaxBoundsCrossed(false);
+		s32 playlistPositionOffsetBeforeCross;
 
 
 		Text::TextObject durationText;
@@ -956,33 +959,40 @@ namespace Graphics
 
 	void MP::RenderScrollBar(f32* playlistOffset, f32 displayedItems, f32 maxItems)
 	{
-		s32 itemH = Data::_PLAYLIST_ITEM_SIZE.y;
 
 		// SCROLL BAR
 		glm::mat4 model;
 		if (displayedItems < Audio::Object::GetSize())
 		{
+			//displayedItems += 3;
+			s32 itemH = Data::_PLAYLIST_ITEM_SIZE.y;
+			s32 separatorH = Data::_PLAYLIST_SEPARATOR_SIZE.y;
+			auto sepCon = Interface::Separator::GetContainer();
+			auto audioCon = Audio::Object::GetAudioObjectContainer();
+			s32 separatorsOffset = sepCon->size() * separatorH;
+
+			s32 bottomPlaylistBorder = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y;
 			f32 playlistSurface = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
-			f32 scaleY = playlistSurface / (float)Audio::Object::GetSize() * displayedItems;
+			f32 scaleY = (playlistSurface / ((float)Audio::Object::GetSize() + separatorsOffset / itemH)) * (displayedItems);
 			// Set minimum size for scroll bar and do calculations with changed size
 			if (scaleY < Data::_PLAYLIST_SCROLL_BAR_SIZE.y)
 				scaleY = Data::_PLAYLIST_SCROLL_BAR_SIZE.y;
 			f32 scrollSurface = playlistSurface - scaleY;
-			f32 scrollStep = ((*playlistOffset) * scrollSurface) / ((maxItems - displayedItems) * itemH);
-			f32 newPosY = (Data::_PLAYLIST_SCROLL_BAR_POS.y + scrollStep);
+			
 
 
 			assert(m_PlaylistBarSlider != NULL);
 
 			m_PlaylistBarSlider->GetButtonSize().y = scaleY;
-			m_PlaylistBarSlider->SetButtonPos(glm::vec2(m_PlaylistBarSlider->GetButtonPos().x,
-														newPosY));
+
 
 			
 
 			if (App::Input::IsKeyDown(App::KeyCode::MouseLeft))
 			{
+
 				App::Input::GetGlobalMousePosition(&mouseX, &mouseY);
+
 
 				if (Input::hasFocus(Input::ButtonType::SliderPlaylist))
 				{
@@ -997,11 +1007,17 @@ namespace Graphics
 			}
 			else
 			{
+				App::Input::GetMousePosition(&mouseXPosPrevious, &mouseYPosPrevious);
+				sliderYPosPrevious = m_PlaylistBarSlider->GetButtonPos().y;
 				playlistSliderActive = false;
 				playlistSliderFirstEnter = true;
 			}
 
-			if (playlistSliderActive)
+			App::Input::GetMousePosition(&mouseX, &mouseY);
+
+			if (playlistSliderActive && 
+				mouseY > Data::_PLAYLIST_ITEMS_SURFACE_POS.y &&
+				mouseY < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
 			{
 				s32 relX, relY;
 				App::Input::GetRelavtiveMousePosition(&relX, &relY);
@@ -1011,31 +1027,106 @@ namespace Graphics
 				{
 					relY = 0;
 				}
+				if(relY != 0)
+					State::SetState(State::PlaylistMovement);
 
-				*playlistOffset += (relY * maxItems / displayedItems);
+
+				*playlistOffset += ((relY * maxItems) / (displayedItems));
+
+				f32 scrollStep = ((*playlistOffset) * scrollSurface) / ((maxItems - displayedItems) * itemH + separatorsOffset);
+				f32 newPosY = (Data::_PLAYLIST_SCROLL_BAR_POS.y + scrollStep);
+				m_PlaylistBarSlider->SetButtonPos(glm::vec2(m_PlaylistBarSlider->GetButtonPos().x, newPosY));
 
 
-				// Lock PLAYLIST at the same time as scroll bar at the bottom
-				/*if (playlistCurrentOffsetY < (maxItems - displayedItems) * itemH * -1 + (displayedItems - displayedItems) * itemH)
+				if (m_PlaylistBarSlider->GetButtonPos().y < Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
 				{
-					playlistCurrentOffsetY = (maxItems - displayedItems) * itemH * -1 + (displayedItems - displayedItems) * itemH;
-				}*/
+					m_PlaylistBarSlider->GetButtonPos().y = Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
+				}
+				if (m_PlaylistBarSlider->GetButtonPos().y + m_PlaylistBarSlider->GetButtonSize().y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+				{
+					m_PlaylistBarSlider->GetButtonPos().y = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - m_PlaylistBarSlider->GetButtonSize().y;
+				}
+
 			}
 
-			/*if (m_PlaylistBarSlider->GetButtonPos().y < Data::_PLAYLIST_SCROLL_BAR_POS.y)
-				m_PlaylistBarSlider->GetButtonPos().y = Data::_PLAYLIST_SCROLL_BAR_POS.y;*/
-
-			/*if (m_PlaylistBarSlider->GetButtonPos().y + m_PlaylistBarSlider->GetButtonSize().y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+			if (playlistSliderActive &&
+				mouseY < Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
 			{
-
-				scrollBarAtBottom = true;
+				m_PlaylistBarSlider->SetButtonPos(glm::vec2(m_PlaylistBarSlider->GetButtonPos().x, Data::_PLAYLIST_ITEMS_SURFACE_POS.y));
+				*playlistOffset = 0;
 			}
-			else
-			{
-				scrollBarAtBottom = false;
-			}*/
 
-			//md_log(m_PlaylistBarSlider->GetButtonPos().y);
+			if (playlistSliderActive &&
+				mouseY > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+			{
+				m_PlaylistBarSlider->SetButtonPos(glm::vec2(m_PlaylistBarSlider->GetButtonPos().x, 
+															Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - m_PlaylistBarSlider->GetButtonSize().y));
+				*playlistOffset = audioCon.size() * itemH + sepCon->size() * separatorH;
+			}
+
+			if (playlistSliderActive)
+			{
+				s32 offsetX = Data::PlaylistBarMovableZoneXOffset;
+				s32 winPosX, winPosY;
+				App::Input::GetGlobalMousePosition(&mouseX, &mouseY);
+				Window::GetWindowPos(&winPosX, &winPosY);
+				mouseX -= winPosX - 10; // Should'nt be hardcored, recheck dimension's definitions
+				mouseY -= winPosY;
+
+				// If mouse is outside scroll bar movable zone, move scroll bar to the beginning
+				if (mouseX < Data::_PLAYLIST_SCROLL_BAR_POS.x - offsetX ||
+					mouseX > Data::_PLAYLIST_SCROLL_BAR_POS.x + offsetX)
+				{
+					scrollBarMaxBoundsCrossed = true;
+					
+					m_PlaylistBarSlider->SetButtonPos(glm::vec2(m_PlaylistBarSlider->GetButtonPos().x, Data::_PLAYLIST_ITEMS_SURFACE_POS.y));
+					*playlistOffset = 0;
+				}
+				else
+				{
+					/*	Move playlist and scroll bar after it is back in bar movable zone to exactly
+						the same position as mouse cursor's
+					*/
+					if (scrollBarMaxBoundsCrossed == true)
+					{
+						
+						s32 mouseRelativeToPlaylistPos = mouseY - Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
+						f32 divider = mouseRelativeToPlaylistPos / playlistSurface;
+						if (divider < 0)
+							divider = 0;
+						if (divider > 1.f)
+							divider = 1.f;
+						md_log(divider);
+						*playlistOffset = (audioCon.size() * itemH + sepCon->size() * separatorH) * divider;
+						if (mouseY < Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
+						{
+							*playlistOffset = 0;
+						}
+						if (mouseY > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+						{
+							*playlistOffset = audioCon.size() * itemH + sepCon->size() * separatorH;
+						}
+
+
+						scrollBarMaxBoundsCrossed = false;
+					}
+				}
+
+			}
+
+			f32 scrollStep = ((*playlistOffset) * scrollSurface) / ((maxItems - displayedItems) * itemH + separatorsOffset);
+			f32 newPosY = (Data::_PLAYLIST_SCROLL_BAR_POS.y + scrollStep);
+			m_PlaylistBarSlider->SetButtonPos(glm::vec2(m_PlaylistBarSlider->GetButtonPos().x, newPosY));
+
+			if (m_PlaylistBarSlider->GetButtonPos().y < Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
+			{
+				m_PlaylistBarSlider->GetButtonPos().y = Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
+			}
+			if (m_PlaylistBarSlider->GetButtonPos().y + m_PlaylistBarSlider->GetButtonSize().y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
+			{
+				m_PlaylistBarSlider->GetButtonPos().y = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - m_PlaylistBarSlider->GetButtonSize().y;
+			}
+
 
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_POS.x, m_PlaylistBarSlider->GetButtonPos().y, 0.9f));
@@ -1082,31 +1173,19 @@ namespace Graphics
 
 
 			s32 upperPlaylistBorder = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - 2 * itemH;
-			s32 bottomPlaylistBorder = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - 1 * itemH;
-			f32 displayedItems = float(Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / (float)dividor;
-			s32 minVisiblePos = playlistPositionOffset / dividor;
-			s32 maxVisiblePos = minVisiblePos + displayedItems + 1;
-			s32 minPosToRender = minVisiblePos - 2;
-			s32 maxPosToRender = maxVisiblePos + 2;
-			if (maxVisiblePos > audioCon.size() - 1)
-				maxVisiblePos = audioCon.size() - 1;
-			if (minPosToRender < 0)
-				minPosToRender = 0;
-			if (maxPosToRender > audioCon.size())
-				maxPosToRender = audioCon.size();
-
+			s32 bottomPlaylistBorder = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y;
+			f32 displayedItems = float(Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / itemH;
+			
 			if (playlistPositionOffset == 0)
 				playlistMove = PlaylistMovement::Down;
 			
 
-			// Render playlist scroll bar
-			RenderScrollBar(&playlistPositionOffset, displayedItems, audioCon.size());
-
-
-
+			
+			if (maxPosToRender > audioCon.size() - 1)
+				maxPosToRender = audioCon.size() - 1;
 			s32 passedSeparatorsCount = 0;
 			f32 scrollStep = Data::PlaylistScrollStep;
-			if(playlistFirstEnter == false)
+			/*if(playlistFirstEnter == false)
 			{
 				for (auto & i : *sepCon)
 				{
@@ -1116,7 +1195,7 @@ namespace Graphics
 						i.second->Visible(false);
 						passedSeparatorsCount++;
 					}
-					else if (i.second->GetButtonPos().y < audioCon[maxVisiblePos]->GetButtonPos().y)
+					else if (i.second->GetButtonPos().y < audioCon[maxPosToRender]->GetButtonPos().y)
 					{
 						i.second->Visible(true);
 					}
@@ -1125,55 +1204,68 @@ namespace Graphics
 						i.second->Visible(false);
 					}
 				}
-			}
-			//md_log(passedSeparatorsCount);
+			}*/
 
 
 			if (mdEngine::App::Input::IsScrollForwardActive() && m_Playlist.hasFocus())
 			{
-				playlistPositionOffset -= scrollStep;;
+				playlistPositionOffset -= scrollStep;
+				State::SetState(State::PlaylistMovement);
 			}
 			if (mdEngine::App::Input::IsScrollBackwardActive() && m_Playlist.hasFocus())
 			{
 				playlistPositionOffset += scrollStep;
+				State::SetState(State::PlaylistMovement);
 			}
 
+			// Render playlist scroll bar
+			//RenderScrollBar(&playlistPositionOffset, displayedItems, audioCon.size());
 
-			if (playlistPositionOffset < 0 ||
-				displayedItems - 1 > audioCon.size())
+
+			if (playlistPositionOffset < 0)
 			{
 				playlistPositionOffset = 0;
 			}
 
-			block:
-			if (abs(playlistPositionOffsetPrevious - playlistPositionOffset) > 0)
+
+			while (abs(playlistPositionOffsetPrevious - playlistPositionOffset) > 0)
 			{
-				md_log(audioCon[0]->GetButtonPos().y);
+
+				md_log(playlistPositionOffsetPrevious - playlistPositionOffset);
 				for (auto & i : audioCon)
 				{
-
+					i->DeleteTexture();
 					/*s32 index = i;
 					if (Audio::Object::GetAudioObject(i) == NULL)
 						index = i + Audio::GetFilesAddedCount();*/
+
 
 					if (playlistPositionOffsetPrevious - playlistPositionOffset > 0)
 					{
 						i->SetButtonPos(
 							glm::vec2(i->GetButtonPos().x,
-									  i->GetButtonPos().y +
-									  abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+								i->GetButtonPos().y +
+								abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
 						playlistMove = PlaylistMovement::Up;
 					}
 					else
 					{
 						i->SetButtonPos(
 							glm::vec2(i->GetButtonPos().x,
-									  i->GetButtonPos().y -
-									  abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+								i->GetButtonPos().y -
+								abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
 						playlistMove = PlaylistMovement::Down;
 					}
 
+					if (playlistCursorPosition >= i->GetButtonPos().y &&
+						playlistCursorPosition <= i->GetButtonPos().y + i->GetButtonSize().y)
+					{
+						//std::cout << i->GetID() << "     " << playlistCursorPosition << "     " << i->GetButtonPos().y << "     " << i->GetButtonPos().y + i->GetButtonSize().y << std::endl;
+						//md_log_compare(playlistCursorPosition, i->GetButtonPos().y);
+						minPosToRender = i->GetID();
+					}
 				}
+
 
 				for (auto & i : *sepCon)
 				{
@@ -1181,54 +1273,105 @@ namespace Graphics
 					{
 						i.second->SetButtonPos(
 							glm::vec2(i.second->GetButtonPos().x,
-									  i.second->GetButtonPos().y +
-									  abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+								i.second->GetButtonPos().y +
+								abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
 
 					}
 					else
 					{
 						i.second->SetButtonPos(
 							glm::vec2(i.second->GetButtonPos().x,
-									  i.second->GetButtonPos().y -
-									  abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+								i.second->GetButtonPos().y -
+								abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
 					}
-
 				}
 
 
 				playlistPositionOffsetPrevious = playlistPositionOffset;
 
+				if (bottomPlaylistBorder > audioCon.back()->GetButtonPos().y + audioCon.back()->GetButtonSize().y &&
+					bottomPlaylistBorder - audioCon.back()->GetButtonPos().y > 1 &&
+					playlistFirstEnter == false)
+				{
+					playlistPositionOffset -= (bottomPlaylistBorder)-(audioCon.back()->GetButtonPos().y + audioCon.back()->GetButtonSize().y);
+				}
+
 				loadItemsTextures = true;
 			}
 
+			// Render playlist scroll bar after playlist position offset is checked
+			RenderScrollBar(&playlistPositionOffset, displayedItems, audioCon.size());
+
+			/*  Sometimes method that is used to obtain playlist position is not accurate, when playlist scroll bar
+				is moved really quick. Make sure that playlist position is accurate.
+				TRY TO FIX THAT IN MORE EFFICIENT WAY
+			*/
+			while (playlistCursorPosition < audioCon[minPosToRender]->GetButtonPos().y &&
+				   minPosToRender > 0)
+			{
+				minPosToRender--;
+			}
+
+			while (playlistCursorPosition > audioCon[minPosToRender]->GetButtonPos().y + audioCon[minPosToRender]->GetButtonSize().y &&
+				minPosToRender < audioCon.size() - 1)
+			{
+				minPosToRender++;
+			}
 
 			if (audioCon.back() == NULL)
 				return;
+			
+			// Find the max position that will be visible considering playlist separators size
+			if (minPosToRender < 0)
+				minPosToRender = 0;
+			if (playlistPositionOffset < 2 * itemH)
+				minPosToRender = 0;
+			maxPosToRender = minPosToRender + displayedItems + 2;
+			if (maxPosToRender > audioCon.size() - 1)
+				maxPosToRender = audioCon.size() - 1;
 
-			if (bottomPlaylistBorder > audioCon.back()->GetButtonPos().y &&
-				playlistFirstEnter == false)
-			{
-				playlistPositionOffset -= bottomPlaylistBorder - audioCon.back()->GetButtonPos().y;
-				goto block;
-			}
+			if (audioCon[maxPosToRender] == NULL || audioCon[minPosToRender] == NULL)
+				return;
 
-			//md_log(playlistPositionOffset);
+			f32 posDifference = audioCon[maxPosToRender]->GetButtonPos().y - audioCon[minPosToRender]->GetButtonPos().y;
+			displayedItems = posDifference / itemH;
+			displayedItems += 2;
+			maxPosToRender = minPosToRender + displayedItems + 2;
+			if (maxPosToRender > audioCon.size())
+				maxPosToRender = audioCon.size();
+
+			//md_log_compare(minPosToRender, maxPosToRender);
 
 			b8 loadTextureFirstEnter(false);
 			if (State::CheckState(State::AudioAdded) ||
-				State::CheckState(State::AudioDeleted))
+				State::CheckState(State::AudioDeleted) ||
+				State::CheckState(State::Window::Resized))
 			{
 				loadItemsPositions = true;
 				playlistFirstEnter = false;
 				loadTextureFirstEnter = true;
 
 				State::ResetMusicPlayerState();
+				State::ResetState(State::Window::Resized);
 			}
 
 			if (loadItemsPositions == true)
 			{
 				glm::vec2 startPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x,
 											   Data::_PLAYLIST_ITEMS_SURFACE_POS.y - playlistPositionOffset);
+
+				playlistCursorPosition = Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 1 * itemH;
+
+				if (loadItemsTextures == true)
+				{
+					for (s32 i = minPosToRender; i < maxPosToRender; i++)
+					{
+						audioCon[i]->ReloadTextTexture();
+					}
+
+					loadItemsTextures = false;
+				}
+
 				for (auto & i : audioCon)
 				{
 					if (i->IsFolderRep() == true)
@@ -1259,45 +1402,35 @@ namespace Graphics
 
 			if (loadItemsTextures == true)
 			{
-				if (maxVisiblePosPrevious > audioCon.size() - 1)
-					maxVisiblePosPrevious = audioCon.size() - 1;
-				assert(minVisiblePosPrevious >= 0);
-
-				if (loadTextureFirstEnter == false)
-				{
-					if (minPosToRender != minVisiblePosPrevious && playlistMove == PlaylistMovement::Down)
-					{
-						audioCon[minVisiblePosPrevious]->DeleteTexture();
-					}
-
-					if (minPosToRender != maxVisiblePosPrevious && playlistMove == PlaylistMovement::Up)
-					{
-						audioCon[maxVisiblePosPrevious]->DeleteTexture();
-					}
-				}
-
-				
+				//md_log_compare(minPosToRender, maxPosToRender);
 				for (s32 i = minPosToRender; i < maxPosToRender; i++)
 				{
 					audioCon[i]->ReloadTextTexture();
 				}
 
-				minVisiblePosPrevious = minPosToRender;
-				maxVisiblePosPrevious = maxPosToRender;
 				loadItemsTextures = false;
 			}
+
 			// ACTUAL RENDERING
 
 			Shader::shaderDefault->use();
 			Shader::shaderDefault->setBool("playlistCut", true);
 			Shader::shaderDefault->setFloat("playlistMinY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y);
 			Shader::shaderDefault->setFloat("playlistMaxY", Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
+			Shader::shaderBorder->use();
+			Shader::shaderBorder->setFloat("playlistMinY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y);
+			Shader::shaderBorder->setFloat("playlistMaxY", Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
 
 
-			// Render VISIBLE playlist items
 			//md_log_compare(minPosToRender, maxPosToRender);
 			std::vector<s32> indexes;
-			glm::mat4 model;
+			// Render ALL playlist separators
+			for (auto & i : *sepCon)
+			{
+				i.second->DrawItem(main_foreground);
+			}
+
+			// Render VISIBLE playlist items
 			for (s32 i = minPosToRender; i < maxPosToRender; i++)
 			{
 				if (audioCon[i] == NULL)
@@ -1305,30 +1438,30 @@ namespace Graphics
 
 				indexes.push_back(i);
 				
-				/*auto it = std::find_if(m_Playlist.multipleSelect.begin(), m_Playlist.multipleSelect.end(), 
-					[&](s32 * ref) {return *ref == i; });
-				if (it != m_Playlist.multipleSelect.end())
+				if (audioCon[i]->HasTexture() == false)
 				{
-					//audioCon[i]->DrawDottedBorder();
-				}*/
+					m_Playlist.SetIndexesToRender(indexes);
+					Shader::shaderDefault->setVec3("color", Color::White);
+					continue;
+				}
 				audioCon[i]->DrawItem(main_foreground);
 			}
 
-			// Render ALL playlist separators
-			for (auto & i : *sepCon)
+			
+			for (auto & i : m_Playlist.multipleSelect)
 			{
-				i.second->DrawItem(main_foreground);
+				audioCon[*i]->DrawDottedBorder();
 			}
 
 			m_Playlist.SetIndexesToRender(indexes);
-
+			Shader::shaderDefault->use();
 			Shader::shaderDefault->setBool("playlistCut", false);
 			Shader::shaderDefault->setVec3("color", Color::White);
 		}
 		else
 		{
-			m_Playlist.SetCurrentMinIndex(0);
-			m_Playlist.SetCurrentMaxIndex(0);
+			
+			m_Playlist.SetIndexesToRender(std::vector<s32>());
 			playlistPositionOffset = 0;
 			playlistFirstEnter = true;
 		}
@@ -2051,6 +2184,13 @@ namespace Graphics
 		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, exit_icon);
 		Shader::Draw(Shader::shaderDefault);
+	}
+
+
+
+	void MP::InitializePlaylistItemsPositions()
+	{
+		
 	}
 
 	void MP::StartMainWindow()
