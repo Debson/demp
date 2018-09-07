@@ -154,6 +154,8 @@ namespace Graphics
 
 		void RenderPlaylistButtons();
 
+		void RenderSettingsButtons();
+
 		void RenderWindowControlButtons();
 
 		void RenderPlaylistInfo();
@@ -947,9 +949,9 @@ namespace Graphics
 
 			if (State::CheckState(State::FilesInfoLoaded) == false)
 			{
-				//md_log(utf16_to_utf8(Audio::Info::GetLoadedItemsCountStr()));
+				//md_log(utf16_to_utf8(Audio::Info::GetProcessedItemsCountStr()));
 				loadedItemsCountText.SetTextString(Audio::Info::GetProcessedItemsCountStr());
-				loadedItemsCountText.InitTextTexture();
+				loadedItemsCountText.ReloadTextTexture();
 				loadedItemsCountText.DrawString();
 			}
 
@@ -959,19 +961,17 @@ namespace Graphics
 
 	void MP::RenderScrollBar(f32* playlistOffset, f32 displayedItems, f32 maxItems)
 	{
-
-		// SCROLL BAR
-		glm::mat4 model;
+		auto sepCon = Interface::Separator::GetContainer();
+		auto audioCon = Audio::Object::GetAudioObjectContainer();
+		s32 separatorH = Data::_PLAYLIST_SEPARATOR_SIZE.y;
+		s32 bottomPlaylistBorder = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y;
+		
 		if (displayedItems < Audio::Object::GetSize())
 		{
 			//displayedItems += 3;
 			s32 itemH = Data::_PLAYLIST_ITEM_SIZE.y;
-			s32 separatorH = Data::_PLAYLIST_SEPARATOR_SIZE.y;
-			auto sepCon = Interface::Separator::GetContainer();
-			auto audioCon = Audio::Object::GetAudioObjectContainer();
 			s32 separatorsOffset = sepCon->size() * separatorH;
 
-			s32 bottomPlaylistBorder = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y;
 			f32 playlistSurface = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y;
 			f32 scaleY = (playlistSurface / ((float)Audio::Object::GetSize() + separatorsOffset / itemH)) * (displayedItems);
 			// Set minimum size for scroll bar and do calculations with changed size
@@ -1128,7 +1128,7 @@ namespace Graphics
 			}
 
 
-			model = glm::mat4();
+			glm::mat4 model;
 			model = glm::translate(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_POS.x, m_PlaylistBarSlider->GetButtonPos().y, 0.9f));
 			model = glm::scale(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_SIZE.x, m_PlaylistBarSlider->GetButtonSize().y, 1.f));
 			Shader::shaderDefault->setVec3("color", Color::Black);
@@ -1138,7 +1138,6 @@ namespace Graphics
 		}
 
 	}
-
 
 	void MP::RenderPlaylistItemsNew()
 	{
@@ -1172,8 +1171,12 @@ namespace Graphics
 			//md_log(dividor);
 
 
-			s32 upperPlaylistBorder = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - 2 * itemH;
+			s32 upperPlaylistBorder = Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 2 * itemH;
 			s32 bottomPlaylistBorder = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y;
+
+			s32 upperBoundOfVisible = Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 2 * itemH;
+			s32 lowerBoundOfVisible = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y + 2 * itemH;
+
 			f32 displayedItems = float(Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - Data::_PLAYLIST_ITEMS_SURFACE_POS.y) / itemH;
 			
 			if (playlistPositionOffset == 0)
@@ -1222,16 +1225,16 @@ namespace Graphics
 			//RenderScrollBar(&playlistPositionOffset, displayedItems, audioCon.size());
 
 
+
 			if (playlistPositionOffset < 0)
 			{
 				playlistPositionOffset = 0;
 			}
 
-
-			while (abs(playlistPositionOffsetPrevious - playlistPositionOffset) > 0)
+			while (abs(playlistPositionOffsetPrevious - playlistPositionOffset) > 0 ||
+				   State::CheckState(State::AudioChanged) == true ||
+				   State::CheckState(State::Window::Resized) == true)
 			{
-
-				md_log(playlistPositionOffsetPrevious - playlistPositionOffset);
 				for (auto & i : audioCon)
 				{
 					i->DeleteTexture();
@@ -1244,26 +1247,25 @@ namespace Graphics
 					{
 						i->SetButtonPos(
 							glm::vec2(i->GetButtonPos().x,
-								i->GetButtonPos().y +
-								abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+									  i->GetButtonPos().y +
+										abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
 						playlistMove = PlaylistMovement::Up;
 					}
 					else
 					{
 						i->SetButtonPos(
 							glm::vec2(i->GetButtonPos().x,
-								i->GetButtonPos().y -
-								abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+									  i->GetButtonPos().y -
+										abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
 						playlistMove = PlaylistMovement::Down;
 					}
 
 					if (playlistCursorPosition >= i->GetButtonPos().y &&
 						playlistCursorPosition <= i->GetButtonPos().y + i->GetButtonSize().y)
 					{
-						//std::cout << i->GetID() << "     " << playlistCursorPosition << "     " << i->GetButtonPos().y << "     " << i->GetButtonPos().y + i->GetButtonSize().y << std::endl;
-						//md_log_compare(playlistCursorPosition, i->GetButtonPos().y);
 						minPosToRender = i->GetID();
 					}
+
 				}
 
 
@@ -1289,15 +1291,59 @@ namespace Graphics
 
 				playlistPositionOffsetPrevious = playlistPositionOffset;
 
+				// Lock playlist at the bottom, and when keep proper position when resizing
 				if (bottomPlaylistBorder > audioCon.back()->GetButtonPos().y + audioCon.back()->GetButtonSize().y &&
 					bottomPlaylistBorder - audioCon.back()->GetButtonPos().y > 1 &&
+					playlistPositionOffset > 0 &&
 					playlistFirstEnter == false)
 				{
 					playlistPositionOffset -= (bottomPlaylistBorder)-(audioCon.back()->GetButtonPos().y + audioCon.back()->GetButtonSize().y);
+					playlistPositionOffset < 0 ? playlistPositionOffset = 0 : 0;
 				}
+				else
+				{
+					State::ResetState(State::Window::Resized);
+				}
+
+				if (State::CheckState(State::AudioChanged) == true)
+				{
+					s32 playingID = m_Playlist.GetPlayingID();
+
+					s32 indexOfLast = minPosToRender + displayedItems - 1;
+					s32 indexOfFirst = minPosToRender + 3;
+					if (indexOfLast == audioCon.size() - 2 ||
+						indexOfFirst == 0)
+					{
+						State::ResetState(State::AudioChanged);
+						loadItemsTextures = true;
+						continue;
+					}
+
+					if (indexOfLast > audioCon.size() - 1)
+						indexOfLast > audioCon.size() - 1;
+
+					if (audioCon[playingID]->GetButtonPos().y > audioCon[indexOfLast]->GetButtonPos().y)
+					{
+						playlistPositionOffset += itemH;
+					}
+					else if(audioCon[playingID]->GetButtonPos().y < audioCon[indexOfFirst]->GetButtonPos().y && 
+							playlistPositionOffset > 0)
+					{
+						playlistPositionOffset -= itemH;
+					}
+					else
+					{
+						State::ResetState(State::AudioChanged);
+					}
+					//md_log(playlistPositionOffset);
+					//State::ResetState(State::AudioChanged);
+				}
+
+
 
 				loadItemsTextures = true;
 			}
+
 
 			// Render playlist scroll bar after playlist position offset is checked
 			RenderScrollBar(&playlistPositionOffset, displayedItems, audioCon.size());
@@ -1318,17 +1364,37 @@ namespace Graphics
 				minPosToRender++;
 			}
 
-			if (audioCon.back() == NULL)
-				return;
-			
-			// Find the max position that will be visible considering playlist separators size
 			if (minPosToRender < 0)
 				minPosToRender = 0;
 			if (playlistPositionOffset < 2 * itemH)
 				minPosToRender = 0;
+
+			/*if (State::CheckState(State::AudioChanged) == true)
+			{
+				s32 playingID = m_Playlist.GetPlayingID();
+				md_log_compare(minPosToRender, maxPosToRender);
+				md_log(playingID);
+				md_log(displayedItems);
+
+				if(playingID > minPosToRender + (s32)displayedItems - 3)
+				{
+					playlistPositionOffset += itemH;
+					minPosToRender++;
+				}
+
+				State::ResetState(State::AudioChanged);
+			}*/
+
+			if (audioCon.back() == NULL)
+				return;
+			
+			// Find the max position that will be visible considering playlist separators size
 			maxPosToRender = minPosToRender + displayedItems + 2;
 			if (maxPosToRender > audioCon.size() - 1)
 				maxPosToRender = audioCon.size() - 1;
+
+
+
 
 			if (audioCon[maxPosToRender] == NULL || audioCon[minPosToRender] == NULL)
 				return;
@@ -1469,14 +1535,6 @@ namespace Graphics
 
 
 	}
-
-
-
-
-
-
-
-
 
 
 
@@ -2167,6 +2225,26 @@ namespace Graphics
 		Shader::shaderDefault->setVec3("color", Color::White);
 	}
 
+	void MP::RenderSettingsButtons()
+	{
+		glm::mat4 model;
+		/* UI Window buttons*/
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(Data::_UI_BUTTONS_BACKGROUND_LEFT_POS, 0.2f));
+		model = glm::scale(model, glm::vec3(Data::_UI_BUTTONS_BACKGROUND_LEFT_SIZE, 1.f));;
+		Shader::shaderDefault->setMat4("model", model);
+		glBindTexture(GL_TEXTURE_2D, exit_background);
+		Shader::Draw(Shader::shaderDefault);
+
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(Data::_SETTINGS_BUTTON_POS, 0.3f));
+		model = glm::scale(model, glm::vec3(Data::_SETTINGS_BUTTON_SIZE, 1.f));;
+		Shader::shaderDefault->setMat4("model", model);
+		glBindTexture(GL_TEXTURE_2D, exit_icon);
+		Shader::Draw(Shader::shaderDefault);
+	}
+
 	void MP::RenderWindowControlButtons()
 	{
 		glm::mat4 model;
@@ -2184,13 +2262,6 @@ namespace Graphics
 		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, exit_icon);
 		Shader::Draw(Shader::shaderDefault);
-	}
-
-
-
-	void MP::InitializePlaylistItemsPositions()
-	{
-		
 	}
 
 	void MP::StartMainWindow()
@@ -2385,11 +2456,11 @@ namespace Graphics
 
 		RenderPlaylistInfo();
 
-		//RenderPlaylistItems();
-
 		RenderPlaylistItemsNew();
 
 		RenderWindowControlButtons();
+
+		RenderSettingsButtons();
 
 		Input::SetButtonExtraState(volumeSliderActive || musicSliderActive || playlistSliderActive || 
 								   UI::fileBrowserActive || playlistAddFileActive);

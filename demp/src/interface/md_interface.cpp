@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <random>
 
+#include "../app/application_window.h"
 #include "../settings/music_player_settings.h"
 #include "../playlist/music_player_playlist.h"
 #include "../graphics/graphics.h"
@@ -23,7 +24,7 @@ namespace mdEngine
 	{
 		static PlaylistSeparatorContainer	m_PlaylistSeparatorContainer;
 		static PlaylistButtonContainer		m_PlaylistButtonsContainer;
-		InterfaceButtonContainer			m_InterfaceButtonContainer;
+		InterfaceButtonContainer		m_InterfaceButtonContainer;
 
 	}
 
@@ -132,7 +133,7 @@ namespace mdEngine
 		m_ClickCount = 0;
 		m_PlaylistItemHidden = false;
 		m_ItemColor = Color::White;
-
+		
 		m_ItemID = *id;
 
 		// Button position is predefined in playlist items rendering algorithm anyway, but leave it for now
@@ -236,6 +237,11 @@ namespace mdEngine
 		m_PlaylistItemHidden = val;
 	}
 
+	void Interface::PlaylistItem::Visible(b8 val)
+	{
+		m_Visible = val;
+	}
+
 	void Interface::PlaylistItem::SetAsFolderRep()
 	{
 		m_FolderRep = true;
@@ -254,6 +260,11 @@ namespace mdEngine
 	void Interface::PlaylistItem::SetItemColor(glm::vec3 color)
 	{
 		m_ItemColor = color;
+	}
+
+	b8 Interface::PlaylistItem::IsVisible() const
+	{
+		return m_Visible;
 	}
 
 	b8 Interface::PlaylistItem::IsPlaying() const
@@ -383,11 +394,6 @@ namespace mdEngine
 		m_SepItemCount--;
 	}
 	
-	b8 Interface::PlaylistSeparator::IsVisible() const
-	{
-		return m_Visible;
-	}
-
 	b8 Interface::PlaylistSeparator::IsSeparatorHidden() const
 	{
 		return m_SeparatorHidden;
@@ -396,11 +402,6 @@ namespace mdEngine
 	b8 Interface::PlaylistSeparator::IsSelected() const
 	{
 		return m_SeparatorSelected;
-	}
-
-	void Interface::PlaylistSeparator::Visible(b8 val)
-	{
-		m_Visible = val;
 	}
 
 	void Interface::PlaylistSeparator::HideSeparator(b8 val)
@@ -619,6 +620,98 @@ namespace mdEngine
 			[&](std::pair<const std::wstring, Button*> const & ref) { return ref.first.compare(name) == 0; });
 
 		return item == m_InterfaceButtonContainer.end() ? false : item->second->isPressed;
+	}
+
+
+	Interface::ButtonSlider::ButtonSlider() { }
+
+	Interface::ButtonSlider::ButtonSlider(glm::vec2 pos, f32* value, f32 step, glm::vec2 size) :	m_SliderPos(pos), 
+																									m_SliderSize(size), 
+																									m_ButtonSize(25, 25),
+																									m_Value(value),
+																									m_Step(step)
+	{
+
+		m_TextTexture = 0;
+		m_TextPos = glm::vec2(pos.x + m_ButtonSize.x, m_SliderPos.y);
+		SetTextColor(Color::White);
+		m_Font = Data::_MUSIC_PLAYER_FONT;
+		m_TextString = std::to_wstring(*m_Value);
+
+		InitTextTexture();
+
+		m_LeftPos = glm::vec2(pos.x, m_SliderPos.y);
+		m_RightPos = glm::vec2(pos.x + m_ButtonSize.x + m_TextSize.x, m_SliderPos.y);
+
+		m_Left = new Button(m_ButtonSize, m_LeftPos);
+		m_Right = new Button(m_ButtonSize, m_RightPos);
+
+	}
+
+	Interface::ButtonSlider::~ButtonSlider() 
+	{ 
+		//delete m_Left;
+		//delete m_Right;
+	}
+
+	void Interface::ButtonSlider::Init()
+	{
+		InitTextTexture();
+
+	}
+
+	void Interface::ButtonSlider::Update()
+	{
+		App::ProcessButton(m_Left);
+		App::ProcessButton(m_Right);
+
+		if (m_Right->isPressed == true)
+		{
+			*m_Value += m_Step;
+			ReloadSliderInfo();
+			md_log(*m_Value);
+		}
+
+		if (m_Left->isPressed == true)
+		{
+			*m_Value -= m_Step;
+			ReloadSliderInfo();
+			md_log(*m_Value);
+		}
+		
+	}
+
+	void Interface::ButtonSlider::Render()
+	{
+		glm::mat4 model;
+		Shader::shaderWindow->use();
+		model = glm::translate(model, glm::vec3(m_LeftPos, 0.5f));
+		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.f));
+		Shader::shaderWindow->setMat4("model", model);
+		Shader::shaderWindow->setVec3("color", Color::White);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		Shader::Draw(Shader::shaderWindow);
+
+
+		DrawString(Shader::shaderWindow);
+
+
+		model = glm::mat4();;
+		Shader::shaderWindow->use();
+		model = glm::translate(model, glm::vec3(m_RightPos, 0.5f));
+		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.f));
+		Shader::shaderWindow->setMat4("model", model);
+		Shader::shaderWindow->setVec3("color", Color::White);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		Shader::Draw(Shader::shaderWindow);
+	}
+
+	void Interface::ButtonSlider::ReloadSliderInfo()
+	{
+		m_TextString = std::to_wstring(*m_Value);
+		ReloadTextTexture();
 	}
 
 	

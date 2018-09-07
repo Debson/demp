@@ -2,6 +2,7 @@
 #define MD_UTIL_H
 
 
+#include <iostream>
 #include "../settings/configuration.h"
 
 #define ZERO_MEM(a) memset(a, 0, sizeof(a))

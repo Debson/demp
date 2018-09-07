@@ -46,6 +46,12 @@ namespace MP
 		glm::vec2 _VOLUME_BAR_DOT_POS;
 		glm::vec2 _SLIDER_DOT_SIZE;
 
+		/*const glm::vec2 _UI_BUTTONS_BACKGROUND_RIGHT_POS;
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_RIGHT_SIZE;
+
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_LEFT_POS;
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_LEFT_SIZE;*/
+
 		glm::vec2 _UI_WINDOW_BAR_POS;
 		glm::vec2 _UI_WINDOW_BAR_SIZE;
 
@@ -94,6 +100,7 @@ namespace MP
 
 		glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_POS;
 		glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE;
+
 
 		s16 _TEXT_BOX_ITEM_HEIGHT;
 

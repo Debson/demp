@@ -83,11 +83,13 @@ namespace mdEngine
 
 			void Click();
 			void HidePlaylistItem(b8 val);
+			void Visible(b8 val);
 			void SetAsFolderRep();
 			void TakeFolderRep();
 			void SetClickCount(s8 count);
 			void SetItemColor(glm::vec3 color);
 
+			b8			 IsVisible() const;
 			b8			 IsPlaying() const;
 			b8			 IsFolderRep() const;
 			b8			 IsPlaylistItemHidden() const;
@@ -96,6 +98,7 @@ namespace mdEngine
 			std::wstring GetShortenTextString();
 
 		protected:
+			b8			 m_Visible;
 			b8			 m_PlaylistItemHidden;
 			b8			 m_FolderRep;
 			u8			 m_ClickCount;
@@ -121,10 +124,9 @@ namespace mdEngine
 			void			SeparatorSubFilePushBack(s32* fileIndex, const std::wstring path);
 			void			SeparatorSubFileInsert(s32* fileIndex, const std::wstring path, s32 pos);
 			void			SeparatorSubFileErased();
-			b8				IsVisible() const;
 			b8				IsSeparatorHidden() const;
 			b8				IsSelected()		const;
-			void			Visible(b8 val);
+			//void			Visible(b8 val);
 			void			HideSeparator(b8 val);
 			void			Select(b8 val);
 			std::wstring	GetSeparatorPath() const;;
@@ -189,11 +191,41 @@ namespace mdEngine
 
 		};
 
+		class ButtonSlider : private TextObject
+		{
+		public:
+
+			ButtonSlider();
+			ButtonSlider(glm::vec2 pos, f32* value, f32 step, glm::vec2 size = glm::vec2(50, 20));
+			~ButtonSlider();
+
+			void Init();
+			void Update();
+			void Render();
+
+		private:
+			void ReloadSliderInfo();
 
 
-		typedef std::vector<std::pair<std::wstring, PlaylistSeparator*>> PlaylistSeparatorContainer;
-		typedef std::vector<std::pair<s32*, Interface::Button*>> PlaylistButtonContainer;
-		typedef std::vector<std::pair<const std::wstring, Button*>> InterfaceButtonContainer;
+			f32* m_Value;
+			f32 m_Step;
+			Button* m_Left;
+			Button* m_Right;
+			glm::vec2 m_LeftPos;
+			glm::vec2 m_RightPos;
+			glm::vec2 m_ButtonSize;
+			glm::vec2 m_SliderPos;
+			
+			glm::vec2 m_SliderSize;
+
+		};
+
+
+
+		typedef std::vector<std::pair<std::wstring, PlaylistSeparator*>>	PlaylistSeparatorContainer;
+		typedef std::vector<std::pair<s32*, Interface::Button*>>			PlaylistButtonContainer;
+		typedef std::vector<std::pair<const std::wstring, Button*>>			InterfaceButtonContainer;
+		
 
 		// TODO: It should not be an extern var...
 		extern InterfaceButtonContainer m_InterfaceButtonContainer;
@@ -217,6 +249,7 @@ namespace mdEngine
 			Interface::Button* GetButton(s32 id);
 			s32 GetSize();
 		}
+
 
 
 

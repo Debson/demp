@@ -33,6 +33,7 @@ namespace mdEngine
 	{
 		extern App::WindowProperties windowProperties;
 
+		SDL_Window* GetSDLWindow();
 		HWND GetHWNDWindow();
 		void SetWindowTitle(const b8& windowName);
 		void SetWindowPos(s32 x, s32 y);

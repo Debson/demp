@@ -9,6 +9,7 @@
 #include "../../external/imgui/imgui.h"
 
 #include "../interface/md_interface.h"
+#include "../interface/md_options_window.h"
 #include "music_player_ui_input.h"
 
 namespace mdEngine
@@ -33,6 +34,8 @@ namespace MP
 		extern ImVec4 ClearColor;
 
 		void DeleteAllFiles();
+
+		Window::OptionsWindow* GetOptionsWindow();
 
 		void Start();
 

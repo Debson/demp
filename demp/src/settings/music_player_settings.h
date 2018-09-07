@@ -39,6 +39,8 @@ namespace MP
 		extern glm::vec2 _DEFAULT_WINDOW_POS;
 		extern glm::vec2 _DEFAULT_WINDOW_SIZE;
 
+		const glm::vec2 _OPTIONS_WINDOW_SIZE = glm::vec2(300, 400);
+
 		extern glm::vec2 _MAIN_BACKGROUND_POS;
 		extern glm::vec2 _MAIN_BACKGROUND_SIZE;
 
@@ -61,6 +63,12 @@ namespace MP
 		extern glm::vec2 _VOLUME_BAR_DOT_POS;
 		extern glm::vec2 _SLIDER_DOT_SIZE;
 
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_RIGHT_POS = glm::vec2(430.f, 5.f);
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_RIGHT_SIZE = glm::vec2(40.f, 15.0f);
+
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_LEFT_POS = glm::vec2(30.f, 5.f);
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_LEFT_SIZE = glm::vec2(40.f, 15.f);
+
 		extern glm::vec2 _UI_WINDOW_BAR_POS;
 		extern glm::vec2 _UI_WINDOW_BAR_SIZE;
 
@@ -69,6 +77,9 @@ namespace MP
 
 		extern glm::vec2 _MINIMIZE_BUTTON_POS;
 		extern glm::vec2 _MINIMIZE_BUTTON_SIZE;
+
+		const glm::vec2 _SETTINGS_BUTTON_POS = glm::vec2(30.f, 5.f);
+		const glm::vec2 _SETTINGS_BUTTON_SIZE = glm::vec2(15.f, 15.f);
 
 		extern glm::vec2 _STAY_ON_TOP_BUTTON_POS;
 		extern glm::vec2 _STAY_ON_TOP_BUTTON_SIZE;

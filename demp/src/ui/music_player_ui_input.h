@@ -20,6 +20,7 @@ namespace mdEngine
 					Exit,
 					Minimize,
 					StayOnTop,
+					Options,
 					Volume,
 					Play,
 					Stop,
@@ -34,6 +35,7 @@ namespace mdEngine
 					SliderVolume,
 					SliderMusic,
 					SliderPlaylist,
+					SliderOptions,
 					PlaylistItem,
 
 					count

@@ -124,6 +124,23 @@ namespace mdEngine
 		Graphics::Shader::Draw(Graphics::Shader::shaderDefault);
 	}
 
+	void Text::TextObject::DrawString(mdShader* shader) const
+	{
+		shader->use();
+		glm::mat4 model;
+		model = glm::translate(model,
+			glm::vec3(glm::vec2(m_TextPos.x + m_TextOffset.x,
+				m_TextPos.y + m_TextOffset.y),
+				0.9)
+		);
+		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.0));
+		shader->setMat4("model", model);
+		shader->setVec3("color", m_TextColorVec.r, m_TextColorVec.g, m_TextColorVec.b);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_TextTexture);
+		Graphics::Shader::Draw(shader);;
+	}
+
 	void Text::TextObject::SetTextScale(f32 scale)
 	{
 		m_TextScale = scale;

@@ -105,6 +105,11 @@ namespace mdEngine
 			Input::GetMousePosition(&mouseX, &mouseY);
 		}
 
+		bool check(true);
+		if (checkBounds == true)
+		{
+			check = mouseY > boundLow && mouseY < boundHigh;
+		}
 		if (checkBounds == true)
 		{
 			button->topHasFocus = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
@@ -113,17 +118,15 @@ namespace mdEngine
 			button->bottomHasFocus = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
 									 mouseY > (button->GetButtonPos().y + button->GetButtonSize().y / 2.f) && 
 									 mouseY < (button->GetButtonPos().y + button->GetButtonSize().y);
+
+			button->topHasFocus = button->topHasFocus && check;
+			button->bottomHasFocus = button->bottomHasFocus && check;
 		}
 
 
 		bool inside = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
-			mouseY > button->GetButtonPos().y && mouseY < (button->GetButtonPos().y + button->GetButtonSize().y);
+					  mouseY > button->GetButtonPos().y && mouseY < (button->GetButtonPos().y + button->GetButtonSize().y);
 
-		bool check(true);
-		if (checkBounds == true)
-		{
-			check = mouseY > boundLow && mouseY < boundHigh;
-		}
 
 		inside = inside && check;
 

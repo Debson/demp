@@ -107,8 +107,6 @@ namespace Graphics
 		// TODO: It cant be an extern variable...
 		extern Interface::TextBox m_AddFileTextBox;
 
-		void InitializePlaylistItemsPositions();
-
 		void StartMainWindow();
 
 		void UpdateMainWindow();

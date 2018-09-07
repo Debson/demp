@@ -11,6 +11,7 @@ namespace mdEngine
 		{
 			extern mdShader* shaderDefault;;
 			extern mdShader* shaderBorder;
+			extern mdShader* shaderWindow;
 
 			void InitShader();
 			void Draw(mdShader* shader);

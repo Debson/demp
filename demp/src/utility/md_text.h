@@ -8,6 +8,7 @@
 #include <string>
 
 #include "../utility/md_types.h"
+#include "md_shader.h"
 
 namespace mdEngine
 {
@@ -29,6 +30,7 @@ namespace mdEngine
 
 			// Draw text string with specific texture 
 			virtual void DrawString(GLuint tex) const;
+			virtual void DrawString(mdShader* shader) const;
 
 			virtual void SetTextScale(f32 scale);
 			virtual void SetTextColor(glm::vec3 col);

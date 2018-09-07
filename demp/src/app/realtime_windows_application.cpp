@@ -190,7 +190,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	mdApplicationHandler->CollectWindowProperties(Window::windowProperties);
 
 
-	if (BASS_Init(-1, 192000, 0, 0, NULL) == false)
+	if (BASS_Init(-1, 48000, 0, 0, NULL) == false)
 	{
 		MD_BASS_ERROR("ERROR: Initialize BASS");
 		assert(SDL_Init(SDL_INIT_VIDEO) == false);
@@ -249,12 +249,16 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		Time::deltaTime = currentFrame - previousFrame;
 		previousFrame = currentFrame;
 
+		auto optionsWindow = MP::UI::GetOptionsWindow();
 
 		if (SDL_PollEvent(&event))
 		{
 #ifdef _DEBUG_
 			ImGui_ImplSDL2_ProcessEvent(&event);
 #endif
+
+			optionsWindow->ProcessEvents(&event);
+
 			switch (event.type)
 			{
 			case (SDL_QUIT):
@@ -352,7 +356,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 	}
 }
 
-
 void mdEngine::StopRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
 	mdIsRunning = false;
@@ -402,6 +405,11 @@ void mdEngine::SetWindowProperties(const App::WindowProperties& windowProperties
 {
 	mdActualWindowWidth = windowProperties.mWindowWidth;
 	mdActualWindowHeight = windowProperties.mWindowHeight;
+}
+
+SDL_Window* mdEngine::Window::GetSDLWindow()
+{
+	return mdWindow;
 }
 
 HWND mdEngine::Window::GetHWNDWindow()

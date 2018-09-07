@@ -473,6 +473,7 @@ void Audio::PerformDeletion(s32 index)
 		}
 	}
 
+	m_AudioObjectContainer[index]->DeleteTexture();
 
 	if (m_AudioObjectContainer.at(index)->IsFolderRep() == true &&
 		index + 1 < m_AudioObjectContainer.size())
