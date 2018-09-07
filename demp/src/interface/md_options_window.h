@@ -26,14 +26,13 @@ namespace mdEngine
 		private:
 			void OnDestroy();
 
-			f32 m_TestValue;
+			s32 m_TestValue;
 
 			s32 m_Height, m_Width;
 			s32 m_WindowID;
 			SDL_Window* m_Window;
 			SDL_Renderer* m_Renderer;
 			SDL_Event m_Event;
-			SDL_GLContext m_Context;
 			Interface::ButtonSlider m_VolumeStepSlider;
 
 

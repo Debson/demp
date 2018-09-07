@@ -38,3 +38,16 @@ GLuint mdLoadTexture(std::string path)
 
 	return textureID;
 }
+
+SDL_Texture* mdLoadTextureSDL(SDL_Renderer* renderer, std::string path)
+{
+	SDL_Texture* newTex = NULL;
+
+	SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+
+	newTex = SDL_CreateTextureFromSurface(renderer, loadedSurface);
+
+	SDL_FreeSurface(loadedSurface);
+
+	return newTex;
+}

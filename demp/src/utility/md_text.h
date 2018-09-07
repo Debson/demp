@@ -25,12 +25,16 @@ namespace mdEngine
 
 			virtual void InitTextTexture();
 			virtual void ReloadTextTexture();
+			// Awlays call it to initialize rendere
+			void InitTextTextureSDL(SDL_Renderer* renderer);
+			void ReloadTextTextureSDL();
 			virtual void DeleteTexture();
 			virtual void DrawString() const;
 
 			// Draw text string with specific texture 
 			virtual void DrawString(GLuint tex) const;
-			virtual void DrawString(mdShader* shader) const;
+			virtual void DrawStringSDL(SDL_Renderer* renderer) const;
+
 
 			virtual void SetTextScale(f32 scale);
 			virtual void SetTextColor(glm::vec3 col);
@@ -49,22 +53,25 @@ namespace mdEngine
 			SDL_Color	GetTextColor() const;
 
 		protected:
-			f32			 m_TextScale;
-			GLuint		 m_TextTexture;
-			TTF_Font*	 m_Font;
-			SDL_Color	 m_TextColorSDL;
-			glm::vec2	 m_TextOffset;
-			glm::vec2	 m_TextPos;
-			glm::vec3	 m_TextColorVec;
-			glm::ivec2	 m_TextSize;
-			std::wstring m_TextString;
+			f32			  m_TextScale;
+			GLuint		  m_TextTexture;
+			SDL_Texture*  m_TextTextureSDL;
+			TTF_Font*	  m_Font;
+			SDL_Color	  m_TextColorSDL;
+			SDL_Renderer* m_TextRenderer;
+			glm::vec2	  m_TextOffset;
+			glm::vec2	  m_TextPos;
+			glm::vec3	  m_TextColorVec;
+			glm::ivec2	  m_TextSize;
+			std::wstring  m_TextString;
 
 		private:
 		};
 
 		void InitializeText();
 
-		GLuint LoadText(TTF_Font* font, std::wstring string, SDL_Color color);
+		GLuint			LoadText(TTF_Font* font, std::wstring string, SDL_Color color);
+		SDL_Texture*	LoadTextSDL(SDL_Renderer* renderer, TTF_Font* font, std::wstring string, SDL_Color color);
 		
 		void CloseText();
 	}

@@ -3,6 +3,7 @@
 #include <gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <random>
+#include <iomanip>
 
 #include "../app/application_window.h"
 #include "../settings/music_player_settings.h"
@@ -13,6 +14,7 @@
 #include "../audio/mp_audio.h"
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_text.h"
+#include "../utility/md_load_texture.h"
 
 using namespace mdEngine::MP::UI;
 using namespace mdEngine::Graphics;
@@ -622,29 +624,31 @@ namespace mdEngine
 		return item == m_InterfaceButtonContainer.end() ? false : item->second->isPressed;
 	}
 
-
+	
 	Interface::ButtonSlider::ButtonSlider() { }
 
-	Interface::ButtonSlider::ButtonSlider(glm::vec2 pos, f32* value, f32 step, glm::vec2 size) :	m_SliderPos(pos), 
-																									m_SliderSize(size), 
-																									m_ButtonSize(25, 25),
-																									m_Value(value),
-																									m_Step(step)
+	Interface::ButtonSlider::ButtonSlider(std::wstring labelName, glm::ivec2 pos, f32* value, f32 step, glm::vec2 size) :	m_SliderSize(size),
+																															m_ValueF(value),
+																															m_Step(step)
 	{
+		m_Value = NULL;
+		m_LabelText = labelName;
+		m_WindowSize = Data::_OPTIONS_WINDOW_SIZE;
+		m_SliderPos = pos;
+		m_SliderSize = size;
+		m_ButtonSize = { 15, 15 };
 
-		m_TextTexture = 0;
-		m_TextPos = glm::vec2(pos.x + m_ButtonSize.x, m_SliderPos.y);
-		SetTextColor(Color::White);
-		m_Font = Data::_MUSIC_PLAYER_FONT;
-		m_TextString = std::to_wstring(*m_Value);
+	}
 
-		InitTextTexture();
-
-		m_LeftPos = glm::vec2(pos.x, m_SliderPos.y);
-		m_RightPos = glm::vec2(pos.x + m_ButtonSize.x + m_TextSize.x, m_SliderPos.y);
-
-		m_Left = new Button(m_ButtonSize, m_LeftPos);
-		m_Right = new Button(m_ButtonSize, m_RightPos);
+	Interface::ButtonSlider::ButtonSlider(std::wstring labelName, glm::ivec2 pos, s32* value, s32 step, glm::vec2 size) :	m_SliderSize(size),
+																															m_Value(value),
+																															m_Step(step)
+	{
+		m_ValueF = NULL;
+		m_LabelText = labelName;
+		m_WindowSize = Data::_OPTIONS_WINDOW_SIZE;
+		m_SliderPos = pos;
+		m_SliderSize = size;
 
 	}
 
@@ -654,9 +658,78 @@ namespace mdEngine
 		//delete m_Right;
 	}
 
-	void Interface::ButtonSlider::Init()
+	void Interface::ButtonSlider::Init(SDL_Renderer* renderer)
 	{
-		InitTextTexture();
+		m_Renderer = renderer;
+		m_LeftTexture = mdLoadTextureSDL(m_Renderer, "E:\\SDL Projects\\demp\\demp\\assets\\switch.png");
+		m_RightTexture = m_LeftTexture;
+
+
+		if (m_LeftTexture == NULL)
+		{
+			MD_SDL_ERROR("SDL Texture");
+		}
+
+		glm::ivec2 buttonTexSize(12, 12);
+		s32 offsetY = 5;
+
+		m_LabelTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
+		m_LabelTextObject.SetTextString(m_LabelText);
+		m_LabelTextObject.SetTextPos(glm::vec2(m_SliderPos.x, m_SliderPos.y));
+		// Init sdl text
+		m_LabelTextObject.InitTextTextureSDL(m_Renderer);
+
+		m_SliderOutline = { m_SliderPos.x, m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2,
+							m_SliderSize.x , m_SliderSize.y };
+
+		m_ValueTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
+		if (m_Value == NULL)
+		{
+			std::wstringstream ss;
+			std::wstring val;
+			ss << std::setprecision(3) << *m_ValueF;
+			ss >> val;
+			m_ValueTextObject.SetTextString(val);
+		}
+		else
+		{
+			m_ValueTextObject.SetTextString(std::to_wstring(*m_Value));
+		}
+
+
+		m_ValueTextObject.InitTextTextureSDL(m_Renderer);
+
+		s32 offsetX = (m_SliderSize.x - 2 * m_ButtonSize.x - m_ValueTextObject.GetTextSize().x) / 2;
+
+		m_ValueTextObject.SetTextPos(glm::vec2(m_SliderPos.x + m_ButtonSize.x + offsetX,
+											   m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - m_ValueTextObject.GetTextSize().y) / 2));
+
+		s32 texW, texH;
+		SDL_QueryTexture(m_LeftTexture, NULL, NULL, &texW, &texH);	
+
+		m_LeftSrc	= { 0, 0, texW, texH };
+		m_LeftDest	= { m_SliderPos.x, m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY,
+						m_ButtonSize.x, m_ButtonSize.y };
+		m_RightSrc	= { 0, 0, texW, texH };
+		m_RightDest	= { m_SliderPos.x + m_ButtonSize.x + (s32)m_ValueTextObject.GetTextSize().x +  2 * offsetX,
+						m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY, 
+						m_ButtonSize.x, m_ButtonSize.y};
+
+
+		m_ButtonSize = glm::vec2(m_SliderSize.y, m_SliderSize.y);
+		offsetX = (m_SliderSize.x - 2 * m_ButtonSize.x - m_ValueTextObject.GetTextSize().x) / 2;
+		m_Left	= new Button();
+		m_Right = new Button();
+		m_Left->SetButtonPos(glm::vec2(m_SliderPos.x, 
+									   m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2));
+		m_Left->SetButtonSize(m_ButtonSize);
+		m_Right->SetButtonPos(glm::vec2(m_SliderPos.x + m_ButtonSize.x + m_ValueTextObject.GetTextSize().x + 2 * offsetX,
+										m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2));
+		m_Right->SetButtonSize(m_ButtonSize);
+		m_ClickTimer = Time::Timer(650);
+
+		m_RightBackground = { (s32)m_Right->GetButtonPos().x,  (s32)m_Right->GetButtonPos().y,
+							  (s32)m_Right->GetButtonSize().x, (s32)m_Right->GetButtonSize().y };
 
 	}
 
@@ -665,53 +738,118 @@ namespace mdEngine
 		App::ProcessButton(m_Left);
 		App::ProcessButton(m_Right);
 
-		if (m_Right->isPressed == true)
+		if (m_Right->isDown == true)
 		{
-			*m_Value += m_Step;
-			ReloadSliderInfo();
-			md_log(*m_Value);
+			if (m_ClickTimer.finished == true && m_Right->isPressed == false)
+			{
+				if (m_Value == NULL)
+					*m_ValueF += m_Step;
+				else
+					*m_Value += m_Step;
+				ReloadSliderInfo();
+			}
+
+			if (m_Right->isPressed == true)
+			{
+				if (m_Value == NULL)
+					*m_ValueF += m_Step;
+				else
+					*m_Value += m_Step;
+				ReloadSliderInfo();
+				m_ClickTimer.start();
+			}
+		}
+		else
+		{
+			m_ClickTimer.stop();
 		}
 
-		if (m_Left->isPressed == true)
+		if (m_Left->isDown == true)
 		{
-			*m_Value -= m_Step;
-			ReloadSliderInfo();
-			md_log(*m_Value);
+			if (m_ClickTimer.finished == true && m_Left->isPressed == false)
+			{
+				if (m_Value == NULL)
+					*m_ValueF -= m_Step;
+				else
+					*m_Value -= m_Step;
+
+				ReloadSliderInfo();
+			}
+
+			if (m_Left->isPressed == true)
+			{
+				if (m_Value == NULL)
+					*m_ValueF -= m_Step;
+				else
+					*m_Value -= m_Step;
+
+				ReloadSliderInfo();
+				m_ClickTimer.start();
+			}
+		}
+		else
+		{
+			m_ClickTimer.stop();
 		}
 		
+		m_ClickTimer.update();
 	}
 
 	void Interface::ButtonSlider::Render()
 	{
-		glm::mat4 model;
-		Shader::shaderWindow->use();
-		model = glm::translate(model, glm::vec3(m_LeftPos, 0.5f));
-		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.f));
-		Shader::shaderWindow->setMat4("model", model);
-		Shader::shaderWindow->setVec3("color", Color::White);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		Shader::Draw(Shader::shaderWindow);
 
 
-		DrawString(Shader::shaderWindow);
+		SDL_SetRenderDrawColor(m_Renderer, 0x00, 0x00, 0x00, 0xFF);
+		SDL_RenderDrawRect(m_Renderer, &m_SliderOutline);
+
+		m_LabelTextObject.DrawStringSDL(m_Renderer);
+
+		SDL_RenderCopyEx(m_Renderer, m_LeftTexture, NULL, &m_LeftDest, 0, NULL, SDL_FLIP_HORIZONTAL);
+
+		m_ValueTextObject.DrawStringSDL(m_Renderer);
 
 
-		model = glm::mat4();;
-		Shader::shaderWindow->use();
-		model = glm::translate(model, glm::vec3(m_RightPos, 0.5f));
-		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.f));
-		Shader::shaderWindow->setMat4("model", model);
-		Shader::shaderWindow->setVec3("color", Color::White);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		Shader::Draw(Shader::shaderWindow);
+		SDL_SetRenderDrawColor(m_Renderer, 0x00, 0xFF, 0x00, 0xFF);
+		SDL_RenderFillRect(m_Renderer, &m_RightBackground);
+		SDL_RenderCopy(m_Renderer, m_RightTexture, &m_RightSrc, &m_RightDest);
+	}
+
+	void Interface::ButtonSlider::Free()
+	{
+		SDL_DestroyTexture(m_LeftTexture);
+		SDL_DestroyTexture(m_RightTexture);
+		m_LeftTexture = NULL;
+		m_RightTexture = NULL;
+
 	}
 
 	void Interface::ButtonSlider::ReloadSliderInfo()
 	{
-		m_TextString = std::to_wstring(*m_Value);
-		ReloadTextTexture();
+		if (m_Value == NULL)
+		{
+			std::wstringstream ss;
+			std::wstring val;
+			ss << std::setprecision(3) << *m_ValueF;
+			ss >> val;
+			m_ValueTextObject.SetTextString(val);
+		}
+		else
+		{
+			m_ValueTextObject.SetTextString(std::to_wstring(*m_Value));
+		}
+		s32 textSizeBefore = m_ValueTextObject.GetTextSize().x;
+		m_ValueTextObject.ReloadTextTextureSDL();
+		s32 textSizeAfter = m_ValueTextObject.GetTextSize().x;;
+		s32 diff = (textSizeAfter - textSizeBefore) / 2.f;
+
+		m_ValueTextObject.SetTextPos(glm::vec2(m_ValueTextObject.GetTextPos().x - diff, 
+											   m_ValueTextObject.GetTextPos().y));
+
+		//m_Right->SetButtonPos(glm::vec2(m_Right->GetButtonPos().x + diff, m_Right->GetButtonPos().y));
+		//m_RightDest = { m_RightDest.x + diff, m_RightDest.y, m_RightDest.w, m_RightDest.h };
+
+		//m_Left->SetButtonPos(glm::vec2(m_Left->GetButtonPos().x - diff, m_Left->GetButtonPos().y));
+		//m_LeftDest = { m_LeftDest.x - diff, m_LeftDest.y, m_LeftDest.w, m_LeftDest.h };
 	}
 
 	

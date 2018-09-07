@@ -10,9 +10,11 @@
 #include <sstream>
 
 #include "../../external/stb_image.h"
+#include <SDL_image.h>
 
 
 GLuint mdLoadTexture(std::string path);
+SDL_Texture* mdLoadTextureSDL(SDL_Renderer* renderer, std::string path);
 
 #endif // !MDLOAD_TEXUTRE_H
 

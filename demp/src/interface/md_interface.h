@@ -8,6 +8,7 @@
 #include "../utility/md_shader.h"
 #include "../ui/music_player_ui_input.h"
 #include "../utility/md_text.h"
+#include "../utility/md_time.h"
 
 using namespace mdEngine::MP::UI;
 using namespace mdEngine::Text;
@@ -191,32 +192,48 @@ namespace mdEngine
 
 		};
 
-		class ButtonSlider : private TextObject
+		class ButtonSlider
 		{
 		public:
 
 			ButtonSlider();
-			ButtonSlider(glm::vec2 pos, f32* value, f32 step, glm::vec2 size = glm::vec2(50, 20));
+			ButtonSlider(std::wstring labelName, glm::ivec2 pos, f32* value, f32 step, glm::vec2 size = glm::vec2(100, 20));
+			ButtonSlider(std::wstring labelName, glm::ivec2 pos, s32* value, s32 step, glm::vec2 size = glm::vec2(100, 20));
 			~ButtonSlider();
 
-			void Init();
+			void Init(SDL_Renderer* renderer);
 			void Update();
 			void Render();
+			void Free();
 
 		private:
 			void ReloadSliderInfo();
 
 
-			f32* m_Value;
+			f32* m_ValueF;
+			s32* m_Value;
 			f32 m_Step;
 			Button* m_Left;
 			Button* m_Right;
-			glm::vec2 m_LeftPos;
-			glm::vec2 m_RightPos;
-			glm::vec2 m_ButtonSize;
-			glm::vec2 m_SliderPos;
-			
-			glm::vec2 m_SliderSize;
+			TextObject m_ValueTextObject;
+			TextObject m_LabelTextObject;
+			SDL_Texture* m_LeftTexture;
+			SDL_Texture* m_RightTexture;
+			SDL_Texture* m_RenTexture;
+			SDL_Renderer* m_Renderer;
+			SDL_Rect m_LeftSrc;
+			SDL_Rect m_LeftDest;
+			SDL_Rect m_RightSrc;
+			SDL_Rect m_RightDest;
+			SDL_Rect m_SliderOutline;
+			SDL_Rect m_LeftBackground;
+			SDL_Rect m_RightBackground;
+			glm::ivec2 m_ButtonSize;
+			Time::Timer m_ClickTimer;
+			glm::ivec2 m_SliderPos;
+			glm::vec2 m_WindowSize;
+			glm::ivec2 m_SliderSize;
+			std::wstring m_LabelText;
 
 		};
 
