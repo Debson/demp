@@ -112,15 +112,17 @@ namespace MP
 
 		glm::vec2 _TEXT_LOADED_ITEMS_COUNT_POS;
 
+		s32 _MAX_SIZE_RAM_LOADED;
 
-		f32 VolumeKeyMultiplier = 0.8f;
-		s32 VolumeScrollStep = 2.f;
-		s32 VolumeFadeTime = 500;
-		s32 PlaylistRollMultiplier = 500;
+		f32 VolumeLevel;
+		f32 VolumeKeyMultiplier;
+		s32 VolumeScrollStep ;
+		s32 PauseFadeTime;
+		s32 PlaylistRollMultiplier;
 
-		f32 PlaylistScrollStep = 30.f;
+		f32 PlaylistScrollStep;
 
-		s32 PlaylistBarMovableZoneXOffset = 150;
+		s32 PlaylistBarMovableZoneXOffset;
 
 		// private
 		f32 mdDefaultWidth;
@@ -137,6 +139,7 @@ namespace MP
 		_MIN_PLAYER_SIZE = glm::vec2(500.f, 500.f);
 
 		Window::windowProperties.mApplicationHeight = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_APP_HEIGHT);
+		Window::windowProperties.mStartApplicationHeight = Window::windowProperties.mApplicationHeight;
 		if (Window::windowProperties.mApplicationHeight < _MIN_PLAYER_SIZE.y)
 			Window::windowProperties.mApplicationHeight = _MIN_PLAYER_SIZE.y + 20.f;
 
@@ -245,6 +248,18 @@ namespace MP
 
 		_TEXT_LOADED_ITEMS_COUNT_POS = glm::vec2(400, mdDefaultHeight - 30.f);
 
+
+		_MAX_SIZE_RAM_LOADED = 50;
+
+		VolumeLevel = 50;
+		VolumeKeyMultiplier = 0.8f;
+		VolumeScrollStep = 2.f;
+		PauseFadeTime = 500;
+		PlaylistRollMultiplier = 500;
+
+		PlaylistScrollStep = 30.f;
+
+		PlaylistBarMovableZoneXOffset = 150;
 	}
 
 	void Data::UpdateData()
@@ -258,13 +273,15 @@ namespace MP
 		mdDefaultHeight = Window::windowProperties.mWindowHeight - 350.f;
 
 
-		//_MAIN_BACKGROUND_SIZE = glm::vec2(mdDefaultWidth, mdCurrentHeight);
+		_MAIN_BACKGROUND_SIZE = glm::vec2(mdDefaultWidth, mdCurrentHeight);
 
 		_PLAYLIST_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdCurrentHeight - _DEFAULT_PLAYER_SIZE.y - 30.f);
 
 		_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, mdCurrentHeight - (mdCurrentHeight - 350.f));
 		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 100.f, mdCurrentHeight - 30.f);
 		_PLAYLIST_ADD_BUTTON_POS = glm::vec2(40.f, mdCurrentHeight - 35.f);
+
+		Data::_MAIN_BACKGROUND_SIZE.y = mdCurrentHeight;
 
 		_PLAYLIST_ADD_BUTTON_TEXTBOX_POS = glm::vec2(40.f, mdCurrentHeight - 20.f);
 

@@ -101,6 +101,18 @@ namespace mdEngine
 		m_ButtonSize = size;
 	}
 
+	void Interface::Button::ResetState()
+	{
+		isPressed			= false;
+		isReleased			= false;
+		isDown				= false;
+		topHasFocus			= false;
+		bottomHasFocus		= false;
+		hasFocus			= false;
+		hasFocusTillRelease = false;
+		wasDown				= false;
+	}
+
 	glm::vec2& Interface::Button::GetButtonPos()
 	{
 		return m_ButtonPos;
@@ -116,6 +128,7 @@ namespace mdEngine
 		return m_MousePos;
 	}
 
+	
 
 
 	/* *************************************************** */
@@ -271,7 +284,7 @@ namespace mdEngine
 
 	b8 Interface::PlaylistItem::IsPlaying() const
 	{
-		return MP::Playlist::RamLoadedMusic.mID == m_ItemID;
+		return MP::Playlist::RamLoadedMusic.m_ID == m_ItemID;
 	}
 
 	b8 Interface::PlaylistItem::IsFolderRep() const
@@ -627,9 +640,11 @@ namespace mdEngine
 	
 	Interface::ButtonSlider::ButtonSlider() { }
 
-	Interface::ButtonSlider::ButtonSlider(std::wstring labelName, glm::ivec2 pos, f32* value, f32 step, glm::vec2 size) :	m_SliderSize(size),
-																															m_ValueF(value),
-																															m_Step(step)
+	Interface::ButtonSlider::ButtonSlider(std::wstring labelName, glm::ivec2 pos, f32* value, f32 step, f32 min, f32 max, glm::vec2 size) :	m_SliderSize(size),
+																																			m_ValueF(value),
+																																			m_Step(step),
+																																			m_MinValue(min),
+																																			m_MaxValue(max)
 	{
 		m_Value = NULL;
 		m_LabelText = labelName;
@@ -640,9 +655,11 @@ namespace mdEngine
 
 	}
 
-	Interface::ButtonSlider::ButtonSlider(std::wstring labelName, glm::ivec2 pos, s32* value, s32 step, glm::vec2 size) :	m_SliderSize(size),
-																															m_Value(value),
-																															m_Step(step)
+	Interface::ButtonSlider::ButtonSlider(std::wstring labelName, glm::ivec2 pos, s32* value, s32 step, s32 min, s32 max, glm::vec2 size) :	m_SliderSize(size),
+																																			m_Value(value),
+																																			m_Step(step),
+																																			m_MinValue(min),
+																																			m_MaxValue(max)
 	{
 		m_ValueF = NULL;
 		m_LabelText = labelName;
@@ -652,18 +669,11 @@ namespace mdEngine
 
 	}
 
-	Interface::ButtonSlider::~ButtonSlider() 
-	{ 
-		//delete m_Left;
-		//delete m_Right;
-	}
-
 	void Interface::ButtonSlider::Init(SDL_Renderer* renderer)
 	{
 		m_Renderer = renderer;
 		m_LeftTexture = mdLoadTextureSDL(m_Renderer, "E:\\SDL Projects\\demp\\demp\\assets\\switch.png");
 		m_RightTexture = m_LeftTexture;
-
 
 		if (m_LeftTexture == NULL)
 		{
@@ -673,14 +683,17 @@ namespace mdEngine
 		glm::ivec2 buttonTexSize(12, 12);
 		s32 offsetY = 5;
 
+		s32 labelTextXOffset = 3;
 		m_LabelTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
 		m_LabelTextObject.SetTextString(m_LabelText);
-		m_LabelTextObject.SetTextPos(glm::vec2(m_SliderPos.x, m_SliderPos.y));
+		m_LabelTextObject.SetTextPos(glm::vec2(m_SliderPos.x - labelTextXOffset, m_SliderPos.y));
 		// Init sdl text
 		m_LabelTextObject.InitTextTextureSDL(m_Renderer);
+		
 
-		m_SliderOutline = { m_SliderPos.x, m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2,
-							m_SliderSize.x , m_SliderSize.y };
+		s32 outlineSizeOffsetX = 4;
+		m_SliderOutline = { m_SliderPos.x - outlineSizeOffsetX, m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2,
+							m_SliderSize.x + 2 * outlineSizeOffsetX , m_SliderSize.y };
 
 		m_ValueTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
 		if (m_Value == NULL)
@@ -699,104 +712,251 @@ namespace mdEngine
 
 		m_ValueTextObject.InitTextTextureSDL(m_Renderer);
 
-		s32 offsetX = (m_SliderSize.x - 2 * m_ButtonSize.x - m_ValueTextObject.GetTextSize().x) / 2;
 
-		m_ValueTextObject.SetTextPos(glm::vec2(m_SliderPos.x + m_ButtonSize.x + offsetX,
+		s32 offsetX = (m_SliderSize.x - 2 * buttonTexSize.x - m_ValueTextObject.GetTextSize().x) / 2;
+
+		m_ValueTextObject.SetTextPos(glm::vec2(m_SliderPos.x + buttonTexSize.x + offsetX,
 											   m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - m_ValueTextObject.GetTextSize().y) / 2));
 
 		s32 texW, texH;
 		SDL_QueryTexture(m_LeftTexture, NULL, NULL, &texW, &texH);	
 
+
 		m_LeftSrc	= { 0, 0, texW, texH };
 		m_LeftDest	= { m_SliderPos.x, m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY,
-						m_ButtonSize.x, m_ButtonSize.y };
+						buttonTexSize.x, buttonTexSize.y };
 		m_RightSrc	= { 0, 0, texW, texH };
-		m_RightDest	= { m_SliderPos.x + m_ButtonSize.x + (s32)m_ValueTextObject.GetTextSize().x +  2 * offsetX,
+		m_RightDest	= { m_SliderPos.x + buttonTexSize.x + (s32)m_ValueTextObject.GetTextSize().x + 2 * offsetX,
 						m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY, 
-						m_ButtonSize.x, m_ButtonSize.y};
+						buttonTexSize.x, buttonTexSize.y};
 
 
 		m_ButtonSize = glm::vec2(m_SliderSize.y, m_SliderSize.y);
 		offsetX = (m_SliderSize.x - 2 * m_ButtonSize.x - m_ValueTextObject.GetTextSize().x) / 2;
-		m_Left	= new Button();
-		m_Right = new Button();
-		m_Left->SetButtonPos(glm::vec2(m_SliderPos.x, 
+		m_LeftButton	= new Button();
+		m_RightButton = new Button();
+		m_LeftButton->SetButtonPos(glm::vec2(m_SliderPos.x - outlineSizeOffsetX,
 									   m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2));
-		m_Left->SetButtonSize(m_ButtonSize);
-		m_Right->SetButtonPos(glm::vec2(m_SliderPos.x + m_ButtonSize.x + m_ValueTextObject.GetTextSize().x + 2 * offsetX,
+		m_LeftButton->SetButtonSize(m_ButtonSize);
+		m_RightButton->SetButtonPos(glm::vec2(m_SliderPos.x + m_ButtonSize.x + m_ValueTextObject.GetTextSize().x + 2 * offsetX + outlineSizeOffsetX,
 										m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2));
-		m_Right->SetButtonSize(m_ButtonSize);
+		m_RightButton->SetButtonSize(m_ButtonSize);
 		m_ClickTimer = Time::Timer(650);
 
-		m_RightBackground = { (s32)m_Right->GetButtonPos().x,  (s32)m_Right->GetButtonPos().y,
-							  (s32)m_Right->GetButtonSize().x, (s32)m_Right->GetButtonSize().y };
+		m_RightBackground = { (s32)m_RightButton->GetButtonPos().x,  (s32)m_RightButton->GetButtonPos().y,
+							  (s32)m_RightButton->GetButtonSize().x, (s32)m_RightButton->GetButtonSize().y };
+
+
+		m_LeftBackground = { (s32)m_LeftButton->GetButtonPos().x,  (s32)m_LeftButton->GetButtonPos().y,
+							  (s32)m_LeftButton->GetButtonSize().x, (s32)m_LeftButton->GetButtonSize().y };
+
+		m_RightBackgroundAlpha	= 0;
+		m_LeftBackgroundAlpha	= 0;
+
+		m_ButtonsBackgroundColor = SDLColor::Orange;
+
+		s32 fadeTimeValue	= 200;
+		m_FadeTimerRight	= Time::Timer(fadeTimeValue);
+		m_FadeTimerLeft		= Time::Timer(fadeTimeValue);
+
+		m_SliderBackground = m_SliderOutline;
+		m_SliderBackgroundColor = SDLColor::Grey;
+
+
+
+		m_DefaultRect = { (s32)m_SliderPos.x + (s32)m_SliderSize.x + 10, m_SliderOutline.y,
+						  70, (s32)m_SliderSize.y };
+
+		m_DefaultButton = new Button();
+		m_DefaultButton->SetButtonPos(glm::vec2(m_DefaultRect.x, m_DefaultRect.y));
+		m_DefaultButton->SetButtonSize(glm::vec2(m_DefaultRect.w, m_DefaultRect.h));
+
+		m_DefaultTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
+
+		m_DefaultTextObject.SetTextString(L"Default");
+		// Init sdl text
+		m_DefaultTextObject.InitTextTextureSDL(m_Renderer);
+
+		offsetX = (m_DefaultRect.w - m_DefaultTextObject.GetTextSize().x) / 2;
+		offsetY = (m_DefaultRect.h - m_DefaultTextObject.GetTextSize().y) / 2;
+		m_DefaultTextObject.SetTextPos(glm::vec2(m_DefaultRect.x + offsetX,
+												 m_SliderOutline.y + offsetY));
+
 
 	}
 
 	void Interface::ButtonSlider::Update()
 	{
-		App::ProcessButton(m_Left);
-		App::ProcessButton(m_Right);
-
-		if (m_Right->isDown == true)
+		u8 startAlpha = 100;
+		if (m_RightButton->hasFocus == true)
 		{
-			if (m_ClickTimer.finished == true && m_Right->isPressed == false)
+			m_FadeTimerRight.Start();
+			m_RightBackgroundAlpha = startAlpha;
+		}
+		else if(m_FadeTimerRight.started == true)
+		{
+			m_RightBackgroundAlpha = startAlpha * (1.f - m_FadeTimerRight.GetProgress());
+		}
+		else if (m_FadeTimerRight.finished == true)
+		{
+			m_RightBackgroundAlpha = 0;
+		}
+
+
+		if (m_RightButton->isDown == true)
+		{
+			if (m_ClickTimer.finished == true && m_RightButton->isPressed == false)
 			{
 				if (m_Value == NULL)
+				{
 					*m_ValueF += m_Step;
+					if (*m_ValueF > m_MaxValue)
+						*m_ValueF = m_MaxValue;
+				}
 				else
+				{
 					*m_Value += m_Step;
+					if (*m_Value > m_MaxValue)
+						*m_Value = m_MaxValue;
+				}
+
 				ReloadSliderInfo();
 			}
 
-			if (m_Right->isPressed == true)
+			if (m_RightButton->isPressed == true)
 			{
 				if (m_Value == NULL)
+				{
 					*m_ValueF += m_Step;
+					if (*m_ValueF > m_MaxValue)
+						*m_ValueF = m_MaxValue;
+				}
 				else
+				{
 					*m_Value += m_Step;
+					if (*m_Value > m_MaxValue)
+						*m_Value = m_MaxValue;
+				}
+
 				ReloadSliderInfo();
-				m_ClickTimer.start();
+				m_ClickTimer.Start();
 			}
 		}
 		else
 		{
-			m_ClickTimer.stop();
+			m_ClickTimer.Stop();
 		}
 
-		if (m_Left->isDown == true)
+		if (m_LeftButton->hasFocus == true)
 		{
-			if (m_ClickTimer.finished == true && m_Left->isPressed == false)
+			m_FadeTimerLeft.Start();
+			m_LeftBackgroundAlpha = startAlpha;
+		}
+		else if (m_FadeTimerLeft.started == true)
+		{
+			m_LeftBackgroundAlpha = startAlpha * (1.f - m_FadeTimerLeft.GetProgress());
+		}
+		else if (m_FadeTimerLeft.finished == true)
+		{
+			m_LeftBackgroundAlpha = 0;
+		}
+
+
+		if (m_LeftButton->isDown == true)
+		{
+			if (m_ClickTimer.finished == true && m_LeftButton->isPressed == false)
 			{
 				if (m_Value == NULL)
+				{
 					*m_ValueF -= m_Step;
+					if (*m_ValueF < m_MinValue)
+						*m_ValueF = m_MinValue;
+				}
 				else
+				{
 					*m_Value -= m_Step;
+					if (*m_Value < m_MinValue)
+						*m_Value = m_MinValue;
+				}
 
 				ReloadSliderInfo();
 			}
 
-			if (m_Left->isPressed == true)
+			if (m_LeftButton->isPressed == true)
 			{
 				if (m_Value == NULL)
+				{
 					*m_ValueF -= m_Step;
+					if (*m_ValueF < m_MinValue)
+						*m_ValueF = m_MinValue;
+				}
 				else
+				{
 					*m_Value -= m_Step;
+					if (*m_Value < m_MinValue)
+						*m_Value = m_MinValue;
+				}
 
 				ReloadSliderInfo();
-				m_ClickTimer.start();
+				m_ClickTimer.Start();
 			}
 		}
 		else
 		{
-			m_ClickTimer.stop();
+			m_ClickTimer.Stop();
 		}
+
+		if (m_DefaultButton->hasFocus == true)
+		{
+			m_DefaultButtonColor = SDLColor::Silver;
+		}
+		else
+		{
+			m_DefaultButtonColor = SDLColor::DarkGrey;
+		}
+
 		
-		m_ClickTimer.update();
+		m_FadeTimerRight.Update();
+		m_FadeTimerLeft.Update();
+		m_ClickTimer.Update();
+	}
+
+	void Interface::ButtonSlider::ProcessInput()
+	{
+		App::ProcessButton(m_LeftButton);
+		App::ProcessButton(m_RightButton);
+		App::ProcessButton(m_DefaultButton);
+	}
+
+	b8 Interface::ButtonSlider::IsDefaultPressed()
+	{
+		return m_DefaultButton->isPressed;
+	}
+
+	void Interface::ButtonSlider::ResetButtons()
+	{
+		m_LeftButton->ResetState();
+		m_RightButton->ResetState();
+		m_DefaultButton->ResetState();
 	}
 
 	void Interface::ButtonSlider::Render()
 	{
+		SDL_SetRenderDrawColor(m_Renderer, m_SliderBackgroundColor.r, m_SliderBackgroundColor.g, m_SliderBackgroundColor.b, 0xFF);
+		SDL_RenderFillRect(m_Renderer, &m_SliderBackground);
+
+		SDL_SetRenderDrawBlendMode(m_Renderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(m_Renderer, m_ButtonsBackgroundColor.r, m_ButtonsBackgroundColor.g, m_ButtonsBackgroundColor.b, m_RightBackgroundAlpha);
+		SDL_RenderFillRect(m_Renderer, &m_RightBackground);
+
+		SDL_SetRenderDrawColor(m_Renderer, m_ButtonsBackgroundColor.r, m_ButtonsBackgroundColor.g, m_ButtonsBackgroundColor.b, m_LeftBackgroundAlpha);
+		SDL_RenderFillRect(m_Renderer, &m_LeftBackground);
+		SDL_SetRenderDrawBlendMode(m_Renderer, SDL_BLENDMODE_NONE);
+
+
+		SDL_SetRenderDrawColor(m_Renderer, m_DefaultButtonColor.r, m_DefaultButtonColor.g, m_DefaultButtonColor.b, 0xFF);
+		SDL_RenderFillRect(m_Renderer, &m_DefaultRect);
+		m_DefaultTextObject.DrawStringSDL(m_Renderer);
 
 
 		SDL_SetRenderDrawColor(m_Renderer, 0x00, 0x00, 0x00, 0xFF);
@@ -808,19 +968,20 @@ namespace mdEngine
 
 		m_ValueTextObject.DrawStringSDL(m_Renderer);
 
-
-		SDL_SetRenderDrawColor(m_Renderer, 0x00, 0xFF, 0x00, 0xFF);
-		SDL_RenderFillRect(m_Renderer, &m_RightBackground);
 		SDL_RenderCopy(m_Renderer, m_RightTexture, &m_RightSrc, &m_RightDest);
+
 	}
 
 	void Interface::ButtonSlider::Free()
 	{
 		SDL_DestroyTexture(m_LeftTexture);
 		SDL_DestroyTexture(m_RightTexture);
-		m_LeftTexture = NULL;
-		m_RightTexture = NULL;
+		m_LeftTexture	= NULL;
+		m_RightTexture	= NULL;
 
+		m_RightButton	= NULL;
+		m_LeftButton	= NULL;
+		m_DefaultButton = NULL;
 	}
 
 	void Interface::ButtonSlider::ReloadSliderInfo()

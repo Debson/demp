@@ -23,4 +23,19 @@ namespace mdEngine
 		ResetState(FileDropped);
 		ResetState(AudioHidden);
 	}
+
+	void State::StartNewFrame()
+	{
+		ResetState(Window::Resized);
+		ResetState(AudioAdded);
+		ResetState(AudioDeleted);
+		ResetState(AudioChosen);
+		ResetState(AudioChanged);
+		ResetState(ContainersResized);
+		ResetState(FileDropped);
+		ResetState(AudioHidden);
+		ResetState(Window::PositionChanged);
+		State::ResetState(State::PlaylistRolling);
+
+	}
 }

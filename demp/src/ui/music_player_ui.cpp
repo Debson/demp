@@ -125,7 +125,7 @@ namespace MP
 		{
 			ImGui::Text(Playlist::GetPositionInString().c_str());
 			ImGui::SameLine();
-			ImGui::Text("     Song ID: %d", Playlist::RamLoadedMusic.mID);
+			ImGui::Text("     Song ID: %d", Playlist::RamLoadedMusic.m_ID);
 			ImGui::SameLine();
 			ImGui::Text("     Volume: %d", (int)(Playlist::GetVolume() * 100));;
 
@@ -136,7 +136,7 @@ namespace MP
 			}
 
 			ImGui::TextColored(ImVec4(0.3, 0.3, 0.3, 1.0), "Prev: %s", Playlist::GetTitle(Playlist::GetPreviousID()).c_str());
-			ImGui::TextColored(ImVec4(0.7, 0.0, 0.0, 1.0), "Curr: %s", Playlist::GetTitle(Playlist::RamLoadedMusic.mID).c_str());;
+			ImGui::TextColored(ImVec4(0.7, 0.0, 0.0, 1.0), "Curr: %s", Playlist::GetTitle(Playlist::RamLoadedMusic.m_ID).c_str());;
 			ImGui::TextColored(ImVec4(0.3, 0.3, 0.3, 1.0), "Next: %s", Playlist::GetTitle(Playlist::GetNextID()).c_str());
 			ImGui::NewLine();
 
@@ -180,8 +180,8 @@ namespace MP
 			ImGui::InputInt("Scroll volume step", &Data::VolumeScrollStep, 1, 1);
 			Playlist::SetScrollVolumeStep(Data::VolumeScrollStep);
 
-			ImGui::InputInt("Volume fade time", &Data::VolumeFadeTime, 20, 100);
-			Playlist::SetVolumeFadeTime(Data::VolumeFadeTime);
+			ImGui::InputInt("Volume fade time", &Data::PauseFadeTime, 20, 100);
+			Playlist::SetVolumeFadeTime(Data::PauseFadeTime);
 
 			ImGui::TreePop();
 		}
@@ -388,7 +388,6 @@ namespace MP
 #endif
 	}
 
-
 	void UI::HandleInput()
 	{
 		if (Input::isButtonPressed(Input::ButtonType::Exit))
@@ -468,7 +467,7 @@ namespace MP
 
 			if (Audio::Object::GetAudioObject(i)->isPressed == true)
 			{
-				clickDelayTimer.start();
+				clickDelayTimer.Start();
 				Audio::Object::GetAudioObject(i)->Click();
 				playlistItemSelected = true;
 
@@ -560,7 +559,7 @@ namespace MP
 		{
 			if (i.second->isPressed == true)
 			{
-				clickDelayTimer.start();
+				clickDelayTimer.Start();
 				i.second->Click();
 
 
@@ -812,19 +811,15 @@ namespace MP
 		{
 			HandlePlaylistInput();
 			HandleSeparatorInput();
-			clickDelayTimer.update();
+			clickDelayTimer.Update();
 		}
 
 		PlaylistFileExplorer();
-
-		optionsWindow.Update();
 	}
 
 	void UI::Render()
 	{
 		DebugRender();
-
-		optionsWindow.Render();
 	}
 
 	void UI::Close()

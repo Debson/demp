@@ -27,17 +27,18 @@ namespace MP
 
 		struct SongObject
 		{
-			char *mData;
-			u32 mSize;
-			HSTREAM mMusic;
-			s64 mID;
+			char *m_Data;
+			u32 m_MusicSize;
+			HSTREAM m_MusicStream;
+			HSTREAM m_CrossfadeMusicStream;
+			s64 m_ID;
 
 			SongObject();
 			~SongObject();
 
 #ifdef _WIN32_
 			b8 load(std::wstring songPath, u32 id);
-			std::wstring mPath;
+			std::wstring m_Path;
 #else
 			b8 init(const char* songPath);
 			b8 load(const char* songPath, u32 id, SongState state);

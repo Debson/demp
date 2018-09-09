@@ -23,7 +23,7 @@ namespace mdEngine
 
 	void MP::MusicPlayer::Update()
 	{
-		Data::UpdateData();
+		//Data::UpdateData();
 		UpdateInput();
 		UpdateLogic();
 		State::ResetStateFlags();

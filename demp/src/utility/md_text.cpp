@@ -261,6 +261,9 @@ namespace mdEngine
 
 
 		textSurface = TTF_RenderUTF8_Blended(font, utf16_to_utf8(string).c_str(), color);
+		if (textSurface == NULL)
+			return 0;
+
 		assert(textSurface != NULL);
 
 		colors = textSurface->format->BytesPerPixel;

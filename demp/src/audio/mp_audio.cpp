@@ -96,7 +96,7 @@ b8 Audio::SavePathFiles(std::wstring path)
 
 	filesLoadedFromFile = true;
 	
-	lastPathPushTimer.start();
+	lastPathPushTimer.Start();
 	m_InitPaths.push_back(path);
 
 	return true;
@@ -181,7 +181,7 @@ b8 Audio::SavePathFiles(std::wstring path, const Info::ID3 id3)
 		return false;
 	}
 
-	lastPathPushTimer.start();
+	lastPathPushTimer.Start();
 	m_InitPaths.push_back(path);
 	m_ID3Container.push_back(id3);
 
@@ -199,7 +199,7 @@ void Audio::PushToPlaylistWrap()
 
 b8 Audio::PushToPlaylist(std::wstring path)
 {
-	lastFunctionCallTimer.start();
+	lastFunctionCallTimer.Start();
 	Audio::CalculateDroppedPosInPlaylist();
 
 	if (fs::exists(path))
@@ -296,16 +296,16 @@ void Audio::UpdateAudioLogic()
 	if (State::CheckState(State::PathLoadedFromFileVolatile) == true)
 		filesLoadedFromFile = true;
 
-	if (lastPathPushTimer.getTicksStart() > MAX_PATH_WAIT_TIME)
+	if (lastPathPushTimer.GetTicksStart() > MAX_PATH_WAIT_TIME)
 	{
 		startLoadingPaths = true;
-		lastPathPushTimer.stop();
+		lastPathPushTimer.Stop();
 	}
 
-	if (lastFunctionCallTimer.getTicksStart() > WAIT_TIME_BEFORE_NEXT_CALL)
+	if (lastFunctionCallTimer.GetTicksStart() > WAIT_TIME_BEFORE_NEXT_CALL)
 	{
 		startLoadingProperties = true;
-		lastFunctionCallTimer.stop();
+		lastFunctionCallTimer.Stop();
 	}
 	if (startLoadingPaths == true)
 	{

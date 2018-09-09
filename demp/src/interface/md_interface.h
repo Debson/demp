@@ -50,6 +50,7 @@ namespace mdEngine
 			virtual void SetButtonPos(glm::vec2 pos);
 			void SetButtonPosY(f32 posY);
 			void SetButtonSize(glm::vec2 size);
+			void ResetState();
 
 			glm::vec2& GetButtonPos();
 			glm::vec2& GetButtonSize();
@@ -197,29 +198,35 @@ namespace mdEngine
 		public:
 
 			ButtonSlider();
-			ButtonSlider(std::wstring labelName, glm::ivec2 pos, f32* value, f32 step, glm::vec2 size = glm::vec2(100, 20));
-			ButtonSlider(std::wstring labelName, glm::ivec2 pos, s32* value, s32 step, glm::vec2 size = glm::vec2(100, 20));
-			~ButtonSlider();
+			ButtonSlider(std::wstring labelName, glm::ivec2 pos, f32* value, f32 step, f32 min = 0, f32 max = 100, glm::vec2 size = glm::vec2(100, 20));
+			ButtonSlider(std::wstring labelName, glm::ivec2 pos, s32* value, s32 step, s32 min = 0, s32 max = 100, glm::vec2 size = glm::vec2(100, 20));
 
 			void Init(SDL_Renderer* renderer);
 			void Update();
+			void ProcessInput();
+			b8 IsDefaultPressed();
+			void ReloadSliderInfo();
+			void ResetButtons();
 			void Render();
 			void Free();
 
 		private:
-			void ReloadSliderInfo();
 
-
+			s32 m_RightBackgroundAlpha;
+			u8 m_LeftBackgroundAlpha;
 			f32* m_ValueF;
 			s32* m_Value;
 			f32 m_Step;
-			Button* m_Left;
-			Button* m_Right;
+			f32 m_MinValue;
+			f32 m_MaxValue;
+			Button* m_LeftButton;
+			Button* m_RightButton;
+			Button* m_DefaultButton;
 			TextObject m_ValueTextObject;
 			TextObject m_LabelTextObject;
+			TextObject m_DefaultTextObject;
 			SDL_Texture* m_LeftTexture;
 			SDL_Texture* m_RightTexture;
-			SDL_Texture* m_RenTexture;
 			SDL_Renderer* m_Renderer;
 			SDL_Rect m_LeftSrc;
 			SDL_Rect m_LeftDest;
@@ -228,8 +235,15 @@ namespace mdEngine
 			SDL_Rect m_SliderOutline;
 			SDL_Rect m_LeftBackground;
 			SDL_Rect m_RightBackground;
+			SDL_Rect m_SliderBackground;
+			SDL_Rect m_DefaultRect;
+			SDL_Color m_ButtonsBackgroundColor;
+			SDL_Color m_SliderBackgroundColor;
+			SDL_Color m_DefaultButtonColor;
 			glm::ivec2 m_ButtonSize;
 			Time::Timer m_ClickTimer;
+			Time::Timer m_FadeTimerRight;
+			Time::Timer m_FadeTimerLeft;
 			glm::ivec2 m_SliderPos;
 			glm::vec2 m_WindowSize;
 			glm::ivec2 m_SliderSize;

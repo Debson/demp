@@ -10,7 +10,7 @@
 #include "../utility/md_types.h"
 
 /* Max size of song that can be loaded into ram IN BYTES */
-#define _MAX_SIZE_RAM_LOADED 50000000
+//#define _MAX_SIZE_RAM_LOADED 50000000
 #define MAX_EXTENSION_LENGTH 4
 #define MAX_FILEPATH_BUFFER_SIZE 65536
 #define MAX_FOLDERPATH_BUFFER_SIZE 512
@@ -131,14 +131,38 @@ namespace MP
 
 		extern glm::vec2 _TEXT_LOADED_ITEMS_COUNT_POS;
 
+		extern s32 _MAX_SIZE_RAM_LOADED;
 
+		const s32 StartMusicFadeTime = 1000;
+
+		extern f32 VolumeLevel;
 		extern f32 VolumeKeyMultiplier;
 		extern s32 VolumeScrollStep;
-		extern s32 VolumeFadeTime;
+		extern  s32 PauseFadeTime;
 		extern s32 PlaylistRollMultiplier;
 		extern s32 PlaylistBarMovableZoneXOffset;
 
 		extern f32 PlaylistScrollStep;
+
+		const s32 _MAX_SIZE_RAM_LOADED_MAX = 300;
+		const s32 VolumeScrollStepMAX = 100.f;
+		const s32 PauseFadeTimeMAX = 10000;
+		const s32 VolumeFadeTimeMAX = 10000;
+		const f32 PlaylistScrollStepMAX = 150.f;
+
+
+		namespace Default
+		{
+			const s32 _MAX_SIZE_RAM_LOADED		= 50;
+			const f32 VolumeKeyMultiplier		= 0.8f;
+			const s32 VolumeScrollStep			= 2.f;
+			const s32 PauseFadeTime				= 500;
+			const s32 VolumeFadeTime			= 500;
+			const s32 PlaylistRollMultiplier	= 500;
+			const f32 PlaylistScrollStep		= 30.f;
+
+
+		}
 
 #ifdef _WIN32_
 		const std::vector<std::wstring> SupportedFormatsW =

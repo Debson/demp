@@ -33,11 +33,13 @@ namespace MP
 		SongObject RamLoadedMusic;
 
 		Time::Timer lastDeletionTimer;
+		Time::Timer playFadeTimer;
 
 		b8 mdNextRequest(false);
 		b8 mdPreviousRequest(false);
 
 		f32 mdVolume = 0.5f;
+		f32 mdVolumeTemp;
 
 		f32 mdVolumeFadeInValue = 0;
 		f32 mdVolumeFadeOutValue = 0;
@@ -51,8 +53,6 @@ namespace MP
 		b8 mdVolumeFadeOut(false);
 
 		f32 mdVolumeScrollStep = 2.f;
-
-		u16 mdVolumeFadeTime = 500;
 
 		b8 mdRepeatMusic(false);
 		b8 mdShuffleMusic(false);
@@ -75,6 +75,10 @@ namespace MP
 
 		void CheckMPState();
 
+		void CrossfadeSong();
+
+		void PerformCrossfade();
+
 
 		b8 check_size(u32);
 
@@ -90,7 +94,7 @@ namespace MP
 
 		b8 check_size(u32 size)
 		{
-			if (size > _MAX_SIZE_RAM_LOADED)
+			if (size > Data::_MAX_SIZE_RAM_LOADED * 1000000)
 				return false;
 
 			return true;
@@ -115,19 +119,18 @@ namespace MP
 
 		SongObject::SongObject()
 		{
-			mMusic = NULL;
-			mData = NULL;
+			m_MusicStream = NULL;
+			m_Data = NULL;
 		}
 
 		SongObject::~SongObject()
 		{
-			BASS_StreamFree(mMusic);
-			mMusic = NULL;
-			mData = NULL;
+			BASS_StreamFree(m_MusicStream);
+			m_MusicStream = NULL;
+			m_Data = NULL;
 		}
    
 #ifdef _WIN32_
-
 		b8 SongObject::load(std::wstring songPath, u32 id)
 		{
 			FILE* file = NULL;
@@ -155,32 +158,32 @@ namespace MP
 				s32 size = ftell(file); // size of opened file
 				fseek(file, 0L, SEEK_SET); // set cursor at the beginning
 
-				mPath = songPath;
-				mID = id;
-				mSize = size;
+				m_Path = songPath;
+				m_ID = id;
+				m_MusicSize = size;
 
-				if(mData != NULL)
-					delete[] mData;
-				BASS_StreamFree(mMusic);
-				mData = NULL;
-				mMusic = NULL;
+				if(m_Data != NULL)
+					delete[] m_Data;
+				BASS_StreamFree(m_MusicStream);
+				m_Data = NULL;
+				m_MusicStream = NULL;
 
-				if (check_size(mSize) == true)
+				if (check_size(m_MusicSize) == true)
 				{
-					mData = new char[size];
-					s32 newLen = fread(mData, sizeof(char), mSize, file);
+					m_Data = new char[size];
+					s32 newLen = fread(m_Data, sizeof(char), m_MusicSize, file);
 					if (ferror(file) == 0)
 					{
 						fclose(file);
 						
 
-						mMusic = BASS_StreamCreateFile(TRUE, mData, 0, size, BASS_STREAM_AUTOFREE);
+						m_MusicStream = BASS_StreamCreateFile(TRUE, m_Data, 0, size, BASS_STREAM_AUTOFREE);
 						if (check_file() == false)
 						{
 							//delete mdPathContainer[mID];
 							//mdPathContainer.erase(mdPathContainer.begin() + mID);
 
-							return load(Audio::Object::GetAudioObject(mID + 1)->GetPath(), mID + 1);
+							return load(Audio::Object::GetAudioObject(m_ID + 1)->GetPath(), m_ID + 1);
 						}
 					}
 					else
@@ -193,10 +196,10 @@ namespace MP
 				}
 				else
 				{
-					delete[] mData;
-					mData = NULL;
+					delete[] m_Data;
+					m_Data = NULL;
 #ifdef _WIN32_
-					mMusic = BASS_StreamCreateFile(FALSE, mPath.c_str(), 0, 0, 0);
+					m_MusicStream = BASS_StreamCreateFile(FALSE, m_Path.c_str(), 0, 0, 0);
 #else
 					mMusic = BASS_StreamCreateFile(FALSE, mPath, 0, 0, 0);
 #endif
@@ -206,7 +209,7 @@ namespace MP
 						//delete mdPathContainer[mID];
 						//mdPathContainer.erase(mdPathContainer.begin() + mID);
 
-						return load(Audio::Object::GetAudioObject(mID + 1)->GetPath(), mID + 1);;
+						return load(Audio::Object::GetAudioObject(m_ID + 1)->GetPath(), m_ID + 1);;
 					}
 				}
 			}
@@ -216,7 +219,7 @@ namespace MP
 
 		HMUSIC& SongObject::get()
 		{
-			return mMusic;
+			return m_MusicStream;
 		}
 
 		void Playlist::InitializeConfig()
@@ -224,12 +227,37 @@ namespace MP
 
 			std::string file = Strings::_SETTINGS_FILE;
 
-			mdVolume =  Parser::GetFloat(file, Strings::_VOLUME);
+			Data::VolumeLevel = Parser::GetFloat(file, Strings::_VOLUME);
+			mdVolume = Data::VolumeLevel;
 			RamLoadedMusic.load(Parser::GetStringUTF8(file, Strings::_CURRENT_SONG),
 								Parser::GetInt(file, Strings::_CURRENT_SONG_ID));
 			Parser::GetInt(file, Strings::_SHUFFLE_STATE) == 1 ? Playlist::ShuffleMusic() : (void)0;
 			mdShuffleMusic = Parser::GetInt(file, Strings::_SHUFFLE_STATE);
 			Parser::GetInt(file, Strings::_REPEAT_STATE)	== 1 ? Playlist::RepeatMusic()	: (void)0;
+
+			Data::VolumeScrollStep		= Parser::GetInt(file, Strings::_VOLUME_SCROLL_STEP);
+			if (Data::VolumeScrollStep < 0)
+				Data::VolumeScrollStep = 0;
+			if (Data::VolumeScrollStep > Data::VolumeScrollStepMAX)
+				Data::VolumeScrollStep = Data::VolumeScrollStepMAX;
+
+			Data::PlaylistScrollStep	= Parser::GetInt(file, Strings::_PLAYLIST_SCROLL_STEP);
+			if (Data::PlaylistScrollStep < 0)
+				Data::PlaylistScrollStep = 0;
+			if (Data::PlaylistScrollStep > Data::PlaylistScrollStepMAX)
+				Data::PlaylistScrollStep = Data::PlaylistScrollStepMAX;
+
+			Data::_MAX_SIZE_RAM_LOADED	= Parser::GetInt(file, Strings::_MAX_RAM_LOADED_SIZE);
+			if (Data::_MAX_SIZE_RAM_LOADED < 0)
+				Data::_MAX_SIZE_RAM_LOADED = 0;
+			if (Data::_MAX_SIZE_RAM_LOADED > Data::_MAX_SIZE_RAM_LOADED_MAX)
+				Data::_MAX_SIZE_RAM_LOADED = Data::_MAX_SIZE_RAM_LOADED_MAX;
+
+			Data::PauseFadeTime	= Parser::GetInt(file, Strings::_PAUSE_FADE_TIME);
+			if (Data::PauseFadeTime < 0)
+				Data::PauseFadeTime = 0;
+			if (Data::PauseFadeTime > Data::PauseFadeTimeMAX)
+				Data::PauseFadeTime = Data::PauseFadeTimeMAX;
 
 			Playlist::SetPosition((s32)Parser::GetFloat(file, Strings::_SONG_POSITION));
 			
@@ -238,13 +266,15 @@ namespace MP
 		void Playlist::Start()
 		{
 			InitializeConfig();
+
+			playFadeTimer = Time::Timer(Data::StartMusicFadeTime);
 		}
 
 		void Playlist::UpdatePlaylist()
 		{
-			if (lastDeletionTimer.getTicksStart() > LAST_EVENT_TIME)
+			if (lastDeletionTimer.GetTicksStart() > LAST_EVENT_TIME)
 			{
-				lastDeletionTimer.stop();
+				lastDeletionTimer.Stop();
 				State::SetState(State::DeletionFinished);
 			}
 
@@ -298,12 +328,36 @@ namespace MP
 				SetActualVolume();
 			}
 
+
+			if (State::CheckState(State::VolumeChanged) == true)
+			{
+				mdVolumeTemp = mdVolume;
+				Data::VolumeLevel = mdVolume;
+				State::ResetState(State::VolumeChanged);
+			}
+
+			if (playFadeTimer.started == true)
+			{
+				mdVolume = playFadeTimer.GetProgressLog() * mdVolumeTemp;
+				State::SetState(State::AudioPlayStarted);
+			}
+			else
+			{
+				Data::VolumeLevel = mdVolume;
+				State::ResetState(State::AudioPlayStarted);
+				mdVolumeTemp = 0;
+			}
+
+
 			CheckMPState();
 
 			CheckVolumeBounds();
 
 			RepeatMusicProcedure();
 
+			CrossfadeSong();
+
+			playFadeTimer.Update();
 		}
 
 		void PlayMusic()
@@ -312,6 +366,8 @@ namespace MP
 			mdVolumeFadeIn = false;
 			mdVolumeFadeOut = false;
 			mdMusicPaused = false;
+
+			PauseMusic();
 
 			/* If current's song position is greater than 0, it means that song's
 			   position was loaded from file. */
@@ -325,14 +381,18 @@ namespace MP
 			if (RamLoadedMusic.get() != NULL)
 			{
 				if(IsPlaying() == false)
-					RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.mID)->GetPath(), RamLoadedMusic.mID);
+					RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)->GetPath(), RamLoadedMusic.m_ID);
 				mdMPStarted = true;
 			}
-			Graphics::MP::GetPlaylistObject()->SetPlayingID(RamLoadedMusic.mID);
-			Graphics::MP::GetPlaylistObject()->SetSelectedID(RamLoadedMusic.mID);
+			Graphics::MP::GetPlaylistObject()->SetPlayingID(RamLoadedMusic.m_ID);
+			Graphics::MP::GetPlaylistObject()->SetSelectedID(RamLoadedMusic.m_ID);
 
 			
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
+			if(playFadeTimer.started == false)
+				mdVolumeTemp = mdVolume;
+			playFadeTimer.Start();
+			mdVolume = 0;
 			SetPosition(pos);
 		}
 
@@ -355,14 +415,14 @@ namespace MP
 
 				if (mdMusicPaused)
 				{
-					BASS_ChannelSlideAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, 0, mdVolumeFadeTime);
+					BASS_ChannelSlideAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, 0, Data::PauseFadeTime);
 					mdVolumeFadeOut = true;
 				}
 				else
 				{
 					mdVolumeFadeOut = false;
 					BASS_ChannelPlay(RamLoadedMusic.get(), false);
-					BASS_ChannelSlideAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, mdVolume, mdVolumeFadeTime);
+					BASS_ChannelSlideAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, mdVolume, Data::PauseFadeTime);
 					mdVolumeFadeIn = true;
 				}
 			}
@@ -390,11 +450,11 @@ namespace MP
 				*/
 				if (mdShuffleMusic == false)
 				{
-					if ((RamLoadedMusic.mID + 1) < Audio::Object::GetSize())
+					if ((RamLoadedMusic.m_ID + 1) < Audio::Object::GetSize())
 					{
 						s32 index = 1;
-						while ((RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.mID + index)->GetPath(), RamLoadedMusic.mID + index) == false)
-							&& (RamLoadedMusic.mID + 1 < Audio::Object::GetSize()))
+						while ((RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID + index)->GetPath(), RamLoadedMusic.m_ID + index) == false)
+							&& (RamLoadedMusic.m_ID + 1 < Audio::Object::GetSize()))
 						{
 							index++;
 						}
@@ -448,11 +508,11 @@ namespace MP
 				*/
 				if (mdShuffleMusic == false)
 				{
-					if ((RamLoadedMusic.mID - 1) >= 0)
+					if ((RamLoadedMusic.m_ID - 1) >= 0)
 					{
 						int index = 1;
-						while ((RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.mID - index)->GetPath(), RamLoadedMusic.mID - index) == false)
-							&& (RamLoadedMusic.mID - index >= 0))
+						while ((RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID - index)->GetPath(), RamLoadedMusic.m_ID - index) == false)
+							&& (RamLoadedMusic.m_ID - index >= 0))
 						{
 							index++;
 						}
@@ -493,9 +553,14 @@ namespace MP
 				mdVolume += (Data::VolumeKeyMultiplier * Time::deltaTime);
 				break;
 			case App::InputEvent::kScrollEvent:
-				mdVolume += (mdVolumeScrollStep / 100.f);
+				mdVolume += (Data::VolumeScrollStep / 100.f);
 				break;
 			}
+
+			if (mdVolume > 100.f)
+				mdVolume = 100.f;
+			if (mdVolume < 0)
+				mdVolume = 0.f;
 		}
 
 		void LowerVolume(App::InputEvent event)
@@ -506,9 +571,14 @@ namespace MP
 				mdVolume -= (Data::VolumeKeyMultiplier * Time::deltaTime);
 				break;
 			case App::InputEvent::kScrollEvent:
-				mdVolume -= (mdVolumeScrollStep / 100.f);
+				mdVolume -= (Data::VolumeScrollStep / 100.f);
 				break;
 			};
+
+			if (mdVolume > 100.f)
+				mdVolume = 100.f;
+			if (mdVolume < 0)
+				mdVolume = 0.f;
 		}
 
 		void RewindMusic(s32 pos)
@@ -565,12 +635,12 @@ namespace MP
 				mdCurrentShuffleMusicPos = 0;
 			}
 			
-			if (RamLoadedMusic.mID < Audio::Object::GetSize())
-				mdShuffleMusicPosContainer.push_back(RamLoadedMusic.mID);
+			if (RamLoadedMusic.m_ID < Audio::Object::GetSize())
+				mdShuffleMusicPosContainer.push_back(RamLoadedMusic.m_ID);
 
 			for (u32 i = 0; i < Audio::Object::GetSize(); i++)
 			{
-				if(i != RamLoadedMusic.mID)
+				if(i != RamLoadedMusic.m_ID)
 					mdShuffleMusicPosContainer.push_back(i);
 			}
 			if(mdShuffleMusicPosContainer.size() > 0)
@@ -617,7 +687,7 @@ namespace MP
 			if (pos < 0)
 				return;
 
-			lastDeletionTimer.start();
+			lastDeletionTimer.Start();
 		
 
 			// BUG: Can't erase pos in playlist button container
@@ -635,6 +705,19 @@ namespace MP
 				Graphics::MP::GetPlaylistObject()->SetSelectedID(Audio::Object::GetSize() - 1);
 
 			State::SetState(State::AudioDeleted);
+		}
+
+		void CrossfadeSong()
+		{
+			if (GetMusicLength() - GetPosition() < 10)
+			{
+				//PerformCrossfade();
+			}
+		}
+
+		void PerformCrossfade()
+		{
+
 		}
 
 		b8 IsLoaded()
@@ -699,10 +782,10 @@ namespace MP
 			}
 			else
 			{
-				if (RamLoadedMusic.mID - 1 < 0)
+				if (RamLoadedMusic.m_ID - 1 < 0)
 					id = Audio::Object::GetSize() - 1;
 				else
-					id = RamLoadedMusic.mID - 1;
+					id = RamLoadedMusic.m_ID - 1;
 			}
 
 			return id;
@@ -720,10 +803,10 @@ namespace MP
 			}
 			else
 			{
-				if (RamLoadedMusic.mID + 1 > Audio::Object::GetSize() - 1)
+				if (RamLoadedMusic.m_ID + 1 > Audio::Object::GetSize() - 1)
 					id = 0;
 				else
-					id = RamLoadedMusic.mID + 1;
+					id = RamLoadedMusic.m_ID + 1;
 			}
 
 			return id;
@@ -858,7 +941,8 @@ namespace MP
 
 		void SetVolumeFadeTime(s32 vol)
 		{
-			mdVolumeFadeTime = vol;
+			
+			Data::PauseFadeTime = vol;
 		}
 	}
 }

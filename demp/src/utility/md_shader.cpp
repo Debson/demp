@@ -285,7 +285,7 @@ void mdShader::setVec2(const std::string &name, GLfloat x, GLfloat y) const
 	glUniform2f(glGetUniformLocation(ID, name.c_str()), x, y);
 }
 
-void mdShader::setVec3(const std::string &name, glm::vec3 &value) const
+void mdShader::setVec3(const std::string &name, glm::vec3 value) const
 {
 	glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
 }

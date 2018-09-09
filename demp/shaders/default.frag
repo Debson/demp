@@ -1,4 +1,4 @@
-#version 330 core
+#version 420 core
 
 in vec2 TexCoords;
 in vec4 pos;
@@ -11,11 +11,15 @@ uniform bool cut;
 uniform bool border;
 uniform bool playlistCut;
 uniform bool plain;
+uniform bool roundEdges;
+uniform bool roundEdgesBackground;
 
 uniform float aspectXY;
 uniform float border_width;
 uniform float playlistMinY;
 uniform float playlistMaxY;
+uniform float playerHeightChange;
+uniform float roundEdgeFactor;
 
 float aspectYX = 1.0 / aspectXY;
 float maxX = 1.0 - border_width / aspectXY;
@@ -42,7 +46,6 @@ void main()
 
 	if(border)
 	{
-		
 		if(TexCoords.x < maxX && TexCoords.x > minX &&
 		   TexCoords.y < maxY && TexCoords.y > minY)
 		{
@@ -73,6 +76,23 @@ void main()
 	if(plain)
 	{
 		FragColor = vec4(color, 1.0);
+	}
+
+	if(roundEdgesBackground == true)
+	{
+		float tex = 0.02 * playerHeightChange;
+		// top right
+		if(TexCoords.x < tex && TexCoords.y < tex && distance(TexCoords, vec2(tex)) > tex)
+			FragColor = vec4(0.0); 
+		// top left
+		if(TexCoords.x > 1 - tex && TexCoords.y < tex && distance(TexCoords, vec2(1 - tex, tex)) > tex)
+			FragColor = vec4(0.0); 
+		// bottom right
+		if(TexCoords.x < tex && TexCoords.y > 1 - tex && distance(TexCoords, vec2(tex, 1 - tex)) > tex)
+			FragColor = vec4(0.0);
+		// bottom left
+		if(TexCoords.x > 1 - tex && TexCoords.y > 1 -tex && distance(TexCoords, vec2(1 - tex, 1 - tex)) > tex)
+			FragColor = vec4(0.0);
 	}
 
 

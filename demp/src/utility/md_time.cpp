@@ -26,17 +26,32 @@ namespace mdEngine
 		Timer::~Timer() { }
 
 
-		void Timer::reset()
+		void Timer::Reset()
 		{
 			finished = false;
 		}
 
-		f32 Timer::progress()
+		f32 Timer::GetProgress()
 		{
-			return currentTime / targetTime;
+			f32 progress = currentTime / targetTime;
+			if (progress > 1.f)
+				progress = 1.f;
+			return progress;
 		}
 
-		void Timer::start()
+
+		f32 Timer::GetProgressLog()
+		{
+			if ((currentTime / targetTime) <= 0.1f)
+				return 0;
+
+			f32 progress = log10((currentTime / targetTime) * 10.f);
+			if (progress > 1.f)
+				progress = 1.f;
+			return progress;
+		}
+
+		void Timer::Start()
 		{
 			stopped = false;
 			if (stopped == false)
@@ -47,16 +62,17 @@ namespace mdEngine
 			}
 		}
 
-		void Timer::stop()
+		void Timer::Stop()
 		{
 			stopped = true;
 		}
 
-		void Timer::update()
+		void Timer::Update()
 		{
 			if (started == true)
 			{
-				if (SDL_GetTicks() - startTime > targetTime)
+				if (SDL_GetTicks() - startTime > targetTime &&
+					currentTime - targetTime > deltaTime)
 				{
 					finished = true;
 					started = false;
@@ -66,12 +82,12 @@ namespace mdEngine
 			}
 		}
 
-		f32 Timer::getTicks()
+		f32 Timer::GetTicks()
 		{
 			return SDL_GetTicks() - startTime;
 		}
 
-		f32 Timer::getTicksStart()
+		f32 Timer::GetTicksStart()
 		{
 			if (stopped == false)
 			{

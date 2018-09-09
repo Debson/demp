@@ -78,7 +78,7 @@ namespace mdEngine
 		AddToFile(&file, Strings::_CONTENT_FILES, Audio::Object::GetSize());
 		AddToFile(&file, Strings::_CONTENT_SIZE, std::to_string(Graphics::MP::GetPlaylistObject()->GetItemsSize()));
 		AddToFile(&file, Strings::_CONTENT_LOADED, Audio::Info::GetProcessedItemsCount() == Audio::Object::GetSize());
-		AddToFile(&file, Strings::_PLAYBACK_CURSOR, MP::Playlist::RamLoadedMusic.mID);
+		AddToFile(&file, Strings::_PLAYBACK_CURSOR, MP::Playlist::RamLoadedMusic.m_ID);
 
 		file << "\n\n";
 		file << SEPARATOR_CONTENT;
@@ -219,16 +219,18 @@ namespace mdEngine
 			return false;
 		}
 
-		AddToFile(&file, Strings::_VOLUME, MP::Playlist::GetVolume());;
-		AddToFile(&file, Strings::_CURRENT_SONG, utf16_to_utf8(MP::Playlist::RamLoadedMusic.mPath));
-		AddToFile(&file, Strings::_CURRENT_SONG_ID, MP::Playlist::RamLoadedMusic.mID);
+		AddToFile(&file, Strings::_VOLUME, MP::Data::VolumeLevel);;
+		AddToFile(&file, Strings::_CURRENT_SONG, utf16_to_utf8(MP::Playlist::RamLoadedMusic.m_Path));
+		AddToFile(&file, Strings::_CURRENT_SONG_ID, MP::Playlist::RamLoadedMusic.m_ID);
 		AddToFile(&file, Strings::_SONG_POSITION, MP::Playlist::GetPosition());
 		AddToFile(&file, Strings::_SHUFFLE_STATE, MP::Playlist::IsShuffleEnabled());
 		AddToFile(&file, Strings::_REPEAT_STATE, MP::Playlist::IsRepeatEnabled());
 		AddToFile(&file, Strings::_PLAYLIST_STATE, Graphics::MP::GetPlaylistObject()->IsToggled());
 		AddToFile(&file, Strings::_APP_HEIGHT, Window::windowProperties.mApplicationHeight);
-		AddToFile(&file, "random1", 5.232);
-		AddToFile(&file, "random2", "elo");
+		AddToFile(&file, Strings::_VOLUME_SCROLL_STEP, MP::Data::VolumeScrollStep);
+		AddToFile(&file, Strings::_PLAYLIST_SCROLL_STEP, MP::Data::PlaylistScrollStep);
+		AddToFile(&file, Strings::_MAX_RAM_LOADED_SIZE, MP::Data::_MAX_SIZE_RAM_LOADED);
+		AddToFile(&file, Strings::_PAUSE_FADE_TIME, MP::Data::PauseFadeTime);
 
 
 		return true;

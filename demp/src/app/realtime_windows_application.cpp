@@ -37,13 +37,13 @@
 
 namespace mdEngine
 {
-	SDL_Window* mdWindow = NULL;
+	SDL_Window* mdWindow;
 	SDL_DisplayMode current;
 	SDL_GLContext gl_context;
 	SDL_SysWMinfo wmInfo;
 	HWND hwnd;
+	s32 mdWindowID;
 	std::thread fileLoadThread;
-	std::thread graphicsThread, updateThread;
 
 #ifdef _DEBUG_
 	ImGuiIO io;
@@ -93,6 +93,7 @@ void mdEngine::SetupSDL()
 		Window::windowProperties.mWindowWidth, current.h,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
 
+	mdWindowID = SDL_GetWindowID(mdWindow);
 
 	if (mdWindow == NULL)
 	{
@@ -234,9 +235,12 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 	while (mdIsRunning == true)
 	{
-		capTimer.start();
+		capTimer.Start();
 		/* main loop */
 		mdEngine::StartNewFrame();
+		State::StartNewFrame();
+
+
 #ifdef _DEBUG_
 		/* imgui */
 		ImGui_ImplOpenGL3_NewFrame();
@@ -251,7 +255,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 		auto optionsWindow = MP::UI::GetOptionsWindow();
 
-		if (SDL_PollEvent(&event))
+		while (SDL_PollEvent(&event) != 0)
 		{
 #ifdef _DEBUG_
 			ImGui_ImplSDL2_ProcessEvent(&event);
@@ -286,7 +290,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 			}
 
-			if (event.type == SDL_WINDOWEVENT)
+			if (event.type == SDL_WINDOWEVENT && event.window.windowID == mdWindowID)
 			{
 				switch (event.window.event)
 				{
@@ -317,11 +321,15 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 		UpdateRelativeMousePosition();
 
-		//if (mdIsRunning == true && Window::windowProperties.mMouseWindowEvent == App::WindowEvent::kEnter)
+		if (mdIsRunning == true && State::CheckState(State::Window::HasFocus))
 		{
 			UpdateWindowSize();
 			mdApplicationHandler->OnRealtimeUpdate();
 			Graphics::UpdateGraphics();
+		}
+		else if (mdIsRunning)
+		{
+			MP::UI::GetOptionsWindow()->Update();
 		}
 
 		SDL_GL_MakeCurrent(mdWindow, gl_context);
@@ -331,10 +339,15 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 		if (State::CheckState(State::Window::Minimized) == false)
 		{
+
 			Graphics::RenderGraphics();
 			mdApplicationHandler->OnRealtimeRender();
 		}
 
+		if (MP::UI::GetOptionsWindow()->IsActive() == true)
+		{
+			MP::UI::GetOptionsWindow()->Render();
+		}
 
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 		ImGui::Render();
@@ -348,10 +361,14 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		SDL_GL_SwapWindow(mdWindow);
 
 	
-		f32 frameTicks = capTimer.getTicks();
-		if (frameTicks < App::Data::_SCREEN_TICK_PER_FRAME)
+		if (State::CheckState(State::Window::PositionChanged) == false && 
+			State::CheckState(State::Window::Resized) == false)
 		{
-			SDL_Delay(App::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
+			f32 frameTicks = capTimer.GetTicks();
+			if (frameTicks < App::Data::_SCREEN_TICK_PER_FRAME)
+			{
+				SDL_Delay(App::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
+			}
 		}
 	}
 }
@@ -367,6 +384,7 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 
 
 	mdApplicationHandler->OnWindowClose();
+	MP::UI::GetOptionsWindow()->Free();
 	Graphics::CloseGraphics();
 
 #ifdef _DEBUG_

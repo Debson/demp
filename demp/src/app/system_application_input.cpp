@@ -1,6 +1,5 @@
 #include "system_application_input.h"
 
-
 namespace mdEngine
 {
 	static bool mdNeedsInitializaiotn(true);
@@ -36,6 +35,9 @@ namespace mdEngine
 
 	void StartNewFrame(void)
 	{
+
+
+
 		if (mdNeedsInitializaiotn == true)
 		{
 			mdNeedsInitializaiotn = false;

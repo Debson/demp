@@ -12,7 +12,7 @@ namespace App
 	//TODO move to settings
 	namespace Data
 	{
-		const s32 _SCREEN_FPS = 120;
+		const s32 _SCREEN_FPS = 60;
 		const s32 _SCREEN_TICK_PER_FRAME = 1000 / _SCREEN_FPS;
 	}
 
@@ -28,6 +28,7 @@ namespace App
 		s32 mWindowWidth;
 		s32 mWindowHeight;
 		s32 mApplicationHeight;
+		s32 mStartApplicationHeight;
 		s32 mWindowPositionX;
 		s32 mWindowPositionY;
 		s32 mDeltaHeightResize;

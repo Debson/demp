@@ -28,6 +28,7 @@ namespace mdEngine
 						mWindowWidth(500), // 400
 						mWindowHeight(700), // 300
 						mApplicationHeight(700),
+						mStartApplicationHeight(700),
 						mWindowPositionX(600),
 						mWindowPositionY(100),
 						mWindowMode(WindowMode::Windowed),
@@ -67,7 +68,10 @@ namespace mdEngine
 					wasInsideMovable = true;
 
 				if (wasInsideMovable && State::CheckState(State::Window::Resized) == false)
+				{
+					State::SetState(State::Window::PositionChanged);
 					Window::SetWindowPos(newWX, newWY);
+				}
 			}
 			else
 			{
@@ -188,8 +192,8 @@ namespace mdEngine
 			if (wasInsideResizable == true && 
 				MP::UI::Input::GetButtonExtraState() == false)
 			{
-
-				State::SetState(State::Window::Resized);
+				if(relY != 0)
+					State::SetState(State::Window::Resized);
 				Window::windowProperties.mDeltaHeightResize = relY;
 
 				Window::windowProperties.mApplicationHeight = winSizeBeforeResize + relY;

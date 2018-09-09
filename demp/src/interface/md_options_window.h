@@ -19,21 +19,22 @@ namespace mdEngine
 			void Update();
 			void Render();
 			void ProcessEvents(SDL_Event* const e);
+			void Free();
 			b8 IsActive();
 
-
-
 		private:
-			void OnDestroy();
 
-			s32 m_TestValue;
-
+			b8 m_WindowHasFocus;
 			s32 m_Height, m_Width;
 			s32 m_WindowID;
 			SDL_Window* m_Window;
 			SDL_Renderer* m_Renderer;
 			SDL_Event m_Event;
+
 			Interface::ButtonSlider m_VolumeStepSlider;
+			Interface::ButtonSlider m_PlaylistScrollStepSlider;
+			Interface::ButtonSlider m_PauseFadeTimeSlider;
+			Interface::ButtonSlider m_RamLoadedSizeSlider;
 
 
 		};
