@@ -60,6 +60,10 @@ namespace mdEngine
 		m_RamLoadedSizeSlider = Interface::ButtonSlider(L"Maximum Ram Loaded Size:", glm::vec2(xPos, 170), &MP::Data::_MAX_SIZE_RAM_LOADED, 1, 0, MP::Data::_MAX_SIZE_RAM_LOADED_MAX);
 		m_RamLoadedSizeSlider.Init(m_Renderer);
 
+		m_TestBool = false;
+		m_ToTrayOnExit = Interface::CheckBox(glm::vec2(xPos, 220), &m_TestBool);
+		m_ToTrayOnExit.Init(m_Renderer);
+
 	}
 
 	void Window::OptionsWindow::Update()
@@ -101,6 +105,8 @@ namespace mdEngine
 			m_PlaylistScrollStepSlider.ProcessInput();
 			m_PauseFadeTimeSlider.ProcessInput();
 			m_RamLoadedSizeSlider.ProcessInput();
+
+			m_ToTrayOnExit.ProcessInput();
 		}
 		else
 		{
@@ -108,12 +114,16 @@ namespace mdEngine
 			m_PlaylistScrollStepSlider.ResetButtons();
 			m_PauseFadeTimeSlider.ResetButtons();
 			m_RamLoadedSizeSlider.ResetButtons();
+
+			m_ToTrayOnExit.ResetState();
 		}
 
 		m_VolumeStepSlider.Update();
 		m_PlaylistScrollStepSlider.Update();
 		m_PauseFadeTimeSlider.Update();
 		m_RamLoadedSizeSlider.Update();
+		
+		m_ToTrayOnExit.Update();
 	}
 
 	void Window::OptionsWindow::Render()
@@ -128,6 +138,8 @@ namespace mdEngine
 		m_PlaylistScrollStepSlider.Render();
 		m_PauseFadeTimeSlider.Render();
 		m_RamLoadedSizeSlider.Render();
+
+		m_ToTrayOnExit.Render();
 
 		SDL_RenderPresent(m_Renderer);
 	}
@@ -170,6 +182,9 @@ namespace mdEngine
 		m_PlaylistScrollStepSlider.Free();
 		m_PauseFadeTimeSlider.Free();
 		m_RamLoadedSizeSlider.Free();
+
+		m_ToTrayOnExit.Free();
+
 		IMG_Quit();
 		m_Renderer = NULL;
 		m_Window = NULL;

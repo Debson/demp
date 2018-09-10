@@ -557,8 +557,8 @@ namespace MP
 				break;
 			}
 
-			if (mdVolume > 100.f)
-				mdVolume = 100.f;
+			if (mdVolume > 1.f)
+				mdVolume = 1.f;
 			if (mdVolume < 0)
 				mdVolume = 0.f;
 		}
@@ -575,8 +575,8 @@ namespace MP
 				break;
 			};
 
-			if (mdVolume > 100.f)
-				mdVolume = 100.f;
+			if (mdVolume > 1.f)
+				mdVolume = 1.f;
 			if (mdVolume < 0)
 				mdVolume = 0.f;
 		}

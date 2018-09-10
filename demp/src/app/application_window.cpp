@@ -3,7 +3,6 @@
 #include "realtime_system_application.h"
 #include "../player/music_player.h"
 #include "../settings/music_player_settings.h"
-#include "../settings/music_player_settings.h"
 #include "../player/music_player_state.h"
 
 namespace mdEngine
@@ -62,10 +61,23 @@ namespace mdEngine
 
 				bool inside = insideX > xL && insideX < xR && insideY > yU && insideY < yD;
 
+				if (insideX > MP::Data::_UI_BUTTONS_BACKGROUND_RIGHT_POS.x &&
+					insideX < MP::Data::_UI_BUTTONS_BACKGROUND_RIGHT_POS.x + MP::Data::_UI_BUTTONS_BACKGROUND_RIGHT_SIZE.x &&
+					insideY > MP::Data::_UI_BUTTONS_BACKGROUND_RIGHT_POS.y &&
+					insideY < MP::Data::_UI_BUTTONS_BACKGROUND_RIGHT_POS.y + MP::Data::_UI_BUTTONS_BACKGROUND_RIGHT_SIZE.y)
+				{
+					inside = false;
+				}
+
+
 				if (inside &&
-					Input::IsKeyPressed(KeyCode::MouseLeft) &&
-					!MP::UI::Input::GetButtonExtraState())
+					Input::IsKeyPressed(KeyCode::MouseLeft) == true &&
+					MP::UI::Input::isButtonDown(MP::UI::Input::ButtonType::Minimize) == false &&
+					MP::UI::Input::isButtonDown(MP::UI::Input::ButtonType::Exit) == false &&
+					MP::UI::Input::GetButtonExtraState() == false)
+				{
 					wasInsideMovable = true;
+				}
 
 				if (wasInsideMovable && State::CheckState(State::Window::Resized) == false)
 				{

@@ -1013,6 +1013,57 @@ namespace mdEngine
 		//m_LeftDest = { m_LeftDest.x - diff, m_LeftDest.y, m_LeftDest.w, m_LeftDest.h };
 	}
 
+
+	Interface::CheckBox::CheckBox() { }
+
+	Interface::CheckBox::CheckBox(glm::vec2 pos, b8* val) : m_Value(val)
+	{
+		m_ButtonPos = pos;
+		m_ButtonSize = glm::vec2(15, 15);
+	}
+
+	void Interface::CheckBox::Init(SDL_Renderer* renderer)
+	{
+		m_Renderer = renderer;
+
+
+		m_CheckBoxOutline = { (s32)m_ButtonPos.x, (s32)m_ButtonPos.y,
+							  (s32)m_ButtonSize.x, (s32)m_ButtonSize.y };
+
+		m_CheckBoxColor = SDLColor::Orange;
+	}
+
+	void Interface::CheckBox::Update()
+	{
+		if (this->isPressed == true)
+		{
+			*m_Value = !(*m_Value);
+		}
+	}
+
+	void Interface::CheckBox::ProcessInput()
+	{
+		App::ProcessButton(this);
+	}
+
+	void Interface::CheckBox::Render()
+	{
+		*m_Value == true ? SDL_SetRenderDrawColor(m_Renderer, SDLColor::Orange.r, SDLColor::Orange.g, SDLColor::Orange.b, 0xFF) :
+						   SDL_SetRenderDrawColor(m_Renderer, SDLColor::Azure.r, SDLColor::Azure.g, SDLColor::Azure.b, 0xFF);
+
+		SDL_RenderFillRect(m_Renderer, &m_CheckBoxOutline);
+
+
+		SDL_SetRenderDrawColor(m_Renderer, SDLColor::Black.r, SDLColor::Black.g, SDLColor::Black.b, 0xFF);
+		SDL_RenderDrawRect(m_Renderer, &m_CheckBoxOutline);
+	}
+
+	void Interface::CheckBox::Free()
+	{
+		m_Renderer = NULL;
+		m_Value = NULL;
+	}
+
 	
 	Interface::PlaylistSeparatorContainer*  Interface::Separator::GetContainer()
 	{

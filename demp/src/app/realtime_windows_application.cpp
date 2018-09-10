@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <Windows.h>
+#include <shellapi.h>
 
 #include <thread>
 
@@ -121,6 +122,8 @@ void mdEngine::SetupSDL()
 
 
 	SetLayeredWindowAttributes(hwnd, RGB(0xFF, 0xFE, 0xFF), 0, LWA_COLORKEY);
+
+	
 
 #endif
 
@@ -288,6 +291,23 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				UpdateMousePosition(event.motion.x, event.motion.y);
 				break;
 
+			case SDL_SYSWMEVENT:
+				if (event.syswm.msg->msg.win.msg == WM_USER + 1)
+				{
+					if (LOWORD(event.syswm.msg->msg.win.lParam) == WM_LBUTTONDBLCLK)
+					{
+						SDL_ShowWindow(mdWindow);
+						SDL_RestoreWindow(mdWindow);
+					}
+
+					// dialog to close the app (create textbox with options)
+					if (LOWORD(event.syswm.msg->msg.win.lParam) == WM_RBUTTONDOWN)
+					{
+						md_log("hmm");
+					}
+				}
+				break;
+
 			}
 
 			if (event.type == SDL_WINDOWEVENT && event.window.windowID == mdWindowID)
@@ -308,7 +328,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 					break;
 				case(SDL_WINDOWEVENT_MINIMIZED):
 					State::SetState(State::Window::Minimized);
+					SDL_HideWindow(mdWindow);
 					break;
+	
 				}
 			}
 		}
@@ -423,6 +445,57 @@ void mdEngine::SetWindowProperties(const App::WindowProperties& windowProperties
 {
 	mdActualWindowWidth = windowProperties.mWindowWidth;
 	mdActualWindowHeight = windowProperties.mWindowHeight;
+}
+
+void mdEngine::Window::HideToTray()
+{
+#ifdef _WIN32_
+
+	HideWindow();
+
+	SDL_GetWindowWMInfo(mdWindow, &wmInfo);
+	SDL_VERSION(&wmInfo.version);
+
+	NOTIFYICONDATA icon;
+	if (SDL_GetWindowWMInfo(mdWindow, &wmInfo))
+	{
+		icon.uCallbackMessage = WM_USER + 1;
+		icon.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+		icon.hIcon = LoadIcon(NULL, IDI_INFORMATION);
+		icon.cbSize = sizeof(icon);
+		icon.hWnd = wmInfo.info.win.window;
+		strcpy_s(icon.szTip, "Test tip");
+
+		bool success = Shell_NotifyIcon(NIM_ADD, &icon);
+	}
+
+	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
+#endif
+}
+
+void mdEngine::Window::BackFromTray()
+{
+
+}
+
+void mdEngine::Window::MinimizeWindow()
+{
+	SDL_HideWindow(mdWindow);
+}
+
+void mdEngine::Window::ShowWindow()
+{
+	SDL_ShowWindow(mdWindow);
+}
+
+void mdEngine::Window::HideWindow()
+{
+	SDL_HideWindow(mdWindow);
+}
+
+void mdEngine::Window::RestoreWindow()
+{
+	SDL_RestoreWindow(mdWindow);
 }
 
 SDL_Window* mdEngine::Window::GetSDLWindow()

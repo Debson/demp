@@ -251,6 +251,28 @@ namespace mdEngine
 
 		};
 
+		class CheckBox : public Button
+		{
+		public:
+			CheckBox();
+			CheckBox(glm::vec2 pos, b8* val);
+
+			void Init(SDL_Renderer* renderer);
+			void Update();
+			void ProcessInput();
+			void Render();
+			void Free();
+
+		private:
+			void ReloadCheckBoxInfo();
+		
+
+			b8* m_Value;
+			SDL_Renderer* m_Renderer;
+			SDL_Rect m_CheckBoxOutline;
+			SDL_Color m_CheckBoxColor;
+		};
+
 
 
 		typedef std::vector<std::pair<std::wstring, PlaylistSeparator*>>	PlaylistSeparatorContainer;

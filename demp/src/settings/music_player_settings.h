@@ -26,6 +26,10 @@ namespace MP
 {
 	namespace Data
 	{
+		static f32 mdDefaultWidth = 500.f;
+		static f32 mdDefaultHeight = 350.f;
+
+
 		extern u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
 
 		extern TTF_Font* _MUSIC_PLAYER_FONT;
@@ -72,11 +76,11 @@ namespace MP
 		extern glm::vec2 _UI_WINDOW_BAR_POS;
 		extern glm::vec2 _UI_WINDOW_BAR_SIZE;
 
-		extern glm::vec2 _EXIT_BUTTON_POS;
-		extern glm::vec2 _EXIT_BUTTON_SIZE;
+		const glm::vec2 _EXIT_BUTTON_POS = glm::vec2(mdDefaultWidth - 45.f, 5.f);
+		const glm::vec2 _EXIT_BUTTON_SIZE = glm::vec2(15.f, 15.f);
 
-		extern glm::vec2 _MINIMIZE_BUTTON_POS;
-		extern glm::vec2 _MINIMIZE_BUTTON_SIZE;
+		const glm::vec2 _MINIMIZE_BUTTON_POS = glm::vec2(mdDefaultWidth - 60.f, 5.f);
+		const glm::vec2 _MINIMIZE_BUTTON_SIZE = glm::vec2(15.f, 15.f);
 
 		const glm::vec2 _SETTINGS_BUTTON_POS = glm::vec2(30.f, 5.f);
 		const glm::vec2 _SETTINGS_BUTTON_SIZE = glm::vec2(15.f, 15.f);

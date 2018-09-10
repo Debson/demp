@@ -259,11 +259,9 @@ namespace mdEngine
 		GLenum format;
 
 
-
 		textSurface = TTF_RenderUTF8_Blended(font, utf16_to_utf8(string).c_str(), color);
-		if (textSurface == NULL)
-			return 0;
-
+		if(textSurface == NULL)
+			std::cout << "Font address: " << font << "     String name: " << utf16_to_utf8(string).c_str() << "     Color: " << std::to_string(color.r) << "  " << std::to_string(color.g) << "  " << std::to_string(color.b) << std::endl;
 		assert(textSurface != NULL);
 
 		colors = textSurface->format->BytesPerPixel;

@@ -98,7 +98,157 @@ namespace MP
 
 	}
 
-	
+	void UI::Start()
+	{
+		//std::string locale = setlocale(LC_ALL, "");
+		//std::cout << "default locale:" << locale;
+
+		mdCurrentWidth = mdEngine::Window::windowProperties.mWindowWidth;
+		mdCurrentHeight = mdEngine::Window::windowProperties.mApplicationHeight;
+
+		mdDefaultWidth = 500.f;
+		mdDefaultHeight = 350.f;
+
+		new Interface::Movable(glm::vec2(mdDefaultWidth, 20), glm::vec2(0.f, 0.f));
+
+		new Interface::Resizable(glm::vec2(mdCurrentWidth, 20), glm::vec2(0, mdCurrentHeight - 20.f));
+
+		// Make slightly bigger hitbox for sliders
+		f32 offsetX = 1.01f;
+		f32 offsetY = 4.f;
+		new Interface::Button(Input::ButtonType::SliderVolume, glm::vec2(Data::_VOLUME_BAR_SIZE.x * offsetX, Data::_VOLUME_BAR_SIZE.y * offsetY),
+													glm::vec2(Data::_VOLUME_BAR_POS.x - (Data::_VOLUME_BAR_SIZE.x * offsetX - Data::_VOLUME_BAR_SIZE.x) / 2.f,
+															  Data::_VOLUME_BAR_POS.y - (Data::_VOLUME_BAR_SIZE.y * offsetY - Data::_VOLUME_BAR_SIZE.y) / 2.f));
+
+		new Interface::Button(Input::ButtonType::SliderMusic, glm::vec2(Data::_MUSIC_PROGRESS_BAR_SIZE.x * offsetX, Data::_MUSIC_PROGRESS_BAR_SIZE.y * offsetY),
+												   glm::vec2(Data::_MUSIC_PROGRESS_BAR_POS.x - (Data::_MUSIC_PROGRESS_BAR_SIZE.x * offsetX - Data::_MUSIC_PROGRESS_BAR_SIZE.x) / 2.f,
+															 Data::_MUSIC_PROGRESS_BAR_POS.y - (Data::_MUSIC_PROGRESS_BAR_SIZE.y * offsetY - Data::_MUSIC_PROGRESS_BAR_SIZE.y) / 2.f));
+
+
+
+		new Interface::Button(Input::ButtonType::Exit, Data::_EXIT_BUTTON_SIZE, Data::_EXIT_BUTTON_POS);
+
+		new Interface::Button(Input::ButtonType::Minimize, Data::_MINIMIZE_BUTTON_SIZE, Data::_MINIMIZE_BUTTON_POS);
+
+		new Interface::Button(Input::ButtonType::Options, Data::_SETTINGS_BUTTON_SIZE, Data::_SETTINGS_BUTTON_POS);
+
+		new Interface::Button(Input::ButtonType::Volume, Data::_VOLUME_SPEAKER_SIZE, Data::_VOLUME_SPEAKER_POS);
+
+		new Interface::Button(Input::ButtonType::Shuffle, Data::_SHUFFLE_BUTTON_SIZE, Data::_SHUFFLE_BUTTON_POS);
+
+		new Interface::Button(Input::ButtonType::Previous, Data::_PREVIOUS_BUTTON_SIZE, Data::_PREVIOUS_BUTTON_POS);
+
+		new Interface::Button(Input::ButtonType::Play, Data::_PLAY_BUTTON_SIZE, Data::_PLAY_BUTTON_POS);
+
+		new Interface::Button(Input::ButtonType::Stop, Data::_PLAY_BUTTON_SIZE, Data::_PLAY_BUTTON_POS);
+
+		new Interface::Button(Input::ButtonType::Next, Data::_NEXT_BUTTON_SIZE, Data::_NEXT_BUTTON_POS);
+
+		new Interface::Button(Input::ButtonType::Repeat, Data::_REPEAT_BUTTON_SIZE, Data::_REPEAT_BUTTON_POS);
+
+		new Interface::Button(Input::ButtonType::Playlist, Data::_PLAYLIST_BUTTON_SIZE, Data::_PLAYLIST_BUTTON_POS);
+
+		new Interface::Button(Input::ButtonType::SliderPlaylist, Data::_PLAYLIST_SCROLL_BAR_SIZE, Data::_PLAYLIST_SCROLL_BAR_POS);
+
+		new Interface::Button(Input::ButtonType::PlaylistAddFile, Data::_PLAYLIST_ADD_BUTTON_SIZE, Data::_PLAYLIST_ADD_BUTTON_POS);
+		// temporary
+		//new Interface::Button(Input::ButtonType::PlaylistAddFolder, Data::_PLAYLIST_ADD_BUTTON_SIZE, Data::_PLAYLIST_ADD_BUTTON_POS);
+
+		clickDelayTimer = Time::Timer(Data::_PLAYLIST_CHOOSE_ITEM_DELAY);
+
+		DebugStart();
+	}
+
+	void UI::Update()
+	{
+		/* Collect user input for buttons and movable */
+		for(u16 i = 0; i < mdMovableContainer.size(); i++)
+			App::ProcessMovable(mdMovableContainer[i]);
+
+		for (u16 i = 0; i < mdResizableContainer.size(); i++)
+			App::ProcessResizable(mdResizableContainer[i]);
+
+		for (u16 i = 0; i < mdButtonsContainer.size(); i++)
+			App::ProcessButton(mdButtonsContainer[i].second);
+
+		// Make sure that hitboxes that are not visible cannot be clicked
+		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
+		for (auto i : Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
+		{
+			if (Interface::PlaylistButton::GetButton(i) == nullptr)
+				break;
+
+			if(Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false)
+				App::ProcessButton(Interface::PlaylistButton::GetButton(i));
+		}
+		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
+
+		// Process playlist separator buttons
+		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
+		auto sepCon = Interface::Separator::GetContainer();
+		for (u16 i = 0; i < Interface::Separator::GetSize(); i++)
+		{
+			App::ProcessButton(sepCon->at(i).second);
+		}
+		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
+
+		// Proces interface buttons
+		for (u16 i = 0; i < Interface::m_InterfaceButtonContainer.size(); i++)
+		{
+			assert(Interface::m_InterfaceButtonContainer[i].second != nullptr);
+
+			App::ProcessButton(Interface::m_InterfaceButtonContainer[i].second);
+		}
+
+		HandleInput();
+		if (State::CheckState(State::PlaylistEmpty) == false)
+		{
+			HandlePlaylistInput();
+			HandleSeparatorInput();
+			clickDelayTimer.Update();
+		}
+
+		PlaylistFileExplorer();
+	}
+
+	void UI::Render()
+	{
+		DebugRender();
+	}
+
+	void UI::Close()
+	{
+		for (size_t i = 0; i < mdMovableContainer.size(); i++)
+		{
+			delete mdMovableContainer[i];
+			mdMovableContainer[i] = nullptr;
+		}
+		mdMovableContainer.clear();
+
+		for (size_t i = 0; i < mdResizableContainer.size(); i++)
+		{
+			delete mdResizableContainer[i];
+			mdResizableContainer[i] = nullptr;
+		}
+		mdResizableContainer.clear();
+
+		for (size_t i = 0; i < mdButtonsContainer.size(); i++)
+		{
+			delete mdButtonsContainer[i].second;
+			mdButtonsContainer[i].second = nullptr;
+		}
+		mdButtonsContainer.clear();
+
+		for (size_t i = 0; i < Interface::m_InterfaceButtonContainer.size(); i++)
+		{
+			delete Interface::m_InterfaceButtonContainer[i].second;
+			Interface::m_InterfaceButtonContainer[i].second = nullptr;
+		}
+		Interface::m_InterfaceButtonContainer.clear();
+
+	}
+
+
 	void UI::DebugStart()
 	{
 #ifdef _DEBUG_
@@ -392,7 +542,23 @@ namespace MP
 	{
 		if (Input::isButtonPressed(Input::ButtonType::Exit))
 		{
-			mdEngine::AppExit();
+			//mdEngine::AppExit();
+			Window::HideToTray();
+		}
+
+		if (Input::isButtonPressed(Input::ButtonType::Minimize))
+		{
+			Window::MinimizeWindow();
+		}
+
+		s32 x, y;
+		Window::GetWindowPos(&x, &y);
+		md_log(y);
+
+		if (App::Input::IsKeyPressed(App::KeyCode::F5))
+		{
+			Window::ShowWindow();
+			Window::RestoreWindow();
 		}
 
 		if (Input::isButtonPressed(Input::ButtonType::Options))
@@ -704,154 +870,6 @@ namespace MP
 	Window::OptionsWindow* UI::GetOptionsWindow()
 	{
 		return &optionsWindow;
-	}
-
-	void UI::Start()
-	{
-		//std::string locale = setlocale(LC_ALL, "");
-		//std::cout << "default locale:" << locale;
-
-		mdCurrentWidth = mdEngine::Window::windowProperties.mWindowWidth;
-		mdCurrentHeight = mdEngine::Window::windowProperties.mApplicationHeight;
-
-		mdDefaultWidth = 500.f;
-		mdDefaultHeight = 350.f;
-
-		new Interface::Movable(glm::vec2(mdDefaultWidth, 20), glm::vec2(0.f, 0.f));
-
-		new Interface::Resizable(glm::vec2(mdCurrentWidth, 20), glm::vec2(0, mdCurrentHeight - 20.f));
-
-		// Make slightly bigger hitbox for sliders
-		f32 offsetX = 1.01f;
-		f32 offsetY = 4.f;
-		new Interface::Button(Input::ButtonType::SliderVolume, glm::vec2(Data::_VOLUME_BAR_SIZE.x * offsetX, Data::_VOLUME_BAR_SIZE.y * offsetY),
-													glm::vec2(Data::_VOLUME_BAR_POS.x - (Data::_VOLUME_BAR_SIZE.x * offsetX - Data::_VOLUME_BAR_SIZE.x) / 2.f,
-															  Data::_VOLUME_BAR_POS.y - (Data::_VOLUME_BAR_SIZE.y * offsetY - Data::_VOLUME_BAR_SIZE.y) / 2.f));
-
-		new Interface::Button(Input::ButtonType::SliderMusic, glm::vec2(Data::_MUSIC_PROGRESS_BAR_SIZE.x * offsetX, Data::_MUSIC_PROGRESS_BAR_SIZE.y * offsetY),
-												   glm::vec2(Data::_MUSIC_PROGRESS_BAR_POS.x - (Data::_MUSIC_PROGRESS_BAR_SIZE.x * offsetX - Data::_MUSIC_PROGRESS_BAR_SIZE.x) / 2.f,
-															 Data::_MUSIC_PROGRESS_BAR_POS.y - (Data::_MUSIC_PROGRESS_BAR_SIZE.y * offsetY - Data::_MUSIC_PROGRESS_BAR_SIZE.y) / 2.f));
-
-
-
-		new Interface::Button(Input::ButtonType::Exit, Data::_EXIT_BUTTON_SIZE, Data::_EXIT_BUTTON_POS);
-
-		new Interface::Button(Input::ButtonType::Options, Data::_SETTINGS_BUTTON_SIZE, Data::_SETTINGS_BUTTON_POS);
-
-		new Interface::Button(Input::ButtonType::Volume, Data::_VOLUME_SPEAKER_SIZE, Data::_VOLUME_SPEAKER_POS);
-
-		new Interface::Button(Input::ButtonType::Shuffle, Data::_SHUFFLE_BUTTON_SIZE, Data::_SHUFFLE_BUTTON_POS);
-
-		new Interface::Button(Input::ButtonType::Previous, Data::_PREVIOUS_BUTTON_SIZE, Data::_PREVIOUS_BUTTON_POS);
-
-		new Interface::Button(Input::ButtonType::Play, Data::_PLAY_BUTTON_SIZE, Data::_PLAY_BUTTON_POS);
-
-		new Interface::Button(Input::ButtonType::Stop, Data::_PLAY_BUTTON_SIZE, Data::_PLAY_BUTTON_POS);
-
-		new Interface::Button(Input::ButtonType::Next, Data::_NEXT_BUTTON_SIZE, Data::_NEXT_BUTTON_POS);
-
-		new Interface::Button(Input::ButtonType::Repeat, Data::_REPEAT_BUTTON_SIZE, Data::_REPEAT_BUTTON_POS);
-
-		new Interface::Button(Input::ButtonType::Playlist, Data::_PLAYLIST_BUTTON_SIZE, Data::_PLAYLIST_BUTTON_POS);
-
-		new Interface::Button(Input::ButtonType::SliderPlaylist, Data::_PLAYLIST_SCROLL_BAR_SIZE, Data::_PLAYLIST_SCROLL_BAR_POS);
-
-		new Interface::Button(Input::ButtonType::PlaylistAddFile, Data::_PLAYLIST_ADD_BUTTON_SIZE, Data::_PLAYLIST_ADD_BUTTON_POS);
-		// temporary
-		//new Interface::Button(Input::ButtonType::PlaylistAddFolder, Data::_PLAYLIST_ADD_BUTTON_SIZE, Data::_PLAYLIST_ADD_BUTTON_POS);
-
-		clickDelayTimer = Time::Timer(Data::_PLAYLIST_CHOOSE_ITEM_DELAY);
-
-		DebugStart();
-	}
-
-	void UI::Update()
-	{
-		/* Collect user input for buttons and movable */
-		for(u16 i = 0; i < mdMovableContainer.size(); i++)
-			App::ProcessMovable(mdMovableContainer[i]);
-
-		for (u16 i = 0; i < mdResizableContainer.size(); i++)
-			App::ProcessResizable(mdResizableContainer[i]);
-
-		for (u16 i = 0; i < mdButtonsContainer.size(); i++)
-			App::ProcessButton(mdButtonsContainer[i].second);
-
-		// Make sure that hitboxes that are not visible cannot be clicked
-		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
-		for (auto i : Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
-		{
-			if (Interface::PlaylistButton::GetButton(i) == nullptr)
-				break;
-
-			if(Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false)
-				App::ProcessButton(Interface::PlaylistButton::GetButton(i));
-		}
-		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
-
-		// Process playlist separator buttons
-		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
-		auto sepCon = Interface::Separator::GetContainer();
-		for (u16 i = 0; i < Interface::Separator::GetSize(); i++)
-		{
-			App::ProcessButton(sepCon->at(i).second);
-		}
-		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
-
-		// Proces interface buttons
-		for (u16 i = 0; i < Interface::m_InterfaceButtonContainer.size(); i++)
-		{
-			assert(Interface::m_InterfaceButtonContainer[i].second != nullptr);
-
-			App::ProcessButton(Interface::m_InterfaceButtonContainer[i].second);
-		}
-
-		HandleInput();
-		if (State::CheckState(State::PlaylistEmpty) == false)
-		{
-			HandlePlaylistInput();
-			HandleSeparatorInput();
-			clickDelayTimer.Update();
-		}
-
-		PlaylistFileExplorer();
-	}
-
-	void UI::Render()
-	{
-		DebugRender();
-	}
-
-	void UI::Close()
-	{
-		for (size_t i = 0; i < mdMovableContainer.size(); i++)
-		{
-			delete mdMovableContainer[i];
-			mdMovableContainer[i] = nullptr;
-		}
-		mdMovableContainer.clear();
-
-		for (size_t i = 0; i < mdResizableContainer.size(); i++)
-		{
-			delete mdResizableContainer[i];
-			mdResizableContainer[i] = nullptr;
-		}
-		mdResizableContainer.clear();
-
-		for (size_t i = 0; i < mdButtonsContainer.size(); i++)
-		{
-			delete mdButtonsContainer[i].second;
-			mdButtonsContainer[i].second = nullptr;
-		}
-		mdButtonsContainer.clear();
-
-		for (size_t i = 0; i < Interface::m_InterfaceButtonContainer.size(); i++)
-		{
-			delete Interface::m_InterfaceButtonContainer[i].second;
-			Interface::m_InterfaceButtonContainer[i].second = nullptr;
-		}
-		Interface::m_InterfaceButtonContainer.clear();
-
 	}
 }
 }

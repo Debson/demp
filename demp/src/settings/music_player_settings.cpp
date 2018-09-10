@@ -55,12 +55,6 @@ namespace MP
 		glm::vec2 _UI_WINDOW_BAR_POS;
 		glm::vec2 _UI_WINDOW_BAR_SIZE;
 
-		glm::vec2 _EXIT_BUTTON_POS;
-		glm::vec2 _EXIT_BUTTON_SIZE;
-
-		glm::vec2 _MINIMIZE_BUTTON_POS;
-		glm::vec2 _MINIMIZE_BUTTON_SIZE;
-
 		glm::vec2 _STAY_ON_TOP_BUTTON_POS;
 		glm::vec2 _STAY_ON_TOP_BUTTON_SIZE;
 
@@ -125,8 +119,6 @@ namespace MP
 		s32 PlaylistBarMovableZoneXOffset;
 
 		// private
-		f32 mdDefaultWidth;
-		f32 mdDefaultHeight;
 		f32 mdCurrentWidth;
 		f32 mdCurrentHeight;
 	}
@@ -134,8 +126,8 @@ namespace MP
 	void Data::InitializeData()
 	{
 
-		mdDefaultWidth = 500.f;
-		mdDefaultHeight = 350.f;;
+		f32 mdDefaultWidth = 500.f;
+		f32 mdDefaultHeight = 350.f;;
 		_MIN_PLAYER_SIZE = glm::vec2(500.f, 500.f);
 
 		Window::windowProperties.mApplicationHeight = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_APP_HEIGHT);
@@ -170,9 +162,6 @@ namespace MP
 
 		_PLAYLIST_FOREGROUND_POS = glm::vec2(20.f, mdDefaultHeight);
 		_PLAYLIST_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight);
-
-		_EXIT_BUTTON_POS = glm::vec2(mdDefaultWidth - 50.f, 5.f);
-		_EXIT_BUTTON_SIZE = glm::vec2(15.f, 15.f);
 
 
 		/* Initialize later */

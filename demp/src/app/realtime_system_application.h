@@ -33,6 +33,12 @@ namespace mdEngine
 	{
 		extern App::WindowProperties windowProperties;
 
+		void HideToTray();
+		void BackFromTray();
+		void MinimizeWindow();
+		void ShowWindow();
+		void HideWindow();
+		void RestoreWindow();
 		SDL_Window* GetSDLWindow();
 		HWND GetHWNDWindow();
 		void SetWindowTitle(const b8& windowName);

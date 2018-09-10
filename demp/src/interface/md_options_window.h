@@ -24,6 +24,7 @@ namespace mdEngine
 
 		private:
 
+			b8 m_TestBool;
 			b8 m_WindowHasFocus;
 			s32 m_Height, m_Width;
 			s32 m_WindowID;
@@ -35,6 +36,7 @@ namespace mdEngine
 			Interface::ButtonSlider m_PlaylistScrollStepSlider;
 			Interface::ButtonSlider m_PauseFadeTimeSlider;
 			Interface::ButtonSlider m_RamLoadedSizeSlider;
+			Interface::CheckBox		m_ToTrayOnExit;
 
 
 		};

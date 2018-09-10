@@ -80,6 +80,8 @@ namespace Graphics
 
 		b8 playlistFirstLoad(true);
 
+		b8 playlistOpened(false);
+
 		b8 playlistWasEmpty(false);
 
 		b8 scrollBarAtBottom(false);
@@ -546,6 +548,7 @@ namespace Graphics
 				volumeSliderActive = false;
 			}
 
+			
 
 			if (volumeSliderActive == true)
 			{
@@ -1363,6 +1366,8 @@ namespace Graphics
 				is moved really quick. Make sure that playlist position is accurate.
 				TRY TO FIX THAT IN MORE EFFICIENT WAY
 			*/
+			if (minPosToRender > audioCon.size() - 1)
+				minPosToRender = audioCon.size() - 1;
 			while (playlistCursorPosition < audioCon[minPosToRender]->GetButtonPos().y &&
 				   minPosToRender > 0)
 			{
@@ -1422,12 +1427,13 @@ namespace Graphics
 			b8 loadTextureFirstEnter(false);
 			if (State::CheckState(State::AudioAdded) ||
 				State::CheckState(State::AudioDeleted) ||
-				State::CheckState(State::Window::Resized))
+				State::CheckState(State::Window::Resized) ||
+				playlistOpened == false)
 			{
 				loadItemsPositions = true;
 				playlistFirstEnter = false;
 				loadTextureFirstEnter = true;
-
+				playlistOpened = true;
 				//State::ResetMusicPlayerState();
 				//State::ResetState(State::Window::Resized);
 			}
@@ -1541,6 +1547,7 @@ namespace Graphics
 			m_Playlist.SetIndexesToRender(std::vector<s32>());
 			playlistPositionOffset = 0;
 			playlistFirstEnter = true;
+			playlistOpened = false;
 		}
 
 
@@ -1635,8 +1642,8 @@ namespace Graphics
 		glm::mat4 model;
 		/* UI Window buttons*/
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(500.f - 70.f, 5.f, 0.2f));
-		model = glm::scale(model, glm::vec3(40.f, 15.0f, 1.f));;
+		model = glm::translate(model, glm::vec3(Data::_UI_BUTTONS_BACKGROUND_RIGHT_POS, 0.2f));
+		model = glm::scale(model, glm::vec3(Data::_UI_BUTTONS_BACKGROUND_RIGHT_SIZE, 1.f));;
 		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, exit_background);
 		Shader::Draw(Shader::shaderDefault);
@@ -1647,6 +1654,13 @@ namespace Graphics
 		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, exit_icon);
 		Shader::Draw(Shader::shaderDefault);
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(Data::_MINIMIZE_BUTTON_POS, 0.3f));
+		model = glm::scale(model, glm::vec3(Data::_MINIMIZE_BUTTON_SIZE, 1.f));;
+		Shader::shaderDefault->setMat4("model", model);
+		glBindTexture(GL_TEXTURE_2D, exit_icon);
+		Shader::Draw(Shader::shaderDefault);
 	}
 
 	void MP::StartMainWindow()
@@ -1654,7 +1668,7 @@ namespace Graphics
 		InitializeConfig();
 
 		main_background			= mdLoadTexture("assets/main.png");
-		main_foreground			= mdLoadTexture("assets/main_foreground.png");
+		main_foreground			= mdLoadTexture("assets/main.png");
 
 		exit_background			= mdLoadTexture("assets/exit_background.png");
 		exit_icon				= mdLoadTexture("assets/exit_icon.png");
