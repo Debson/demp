@@ -8,8 +8,9 @@
 #include "../app/application_window.h"
 #include "../settings/music_player_settings.h"
 #include "../playlist/music_player_playlist.h"
+#include "../player/music_player_state.h"
 #include "../graphics/graphics.h"
-#include "../graphics/music_player_graphics.h"
+#include "../graphics/music_player_graphics_playlist.h"
 #include "../ui/music_player_ui.h"
 #include "../audio/mp_audio.h"
 #include "../utility/utf8_to_utf16.h"
@@ -149,20 +150,20 @@ namespace mdEngine
 		m_PlaylistItemHidden = false;
 		m_ItemColor = Color::White;
 		
-		m_ItemID = *id;
+		m_ItemID = id;
 
 		// Button position is predefined in playlist items rendering algorithm anyway, but leave it for now
 		m_StartPos = Data::_PLAYLIST_ITEMS_SURFACE_POS;
-		m_ButtonPos = glm::vec2(m_StartPos.x, m_StartPos.y + m_ItemID * (m_ButtonSize.y));
+		m_ButtonPos = glm::vec2(m_StartPos.x, m_StartPos.y + *m_ItemID * (m_ButtonSize.y));
 		m_TextPos = m_ButtonPos;
 
 		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
 		SetTextColor(Color::White);
 
-		m_TextString = Audio::Object::GetAudioObject(m_ItemID)->GetTitle();
+		m_TextString = Audio::Object::GetAudioObject(*m_ItemID)->GetTitle();
 
-		assert(Audio::Object::GetAudioObject(m_ItemID) != nullptr);
+		assert(Audio::Object::GetAudioObject(*m_ItemID) != nullptr);
 
 		m_TitleC = utf16_to_utf8(m_TextString);
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
@@ -192,7 +193,8 @@ namespace mdEngine
 		glm::vec3 originalColor = m_ItemColor;
 		glm::vec3 halvesColor = Color::DarkGrey;
 
-		if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == m_ItemID)
+		if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == *m_ItemID &&
+			State::CheckState(State::CurrentlyPlayingDeleted) == false)
 		{
 			m_ItemColor *= Color::Red;
 		}
@@ -284,7 +286,7 @@ namespace mdEngine
 
 	b8 Interface::PlaylistItem::IsPlaying() const
 	{
-		return MP::Playlist::RamLoadedMusic.m_ID == m_ItemID;
+		return MP::Playlist::RamLoadedMusic.m_ID == *m_ItemID;
 	}
 
 	b8 Interface::PlaylistItem::IsFolderRep() const
@@ -1016,21 +1018,29 @@ namespace mdEngine
 
 	Interface::CheckBox::CheckBox() { }
 
-	Interface::CheckBox::CheckBox(glm::vec2 pos, b8* val) : m_Value(val)
+	Interface::CheckBox::CheckBox(std::wstring labelName, glm::vec2 pos, b8* val) : m_Value(val)
 	{
-		m_ButtonPos = pos;
-		m_ButtonSize = glm::vec2(15, 15);
+		s32 textOffsetX = 5;
+		m_TextString = labelName;
+		m_TextPos = glm::vec2(pos.x - textOffsetX, pos.y);
+		m_Font = Data::_MUSIC_PLAYER_FONT;
+		m_TextColorSDL = SDLColor::Black;
 	}
 
 	void Interface::CheckBox::Init(SDL_Renderer* renderer)
 	{
 		m_Renderer = renderer;
+		InitTextTextureSDL(m_Renderer);
 
+		s32 offsetY = 5;
+		m_ButtonPos = glm::vec2(m_TextPos.x, m_TextPos.y + m_TextSize.y + offsetY);
+		m_ButtonSize = glm::vec2(15, 15);
 
 		m_CheckBoxOutline = { (s32)m_ButtonPos.x, (s32)m_ButtonPos.y,
 							  (s32)m_ButtonSize.x, (s32)m_ButtonSize.y };
 
 		m_CheckBoxColor = SDLColor::Orange;
+
 	}
 
 	void Interface::CheckBox::Update()
@@ -1048,6 +1058,8 @@ namespace mdEngine
 
 	void Interface::CheckBox::Render()
 	{
+		DrawStringSDL(m_Renderer);
+
 		*m_Value == true ? SDL_SetRenderDrawColor(m_Renderer, SDLColor::Orange.r, SDLColor::Orange.g, SDLColor::Orange.b, 0xFF) :
 						   SDL_SetRenderDrawColor(m_Renderer, SDLColor::Azure.r, SDLColor::Azure.g, SDLColor::Azure.b, 0xFF);
 

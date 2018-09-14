@@ -9,7 +9,8 @@ uniform sampler2D image;
 uniform vec3 color;
 uniform bool cut;
 uniform bool border;
-uniform bool playlistCut;
+uniform bool playlistCutY;
+uniform bool playlistCutX;
 uniform bool plain;
 uniform bool roundEdges;
 uniform bool roundEdgesBackground;
@@ -18,8 +19,13 @@ uniform float aspectXY;
 uniform float border_width;
 uniform float playlistMinY;
 uniform float playlistMaxY;
+
+uniform vec2 playlistBoundsY;
+uniform vec2 playlistBoundsX;
+
 uniform float playerHeightChange;
 uniform float roundEdgeFactor;
+
 
 float aspectYX = 1.0 / aspectXY;
 float maxX = 1.0 - border_width / aspectXY;
@@ -61,9 +67,21 @@ void main()
 		FragColor = texColor * vec4(color, 1.0);
 	}
 
-	if(playlistCut)
+	if(playlistCutY)
 	{
-		if(pos.y > playlistMaxY || pos.y < playlistMinY)
+		if(pos.y > playlistBoundsY.y || pos.y < playlistBoundsY.x)
+		{
+			FragColor = vec4(1.0, 1.0, 1.0, 0.0); 
+		}
+		else
+		{
+			FragColor = texColor * vec4(color, 1.0);
+		}
+	}
+	
+	if(playlistCutX)
+	{
+		if(pos.x > playlistBoundsX.y || pos.x < playlistBoundsX.x)
 		{
 			FragColor = vec4(1.0, 1.0, 1.0, 0.0); 
 		}

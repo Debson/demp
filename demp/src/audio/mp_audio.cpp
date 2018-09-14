@@ -9,9 +9,10 @@
 #include "../interface/md_interface.h"
 #include "../player/music_player.h"
 #include "../player/music_player_state.h"
+#include "../playlist/music_player_playlist.h"
 #include "../settings/music_player_settings.h"
 #include "../settings/music_player_string.h"
-#include "../graphics/music_player_graphics.h"
+#include "../graphics/music_player_graphics_playlist.h"
 #include "../ui/music_player_ui.h"
 #include "../utility/md_util.h"
 #include "../utility/md_time.h"
@@ -66,8 +67,6 @@ namespace Audio
 	s32 indexOfDroppedOnItem = -1;
 
 
-
-
 	void PushToPlaylistWrap();
 	b8 AddAudioItem(std::wstring path, s32 id);
 	void AddAudioItemWrap(const std::vector<std::wstring> vec, const s32 start, const s32 end);
@@ -75,8 +74,6 @@ namespace Audio
 
 	void SetFoldersRep();
 	void CalculateDroppedPosInPlaylist();
-
-
 }
 
 void Audio::StartAudio()
@@ -101,6 +98,7 @@ b8 Audio::SavePathFiles(std::wstring path)
 
 	return true;
 }
+
 void Audio::FilesAddedByFileBrowser(b8 val)
 {
 	filesAddedByFileBrowser = val;
@@ -291,8 +289,6 @@ b8 Audio::PushToPlaylist(std::wstring path)
 
 void Audio::UpdateAudioLogic()
 {
-
-
 	if (State::CheckState(State::PathLoadedFromFileVolatile) == true)
 		filesLoadedFromFile = true;
 
@@ -601,6 +597,9 @@ void Audio::SetFoldersRep()
 		*/
 		
 		State::SetState(State::AudioAdded);
+		State::SetState(State::ShuffleAfterLoad);
+		State::ResetState(State::CurrentlyPlayingDeleted);
+
 		auto sepCon = Interface::Separator::GetContainer();
 		sepCon->clear();
 
@@ -628,7 +627,11 @@ void Audio::SetFoldersRep()
 				Info::LoadedItemsInfoCount++;
 
 		}
-		
+		md_log(Graphics::MP::GetPlaylistObject()->GetPlayingID());
+		if (Graphics::MP::GetPlaylistObject()->GetPlayingID() >= 0)
+			 MP::Playlist::RamLoadedMusic.m_ID += m_AddedFilesPathContainer.size();
+
+		md_log(Graphics::MP::GetPlaylistObject()->GetPlayingID());
 
 		filesLoadedFromFile = false;
 		m_AddedFilesFoldersPathContainer.clear();

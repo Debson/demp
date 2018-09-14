@@ -6,7 +6,7 @@
 #include <Windows.h>
 
 #include "../ui/music_player_ui.h"
-#include "../graphics/music_player_graphics.h"
+#include "../graphics/music_player_graphics_playlist.h"
 #include "../audio/mp_audio.h"
 #include "../settings/configuration.h"
 #include "../settings/music_player_string.h"
@@ -29,7 +29,6 @@ namespace MP
 {
 	namespace Playlist
 	{
-		PathContainer mdPathContainer;
 		SongObject RamLoadedMusic;
 
 		Time::Timer lastDeletionTimer;
@@ -131,16 +130,17 @@ namespace MP
 		}
    
 #ifdef _WIN32_
-		b8 SongObject::load(std::wstring songPath, u32 id)
+		b8 SongObject::load(Audio::AudioObject* audioObject)
 		{
 			FILE* file = NULL;
-			if (_wfopen_s(&file, songPath.c_str(), L"rb+") != 0)
+			if (_wfopen_s(&file, audioObject->GetPath().c_str(), L"rb+") != 0)
 			{
-				OUTPUT << "ERROR: could not open file at path \"" << songPath << "\"\n";
+				OUTPUT << "ERROR: could not open file at path \"" << audioObject->GetPath() << "\"\n";
 				std::cout << stderr;
 				return false;
 			}
 #else
+
 		b8 SongObject::load(const char* songPath, u32 id, MP::Playlist::SongState state)
 		{
 			FILE* file = fopen(songPath, "rb+");
@@ -158,8 +158,8 @@ namespace MP
 				s32 size = ftell(file); // size of opened file
 				fseek(file, 0L, SEEK_SET); // set cursor at the beginning
 
-				m_Path = songPath;
-				m_ID = id;
+				m_Path = audioObject->GetPath();
+				m_ID = audioObject->GetID();
 				m_MusicSize = size;
 
 				if(m_Data != NULL)
@@ -183,13 +183,13 @@ namespace MP
 							//delete mdPathContainer[mID];
 							//mdPathContainer.erase(mdPathContainer.begin() + mID);
 
-							return load(Audio::Object::GetAudioObject(m_ID + 1)->GetPath(), m_ID + 1);
+							return load(Audio::Object::GetAudioObject(m_ID + 1));
 						}
 					}
 					else
 					{
 						fclose(file);;
-						OUTPUT << "ERROR: could not read file at path \"" << songPath << "\"\n";
+						OUTPUT << "ERROR: could not read file at path \"" << audioObject->GetPath() << "\"\n";
 						std::cout << stderr << std::endl;
 						return false;
 					}
@@ -209,7 +209,7 @@ namespace MP
 						//delete mdPathContainer[mID];
 						//mdPathContainer.erase(mdPathContainer.begin() + mID);
 
-						return load(Audio::Object::GetAudioObject(m_ID + 1)->GetPath(), m_ID + 1);;
+						return load(Audio::Object::GetAudioObject(m_ID + 1));;
 					}
 				}
 			}
@@ -229,9 +229,11 @@ namespace MP
 
 			Data::VolumeLevel = Parser::GetFloat(file, Strings::_VOLUME);
 			mdVolume = Data::VolumeLevel;
-			RamLoadedMusic.load(Parser::GetStringUTF8(file, Strings::_CURRENT_SONG),
-								Parser::GetInt(file, Strings::_CURRENT_SONG_ID));
-			Parser::GetInt(file, Strings::_SHUFFLE_STATE) == 1 ? Playlist::ShuffleMusic() : (void)0;
+			
+			/*s32 songID = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
+			RamLoadedMusic.load(Audio::Object::GetAudioObject(songID));*/
+
+			Parser::GetInt(file, Strings::_SHUFFLE_STATE) == 1 ? State::SetState(State::ShuffleAfterLoad) : (void)0;
 			mdShuffleMusic = Parser::GetInt(file, Strings::_SHUFFLE_STATE);
 			Parser::GetInt(file, Strings::_REPEAT_STATE)	== 1 ? Playlist::RepeatMusic()	: (void)0;
 
@@ -259,8 +261,9 @@ namespace MP
 			if (Data::PauseFadeTime > Data::PauseFadeTimeMAX)
 				Data::PauseFadeTime = Data::PauseFadeTimeMAX;
 
-			Playlist::SetPosition((s32)Parser::GetFloat(file, Strings::_SONG_POSITION));
-			
+			Parser::GetInt(file, Strings::_ON_EXIT_MINIMIZE_TO_TRAY) == 1 ? State::SetState(State::OnExitMinimizeToTray) : (void)0;
+
+			Parser::GetInt(file, Strings::_CURRENT_SONG_ID) >= 0 ? State::SetState(State::InitMusicLoad) : (void)0;
 		}
 
 		void Playlist::Start()
@@ -296,10 +299,11 @@ namespace MP
 				mdPreviousRequest = false;
 			}
 
+
 			if (State::CheckState(State::DeletionFinished) == true)
 			{
-				ShuffleMusic();
-				State::ResetMusicPlayerState();
+				ShuffleMusicProcedure();
+				//ShuffleMusic();
 			}
 		}
 
@@ -348,7 +352,6 @@ namespace MP
 				mdVolumeTemp = 0;
 			}
 
-
 			CheckMPState();
 
 			CheckVolumeBounds();
@@ -381,13 +384,13 @@ namespace MP
 			if (RamLoadedMusic.get() != NULL)
 			{
 				if(IsPlaying() == false)
-					RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)->GetPath(), RamLoadedMusic.m_ID);
+					RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID));
 				mdMPStarted = true;
 			}
 			Graphics::MP::GetPlaylistObject()->SetPlayingID(RamLoadedMusic.m_ID);
 			Graphics::MP::GetPlaylistObject()->SetSelectedID(RamLoadedMusic.m_ID);
 
-			
+
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
 			if(playFadeTimer.started == false)
 				mdVolumeTemp = mdVolume;
@@ -434,9 +437,18 @@ namespace MP
 			if ((RamLoadedMusic.get() != NULL || BASS_ErrorGetCode() == BASS_ERROR_FILEFORM) &&
 				Audio::Object::GetSize() > 0)
 			{
+				f32 pos = GetPosition();
 				BASS_ChannelStop(RamLoadedMusic.get());
 
 				State::SetState(State::AudioChanged);
+				if (State::CheckState(State::CurrentlyPlayingDeleted) == true)
+				{
+					RamLoadedMusic.m_ID--;
+					State::ResetState(State::CurrentlyPlayingDeleted);
+				}
+
+				if (RamLoadedMusic.m_ID > Audio::Object::GetSize())
+					RamLoadedMusic.m_ID = -1;
 
 				/* If shuffle is enabled, try to load next song basing on shuffled positions container.
 
@@ -453,19 +465,20 @@ namespace MP
 					if ((RamLoadedMusic.m_ID + 1) < Audio::Object::GetSize())
 					{
 						s32 index = 1;
-						while ((RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID + index)->GetPath(), RamLoadedMusic.m_ID + index) == false)
+						while ((RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID + index)) == false)
 							&& (RamLoadedMusic.m_ID + 1 < Audio::Object::GetSize()))
 						{
 							index++;
 						}
 						//assert(RamLoadedSong.load(mdPathContainer[RamLoadedSong.mID + index], RamLoadedSong.mID + index));
-
-						mdNextRequest = true;
+						if(pos != 0)
+							mdNextRequest = true;
 					}
 					else
 					{
-						RamLoadedMusic.load(Audio::Object::GetAudioObject(0)->GetPath(), 0);
-						mdNextRequest = true;
+						RamLoadedMusic.load(Audio::Object::GetAudioObject(0));
+						if (pos != 0)
+							mdNextRequest = true;
 					}
 				}
 				else
@@ -473,8 +486,7 @@ namespace MP
 					mdCurrentShuffleMusicPos++;
 					if (mdCurrentShuffleMusicPos > mdShuffleMusicPosContainer.size() - 1)
 						mdCurrentShuffleMusicPos = 0;
-					while (RamLoadedMusic.load(Audio::Object::GetAudioObject(mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos])->GetPath(),
-											   mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos]) == false)
+					while (RamLoadedMusic.load(Audio::Object::GetAudioObject(mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos])) == false)
 					{
 						mdCurrentShuffleMusicPos++;
 						if (mdCurrentShuffleMusicPos > mdShuffleMusicPosContainer.size() - 1)
@@ -492,9 +504,15 @@ namespace MP
 			if ((RamLoadedMusic.get() != NULL || BASS_ErrorGetCode() == BASS_ERROR_FILEFORM) &&
 				Audio::Object::GetSize() > 0)
 			{
+				f32 pos = GetPosition();
+
 				BASS_ChannelStop(RamLoadedMusic.get());
 
 				State::SetState(State::AudioChanged);
+				State::ResetState(State::CurrentlyPlayingDeleted);
+
+				if (RamLoadedMusic.m_ID > Audio::Object::GetSize())
+					RamLoadedMusic.m_ID = -1;
 
 				/*	If shuffle is enabled, try to load next song basing on shuffled positions container.
 				
@@ -511,19 +529,20 @@ namespace MP
 					if ((RamLoadedMusic.m_ID - 1) >= 0)
 					{
 						int index = 1;
-						while ((RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID - index)->GetPath(), RamLoadedMusic.m_ID - index) == false)
+						while ((RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID - index)) == false)
 							&& (RamLoadedMusic.m_ID - index >= 0))
 						{
 							index++;
 						}
 
-						//assert(RamLoadedSong.load(mdPathContainer[RamLoadedSong.mID - index], RamLoadedSong.mID - index));
-						mdPreviousRequest = true;
+						if (pos != 0)
+							mdPreviousRequest = true;
 					}
 					else
 					{
-						RamLoadedMusic.load(Audio::Object::GetAudioObject(Audio::Object::GetSize() - 1)->GetPath(), Audio::Object::GetSize() - 1);
-						mdPreviousRequest = true;
+						RamLoadedMusic.load(Audio::Object::GetAudioObject(Audio::Object::GetSize() - 1));
+						if (pos != 0)
+							mdPreviousRequest = true;
 					}
 				}
 				else
@@ -531,8 +550,7 @@ namespace MP
 					mdCurrentShuffleMusicPos--;
 					if (mdCurrentShuffleMusicPos < 0)
 						mdCurrentShuffleMusicPos = Audio::Object::GetSize() - 1;
-					while (RamLoadedMusic.load(Audio::Object::GetAudioObject(mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos])->GetPath(),
-											   mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos]) == false)
+					while (RamLoadedMusic.load(Audio::Object::GetAudioObject(mdShuffleMusicPosContainer[mdCurrentShuffleMusicPos])) == false)
 					{
 						mdCurrentShuffleMusicPos--;
 						if (mdCurrentShuffleMusicPos < 0)
@@ -629,7 +647,7 @@ namespace MP
 			   all the numbers, creating a playlist with shuffeled songs.
 			*/
 
-			if (mdShuffleMusicPosContainer.size() > 0)
+			if (mdShuffleMusicPosContainer.empty() == false)
 			{
 				mdShuffleMusicPosContainer.clear();
 				mdCurrentShuffleMusicPos = 0;
@@ -643,7 +661,8 @@ namespace MP
 				if(i != RamLoadedMusic.m_ID)
 					mdShuffleMusicPosContainer.push_back(i);
 			}
-			if(mdShuffleMusicPosContainer.size() > 0)
+
+			if(mdShuffleMusicPosContainer.empty() == false)
 				std::random_shuffle(mdShuffleMusicPosContainer.begin() + 1, mdShuffleMusicPosContainer.end());
 			
 		}
@@ -667,10 +686,48 @@ namespace MP
 				NextMusic();
 			}
 
-			if (State::CheckState(State::AudioAdded) == true && mdShuffleMusic == true)
+			if (State::CheckState(State::ShuffleAfterAddition) &&
+				mdShuffleMusic == true)
 			{
-				ShuffleMusicProcedure();
+				ShuffleMusic();
+				//ShuffleMusicProcedure();
+				State::ResetState(State::ShuffleAfterAddition);
 			}
+
+			if (State::CheckState(State::FilesLoaded) == true &&
+				State::CheckState(State::ShuffleAfterLoad) == true &&
+				mdShuffleMusic == true)
+			{
+				ShuffleMusic();
+				//ShuffleMusicProcedure();
+				State::ResetState(State::ShuffleAfterLoad);
+			}
+			else
+			{
+				State::ResetState(State::ShuffleAfterLoad);
+			}
+
+			if (Audio::Object::GetSize() == 0)
+			{
+				mdShuffleMusicPosContainer.clear();
+			}
+
+			if (State::CheckState(State::FilesLoaded) == true &&
+				State::CheckState(State::InitMusicLoad) == true)
+			{
+				std::string file = Strings::_SETTINGS_FILE;
+				s32 songID = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
+				if (songID < Audio::Object::GetSize())
+				{
+					md_log(songID);
+					RamLoadedMusic.load(Audio::Object::GetAudioObject(songID));
+					Playlist::SetPosition((s32)Parser::GetFloat(file, Strings::_SONG_POSITION));
+					Graphics::MP::GetPlaylistObject()->SetPlayingID(songID);
+					State::SetState(State::InitialLoadFromFile);
+				}
+				State::ResetState(State::InitMusicLoad);
+			}
+
 		}
 
 		void CheckVolumeBounds()
@@ -699,7 +756,7 @@ namespace MP
 			Audio::PerformDeletion(pos);
 			
 			if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == pos)
-				Graphics::MP::GetPlaylistObject()->SetPlayingID(-1);
+				State::SetState(State::CurrentlyPlayingDeleted);
 
 			if (Graphics::MP::GetPlaylistObject()->GetSelectedID() > Audio::Object::GetSize() - 1)
 				Graphics::MP::GetPlaylistObject()->SetSelectedID(Audio::Object::GetSize() - 1);
@@ -733,6 +790,14 @@ namespace MP
 		b8 IsPlaying()
 		{
 			return BASS_ChannelIsActive(RamLoadedMusic.get());
+		}
+
+		b8 IsChannelPlaying()
+		{
+			if (mdMusicPaused == true)
+				return !mdMusicPaused;
+
+			return BASS_ChannelIsActive(RamLoadedMusic.get()) == BASS_ACTIVE_PLAYING;
 		}
 
 		b8 IsShuffleEnabled()
@@ -887,6 +952,41 @@ namespace MP
 												 BASS_ChannelGetLength(RamLoadedMusic.get(), BASS_POS_BYTE));
 			return -1;
 		}
+
+		void SetPosition(s32 pos)
+		{
+			BASS_ChannelSetPosition(
+				RamLoadedMusic.get(),
+				BASS_ChannelSeconds2Bytes(RamLoadedMusic.get(), pos), 
+				BASS_POS_BYTE);
+		}
+
+		void RepeatMusic()
+		{
+			//if(IsPlaying() == true)
+				mdRepeatMusic = !mdRepeatMusic;
+		}
+
+		void ShuffleMusic()
+		{
+			if(Audio::Object::GetSize() > 0)
+				mdShuffleMusic = !mdShuffleMusic;
+
+			if(mdShuffleMusic == true)
+				ShuffleMusicProcedure();
+		}
+
+		void SetScrollVolumeStep(s8 step)
+		{
+			mdVolumeScrollStep = step;
+		}
+
+		void SetVolumeFadeTime(s32 vol)
+		{
+			
+			Data::PauseFadeTime = vol;
+		}
+
 #ifdef _DEBUG_
 		s32 GetCurrentShufflePos()
 		{
@@ -911,39 +1011,6 @@ namespace MP
 				std::cout << utf16_to_utf8(Audio::Object::GetAudioObject(i)->GetPath()) << std::endl;
 		}
 #endif
-
-		void SetPosition(s32 pos)
-		{
-			BASS_ChannelSetPosition(
-				RamLoadedMusic.get(),
-				BASS_ChannelSeconds2Bytes(RamLoadedMusic.get(), pos), 
-				BASS_POS_BYTE);
-		}
-
-		void RepeatMusic()
-		{
-			//if(IsPlaying() == true)
-				mdRepeatMusic = !mdRepeatMusic;
-		}
-
-		void ShuffleMusic()
-		{
-			if(Audio::Object::GetSize() > 0)
-				mdShuffleMusic = !mdShuffleMusic;
-
-			ShuffleMusicProcedure();
-		}
-
-		void SetScrollVolumeStep(s8 step)
-		{
-			mdVolumeScrollStep = step;
-		}
-
-		void SetVolumeFadeTime(s32 vol)
-		{
-			
-			Data::PauseFadeTime = vol;
-		}
 	}
 }
 }

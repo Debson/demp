@@ -23,6 +23,7 @@
 #include "../settings/music_player_settings.h"
 #include "../graphics/graphics.h"
 #include "../graphics/music_player_graphics.h"
+#include "../graphics/music_player_graphics_playlist.h"
 #include "../playlist/music_player_playlist.h"
 #include "../player/music_player.h"
 #include "../player/music_player_system.h"
@@ -180,6 +181,7 @@ namespace MP
 
 			if(Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false)
 				App::ProcessButton(Interface::PlaylistButton::GetButton(i));
+
 		}
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
 
@@ -352,20 +354,20 @@ namespace MP
 
 			/*ImGui::Text("Current shuffle pos: %d", Playlist::GetCurrentShufflePos());
 
-			ImGui::Text("Shuffle container size: %d", Playlist::GetShuffleContainerSize());
+			ImGui::Text("Shuffle container size: %d", Playlist::GetShuffleContainerSize());*/
 
 
-			if (ImGui::Button("Print test") == true)
+			/*if (ImGui::Button("Print test") == true)
 			{
 				Audio::PrintTest();
-			}
+			}*/
 			
 			if (ImGui::Button("Print Shuffled Pos") == true)
 			{
 				Playlist::PrintShuffledPositions();
 			}
 
-			if (ImGui::Button("Print Loaded Paths") == true)
+			/*if (ImGui::Button("Print Loaded Paths") == true)
 			{
 				Playlist::PrintLoadedPaths();
 			}*/
@@ -542,8 +544,10 @@ namespace MP
 	{
 		if (Input::isButtonPressed(Input::ButtonType::Exit))
 		{
-			//mdEngine::AppExit();
-			Window::HideToTray();
+			if(State::CheckState(State::OnExitMinimizeToTray) == true)
+				Window::HideToTray();
+			else
+				mdEngine::AppExit();
 		}
 
 		if (Input::isButtonPressed(Input::ButtonType::Minimize))
@@ -551,14 +555,22 @@ namespace MP
 			Window::MinimizeWindow();
 		}
 
-		s32 x, y;
-		Window::GetWindowPos(&x, &y);
-		md_log(y);
 
 		if (App::Input::IsKeyPressed(App::KeyCode::F5))
 		{
-			Window::ShowWindow();
+			//Window::ShowWindow();
+			s32 x, y;
+			Window::GetWindowPos(&x, &y);
+			md_log_compare(x, y);
 			Window::RestoreWindow();
+			Window::ShowWindow();
+			md_log("f5");
+		}
+
+		if (App::Input::IsKeyPressed(App::KeyCode::F6))
+		{
+			Window::MinimizeWindow();;
+			md_log("f6");
 		}
 
 		if (Input::isButtonPressed(Input::ButtonType::Options))
@@ -660,7 +672,7 @@ namespace MP
 				if (Audio::Object::GetAudioObject(i)->GetClickCount() > 1)
 				{
 					State::SetState(State::AudioChosen);
-					Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(i)->GetPath(), i);
+					Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(i));
 					Playlist::PlayMusic();
 				}
 

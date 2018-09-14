@@ -16,7 +16,7 @@ namespace mdEngine
 
 				enum ButtonType
 				{
-					None,
+					Other,
 					Exit,
 					Minimize,
 					StayOnTop,

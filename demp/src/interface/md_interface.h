@@ -104,7 +104,7 @@ namespace mdEngine
 			b8			 m_PlaylistItemHidden;
 			b8			 m_FolderRep;
 			u8			 m_ClickCount;
-			s32			 m_ItemID;
+			s32*		 m_ItemID;
 			glm::vec3	 m_ItemColor;
 			glm::vec2	 m_StartPos;
 			std::string  m_TitleC;
@@ -251,11 +251,11 @@ namespace mdEngine
 
 		};
 
-		class CheckBox : public Button
+		class CheckBox : public Button, private TextObject
 		{
 		public:
 			CheckBox();
-			CheckBox(glm::vec2 pos, b8* val);
+			CheckBox(std::wstring labelName, glm::vec2 pos, b8* val);
 
 			void Init(SDL_Renderer* renderer);
 			void Update();

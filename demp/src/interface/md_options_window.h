@@ -24,7 +24,7 @@ namespace mdEngine
 
 		private:
 
-			b8 m_TestBool;
+			b8 m_ToTrayOnExitState;
 			b8 m_WindowHasFocus;
 			s32 m_Height, m_Width;
 			s32 m_WindowID;

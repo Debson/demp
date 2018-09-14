@@ -39,6 +39,7 @@ namespace mdEngine
 		void ShowWindow();
 		void HideWindow();
 		void RestoreWindow();
+		void MaximizeWindow();
 		SDL_Window* GetSDLWindow();
 		HWND GetHWNDWindow();
 		void SetWindowTitle(const b8& windowName);

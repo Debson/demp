@@ -5,7 +5,7 @@
 #include <vector>
 #include <bass.h>
 
-
+#include "../audio/mp_audio.h"
 #include "../settings/configuration.h"
 #include "../settings/music_player_settings.h"
 #include "../app/system_application_input.h"
@@ -31,13 +31,13 @@ namespace MP
 			u32 m_MusicSize;
 			HSTREAM m_MusicStream;
 			HSTREAM m_CrossfadeMusicStream;
-			s64 m_ID;
+			s32 m_ID;
 
 			SongObject();
 			~SongObject();
 
 #ifdef _WIN32_
-			b8 load(std::wstring songPath, u32 id);
+			b8 load(Audio::AudioObject* audioObject);
 			std::wstring m_Path;
 #else
 			b8 init(const char* songPath);
@@ -84,6 +84,9 @@ namespace MP
 		b8 IsPaused();
 
 		b8 IsPlaying();
+
+		// Returns playing state immidiately, without volume fade delay
+		b8 IsChannelPlaying();
 
 		b8 IsShuffleEnabled();
 

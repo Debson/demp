@@ -9,52 +9,58 @@ namespace mdEngine
 {
 	namespace State
 	{
-		enum AudioFilesState: u32
+		enum AudioFilesState: u64
 		{
-			None						= (1u << 0),
-			PlaylistEmpty				= (1u << 1),
-			PlaylistFilled				= (1u << 2),
-			AudioAdded					= (1u << 3),
-			AudioDeleted				= (1u << 4),
-			AudioChosen					= (1u << 5),
-			AudioChanged				= (1u << 6),
-			AudioHidden					= (1u << 7),
-			AudioPlayStarted			= (1u << 24),
-			FilesLoaded					= (1u << 8),
-			FilesInfoLoaded				= (1u << 9),
-			PathLoadedFromFile			= (1u << 10),
-			PathLoadedFromFileVolatile	= (1u << 11),
-			DeletionFinished			= (1u << 12)
+			None						= (1llu << 0),
+			PlaylistEmpty				= (1llu << 1),
+			PlaylistFilled				= (1llu << 2),
+			AudioAdded					= (1llu << 3),
+			AudioDeleted				= (1llu << 4),
+			AudioChosen					= (1llu << 5),
+			AudioChanged				= (1llu << 6),
+			AudioHidden					= (1llu << 7),
+			AudioPlayStarted			= (1llu << 24),
+			FilesLoaded					= (1llu << 8),
+			FilesInfoLoaded				= (1llu << 9),
+			PathLoadedFromFile			= (1llu << 10),
+			PathLoadedFromFileVolatile	= (1llu << 11),
+			DeletionFinished			= (1llu << 12),
+			ShuffleAfterLoad			= (1llu << 30),
+			ShuffleAfterAddition		= (1llu << 33),
+			CurrentlyPlayingDeleted		= (1llu << 34)
 
 		};
 
-		enum MusicPlayerState : u32
+		enum MusicPlayerState : u64
 		{
-			FileDropped				= (1u << 13),
-			ContainersResized		= (1u << 14),
-			PlaylistMovement		= (1u << 15),
-			VolumeChanged			= (1u << 25),
-			CrossfadeEnabled		= (1u << 26),
-			PlaylistRolling			= (1u << 28)
+			FileDropped				= (1llu << 13),
+			ContainersResized		= (1llu << 14),
+			PlaylistMovement		= (1llu << 15),
+			VolumeChanged			= (1llu << 25),
+			CrossfadeEnabled		= (1llu << 26),
+			PlaylistRolling			= (1llu << 28),
+			OnExitMinimizeToTray	= (1llu << 29),
+			InitMusicLoad			= (1llu << 31),
+			InitialLoadFromFile		= (1llu << 32)
 		};
 
 		namespace Window
 		{
-			enum WindowEvent : u32
+			enum WindowEvent : u64
 			{
-				HasFocus		= (1u << 16),
-				Resized			= (1u << 17),
-				Minimized		= (1u << 18),
-				Shown			= (1u << 19),
-				Hidden			= (1u << 20),
-				Exposed			= (1u << 21),
-				MouseEnter		= (1u << 22),
-				MouseLeave		= (1u << 23),
-				PositionChanged	= (1u << 27)
+				HasFocus		= (1llu << 16),
+				Resized			= (1llu << 17),
+				Minimized		= (1llu << 18),
+				Shown			= (1llu << 19),
+				Hidden			= (1llu << 20),
+				Exposed			= (1llu << 21),
+				MouseEnter		= (1llu << 22),
+				MouseLeave		= (1llu << 23),
+				PositionChanged	= (1llu << 27)
 			};
 		};
 
-		extern u32 m_currentState;
+		extern u64 m_currentState;
 
 		TEMPLATE void SetState(T state)
 		{

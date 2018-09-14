@@ -4,7 +4,7 @@
 
 namespace mdEngine
 {
-	u32 State::m_currentState = State::None | State::PlaylistEmpty;
+	u64 State::m_currentState = State::None | State::PlaylistEmpty;
 
 
 	void State::ResetStateFlags()
@@ -35,7 +35,7 @@ namespace mdEngine
 		ResetState(FileDropped);
 		ResetState(AudioHidden);
 		ResetState(Window::PositionChanged);
-		State::ResetState(State::PlaylistRolling);
+		ResetState(State::DeletionFinished);
 
 	}
 }

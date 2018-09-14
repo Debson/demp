@@ -6,7 +6,9 @@
 
 #include "../utility/md_util.h"
 #include "../settings/music_player_settings.h"
+#include "../settings/music_player_string.h"
 #include "../app/realtime_system_application.h"
+#include "../player/music_player_state.h"
 
 
 
@@ -29,7 +31,7 @@ namespace mdEngine
 		if (m_Window != NULL)
 			return;
 
-		m_Window = SDL_CreateWindow("Options",
+		m_Window = SDL_CreateWindow(Strings::_OPTIONS_WINDOW_NAME.c_str(),
 			SDL_WINDOWPOS_CENTERED,
 			SDL_WINDOWPOS_CENTERED,
 			m_Width, 
@@ -47,21 +49,21 @@ namespace mdEngine
 		}
 
 
-		s32 xPos = 70;
-		m_VolumeStepSlider = Interface::ButtonSlider(L"Volume Scroll Step:", glm::vec2(xPos, 20), &MP::Data::VolumeScrollStep, 1, 0, MP::Data::VolumeScrollStepMAX);
+		s32 xPos = 110;
+		m_VolumeStepSlider = Interface::ButtonSlider(Strings::_VOLUME_SCROL_STEP_TEXT, glm::vec2(xPos, 20), &MP::Data::VolumeScrollStep, 1, 0, MP::Data::VolumeScrollStepMAX);
 		m_VolumeStepSlider.Init(m_Renderer);
 
-		m_PlaylistScrollStepSlider = Interface::ButtonSlider(L"Playlist Scroll Step:", glm::vec2(xPos, 70), &MP::Data::PlaylistScrollStep, 5.f, 0.f, MP::Data::PlaylistScrollStepMAX);
+		m_PlaylistScrollStepSlider = Interface::ButtonSlider(Strings::_PLAYLIST_SCROLL_STEP_TEXT, glm::vec2(xPos, 70), &MP::Data::PlaylistScrollStep, 5.f, 0.f, MP::Data::PlaylistScrollStepMAX);
 		m_PlaylistScrollStepSlider.Init(m_Renderer);
 
-		m_PauseFadeTimeSlider = Interface::ButtonSlider(L"Volume Fade on Pause/Play Length:", glm::vec2(xPos, 120), &MP::Data::PauseFadeTime, 50, 0, MP::Data::PauseFadeTimeMAX);
+		m_PauseFadeTimeSlider = Interface::ButtonSlider(Strings::_PAUSE_FADE_TEXT, glm::vec2(xPos, 120), &MP::Data::PauseFadeTime, 50, 0, MP::Data::PauseFadeTimeMAX);
 		m_PauseFadeTimeSlider.Init(m_Renderer);
 
-		m_RamLoadedSizeSlider = Interface::ButtonSlider(L"Maximum Ram Loaded Size:", glm::vec2(xPos, 170), &MP::Data::_MAX_SIZE_RAM_LOADED, 1, 0, MP::Data::_MAX_SIZE_RAM_LOADED_MAX);
+		m_RamLoadedSizeSlider = Interface::ButtonSlider(Strings::_MAX_RAM_LOADED_SIZE_TEXT, glm::vec2(xPos, 170), &MP::Data::_MAX_SIZE_RAM_LOADED, 1, 0, MP::Data::_MAX_SIZE_RAM_LOADED_MAX);
 		m_RamLoadedSizeSlider.Init(m_Renderer);
 
-		m_TestBool = false;
-		m_ToTrayOnExit = Interface::CheckBox(glm::vec2(xPos, 220), &m_TestBool);
+		m_ToTrayOnExitState = State::CheckState(State::OnExitMinimizeToTray);
+		m_ToTrayOnExit = Interface::CheckBox(Strings::_ON_EXIT_MINMIZE_TO_TRAY_TEXT, glm::vec2(xPos, 220), &m_ToTrayOnExitState);
 		m_ToTrayOnExit.Init(m_Renderer);
 
 	}
@@ -117,6 +119,8 @@ namespace mdEngine
 
 			m_ToTrayOnExit.ResetState();
 		}
+
+		m_ToTrayOnExitState == true ? State::SetState(State::OnExitMinimizeToTray) : State::ResetState(State::OnExitMinimizeToTray);
 
 		m_VolumeStepSlider.Update();
 		m_PlaylistScrollStepSlider.Update();

@@ -27,7 +27,7 @@ namespace MP
 	namespace Data
 	{
 		static f32 mdDefaultWidth = 500.f;
-		static f32 mdDefaultHeight = 350.f;
+		static f32 mdDefaultHeight = 320.f;
 
 
 		extern u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
@@ -37,19 +37,19 @@ namespace MP
 
 		extern glm::vec2 _MIN_PLAYER_SIZE;
 
-		extern glm::vec2 _DEFAULT_PLAYER_POS;
-		extern glm::vec2 _DEFAULT_PLAYER_SIZE;
+		const glm::vec2 _DEFAULT_PLAYER_POS = glm::vec2(0.f, 0.f);
+		const glm::vec2 _DEFAULT_PLAYER_SIZE = glm::vec2(500.f, mdDefaultHeight);
 
 		extern glm::vec2 _DEFAULT_WINDOW_POS;
 		extern glm::vec2 _DEFAULT_WINDOW_SIZE;
 
-		const glm::vec2 _OPTIONS_WINDOW_SIZE = glm::vec2(300, 400);
+		const glm::vec2 _OPTIONS_WINDOW_SIZE = glm::vec2(400, 300);
 
 		extern glm::vec2 _MAIN_BACKGROUND_POS;
 		extern glm::vec2 _MAIN_BACKGROUND_SIZE;
 
-		extern glm::vec2 _MAIN_FOREGROUND_POS;
-		extern glm::vec2 _MAIN_FOREGROUND_SIZE;
+		const glm::vec2 _MAIN_FOREGROUND_POS = glm::vec2(20.0f, 20.0f);
+		const glm::vec2 _MAIN_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight - 50.f);
 
 		extern glm::vec2 _PLAYLIST_FOREGROUND_POS;
 		extern glm::vec2 _PLAYLIST_FOREGROUND_SIZE;
@@ -125,15 +125,18 @@ namespace MP
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_POS;
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE;
 
-		extern s16 _TEXT_BOX_ITEM_HEIGHT;
+		const s16 _TEXT_BOX_ITEM_HEIGHT = 20;
 
-		extern glm::vec2 _TEXT_ITEMS_DURATION_POS;
+		static f32 textOffsetY = 1.f;
+		const glm::vec2 _TEXT_ITEMS_DURATION_POS = glm::vec2(20, mdDefaultHeight + textOffsetY);
 
-		extern glm::vec2 _TEXT_ITEMS_SIZE_POS;
+		const glm::vec2 _TEXT_ITEMS_SIZE_POS = glm::vec2(170, mdDefaultHeight + textOffsetY);
 
-		extern glm::vec2 _TEXT_ITEMS_COUNT_POS;
+		const glm::vec2 _TEXT_ITEMS_COUNT_POS = glm::vec2(120, mdDefaultHeight + textOffsetY);
 
-		extern glm::vec2 _TEXT_LOADED_ITEMS_COUNT_POS;
+		const glm::vec2 _TEXT_LOADED_ITEMS_COUNT_POS = glm::vec2(400, mdDefaultHeight + textOffsetY);
+
+		const glm::vec2 _TEXT_MUSIC_TITLE_SCROLL_POS = glm::vec2(80, 50);
 
 		extern s32 _MAX_SIZE_RAM_LOADED;
 
@@ -148,12 +151,16 @@ namespace MP
 
 		extern f32 PlaylistScrollStep;
 
-		const s32 _MAX_SIZE_RAM_LOADED_MAX = 300;
-		const s32 VolumeScrollStepMAX = 100.f;
-		const s32 PauseFadeTimeMAX = 10000;
-		const s32 VolumeFadeTimeMAX = 10000;
-		const f32 PlaylistScrollStepMAX = 150.f;
+		const s32 _MAX_SIZE_RAM_LOADED_MAX	= 300;
+		const s32 VolumeScrollStepMAX		= 100.f;
+		const s32 PauseFadeTimeMAX			= 10000;
+		const s32 VolumeFadeTimeMAX			= 10000;
+		const f32 PlaylistScrollStepMAX		= 150.f;
 
+		const f32 MusicInfoScrollingSpeed		= 30.f;
+		const f32 MusicInfoScrollingSpeedRewind = 120.f;
+		const s32 MusicInfoScrollStopTimer		= 1200;
+		const s32 MusicInfoScrollTextDistDiff	= 40.f;
 
 		namespace Default
 		{

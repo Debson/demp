@@ -36,6 +36,20 @@
 #include "../utility/md_time.h"
 
 
+#define IDM_EXIT 32771
+#define ID_S_EXIT                       32772
+#define IDM_SHOW_DEMP					32773
+#define IDM_SEP 32774
+
+// Windows Header Files:
+#include <windows.h>
+#include <shellapi.h>
+// C RunTime Header Files
+#include <stdlib.h>
+#include <malloc.h>
+#include <memory.h>
+#include <tchar.h>
+
 namespace mdEngine
 {
 	SDL_Window* mdWindow;
@@ -43,6 +57,10 @@ namespace mdEngine
 	SDL_GLContext gl_context;
 	SDL_SysWMinfo wmInfo;
 	HWND hwnd;
+	NOTIFYICONDATA icon;
+	BOOL bDisable = FALSE;
+	HMENU hPopMenu;
+
 	s32 mdWindowID;
 	std::thread fileLoadThread;
 
@@ -123,7 +141,24 @@ void mdEngine::SetupSDL()
 
 	SetLayeredWindowAttributes(hwnd, RGB(0xFF, 0xFE, 0xFF), 0, LWA_COLORKEY);
 
-	
+	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
+
+	SDL_GetWindowWMInfo(mdWindow, &wmInfo);
+	SDL_VERSION(&wmInfo.version);
+
+	if (SDL_GetWindowWMInfo(mdWindow, &wmInfo))
+	{
+		icon.uCallbackMessage = WM_USER + 1;
+		icon.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+		icon.hIcon = LoadIcon(NULL, IDI_INFORMATION);
+		icon.cbSize = sizeof(icon);
+		icon.hWnd = wmInfo.info.win.window;
+		strcpy_s(icon.szTip, "Test tip");
+
+		bool success = Shell_NotifyIcon(NIM_ADD, &icon);
+
+
+	}
 
 #endif
 
@@ -290,25 +325,62 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			case (SDL_MOUSEMOTION):
 				UpdateMousePosition(event.motion.x, event.motion.y);
 				break;
+			}
 
-			case SDL_SYSWMEVENT:
-				if (event.syswm.msg->msg.win.msg == WM_USER + 1)
+			int wmId, wmEvent;
+
+			if (event.type == SDL_SYSWMEVENT)
+			{
+				switch (event.syswm.msg->msg.win.msg)
 				{
-					if (LOWORD(event.syswm.msg->msg.win.lParam) == WM_LBUTTONDBLCLK)
+				case (WM_USER + 1):
+				{
+					switch (LOWORD(event.syswm.msg->msg.win.lParam))
 					{
+					case WM_LBUTTONDBLCLK:
 						SDL_ShowWindow(mdWindow);
 						SDL_RestoreWindow(mdWindow);
-					}
+						//Shell_NotifyIcon(NIM_DELETE, &icon);
+						break;
+					case WM_RBUTTONDOWN:
+						SDL_GetWindowWMInfo(mdWindow, &wmInfo);
+						SDL_VERSION(&wmInfo.version);
 
-					// dialog to close the app (create textbox with options)
-					if (LOWORD(event.syswm.msg->msg.win.lParam) == WM_RBUTTONDOWN)
-					{
-						md_log("hmm");
+						if (SDL_GetWindowWMInfo(mdWindow, &wmInfo))
+						{
+							POINT lpClickPoint;
+							UINT uFlag = MF_BYPOSITION | MF_STRING;
+							GetCursorPos(&lpClickPoint);
+							hPopMenu = CreatePopupMenu();
+							InsertMenu(hPopMenu, 0xFFFFFFFF, uFlag, IDM_SHOW_DEMP, _T("Show demp"));
+							InsertMenu(hPopMenu, 0xFFFFFFFF, MF_SEPARATOR, IDM_SEP, _T("SEP"));
+							InsertMenu(hPopMenu, 0xFFFFFFFF, uFlag, IDM_EXIT, _T("Exit"));
+
+							SetForegroundWindow(wmInfo.info.win.window);
+							TrackPopupMenu(hPopMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_BOTTOMALIGN, lpClickPoint.x, lpClickPoint.y, 0, wmInfo.info.win.window, NULL);
+						}
+						break;
 					}
 				}
 				break;
-
+				case WM_COMMAND:
+					wmId = LOWORD(event.syswm.msg->msg.win.wParam);
+					// Parse the menu selections:
+					switch (wmId)
+					{
+					case IDM_SHOW_DEMP:
+						Window::ShowWindow();
+						Window::RestoreWindow();
+						break;
+					case IDM_EXIT:
+						Shell_NotifyIcon(NIM_DELETE, &icon);
+						AppExit();
+						break;
+					}
+					break;
+				}
 			}
+
 
 			if (event.type == SDL_WINDOWEVENT && event.window.windowID == mdWindowID)
 			{
@@ -328,7 +400,15 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 					break;
 				case(SDL_WINDOWEVENT_MINIMIZED):
 					State::SetState(State::Window::Minimized);
-					SDL_HideWindow(mdWindow);
+					break;
+				case (SDL_WINDOWEVENT_RESTORED):
+					State::ResetState(State::Window::Minimized);
+					break;
+				case (SDL_WINDOWEVENT_HIDDEN):
+					md_log("hidden");
+					break;
+				case (SDL_WINDOWEVENT_SHOWN):
+					md_log("shown");
 					break;
 	
 				}
@@ -343,7 +423,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 		UpdateRelativeMousePosition();
 
-		if (mdIsRunning == true && State::CheckState(State::Window::HasFocus))
+		if (mdIsRunning == true && 
+			State::CheckState(State::Window::HasFocus) ||
+			State::CheckState(State::FilesLoaded) == false)
 		{
 			UpdateWindowSize();
 			mdApplicationHandler->OnRealtimeUpdate();
@@ -359,7 +441,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		if (State::CheckState(State::Window::Minimized) == false)
+		//if (State::CheckState(State::Window::Minimized) == false)
 		{
 
 			Graphics::RenderGraphics();
@@ -404,6 +486,7 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 {
 	/* CLEAR AND FREE MEMORY */
 
+	Shell_NotifyIcon(NIM_DELETE, &icon);
 
 	mdApplicationHandler->OnWindowClose();
 	MP::UI::GetOptionsWindow()->Free();
@@ -451,23 +534,8 @@ void mdEngine::Window::HideToTray()
 {
 #ifdef _WIN32_
 
+	MinimizeWindow();
 	HideWindow();
-
-	SDL_GetWindowWMInfo(mdWindow, &wmInfo);
-	SDL_VERSION(&wmInfo.version);
-
-	NOTIFYICONDATA icon;
-	if (SDL_GetWindowWMInfo(mdWindow, &wmInfo))
-	{
-		icon.uCallbackMessage = WM_USER + 1;
-		icon.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
-		icon.hIcon = LoadIcon(NULL, IDI_INFORMATION);
-		icon.cbSize = sizeof(icon);
-		icon.hWnd = wmInfo.info.win.window;
-		strcpy_s(icon.szTip, "Test tip");
-
-		bool success = Shell_NotifyIcon(NIM_ADD, &icon);
-	}
 
 	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
 #endif
@@ -480,7 +548,7 @@ void mdEngine::Window::BackFromTray()
 
 void mdEngine::Window::MinimizeWindow()
 {
-	SDL_HideWindow(mdWindow);
+	SDL_MinimizeWindow(mdWindow);
 }
 
 void mdEngine::Window::ShowWindow()
@@ -496,6 +564,11 @@ void mdEngine::Window::HideWindow()
 void mdEngine::Window::RestoreWindow()
 {
 	SDL_RestoreWindow(mdWindow);
+}
+
+void mdEngine::Window::MaximizeWindow()
+{
+	SDL_MaximizeWindow(mdWindow);
 }
 
 SDL_Window* mdEngine::Window::GetSDLWindow()

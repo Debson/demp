@@ -14,8 +14,13 @@ namespace mdEngine
 		// DD:HH:MM:SS
 		std::string SecToProperTimeFormat(f64 secs);
 
+		// Shortest possible representation
+		std::string SecToProperTimeFormatShort(f64 secs);
+
 		// GB or MB
 		std::string BytesToProperSizeFormat(f64 bytes);
+
+		std::wstring FrequencyToProperFormat(f32 freq);
 	}
 }
 #endif // !MD_CONVERTER_H

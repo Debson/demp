@@ -80,6 +80,21 @@ namespace mdEngine
 		return time;
 	}
 
+	std::string Converter::SecToProperTimeFormatShort(f64 secs)
+	{
+		std::string time = SecToProperTimeFormat(secs);
+
+		while (time[0] == '0' &&
+			   time[1] == '0' &&
+			   time.length() > 2)
+		{
+			time = time.substr(3, time.length());
+		}
+
+
+		return time;
+	}
+
 	// GB or MB
 	std::string Converter::BytesToProperSizeFormat(f64 bytes)
 	{
@@ -121,5 +136,15 @@ namespace mdEngine
 		}
 
 		return size;
+	}
+
+	std::wstring Converter::FrequencyToProperFormat(f32 freq)
+	{
+		std::wstring str;
+
+		str = std::to_wstring((s32)freq / 1000);
+		str += L" kHz";
+
+		return str;
 	}
 }

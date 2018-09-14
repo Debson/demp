@@ -15,7 +15,7 @@
 #include "../audio/mp_audio.h"
 #include "../settings/music_player_string.h"
 #include "../interface/md_interface.h"
-#include "../graphics/music_player_graphics.h"
+#include "../graphics/music_player_graphics_playlist.h"
 #include "../playlist/music_player_playlist.h"
 #include "../player/music_player_system.h"
 #include "../player/music_player_state.h"
@@ -231,6 +231,7 @@ namespace mdEngine
 		AddToFile(&file, Strings::_PLAYLIST_SCROLL_STEP, MP::Data::PlaylistScrollStep);
 		AddToFile(&file, Strings::_MAX_RAM_LOADED_SIZE, MP::Data::_MAX_SIZE_RAM_LOADED);
 		AddToFile(&file, Strings::_PAUSE_FADE_TIME, MP::Data::PauseFadeTime);
+		AddToFile(&file, Strings::_ON_EXIT_MINIMIZE_TO_TRAY, State::CheckState(State::OnExitMinimizeToTray));
 
 
 		return true;
