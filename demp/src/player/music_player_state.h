@@ -50,15 +50,28 @@ namespace mdEngine
 			{
 				HasFocus		= (1llu << 16),
 				Resized			= (1llu << 17),
+				ResizedFromTop	= (1llu << 40),
 				Minimized		= (1llu << 18),
 				Shown			= (1llu << 19),
 				Hidden			= (1llu << 20),
 				Exposed			= (1llu << 21),
 				MouseEnter		= (1llu << 22),
 				MouseLeave		= (1llu << 23),
-				PositionChanged	= (1llu << 27)
+				PositionChanged	= (1llu << 27),
+				InTray			= (1llu << 35),
+				MouseOnTrayIcon = (1llu << 39)
 			};
 		};
+
+		namespace OptionWindow
+		{
+			enum WindowEvent : u64
+			{
+				HasFocus			= (1llu << 36),
+				Minimized			= (1llu << 37),
+				Shown				= (1llu << 38)
+			};
+		}
 
 		extern u64 m_currentState;
 

@@ -260,13 +260,14 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
+
 	mdIsRunning = true;
 	mdAppClosing = false;
 
 	SDL_Event event;
 
 	Time::deltaTime = Time::Time();
-	
+
 	f64 previousFrame = 0;
 	f64 currentFrame = 0;
 	Time::Timer capTimer;
@@ -329,6 +330,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 			int wmId, wmEvent;
 
+			State::ResetState(State::Window::MouseOnTrayIcon);
 			if (event.type == SDL_SYSWMEVENT)
 			{
 				switch (event.syswm.msg->msg.win.msg)
@@ -340,6 +342,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 					case WM_LBUTTONDBLCLK:
 						SDL_ShowWindow(mdWindow);
 						SDL_RestoreWindow(mdWindow);
+						State::ResetState(State::Window::InTray);
 						//Shell_NotifyIcon(NIM_DELETE, &icon);
 						break;
 					case WM_RBUTTONDOWN:
@@ -360,6 +363,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 							TrackPopupMenu(hPopMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_BOTTOMALIGN, lpClickPoint.x, lpClickPoint.y, 0, wmInfo.info.win.window, NULL);
 						}
 						break;
+					case WM_MOUSEMOVE:
+						State::SetState(State::Window::MouseOnTrayIcon);
+						break;
 					}
 				}
 				break;
@@ -378,6 +384,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 						break;
 					}
 					break;
+				
 				}
 			}
 
@@ -405,77 +412,112 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 					State::ResetState(State::Window::Minimized);
 					break;
 				case (SDL_WINDOWEVENT_HIDDEN):
-					md_log("hidden");
 					break;
 				case (SDL_WINDOWEVENT_SHOWN):
-					md_log("shown");
 					break;
-	
+
+				}
+			}
+
+			if (event.type == SDL_WINDOWEVENT && event.window.windowID == GetOptionsWindow()->GetOptionWindowID())
+			{
+				switch (event.window.event)
+				{
+				case (SDL_WINDOWEVENT_FOCUS_GAINED):
+					State::SetState(State::OptionWindow::HasFocus);
+					break;
+				case (SDL_WINDOWEVENT_FOCUS_LOST):
+					State::ResetState(State::OptionWindow::HasFocus);;
+					break;
+
+				}
+
+			}
+		}
+
+			const u8* current_keystate = SDL_GetKeyboardState(NULL);
+			mdEngine::UpdateKeyState(current_keystate);
+
+			const u32 current_mousestate = SDL_GetMouseState(NULL, NULL);
+			mdEngine::UpdateMouseState(current_mousestate);
+
+			UpdateRelativeMousePosition();
+
+			if (mdIsRunning == true &&
+				State::CheckState(State::OptionWindow::HasFocus) == false)
+			{
+				UpdateWindowSize();
+				mdApplicationHandler->OnRealtimeUpdate();
+				Graphics::UpdateGraphics();
+			}
+			else if (mdIsRunning == true)
+			{
+				MP::UI::GetOptionsWindow()->Update();
+			}
+
+			SDL_GL_MakeCurrent(mdWindow, gl_context);
+#ifdef _DEBUG_
+			glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			if (State::CheckState(State::Window::Minimized) == false ||
+				State::CheckState(State::Window::InTray) == false)
+			{
+
+				Graphics::RenderGraphics();
+				mdApplicationHandler->OnRealtimeRender();
+			}
+
+			if (MP::UI::GetOptionsWindow()->IsActive() == true)
+			{
+				MP::UI::GetOptionsWindow()->Render();
+			}
+
+			glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#else
+			glClearColor(1.f, 254.f / 255.f, 1.f, 1.f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			if (State::CheckState(State::Window::Minimized) == false ||
+				State::CheckState(State::Window::InTray) == false)
+			{
+				Graphics::RenderGraphics();
+				mdApplicationHandler->OnRealtimeRender();
+			}
+
+			if (MP::UI::GetOptionsWindow()->IsActive() == true)
+			{
+				MP::UI::GetOptionsWindow()->Render();
+			}
+#endif
+			SDL_GL_SwapWindow(mdWindow);
+
+
+			if ((State::CheckState(State::Window::InTray) == true &&
+				State::CheckState(State::Window::MouseOnTrayIcon) == false) ||
+				State::CheckState(State::Window::Minimized) == true)
+			{
+				MP::Data::UpdateFPS(5.f);
+			}
+			else
+			{
+				MP::Data::UpdateFPS(MP::Data::_SCREEN_FPS);
+			}
+
+			if (State::CheckState(State::Window::PositionChanged) == false &&
+				State::CheckState(State::Window::Resized) == false &&
+				State::CheckState(State::PlaylistMovement) == false)
+			{
+				f32 frameTicks = capTimer.GetTicks();
+				if (frameTicks < MP::Data::_SCREEN_TICK_PER_FRAME)
+				{
+					SDL_Delay(MP::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
 				}
 			}
 		}
-		
-		const u8* current_keystate = SDL_GetKeyboardState(NULL);
-		mdEngine::UpdateKeyState(current_keystate);
-
-		const u32 current_mousestate = SDL_GetMouseState(NULL, NULL);
-		mdEngine::UpdateMouseState(current_mousestate);
-
-		UpdateRelativeMousePosition();
-
-		if (mdIsRunning == true && 
-			State::CheckState(State::Window::HasFocus) ||
-			State::CheckState(State::FilesLoaded) == false)
-		{
-			UpdateWindowSize();
-			mdApplicationHandler->OnRealtimeUpdate();
-			Graphics::UpdateGraphics();
-		}
-		else if (mdIsRunning)
-		{
-			MP::UI::GetOptionsWindow()->Update();
-		}
-
-		SDL_GL_MakeCurrent(mdWindow, gl_context);
-#ifdef _DEBUG_
-		glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		//if (State::CheckState(State::Window::Minimized) == false)
-		{
-
-			Graphics::RenderGraphics();
-			mdApplicationHandler->OnRealtimeRender();
-		}
-
-		if (MP::UI::GetOptionsWindow()->IsActive() == true)
-		{
-			MP::UI::GetOptionsWindow()->Render();
-		}
-
-		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#else
-		glClearColor(1.f, 254.f/255.f, 1.f, 1.f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport(0, 0, (int)mdActualWindowWidth, (int)mdActualWindowHeight);
-		Graphics::Render();
-#endif
-		SDL_GL_SwapWindow(mdWindow);
-
-	
-		if (State::CheckState(State::Window::PositionChanged) == false && 
-			State::CheckState(State::Window::Resized) == false)
-		{
-			f32 frameTicks = capTimer.GetTicks();
-			if (frameTicks < App::Data::_SCREEN_TICK_PER_FRAME)
-			{
-				SDL_Delay(App::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
-			}
-		}
 	}
-}
+
 
 void mdEngine::StopRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
@@ -534,6 +576,7 @@ void mdEngine::Window::HideToTray()
 {
 #ifdef _WIN32_
 
+	State::SetState(State::Window::InTray);
 	MinimizeWindow();
 	HideWindow();
 

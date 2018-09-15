@@ -30,6 +30,9 @@ namespace MP
 		static f32 mdDefaultHeight = 320.f;
 
 
+		const s32 _SCREEN_FPS = 60;
+		extern s32 _SCREEN_TICK_PER_FRAME;
+
 		extern u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
 
 		extern TTF_Font* _MUSIC_PLAYER_FONT;
@@ -201,6 +204,8 @@ namespace MP
 		void InitializeData();
 
 		void UpdateData();
+
+		void UpdateFPS(f32 newFPS);
 
 		void CloseData();
 	}

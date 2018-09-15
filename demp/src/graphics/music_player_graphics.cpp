@@ -84,6 +84,8 @@ namespace Graphics
 
 		b8 scrollBarAtBottom(false);
 
+		b8 windowResizeStarted(false);
+
 		//
 		b8 musicInfoScrollTextLoaded(false);
 		b8 musicInfoScrollTextRewind(false);
@@ -1238,63 +1240,68 @@ namespace Graphics
 				playlistPositionOffset = 0;
 			}
 
-
 			bool resized = State::CheckState(State::Window::Resized);
+			//resized = false;
 			while (abs(playlistPositionOffsetPrevious - playlistPositionOffset) > 0 ||
-				   State::CheckState(State::AudioChanged) == true ||
-				   State::CheckState(State::InitialLoadFromFile) == true ||
+				   State::CheckState(State::AudioChanged) == true					||
+				   State::CheckState(State::InitialLoadFromFile) == true			|| 
+				   State::CheckState(State::Window::ResizedFromTop) == true			||
 				   resized == true)
 			{
-				for (auto & i : audioCon)
+				//if (resized == false)
 				{
-					i->DeleteTexture();
-					/*s32 index = i;
-					if (Audio::Object::GetAudioObject(i) == NULL)
-						index = i + Audio::GetFilesAddedCount();*/
-
-
-					if (playlistPositionOffsetPrevious - playlistPositionOffset > 0)
+					for (auto & i : audioCon)
 					{
-						i->SetButtonPos(
-							glm::vec2(i->GetButtonPos().x,
-									  i->GetButtonPos().y +
-										abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
-						playlistMove = PlaylistMovement::Up;
-					}
-					else
-					{
-						i->SetButtonPos(
-							glm::vec2(i->GetButtonPos().x,
-									  i->GetButtonPos().y -
-										abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
-						playlistMove = PlaylistMovement::Down;
-					}
-
-					if (playlistCursorPosition >= i->GetButtonPos().y &&
-						playlistCursorPosition <= i->GetButtonPos().y + i->GetButtonSize().y)
-					{
-						minPosToRender = i->GetID();
-					}
-
-				}
+						i->DeleteTexture();
+						/*s32 index = i;
+						if (Audio::Object::GetAudioObject(i) == NULL)
+							index = i + Audio::GetFilesAddedCount();*/
 
 
-				for (auto & i : *sepCon)
-				{
-					if (playlistPositionOffsetPrevious - playlistPositionOffset > 0)
-					{
-						i.second->SetButtonPos(
-							glm::vec2(i.second->GetButtonPos().x,
-								i.second->GetButtonPos().y +
-								abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+						if (playlistPositionOffsetPrevious - playlistPositionOffset > 0)
+						{
+							i->SetButtonPos(
+								glm::vec2(i->GetButtonPos().x,
+									i->GetButtonPos().y +
+									abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+							playlistMove = PlaylistMovement::Up;
+						}
+						else
+						{
+							i->SetButtonPos(
+								glm::vec2(i->GetButtonPos().x,
+									i->GetButtonPos().y -
+									abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+							playlistMove = PlaylistMovement::Down;
+						}
+
+						if (playlistCursorPosition >= i->GetButtonPos().y &&
+							playlistCursorPosition <= i->GetButtonPos().y + i->GetButtonSize().y)
+						{
+							minPosToRender = i->GetID();
+						}
 
 					}
-					else
+
+
+
+					for (auto & i : *sepCon)
 					{
-						i.second->SetButtonPos(
-							glm::vec2(i.second->GetButtonPos().x,
-								i.second->GetButtonPos().y -
-								abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+						if (playlistPositionOffsetPrevious - playlistPositionOffset > 0)
+						{
+							i.second->SetButtonPos(
+								glm::vec2(i.second->GetButtonPos().x,
+									i.second->GetButtonPos().y +
+									abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+
+						}
+						else
+						{
+							i.second->SetButtonPos(
+								glm::vec2(i.second->GetButtonPos().x,
+									i.second->GetButtonPos().y -
+									abs(playlistPositionOffsetPrevious - playlistPositionOffset)));
+						}
 					}
 				}
 
@@ -1309,9 +1316,11 @@ namespace Graphics
 				{
 					playlistPositionOffset -= (bottomPlaylistBorder)-(audioCon.back()->GetButtonPos().y + audioCon.back()->GetButtonSize().y);
 					playlistPositionOffset < 0 ? playlistPositionOffset = 0 : 0;
+					State::ResetState(State::Window::ResizedFromTop);
 				}
 				else
 				{
+					State::ResetState(State::Window::ResizedFromTop);
 					resized = false;
 				}
 
@@ -1350,10 +1359,13 @@ namespace Graphics
 						State::ResetState(State::InitialLoadFromFile);
 					}
 				}
+				else
+					State::ResetState(State::InitialLoadFromFile);
 
 
 
-				loadItemsTextures = true;
+				//if(resized == false)
+					loadItemsTextures = true;
 			}
 
 			// Render playlist scroll bar after playlist position offset is checked
@@ -1405,9 +1417,8 @@ namespace Graphics
 			//md_log_compare(minPosToRender, maxPosToRender);
 
 			b8 loadTextureFirstEnter(false);
-			if (State::CheckState(State::AudioAdded) ||
-				State::CheckState(State::AudioDeleted) ||
-				State::CheckState(State::Window::Resized) ||
+			if (State::CheckState(State::AudioAdded) == true ||
+				State::CheckState(State::AudioDeleted) == true ||
 				playlistOpened == false)
 			{
 				loadItemsPositions = true;
@@ -1417,6 +1428,28 @@ namespace Graphics
 				//State::ResetMusicPlayerState();
 				//State::ResetState(State::Window::Resized);
 			}
+
+
+			if(State::CheckState(State::Window::Resized) == true && 
+				windowResizeStarted == false)
+			{
+				/*loadItemsTextures = true;
+				loadItemsPositions = true;
+
+				s32 screenHeight = 1080;
+				maxPosToRender = minPosToRender + 1080 / itemH;
+				if (maxPosToRender > audioCon.size() - 1)
+					maxPosToRender = audioCon.size() - 1;
+
+				windowResizeStarted = true;
+				md_log("hmm");*/
+			}
+
+			if (State::CheckState(State::Window::Resized) == false)
+			{
+				windowResizeStarted = false;
+			}
+
 
 			if (loadItemsPositions == true)
 			{

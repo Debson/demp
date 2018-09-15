@@ -14,7 +14,6 @@ namespace mdEngine
 
 	void State::ResetMusicPlayerState()
 	{
-		ResetState(Window::Resized);
 		ResetState(AudioAdded);
 		ResetState(AudioDeleted);
 		ResetState(AudioChosen);
@@ -26,7 +25,6 @@ namespace mdEngine
 
 	void State::StartNewFrame()
 	{
-		ResetState(Window::Resized);
 		ResetState(AudioAdded);
 		ResetState(AudioDeleted);
 		ResetState(AudioChosen);
@@ -36,6 +34,7 @@ namespace mdEngine
 		ResetState(AudioHidden);
 		ResetState(Window::PositionChanged);
 		ResetState(State::DeletionFinished);
+		State::ResetState(State::PlaylistMovement);
 
 	}
 }

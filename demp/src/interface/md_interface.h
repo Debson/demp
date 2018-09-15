@@ -23,19 +23,23 @@ namespace mdEngine
 
 		struct Movable
 		{
+			Movable();
 			Movable(glm::vec2 size, glm::vec2 pos);;
 
 			glm::vec2 m_Size;
 			glm::vec2 m_Pos;
+			b8 hasFocus;
 
 		};
 
 		struct Resizable
 		{
-			Resizable(glm::vec2 size, glm::vec2 pos);;
+			Resizable();
+			Resizable(glm::vec2 size, glm::vec2 pos);
 
 			glm::vec2 m_Size;
 			glm::vec2 m_Pos;
+			b8 hasFocus;
 		};
 
 		class Button

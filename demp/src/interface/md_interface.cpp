@@ -69,9 +69,10 @@ namespace mdEngine
 	}
 
 	/* *************************************************** */
+	Interface::Resizable::Resizable() { }
+
 	Interface::Resizable::Resizable(glm::vec2 size, glm::vec2 pos) : m_Size(size), m_Pos(pos)
 	{
-		mdResizableContainer.push_back(this);
 	}
 
 	/* *************************************************** */

@@ -9,13 +9,6 @@ namespace mdEngine
 {
 namespace App
 {
-	//TODO move to settings
-	namespace Data
-	{
-		const s32 _SCREEN_FPS = 60;
-		const s32 _SCREEN_TICK_PER_FRAME = 1000 / _SCREEN_FPS;
-	}
-
 	enum class WindowMode
 	{
 		Windowed,
@@ -47,7 +40,9 @@ namespace App
 
 	void ProcessButton(Interface::Button* button);
 
-	void ProcessResizable(Interface::Resizable* bar);
+	void ProcessResizableTop(Interface::Resizable* barTop, Interface::Resizable* barBottom);
+
+	void ProcessResizableBottom(Interface::Resizable* barBottom, Interface::Resizable* barTop);
 }
 }
 

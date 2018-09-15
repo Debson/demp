@@ -177,6 +177,10 @@ namespace mdEngine
 		return m_Window != NULL;
 	}
 
+	s32 Window::OptionsWindow::GetOptionWindowID()
+	{
+		return m_WindowID;
+	}
 
 	void Window::OptionsWindow::Free()
 	{

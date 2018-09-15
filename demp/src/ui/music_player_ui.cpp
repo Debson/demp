@@ -40,10 +40,12 @@ namespace MP
 {
 	namespace UI
 	{
-		MovableContainer	mdMovableContainer;
-		ResizableContainer	mdResizableContainer;
-		ButtonContainer		mdButtonsContainer;
-		Window::OptionsWindow optionsWindow;
+		MovableContainer		mdMovableContainer;
+		Interface::Resizable	mdResizableBottom;
+		Interface::Resizable	mdResizableTop;
+		ButtonContainer			mdButtonsContainer;
+		Window::OptionsWindow	mdOptionsWindow;
+		SDL_Cursor*				mdCursor;
 
 		std::atomic<bool> fileBrowserFinished(false);
 		
@@ -81,6 +83,8 @@ namespace MP
 
 		void HandleInput();
 
+		void UpdateMouseCursor();
+
 		void HandlePlaylistInput();
 
 		void HandleSeparatorInput();
@@ -110,9 +114,13 @@ namespace MP
 		mdDefaultWidth = 500.f;
 		mdDefaultHeight = 350.f;
 
-		new Interface::Movable(glm::vec2(mdDefaultWidth, 20), glm::vec2(0.f, 0.f));
+		new Interface::Movable(glm::vec2(mdDefaultWidth, 20), glm::vec2(0.f, 5.f));
 
-		new Interface::Resizable(glm::vec2(mdCurrentWidth, 20), glm::vec2(0, mdCurrentHeight - 20.f));
+
+		mdResizableTop		= Interface::Resizable(glm::vec2(mdCurrentWidth, 5.f), glm::vec2(0, 0.f));
+
+		mdResizableBottom	= Interface::Resizable(glm::vec2(mdCurrentWidth, 5), glm::vec2(0, mdCurrentHeight - 5.f));
+
 
 		// Make slightly bigger hitbox for sliders
 		f32 offsetX = 1.01f;
@@ -166,8 +174,11 @@ namespace MP
 		for(u16 i = 0; i < mdMovableContainer.size(); i++)
 			App::ProcessMovable(mdMovableContainer[i]);
 
-		for (u16 i = 0; i < mdResizableContainer.size(); i++)
-			App::ProcessResizable(mdResizableContainer[i]);
+		App::ProcessResizableTop(&mdResizableTop, &mdResizableBottom);
+
+		App::ProcessResizableBottom(&mdResizableBottom, &mdResizableTop);
+
+		UpdateMouseCursor();
 
 		for (u16 i = 0; i < mdButtonsContainer.size(); i++)
 			App::ProcessButton(mdButtonsContainer[i].second);
@@ -176,7 +187,7 @@ namespace MP
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
 		for (auto i : Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
 		{
-			if (Interface::PlaylistButton::GetButton(i) == nullptr)
+			if (Interface::PlaylistButton::GetButton(i) == nullptr || State::CheckState(State::Window::Resized) == true)
 				break;
 
 			if(Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false)
@@ -227,13 +238,7 @@ namespace MP
 		}
 		mdMovableContainer.clear();
 
-		for (size_t i = 0; i < mdResizableContainer.size(); i++)
-		{
-			delete mdResizableContainer[i];
-			mdResizableContainer[i] = nullptr;
-		}
-		mdResizableContainer.clear();
-
+		
 		for (size_t i = 0; i < mdButtonsContainer.size(); i++)
 		{
 			delete mdButtonsContainer[i].second;
@@ -477,15 +482,21 @@ namespace MP
 				Shader::Draw(Shader::shaderDefault);
 			}
 
-			for (u16 i = 0; i < mdResizableContainer.size(); i++)
-			{
-				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(mdResizableContainer[i]->m_Pos, 1.f));
-				model = glm::scale(model, glm::vec3(mdResizableContainer[i]->m_Size, 1.f));;
-				Shader::shaderDefault->setFloat("aspectXY", mdResizableContainer[i]->m_Size.x / mdResizableContainer[i]->m_Size.y);
-				Shader::shaderDefault->setMat4("model", model);
-				Shader::Draw(Shader::shaderDefault);
-			}
+			model = glm::mat4();
+			model = glm::translate(model, glm::vec3(mdResizableTop.m_Pos, 1.f));
+			model = glm::scale(model, glm::vec3(mdResizableTop.m_Size, 1.f));;
+			Shader::shaderDefault->setFloat("aspectXY", 0.8f);
+			Shader::shaderDefault->setMat4("model", model);
+			Shader::Draw(Shader::shaderDefault);
+
+			
+			model = glm::mat4();
+			model = glm::translate(model, glm::vec3(mdResizableBottom.m_Pos, 1.f));
+			model = glm::scale(model, glm::vec3(mdResizableBottom.m_Size, 1.f));;
+			Shader::shaderDefault->setFloat("aspectXY", 0.8f);
+			Shader::shaderDefault->setMat4("model", model);
+			Shader::Draw(Shader::shaderDefault);
+			
 
 			for (u16 i = 0; i < Interface::PlaylistButton::GetSize(); i++)
 			{
@@ -576,7 +587,7 @@ namespace MP
 		if (Input::isButtonPressed(Input::ButtonType::Options))
 		{
 			md_log("settings");
-			optionsWindow.Init();
+			mdOptionsWindow.Init();
 		}
 
 		if (Input::isButtonPressed(Input::ButtonType::Shuffle))
@@ -630,6 +641,39 @@ namespace MP
 			}
 		}
 
+	}
+
+	void UI::UpdateMouseCursor()
+	{
+		b8 hasFocusResizable(false);
+		if ((mdResizableBottom.hasFocus == true ||
+			mdResizableTop.hasFocus == true) && 
+			mdCursor == NULL)
+		{
+			mdCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
+			hasFocusResizable = true;
+		}
+		else if (mdResizableBottom.hasFocus == true ||
+				 mdResizableTop.hasFocus == true)
+		{
+			hasFocusResizable = true;
+		}
+
+		if (State::CheckState(State::Window::PositionChanged) == true && mdCursor == NULL)
+		{
+			mdCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
+		}
+
+		if(hasFocusResizable == false &&
+		   State::CheckState(State::Window::PositionChanged) == false &&
+		   mdCursor != NULL)
+		{
+			SDL_FreeCursor(mdCursor);
+			mdCursor = NULL;
+		}
+
+
+		SDL_SetCursor(mdCursor);
 	}
 
 	void UI::HandlePlaylistInput()
@@ -881,7 +925,7 @@ namespace MP
 
 	Window::OptionsWindow* UI::GetOptionsWindow()
 	{
-		return &optionsWindow;
+		return &mdOptionsWindow;
 	}
 }
 }

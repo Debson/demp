@@ -11,6 +11,9 @@ namespace MP
 {
 	namespace Data
 	{
+
+		s32 _SCREEN_TICK_PER_FRAME = 1000 / _SCREEN_FPS;
+
 		u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
 
 		TTF_Font* _MUSIC_PLAYER_FONT;
@@ -238,6 +241,11 @@ namespace MP
 
 		_PLAYLIST_ADD_BUTTON_TEXTBOX_POS = glm::vec2(40.f, mdCurrentHeight - 20.f);
 
+	}
+
+	void Data::UpdateFPS(f32 newFPS)
+	{
+		_SCREEN_TICK_PER_FRAME = 1000 / newFPS;
 	}
 
 	void Data::CloseData()

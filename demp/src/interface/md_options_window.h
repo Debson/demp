@@ -21,6 +21,7 @@ namespace mdEngine
 			void ProcessEvents(SDL_Event* const e);
 			void Free();
 			b8 IsActive();
+			s32 GetOptionWindowID();
 
 		private:
 
