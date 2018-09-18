@@ -52,9 +52,6 @@ namespace MP
 		glm::vec2 _UI_WINDOW_BAR_POS;
 		glm::vec2 _UI_WINDOW_BAR_SIZE;
 
-		glm::vec2 _STAY_ON_TOP_BUTTON_POS;
-		glm::vec2 _STAY_ON_TOP_BUTTON_SIZE;
-
 		glm::vec2 _PLAY_BUTTON_POS;
 		glm::vec2 _PLAY_BUTTON_SIZE;
 
@@ -157,15 +154,6 @@ namespace MP
 
 		_VOLUME_BAR_DOT_POS = glm::vec2(mdDefaultWidth / 2.f - 130.f, mdDefaultHeight - 63.f - musicUIOffsetY);
 		_SLIDER_DOT_SIZE = glm::vec2(9.f, 9.f);
-
-		_UI_WINDOW_BAR_POS;
-		_UI_WINDOW_BAR_SIZE;
-
-		_MINIMIZE_BUTTON_POS;
-		_MINIMIZE_BUTTON_SIZE;
-
-		_STAY_ON_TOP_BUTTON_POS;
-		_STAY_ON_TOP_BUTTON_SIZE;
 
 		_SHUFFLE_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f - 110.f - musicUIOffsetX, mdDefaultHeight - 65.f - musicUIOffsetY);
 		_SHUFFLE_BUTTON_SIZE = glm::vec2(20.f, 12.f);

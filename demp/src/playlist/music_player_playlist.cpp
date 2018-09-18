@@ -50,6 +50,8 @@ namespace MP
 
 		b8 mdVolumeFadeIn(false);
 		b8 mdVolumeFadeOut(false);
+		
+		b8 mdStartNewOnEnd(false);
 
 		f32 mdVolumeScrollStep = 2.f;
 
@@ -78,11 +80,11 @@ namespace MP
 
 		void PerformCrossfade();
 
+		void AudioChangeInTray();
 
 		b8 check_size(u32);
 
 		b8 check_file();
-
 	}
 }
 
@@ -120,6 +122,8 @@ namespace MP
 		{
 			m_MusicStream = NULL;
 			m_Data = NULL;
+			m_ID = 0;
+			m_MusicSize = 0;
 		}
 
 		SongObject::~SongObject()
@@ -215,6 +219,18 @@ namespace MP
 			}
 
 			return true;
+		}
+
+		void SongObject::Free()
+		{
+			if (m_Data != NULL)
+				delete m_Data;
+			m_Data = NULL;
+			m_MusicSize = 0;
+			if(m_MusicStream != NULL)
+				BASS_StreamFree(m_MusicStream);
+			m_MusicStream = NULL;
+			m_ID = 0;
 		}
 
 		HMUSIC& SongObject::get()
@@ -342,6 +358,7 @@ namespace MP
 
 			if (playFadeTimer.started == true)
 			{
+				//md_log(mdVolume);
 				mdVolume = playFadeTimer.GetProgressLog() * mdVolumeTemp;
 				State::SetState(State::AudioPlayStarted);
 			}
@@ -352,6 +369,7 @@ namespace MP
 				mdVolumeTemp = 0;
 			}
 
+
 			CheckMPState();
 
 			CheckVolumeBounds();
@@ -360,17 +378,24 @@ namespace MP
 
 			CrossfadeSong();
 
+			AudioChangeInTray();
+
 			playFadeTimer.Update();
 		}
 
 		void PlayMusic()
 		{
+			if (Audio::Object::GetSize() == 0)
+				return;
+
 			/* Reset booleans that control music state */
 			mdVolumeFadeIn = false;
 			mdVolumeFadeOut = false;
 			mdMusicPaused = false;
+			mdStartNewOnEnd = true;
 
 			PauseMusic();
+
 
 			/* If current's song position is greater than 0, it means that song's
 			   position was loaded from file. */
@@ -680,10 +705,22 @@ namespace MP
 			/* If Music Player has started his first song, next song(next on playlist) will be 
 			   played automatically. Check if next music was selected by user 
 			*/
-			if (mdMPStarted == true && IsPlaying() == false && mdRepeatMusic == false && 
+			if (mdMPStarted == true && 
+				IsPlaying() == false && 
+				mdRepeatMusic == false && 
+				mdStartNewOnEnd == true &&
 				State::CheckState(State::AudioChosen) == false)
 			{
 				NextMusic();
+			}
+
+			if (Audio::Object::GetSize() == 0 && 
+				IsPlaying() == false)
+			{
+				mdStartNewOnEnd = false;
+				mdCurrentShuffleMusicPos = 0;
+				Graphics::MP::GetPlaylistObject()->SetPlayingID(-1);
+				RamLoadedMusic.Free();
 			}
 
 			if (State::CheckState(State::ShuffleAfterAddition) &&
@@ -775,6 +812,21 @@ namespace MP
 		void PerformCrossfade()
 		{
 
+		}
+
+		void AudioChangeInTray()
+		{
+			// Increase fps when audio is about to change
+			// If it is last 2 seconds of currently playing song
+			if (GetMusicLength() - GetPosition() < 2.f)
+			{
+				State::SetState(State::AudioChangedInTray);
+			}
+			// If it is first 2-3 seconds of the song, reset that state.
+			if (GetPosition() > 2.f && GetPosition() - 3.f <= 0)
+			{
+				State::ResetState(State::AudioChangedInTray);
+			}
 		}
 
 		b8 IsLoaded()

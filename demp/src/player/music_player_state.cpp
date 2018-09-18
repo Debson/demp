@@ -23,6 +23,14 @@ namespace mdEngine
 		ResetState(AudioHidden);
 	}
 
+	b8 State::IsBackgroundModeActive()
+	{
+		return	(CheckState(Window::InTray) == true ||
+			CheckState(Window::Minimized) == true) &&
+			CheckState(Window::MouseOnTrayIcon) == false &&
+			CheckState(AudioChangedInTray) == false;
+	}
+
 	void State::StartNewFrame()
 	{
 		ResetState(AudioAdded);

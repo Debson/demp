@@ -27,14 +27,14 @@ namespace MP
 
 		struct SongObject
 		{
+			SongObject();
+			~SongObject();
+
 			char *m_Data;
 			u32 m_MusicSize;
 			HSTREAM m_MusicStream;
-			HSTREAM m_CrossfadeMusicStream;
 			s32 m_ID;
 
-			SongObject();
-			~SongObject();
 
 #ifdef _WIN32_
 			b8 load(Audio::AudioObject* audioObject);
@@ -45,6 +45,7 @@ namespace MP
 			const char* mPath;
 #endif
 
+			void Free();
 
 			HMUSIC& get();
 		};

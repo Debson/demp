@@ -51,8 +51,8 @@ namespace MP
 		extern glm::vec2 _MAIN_BACKGROUND_POS;
 		extern glm::vec2 _MAIN_BACKGROUND_SIZE;
 
-		const glm::vec2 _MAIN_FOREGROUND_POS = glm::vec2(20.0f, 20.0f);
-		const glm::vec2 _MAIN_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight - 50.f);
+		const glm::vec2 _MAIN_FOREGROUND_POS = glm::vec2(20.0f, 30.0f);
+		const glm::vec2 _MAIN_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight - 40.f);
 
 		extern glm::vec2 _PLAYLIST_FOREGROUND_POS;
 		extern glm::vec2 _PLAYLIST_FOREGROUND_SIZE;
@@ -70,26 +70,62 @@ namespace MP
 		extern glm::vec2 _VOLUME_BAR_DOT_POS;
 		extern glm::vec2 _SLIDER_DOT_SIZE;
 
-		const glm::vec2 _UI_BUTTONS_BACKGROUND_RIGHT_POS = glm::vec2(430.f, 5.f);
-		const glm::vec2 _UI_BUTTONS_BACKGROUND_RIGHT_SIZE = glm::vec2(40.f, 15.0f);
+		static f32 ui_buttons_scale = 0.9f;
+		static s32 offsetY = 20.f * ui_buttons_scale;
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_RIGHT_SIZE = glm::vec2(73.2f, 19.8f) * ui_buttons_scale;
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_RIGHT_POS = glm::vec2(mdDefaultWidth - _UI_BUTTONS_BACKGROUND_RIGHT_SIZE.x - offsetY, 5.f);
 
-		const glm::vec2 _UI_BUTTONS_BACKGROUND_LEFT_POS = glm::vec2(30.f, 5.f);
-		const glm::vec2 _UI_BUTTONS_BACKGROUND_LEFT_SIZE = glm::vec2(40.f, 15.f);
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_LEFT_POS = glm::vec2(offsetY, 5.f);
+		const glm::vec2 _UI_BUTTONS_BACKGROUND_LEFT_SIZE = glm::vec2(28.2f, 19.8f) * ui_buttons_scale;
+;
 
 		extern glm::vec2 _UI_WINDOW_BAR_POS;
 		extern glm::vec2 _UI_WINDOW_BAR_SIZE;
 
-		const glm::vec2 _EXIT_BUTTON_POS = glm::vec2(mdDefaultWidth - 45.f, 5.f);
-		const glm::vec2 _EXIT_BUTTON_SIZE = glm::vec2(15.f, 15.f);
+		static glm::vec2 backgroundSize = glm::vec2(21.f, 15.6f) * ui_buttons_scale;
+		static f32 offsetBackgroundX = 3.f * ui_buttons_scale;
+		const glm::vec2 _EXIT_BUTTON_BACKGROUND_SIZE = backgroundSize;
+		const glm::vec2 _EXIT_BUTTON_BACKGROUND_POS = glm::vec2(_UI_BUTTONS_BACKGROUND_RIGHT_POS.x + _UI_BUTTONS_BACKGROUND_RIGHT_SIZE.x - _EXIT_BUTTON_BACKGROUND_SIZE.x - offsetBackgroundX,
+																_UI_BUTTONS_BACKGROUND_RIGHT_POS.y + (_UI_BUTTONS_BACKGROUND_RIGHT_SIZE.y - _EXIT_BUTTON_BACKGROUND_SIZE.y) / 2.f);
 
-		const glm::vec2 _MINIMIZE_BUTTON_POS = glm::vec2(mdDefaultWidth - 60.f, 5.f);
-		const glm::vec2 _MINIMIZE_BUTTON_SIZE = glm::vec2(15.f, 15.f);
+		static f32 stayOnTopOffsetX = 0.05f * ui_buttons_scale;
+		const glm::vec2 _STAY_ON_TOP_BUTTON_BACKGROUND_SIZE = backgroundSize;
+		const glm::vec2 _STAY_ON_TOP_BUTTON_BACKGROUND_POS = glm::vec2(_UI_BUTTONS_BACKGROUND_RIGHT_POS.x + (_UI_BUTTONS_BACKGROUND_RIGHT_SIZE.x - _STAY_ON_TOP_BUTTON_BACKGROUND_SIZE.x) / 2.f - stayOnTopOffsetX,
+																	   _UI_BUTTONS_BACKGROUND_RIGHT_POS.y + (_UI_BUTTONS_BACKGROUND_RIGHT_SIZE.y - _STAY_ON_TOP_BUTTON_BACKGROUND_SIZE.y) / 2.f);
 
-		const glm::vec2 _SETTINGS_BUTTON_POS = glm::vec2(30.f, 5.f);
-		const glm::vec2 _SETTINGS_BUTTON_SIZE = glm::vec2(15.f, 15.f);
+		const glm::vec2 _MINIMIZE_BUTTON_BACKGROUND_SIZE = backgroundSize;
+		const glm::vec2 _MINIMIZE_BUTTON_BACKGROUND_POS = glm::vec2(_UI_BUTTONS_BACKGROUND_RIGHT_POS.x + offsetBackgroundX,
+																	_UI_BUTTONS_BACKGROUND_RIGHT_POS.y + (_UI_BUTTONS_BACKGROUND_RIGHT_SIZE.y - _EXIT_BUTTON_BACKGROUND_SIZE.y) / 2.f);
 
-		extern glm::vec2 _STAY_ON_TOP_BUTTON_POS;
-		extern glm::vec2 _STAY_ON_TOP_BUTTON_SIZE;
+		static glm::vec2 settingsBackgroundSize = glm::vec2(17.f, 15.6f) * ui_buttons_scale;
+		const glm::vec2 _SETTINGS_BUTTON_BACKGROUND_SIZE = glm::vec2(settingsBackgroundSize);
+		const glm::vec2 _SETTINGS_BUTTON_BACKGROUND_POS = glm::vec2(_UI_BUTTONS_BACKGROUND_LEFT_POS.x + (_UI_BUTTONS_BACKGROUND_LEFT_SIZE.x - _SETTINGS_BUTTON_BACKGROUND_SIZE.x) / 2.f, 
+																	_UI_BUTTONS_BACKGROUND_LEFT_POS.y + (_UI_BUTTONS_BACKGROUND_LEFT_SIZE.y - _SETTINGS_BUTTON_BACKGROUND_SIZE.y) / 2.f);
+
+
+		const f32 _UI_BUTTONS_GLOW_SCALE = 1.5f;
+		
+		static f32 buttonsSize = 10.4f * ui_buttons_scale;
+		const glm::vec2 _EXIT_BUTTON_SIZE = glm::vec2(buttonsSize);
+		const glm::vec2 _EXIT_BUTTON_POS = glm::vec2(_EXIT_BUTTON_BACKGROUND_POS.x + (_EXIT_BUTTON_BACKGROUND_SIZE.x - _EXIT_BUTTON_SIZE.x) / 2.f,
+													 _EXIT_BUTTON_BACKGROUND_POS.y + (_EXIT_BUTTON_BACKGROUND_SIZE.y - _EXIT_BUTTON_SIZE.y) / 2.f);
+
+		const glm::vec2 _STAY_ON_TOP_BUTTON_SIZE = glm::vec2(buttonsSize);
+		const glm::vec2 _STAY_ON_TOP_BUTTON_POS = glm::vec2(_UI_BUTTONS_BACKGROUND_RIGHT_POS.x + _UI_BUTTONS_BACKGROUND_RIGHT_SIZE.x / 2.f - _STAY_ON_TOP_BUTTON_SIZE.x / 2.f,
+															_STAY_ON_TOP_BUTTON_BACKGROUND_POS.y + (_STAY_ON_TOP_BUTTON_BACKGROUND_SIZE.y - _STAY_ON_TOP_BUTTON_SIZE.y) / 2.f);
+
+		const glm::vec2 _MINIMIZE_BUTTON_SIZE = glm::vec2(buttonsSize);
+		static s32 minimizeOffsetY = 1;
+		static s32 minimizeOffsetX = 1;
+		const glm::vec2 _MINIMIZE_BUTTON_POS = glm::vec2(_MINIMIZE_BUTTON_BACKGROUND_POS.x + (_MINIMIZE_BUTTON_BACKGROUND_SIZE.x -_MINIMIZE_BUTTON_SIZE.x) / 2.f + minimizeOffsetX,
+														 _MINIMIZE_BUTTON_BACKGROUND_POS.y + (_MINIMIZE_BUTTON_BACKGROUND_SIZE.y - _MINIMIZE_BUTTON_SIZE.y) / 2.f - minimizeOffsetY);
+
+
+
+		const glm::vec2 _SETTINGS_BUTTON_SIZE = glm::vec2(buttonsSize);
+		const glm::vec2 _SETTINGS_BUTTON_POS = glm::vec2(Data::_SETTINGS_BUTTON_BACKGROUND_POS.x + (Data::_SETTINGS_BUTTON_BACKGROUND_SIZE.x - Data::_SETTINGS_BUTTON_SIZE.x) / 2.f,
+														 Data::_SETTINGS_BUTTON_BACKGROUND_POS.y + (Data::_SETTINGS_BUTTON_BACKGROUND_SIZE.y - Data::_SETTINGS_BUTTON_SIZE.y) / 2.f);
+
 
 		extern glm::vec2 _PLAY_BUTTON_POS;
 		extern glm::vec2 _PLAY_BUTTON_SIZE;

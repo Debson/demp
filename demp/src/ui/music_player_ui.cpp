@@ -137,6 +137,8 @@ namespace MP
 
 		new Interface::Button(Input::ButtonType::Exit, Data::_EXIT_BUTTON_SIZE, Data::_EXIT_BUTTON_POS);
 
+		new Interface::Button(Input::ButtonType::StayOnTop, Data::_STAY_ON_TOP_BUTTON_SIZE, Data::_STAY_ON_TOP_BUTTON_POS);
+
 		new Interface::Button(Input::ButtonType::Minimize, Data::_MINIMIZE_BUTTON_SIZE, Data::_MINIMIZE_BUTTON_POS);
 
 		new Interface::Button(Input::ButtonType::Options, Data::_SETTINGS_BUTTON_SIZE, Data::_SETTINGS_BUTTON_POS);
@@ -184,26 +186,23 @@ namespace MP
 			App::ProcessButton(mdButtonsContainer[i].second);
 
 		// Make sure that hitboxes that are not visible cannot be clicked
-		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
+		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
 		for (auto i : Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
 		{
-			if (Interface::PlaylistButton::GetButton(i) == nullptr || State::CheckState(State::Window::Resized) == true)
+			if (Audio::Object::GetAudioObject(i) == nullptr || State::CheckState(State::Window::Resized) == true)
 				break;
 
-			if(Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false)
-				App::ProcessButton(Interface::PlaylistButton::GetButton(i));
+			if (Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false)
+				App::ProcesPlaylistButton(Audio::Object::GetAudioObject(i));
 
 		}
-		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
 
 		// Process playlist separator buttons
-		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, true);
 		auto sepCon = Interface::Separator::GetContainer();
 		for (u16 i = 0; i < Interface::Separator::GetSize(); i++)
 		{
-			App::ProcessButton(sepCon->at(i).second);
+			App::ProcesPlaylistButton(sepCon->at(i).second);
 		}
-		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y, false);
 
 		// Proces interface buttons
 		for (u16 i = 0; i < Interface::m_InterfaceButtonContainer.size(); i++)
@@ -354,6 +353,8 @@ namespace MP
 			}
 
 			ImGui::Text("Songs loaded: %d", Audio::Object::GetSize());
+
+			ImGui::Text("Separators loaded: %d", Interface::Separator::GetSize());
 
 			ImGui::Text("Processed items count: %u", Audio::GetProccessedFileCount());
 
@@ -659,7 +660,8 @@ namespace MP
 			hasFocusResizable = true;
 		}
 
-		if (State::CheckState(State::Window::PositionChanged) == true && mdCursor == NULL)
+		if (State::CheckState(State::Window::PositionChanged) == true && mdCursor == NULL &&
+			Input::hasFocus(Input::ButtonType::Options) == false)
 		{
 			mdCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
 		}

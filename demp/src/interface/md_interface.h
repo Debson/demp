@@ -82,10 +82,11 @@ namespace mdEngine
 			virtual ~PlaylistItem();
 			static s32 OffsetIndex;
 
-			void DrawDottedBorder() const;
+			void DrawDottedBorder();
 			virtual void DrawItem(GLuint texture);
 			virtual void InitItem(s32* id);
 			virtual void SetButtonPos(glm::vec2 pos);
+			glm::vec2& GetPlaylistItemPos();
 
 			void Click();
 			void HidePlaylistItem(b8 val);
@@ -94,6 +95,7 @@ namespace mdEngine
 			void TakeFolderRep();
 			void SetClickCount(s8 count);
 			void SetItemColor(glm::vec3 color);
+			static void SetPlaylistOffsetY(f32* offsetY);
 
 			b8			 IsVisible() const;
 			b8			 IsPlaying() const;
@@ -111,9 +113,10 @@ namespace mdEngine
 			s32*		 m_ItemID;
 			glm::vec3	 m_ItemColor;
 			glm::vec2	 m_StartPos;
+			glm::vec2	 m_PlaylistItemPos;
 			std::string  m_TitleC;
 			std::wstring m_Path;
-
+			static f32*	 m_PlaylistOffsetY;
 		};
 
 		typedef std::vector<std::pair<s32*, std::wstring>> SeparatorSubContainer;

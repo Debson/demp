@@ -18,48 +18,49 @@ namespace mdEngine
 			AudioDeleted				= (1llu << 4),
 			AudioChosen					= (1llu << 5),
 			AudioChanged				= (1llu << 6),
-			AudioHidden					= (1llu << 7),
-			AudioPlayStarted			= (1llu << 24),
-			FilesLoaded					= (1llu << 8),
-			FilesInfoLoaded				= (1llu << 9),
-			PathLoadedFromFile			= (1llu << 10),
-			PathLoadedFromFileVolatile	= (1llu << 11),
-			DeletionFinished			= (1llu << 12),
-			ShuffleAfterLoad			= (1llu << 30),
-			ShuffleAfterAddition		= (1llu << 33),
-			CurrentlyPlayingDeleted		= (1llu << 34)
+			AudioChangedInTray			= (1llu << 7),
+			AudioHidden					= (1llu << 8),
+			AudioPlayStarted			= (1llu << 9),
+			FilesLoaded					= (1llu << 10),
+			FilesInfoLoaded				= (1llu << 11),
+			PathLoadedFromFile			= (1llu << 12),
+			PathLoadedFromFileVolatile	= (1llu << 13),
+			DeletionFinished			= (1llu << 14),
+			ShuffleAfterLoad			= (1llu << 15),
+			ShuffleAfterAddition		= (1llu << 16),
+			CurrentlyPlayingDeleted		= (1llu << 17)
 
 		};
 
 		enum MusicPlayerState : u64
 		{
-			FileDropped				= (1llu << 13),
-			ContainersResized		= (1llu << 14),
-			PlaylistMovement		= (1llu << 15),
-			VolumeChanged			= (1llu << 25),
-			CrossfadeEnabled		= (1llu << 26),
-			PlaylistRolling			= (1llu << 28),
-			OnExitMinimizeToTray	= (1llu << 29),
-			InitMusicLoad			= (1llu << 31),
-			InitialLoadFromFile		= (1llu << 32)
+			FileDropped				= (1llu << 18),
+			ContainersResized		= (1llu << 19),
+			PlaylistMovement		= (1llu << 20),
+			VolumeChanged			= (1llu << 21),
+			CrossfadeEnabled		= (1llu << 22),
+			PlaylistRolling			= (1llu << 23),
+			OnExitMinimizeToTray	= (1llu << 24),
+			InitMusicLoad			= (1llu << 25),
+			InitialLoadFromFile		= (1llu << 26),
 		};
 
 		namespace Window
 		{
 			enum WindowEvent : u64
 			{
-				HasFocus		= (1llu << 16),
-				Resized			= (1llu << 17),
-				ResizedFromTop	= (1llu << 40),
-				Minimized		= (1llu << 18),
-				Shown			= (1llu << 19),
-				Hidden			= (1llu << 20),
-				Exposed			= (1llu << 21),
-				MouseEnter		= (1llu << 22),
-				MouseLeave		= (1llu << 23),
-				PositionChanged	= (1llu << 27),
-				InTray			= (1llu << 35),
-				MouseOnTrayIcon = (1llu << 39)
+				HasFocus		= (1llu << 27),
+				Resized			= (1llu << 28),
+				ResizedFromTop	= (1llu << 29),
+				Minimized		= (1llu << 30),
+				Shown			= (1llu << 31),
+				Hidden			= (1llu << 32),
+				Exposed			= (1llu << 33),
+				MouseEnter		= (1llu << 34),
+				MouseLeave		= (1llu << 35),
+				PositionChanged	= (1llu << 36),
+				InTray			= (1llu << 37),
+				MouseOnTrayIcon = (1llu << 38)
 			};
 		};
 
@@ -67,9 +68,9 @@ namespace mdEngine
 		{
 			enum WindowEvent : u64
 			{
-				HasFocus			= (1llu << 36),
-				Minimized			= (1llu << 37),
-				Shown				= (1llu << 38)
+				HasFocus			= (1llu << 39),
+				Minimized			= (1llu << 40),
+				Shown				= (1llu << 41)
 			};
 		}
 
@@ -92,6 +93,8 @@ namespace mdEngine
 
 		// Reset all flags associated with Music player state, and set 
 		void ResetMusicPlayerState();
+
+		b8 IsBackgroundModeActive();
 
 
 		// Flags that NEED to be restarted at end of the frame

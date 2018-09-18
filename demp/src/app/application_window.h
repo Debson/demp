@@ -34,11 +34,13 @@ namespace App
 	};
 
 
-	void SetButtonCheckBounds(s32 low, s32 high, b8 val);
+	void SetButtonCheckBounds(s32 low, s32 high);
 
 	void ProcessMovable(Interface::Movable* bar);
 
 	void ProcessButton(Interface::Button* button);
+
+	void ProcesPlaylistButton(Interface::PlaylistItem* button);
 
 	void ProcessResizableTop(Interface::Resizable* barTop, Interface::Resizable* barBottom);
 

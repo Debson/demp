@@ -172,8 +172,10 @@ namespace mdEngine
 		m_PlaylistButtonsContainer[*id] = std::make_pair(id, this);
 	}
 
-	void Interface::PlaylistItem::DrawDottedBorder() const
+	void Interface::PlaylistItem::DrawDottedBorder()
 	{
+		m_PlaylistItemPos = glm::vec2(m_ButtonPos.x, m_ButtonPos.y - *m_PlaylistOffsetY);
+
 		glm::mat4 model;
 		Shader::shaderBorder->use();
 		Shader::shaderBorder->setVec3("color", Color::Grey);
@@ -181,7 +183,7 @@ namespace mdEngine
 		f32 dotYOffset = 0.1;
 		Shader::shaderBorder->setFloat("xOffset", dotXOffset);
 		Shader::shaderBorder->setFloat("yOffset", dotYOffset);
-		model = glm::translate(model, glm::vec3(m_ButtonPos, 0.9));
+		model = glm::translate(model, glm::vec3(m_PlaylistItemPos, 0.9));
 		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.f));
 		Shader::shaderBorder->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -194,6 +196,9 @@ namespace mdEngine
 		glm::vec3 originalColor = m_ItemColor;
 		glm::vec3 halvesColor = Color::DarkGrey;
 
+		m_PlaylistItemPos = glm::vec2(m_ButtonPos.x, m_ButtonPos.y - *m_PlaylistOffsetY);
+		m_TextPos = m_PlaylistItemPos;
+
 		if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == *m_ItemID &&
 			State::CheckState(State::CurrentlyPlayingDeleted) == false)
 		{
@@ -202,9 +207,11 @@ namespace mdEngine
 
 		Shader::shaderDefault->use();
 		halvesColor *= m_ItemColor;
+
+
 		if (topHasFocus == true)
 		{
-			model = glm::translate(model, glm::vec3(m_ButtonPos, 0.5f));
+			model = glm::translate(model, glm::vec3(m_PlaylistItemPos, 0.5f));
 			model = glm::scale(model, glm::vec3(m_ButtonSize.x, m_ButtonSize.y / 2.f, 1.0f));
 			Shader::shaderDefault->setMat4("model", model);
 			Shader::shaderDefault->setVec3("color", halvesColor);
@@ -215,7 +222,7 @@ namespace mdEngine
 
 		if (bottomHasFocus == true)
 		{
-			model = glm::translate(model, glm::vec3(m_ButtonPos.x, m_ButtonPos.y + m_ButtonSize.y / 2.f, 0.5f));
+			model = glm::translate(model, glm::vec3(m_PlaylistItemPos.x, m_PlaylistItemPos.y + m_ButtonSize.y / 2.f, 0.5f));
 			model = glm::scale(model, glm::vec3(m_ButtonSize.x, m_ButtonSize.y / 2.f, 1.0f));
 			Shader::shaderDefault->setMat4("model", model);
 			Shader::shaderDefault->setVec3("color", halvesColor);
@@ -225,7 +232,7 @@ namespace mdEngine
 
 
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(m_ButtonPos, 0.5f));
+		model = glm::translate(model, glm::vec3(m_PlaylistItemPos, 0.5f));
 		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.0f));
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setVec3("color", m_ItemColor);
@@ -244,6 +251,13 @@ namespace mdEngine
 		m_ButtonPos = pos;
 		m_TextPos = pos;
 	}
+
+	glm::vec2& Interface::PlaylistItem::GetPlaylistItemPos()
+	{
+		m_PlaylistItemPos = glm::vec2(m_ButtonPos.x, m_ButtonPos.y - *m_PlaylistOffsetY);
+		return m_PlaylistItemPos;
+	}
+
 
 	void Interface::PlaylistItem::Click()
 	{
@@ -278,6 +292,11 @@ namespace mdEngine
 	void Interface::PlaylistItem::SetItemColor(glm::vec3 color)
 	{
 		m_ItemColor = color;
+	}
+
+	void Interface::PlaylistItem::SetPlaylistOffsetY(f32* offsetY)
+	{
+		m_PlaylistOffsetY = offsetY;
 	}
 
 	b8 Interface::PlaylistItem::IsVisible() const
@@ -337,6 +356,8 @@ namespace mdEngine
 
 	s32 Interface::PlaylistItem::OffsetIndex = 0;
 
+	f32* Interface::PlaylistItem::m_PlaylistOffsetY = NULL;
+
 	/* *************************************************** */
 	Interface::PlaylistSeparator::PlaylistSeparator() { }
 
@@ -374,9 +395,11 @@ namespace mdEngine
 
 	void Interface::PlaylistSeparator::DrawItem(GLuint texture)
 	{
+		m_PlaylistItemPos = glm::vec2(m_ButtonPos.x, m_ButtonPos.y - *m_PlaylistOffsetY);
+		m_TextPos = m_PlaylistItemPos;
 		Shader::shaderDefault->use();
 		glm::mat4 model;
-		model = glm::translate(model, glm::vec3(m_ButtonPos, 0.5f));
+		model = glm::translate(model, glm::vec3(m_PlaylistItemPos, 0.5f));
 		model = glm::scale(model, glm::vec3(m_ButtonSize, 1.0f));
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setVec3("color", m_ItemColor);

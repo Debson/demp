@@ -30,23 +30,23 @@ namespace Audio
 		s32* GetIDP();
 		void DecrementID();
 		void IncrementID();
-		std::wstring GetPath() const;
-		std::wstring GetFolderPath() const;
-		std::wstring GetArtist() const;
+		std::wstring GetPath()			const;
+		std::wstring GetFolderPath()	const;
+		std::wstring GetArtist()		const;
 		std::wstring GetTitle();
-		std::wstring GetTrackNum() const;
-		std::wstring GetAlbum() const;
-		std::wstring GetYear() const;
-		std::wstring GetComment() const;
-		std::wstring GetGenre() const;
-		std::wstring GetFormat() const;
+		std::wstring GetTrackNum()		const;
+		std::wstring GetAlbum()			const;
+		std::wstring GetYear()			const;
+		std::wstring GetComment()		const;
+		std::wstring GetGenre()			const;
+		std::wstring GetFormat()		const;
 		void SetID(s32 id);
 		void SetPath(std::wstring path);
 		void SetFolderPath(std::wstring path);
-		f32 GetFrequency() const;
-		f32 GetBitrate() const;
-		s32 GetObjectSize() const;
-		f64 GetLength() const;
+		f32 GetFrequency()				const;
+		f32 GetBitrate()				const;
+		s32 GetObjectSize()				const;
+		f64 GetLength()					const;
 		Info::ID3& GetID3Struct();
 
 	private:

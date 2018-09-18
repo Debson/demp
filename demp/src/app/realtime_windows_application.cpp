@@ -294,6 +294,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 		auto optionsWindow = MP::UI::GetOptionsWindow();
 
+		State::ResetState(State::Window::MouseOnTrayIcon);
 		while (SDL_PollEvent(&event) != 0)
 		{
 #ifdef _DEBUG_
@@ -330,7 +331,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 			int wmId, wmEvent;
 
-			State::ResetState(State::Window::MouseOnTrayIcon);
 			if (event.type == SDL_SYSWMEVENT)
 			{
 				switch (event.syswm.msg->msg.win.msg)
@@ -406,7 +406,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 					State::ResetState(State::Window::MouseEnter);;
 					break;
 				case(SDL_WINDOWEVENT_MINIMIZED):
-					State::SetState(State::Window::Minimized);
+					if(State::CheckState(State::Window::InTray) == false)
+						State::SetState(State::Window::Minimized);
 					break;
 				case (SDL_WINDOWEVENT_RESTORED):
 					State::ResetState(State::Window::Minimized);
@@ -461,7 +462,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			if (State::CheckState(State::Window::Minimized) == false ||
-				State::CheckState(State::Window::InTray) == false)
+				State::CheckState(State::Window::InTray) == false ||
+				State::CheckState(State::AudioChangedInTray) == true)
 			{
 
 				Graphics::RenderGraphics();
@@ -493,12 +495,10 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 #endif
 			SDL_GL_SwapWindow(mdWindow);
 
-
-			if ((State::CheckState(State::Window::InTray) == true &&
-				State::CheckState(State::Window::MouseOnTrayIcon) == false) ||
-				State::CheckState(State::Window::Minimized) == true)
+			
+			if (State::IsBackgroundModeActive() == true)
 			{
-				MP::Data::UpdateFPS(5.f);
+				MP::Data::UpdateFPS(3.f);
 			}
 			else
 			{
@@ -513,6 +513,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				if (frameTicks < MP::Data::_SCREEN_TICK_PER_FRAME)
 				{
 					SDL_Delay(MP::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
+					//md_log(MP::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
 				}
 			}
 		}

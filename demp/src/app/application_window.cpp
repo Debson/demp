@@ -19,7 +19,6 @@ namespace mdEngine
 		s32 winSizeBeforeResizeTop;
 		s32 winPosBeforeResize;
 
-
 		s32 newWY;
 		s32 newSizeY;
 
@@ -131,7 +130,6 @@ namespace mdEngine
 			return;
 		}
 
-
 		s32 mouseX, mouseY;
 
 		s32 x, y;
@@ -149,27 +147,75 @@ namespace mdEngine
 			Input::GetMousePosition(&mouseX, &mouseY);
 		}
 
-		bool check(true);
-		if (checkBounds == true)
-		{
-			check = mouseY > boundLow && mouseY < boundHigh;
-		}
-		if (checkBounds == true)
-		{
-			button->topHasFocus = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
-								  mouseY > button->GetButtonPos().y && mouseY < (button->GetButtonPos().y + button->GetButtonSize().y / 2.f);
-
-			button->bottomHasFocus = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
-									 mouseY > (button->GetButtonPos().y + button->GetButtonSize().y / 2.f) && 
-									 mouseY < (button->GetButtonPos().y + button->GetButtonSize().y);
-
-			button->topHasFocus = button->topHasFocus && check;
-			button->bottomHasFocus = button->bottomHasFocus && check;
-		}
-
-
 		bool inside = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
 					  mouseY > button->GetButtonPos().y && mouseY < (button->GetButtonPos().y + button->GetButtonSize().y);
+
+		if (inside && !button->wasDown)
+			button->hasFocus = true;
+		else
+		{
+			button->hasFocus = false;
+			button->wasDown = App::Input::IsKeyDown(App::KeyCode::MouseLeft);
+		}
+
+		if (inside)
+			button->hasFocusTillRelease = true;
+		else if (!Input::IsKeyDown(KeyCode::MouseLeft))
+			button->hasFocusTillRelease = false;
+
+		if (inside && Input::IsKeyPressed(KeyCode::MouseLeft))
+			button->isPressed = true;
+		else
+			button->isPressed = false;
+
+		if (inside && Input::IsKeyDown(KeyCode::MouseLeft))
+		{
+			button->isDown = true;
+			button->GetInButtonMousePos().x = mouseX;
+		}
+		else
+		{
+			button->isDown = false;
+			button->GetInButtonMousePos().y = mouseY;
+		}
+
+
+		button->isReleased = !(button->isPressed || button->isDown);
+	}
+
+	void App::ProcesPlaylistButton(Interface::PlaylistItem* button)
+	{
+		if (button->GetPlaylistItemPos() == glm::vec2(POS_INVALID))
+		{
+			return;
+		}
+
+
+		s32 mouseX, mouseY;
+
+		s32 x, y;
+		s32 winX, winY;
+		Input::GetGlobalMousePosition(&x, &y);
+		Window::GetWindowPos(&winX, &winY);
+
+		
+		mouseX = x - winX;
+		mouseY = y - winY;
+		
+		bool check = mouseY > boundLow && mouseY < boundHigh;
+
+		button->topHasFocus = mouseX > button->GetPlaylistItemPos().x && mouseX < (button->GetPlaylistItemPos().x + button->GetButtonSize().x) &&
+			mouseY > button->GetPlaylistItemPos().y && mouseY < (button->GetPlaylistItemPos().y + button->GetButtonSize().y / 2.f);
+
+		button->bottomHasFocus = mouseX > button->GetPlaylistItemPos().x && mouseX < (button->GetPlaylistItemPos().x + button->GetButtonSize().x) &&
+			mouseY >(button->GetPlaylistItemPos().y + button->GetButtonSize().y / 2.f) &&
+			mouseY < (button->GetPlaylistItemPos().y + button->GetButtonSize().y);
+
+		button->topHasFocus = button->topHasFocus && check;
+		button->bottomHasFocus = button->bottomHasFocus && check;
+		
+		bool inside = mouseX > button->GetPlaylistItemPos().x && mouseX < (button->GetPlaylistItemPos().x + button->GetButtonSize().x) &&
+					  mouseY > button->GetPlaylistItemPos().y && mouseY < (button->GetPlaylistItemPos().y + button->GetButtonSize().y);
 
 
 		inside = inside && check;
@@ -349,12 +395,9 @@ namespace mdEngine
 		}
 	}
 
-
-	void App::SetButtonCheckBounds(s32 low, s32 high, b8 val)
+	void App::SetButtonCheckBounds(s32 low, s32 high)
 	{
-		checkBounds = val;
 		boundLow = low;
 		boundHigh = high;
 	}
-	
 }
