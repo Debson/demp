@@ -3,8 +3,11 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <cctype>
 #include <iostream>
 #include <Windows.h>
+#include <locale>
+#include <codecvt>
 
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -22,6 +25,7 @@
 
 // title, artist, album, genre, year, track num, composer, bitrate, channels, freq, size, length,   
 #define SEPARATOR '|'
+#define SEPARATOR_W L'|'
 #define SEPARATOR_SUMMARY "#-----SUMMARY-----#" 
 #define SEPARATOR_CONTENT "#-----CONTENT-----#"
 
@@ -37,7 +41,6 @@
 #define POSITION_FREQUENCY	10
 #define POSITION_SIZE		11
 #define POSITION_LENGTH		12
-#define POSITION_FOLDER_REP	13
 
 
 namespace fs = boost::filesystem;
@@ -55,10 +58,55 @@ namespace mdEngine
 		
 
 		template <typename T>
-		T GetValueAtPos(std::string path, s32 pos);
+		T GetValueAtPos(std::wstring path, s32 pos);
 
 		std::wstring GetStringAtPos(std::wstring path, s32 pos);
+
+		b8 is_number(const std::string& s);
+
+		size_t GetSizeOfFile(const std::wstring& path)
+		{
+			struct _stat fileinfo;
+			_wstat(path.c_str(), &fileinfo);
+			return fileinfo.st_size;
+		}
+
+		std::wstring LoadUtf8FileToString(const std::wstring& filename)
+		{
+			std::wstring buffer;            // stores file contents
+			FILE* f = _wfopen(filename.c_str(), L"rtS, ccs=UTF-8");
+
+			// Failed to open file
+			if (f == NULL)
+			{
+				// ...handle some error...
+				return buffer;
+			}
+
+			size_t filesize = GetSizeOfFile(filename);
+
+			// Read entire file contents in to memory
+			if (filesize > 0)
+			{
+				buffer.resize(filesize);
+				size_t wchars_read = fread(&(buffer.front()), sizeof(wchar_t), filesize, f);
+				buffer.resize(wchars_read);
+				buffer.shrink_to_fit();
+			}
+
+			fclose(f);
+
+			return buffer;
+		}
 	}
+
+	b8 Parser::is_number(const std::string& s)
+	{
+		std::string::const_iterator it = s.begin();
+		while (it != s.end() && std::isdigit(*it)) ++it;
+		return !s.empty() && it == s.end();
+	}
+
 
 	b8 Parser::SavePathsToFile(const std::string& fileName)
 	{
@@ -84,6 +132,8 @@ namespace mdEngine
 		file << SEPARATOR_CONTENT;
 		file << "\n";
 
+		//std::wstringstream buffer;
+		auto sepCon = Interface::Separator::GetContainer();
 		for (auto & i : *Interface::Separator::GetContainer())
 		{
 			file << "-" << utf16_to_utf8(i.second->GetSeparatorPath()) << "\n";
@@ -115,9 +165,10 @@ namespace mdEngine
 				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().size);
 				file << SEPARATOR;
 				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().length);
-				file << SEPARATOR;
-				file << Audio::Object::GetAudioObject(*k.first)->IsFolderRep();
 				file << "\n";
+
+				//buffer << k.second;
+				//buffer << std::endl;
 			}
 		}
 
@@ -128,30 +179,30 @@ namespace mdEngine
 
 	b8 Parser::ReadPathsFromFile(const std::string& fileName)
 	{
-		std::ifstream file;
-		file.open(fileName, std::ios::in | std::ios::binary);
-		if (file.is_open() == false)
-		{
-			MD_ERROR("Error: Could not open a file for reading!\n");
-			return false;
-		}
-
-		std::string input;
-
 		// Move to line with content(paths and file info)
 		s32 filesInfoScanned = Parser::GetInt(fileName, Strings::_CONTENT_LOADED);
+		s32 filesDuration = Parser::GetInt(fileName, Strings::_CONTENT_DURATION);
+		if (filesDuration <= 0 && filesInfoScanned > 0)
+		{
+			filesInfoScanned = 0;
+		}
 
-		while(getline(file, input) && input.compare(SEPARATOR_CONTENT) != 0) { }
+		f32 start = SDL_GetTicks();
+		std::wstring input = LoadUtf8FileToString(utf8_to_utf16(Strings::_PLAYLIST_FILE));
+		std::wstringstream buffer(input);
+		input = std::wstring();
 
-		while(getline(file, input))
+		while(getline(buffer, input) && input.compare(L"#-----CONTENT-----#") != 0) { }
+
+		while(getline(buffer, input))
 		{
 			[&] 
 			{
 				if (input[0] == '-')
 				{
-					if (Audio::Folders::AddFolder(utf8_to_utf16(input.substr(1, input.length()))) == false)
+					if (Audio::Folders::AddFolder(input.substr(1, input.length())) == false)
 					{
-						while (getline(file, input) && input[0] != '-') { }
+						while (getline(buffer, input) && input[0] != '-') { }
 						return;
 					}
 				}
@@ -165,46 +216,31 @@ namespace mdEngine
 					State::SetState(State::PathLoadedFromFileVolatile);
 					State::SetState(State::PathLoadedFromFile);
 
-					s32 pos = input.find_first_of(SEPARATOR);
-					std::wstring path = utf8_to_utf16(input.substr(0, pos));
+					s32 pos = input.find_first_of(L'|');
+					std::wstring path = input.substr(0, pos);
 					Audio::Info::ID3 info;
+					// optimize this, somehow
 					if (filesInfoScanned == 1)
 					{
-						info.title = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())), POSITION_TITLE);
-						info.artist = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())), POSITION_ARTIST);
-						info.album = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())), POSITION_ALBUM);
-						info.genre = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())), POSITION_GENRE);
-						info.year = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())), POSITION_YEAR);
-						info.track_num = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())), POSITION_TRACK_NUM);
-						info.composer = GetStringAtPos(utf8_to_utf16(input.substr(pos, input.length())), POSITION_COMPOSER);
+						info.title = GetStringAtPos(input.substr(pos, input.length()), POSITION_TITLE);
+						info.artist = GetStringAtPos(input.substr(pos, input.length()), POSITION_ARTIST);
+						info.album = GetStringAtPos(input.substr(pos, input.length()), POSITION_ALBUM);
+						info.genre = GetStringAtPos(input.substr(pos, input.length()), POSITION_GENRE);
+						info.year = GetStringAtPos(input.substr(pos, input.length()), POSITION_YEAR);
+						info.track_num = GetStringAtPos(input.substr(pos, input.length()), POSITION_TRACK_NUM);
+						info.composer = GetStringAtPos(input.substr(pos, input.length()), POSITION_COMPOSER);
 						info.bitrate = GetValueAtPos<f32>(input.substr(pos, input.length()), POSITION_BITRATE);
 						info.channels = GetValueAtPos<s16>(input.substr(pos, input.length()), POSITION_CHANNELS);
 						info.freq = GetValueAtPos<f32>(input.substr(pos, input.length()), POSITION_FREQUENCY);
 						info.size = GetValueAtPos<f32>(input.substr(pos, input.length()), POSITION_SIZE);
 						info.length = GetValueAtPos<f64>(input.substr(pos, input.length()), POSITION_LENGTH);
 					}
-					info.folder_rep = GetValueAtPos<b8>(input.substr(pos, input.length()),					POSITION_FOLDER_REP);
-					
-					/*std::cout << utf16_to_utf8(path) << std::endl;
-					std::wcout << info.title << std::endl;
-					std::wcout << info.artist << std::endl;
-					std::wcout << info.album << std::endl;
-					std::wcout << info.genre << std::endl;
-					std::wcout << info.year << std::endl;
-					std::wcout << info.track_num << std::endl;
-					std::wcout << info.composer << std::endl;
-					std::wcout << std::to_wstring(info.bitrate) << std::endl;
-					std::wcout << std::to_wstring(info.channels) << std::endl;
-					std::wcout << std::to_wstring(info.freq) << std::endl;
-					std::wcout << std::to_wstring(info.size) << std::endl;
-					std::wcout << std::to_wstring(info.length) << std::endl << std::endl;*/
 
-					Audio::SavePathFiles(path, info);
+					Audio::LoadPathsFromFile(path, info);
 				}
 			}();
 		}
 
-		file.close();
 		
 		return true;
 	}
@@ -232,7 +268,6 @@ namespace mdEngine
 		AddToFile(&file, Strings::_MAX_RAM_LOADED_SIZE, MP::Data::_MAX_SIZE_RAM_LOADED);
 		AddToFile(&file, Strings::_PAUSE_FADE_TIME, MP::Data::PauseFadeTime);
 		AddToFile(&file, Strings::_ON_EXIT_MINIMIZE_TO_TRAY, State::CheckState(State::OnExitMinimizeToTray));
-
 
 		return true;
 	}
@@ -316,9 +351,11 @@ namespace mdEngine
 			t = t.substr(t.find("\"") + 1);
 			t[t.length() - 1] = '\0';
 
-			std::stringstream ss;
-			ss << t;
-			ss >> val;
+			try
+			{
+				val = std::stoi(t);
+			}
+			catch (std::invalid_argument) { }
 		}
 		else
 		{
@@ -353,8 +390,15 @@ namespace mdEngine
 
 			t = t.substr(t.find("\"") + 1);
 			t[t.length() - 1] = '\0';
+	
 
-			val = std::stof(t);
+			try
+			{
+				val = std::stof(t);
+			}
+			catch (std::invalid_argument) { }
+			
+
 		}
 		else
 		{
@@ -422,21 +466,21 @@ namespace mdEngine
 	}
 
 	template <typename T>
-	T Parser::GetValueAtPos(std::string path, s32 pos)
+	T Parser::GetValueAtPos(std::wstring path, s32 pos)
 	{
 		s32 count = 0;
 		s32 strPos = 0;
-		std::string p(path);
-		std::stringstream ss;
-		while (p.find(SEPARATOR) != std::string::npos && count < pos)
+		std::wstring p(path);
+		std::wstringstream ss;
+		while (p.find(SEPARATOR_W) != std::wstring::npos && count < pos)
 		{
-			p = p.substr(p.find(SEPARATOR) + 1, p.length());
+			p = p.substr(p.find(SEPARATOR_W) + 1, p.length());
 			count++;
 		}
 
 		T value = 0;
 
-		p = p.substr(0, p.find_first_of(SEPARATOR));
+		p = p.substr(0, p.find_first_of(SEPARATOR_W));
 
 		ss << p;
 		ss >> value;

@@ -33,45 +33,49 @@ namespace MP
 		const s32 _SCREEN_FPS = 60;
 		extern s32 _SCREEN_TICK_PER_FRAME;
 
-		extern u16 _PLAYLIST_CHOOSE_ITEM_DELAY;
+		const s32 _PLAYLIST_CHOOSE_ITEM_DELAY = 300;
 
 		extern TTF_Font* _MUSIC_PLAYER_FONT;
 		extern TTF_Font* _MUSIC_PLAYER_NUMBER_FONT;
 
-		extern glm::vec2 _MIN_PLAYER_SIZE;
+		const glm::vec2 _MIN_PLAYER_SIZE = glm::vec2(500.f, 500.f);
 
 		const glm::vec2 _DEFAULT_PLAYER_POS = glm::vec2(0.f, 0.f);
 		const glm::vec2 _DEFAULT_PLAYER_SIZE = glm::vec2(500.f, mdDefaultHeight);
 
-		extern glm::vec2 _DEFAULT_WINDOW_POS;
-		extern glm::vec2 _DEFAULT_WINDOW_SIZE;
+		const glm::vec2 _DEFAULT_WINDOW_POS = glm::vec2(0.f, 0.f);;
+		const glm::vec2 _DEFAULT_WINDOW_SIZE = glm::vec2(mdDefaultWidth, 700.f);
 
 		const glm::vec2 _OPTIONS_WINDOW_SIZE = glm::vec2(400, 300);
 
-		extern glm::vec2 _MAIN_BACKGROUND_POS;
+		const glm::vec2 _MAIN_BACKGROUND_POS = glm::vec2(0.f, 0.f);;
 		extern glm::vec2 _MAIN_BACKGROUND_SIZE;
 
 		const glm::vec2 _MAIN_FOREGROUND_POS = glm::vec2(20.0f, 30.0f);
 		const glm::vec2 _MAIN_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight - 40.f);
 
-		extern glm::vec2 _PLAYLIST_FOREGROUND_POS;
+		const glm::vec2 _PLAYLIST_FOREGROUND_POS = glm::vec2(20.f, mdDefaultHeight + 20.f);;
 		extern glm::vec2 _PLAYLIST_FOREGROUND_SIZE;
 
-		extern glm::vec2 _VOLUME_BAR_POS;
-		extern glm::vec2 _VOLUME_BAR_SIZE;
+		static s16 musicUIOffsetX = -60;
+		static s16 musicUIOffsetY = 10;
+		static s16 musicProgressBarOffsetY = 8;
 
-		extern glm::vec2 _MUSIC_PROGRESS_BAR_POS;
-		extern glm::vec2 _MUSIC_PROGRESS_BAR_SIZE;
+		const glm::vec2 _VOLUME_BAR_POS = glm::vec2(mdDefaultWidth / 2.f - 170.f, mdDefaultHeight - 60.f - musicUIOffsetY);;
+		const glm::vec2 _VOLUME_BAR_SIZE = glm::vec2(90.f, 4.f);;
 
-		extern glm::vec2 _VOLUME_SPEAKER_POS;
-		extern glm::vec2 _VOLUME_SPEAKER_SIZE;
+		const glm::vec2 _MUSIC_PROGRESS_BAR_POS = glm::vec2(mdDefaultWidth / 2.f - 175.f, mdDefaultHeight - musicUIOffsetY - musicProgressBarOffsetY);
+		const glm::vec2 _MUSIC_PROGRESS_BAR_SIZE = glm::vec2(mdDefaultWidth / 2.f + 100.f, 5.f);
 
-		extern glm::vec2 _MUSIC_PROGRESS_BAR_DOT_POS;
-		extern glm::vec2 _VOLUME_BAR_DOT_POS;
-		extern glm::vec2 _SLIDER_DOT_SIZE;
+		const glm::vec2 _VOLUME_SPEAKER_POS = glm::vec2(mdDefaultWidth / 2.f - 200.f, mdDefaultHeight - 66.f - musicUIOffsetY);
+		const glm::vec2 _VOLUME_SPEAKER_SIZE = glm::vec2(15.f, 15.f);;
+
+		const glm::vec2 _MUSIC_PROGRESS_BAR_DOT_POS = glm::vec2(_MUSIC_PROGRESS_BAR_POS.x, _MUSIC_PROGRESS_BAR_POS.y - 2.f);;
+		const glm::vec2 _VOLUME_BAR_DOT_POS = glm::vec2(mdDefaultWidth / 2.f - 130.f, mdDefaultHeight - 63.f - musicUIOffsetY);;
+		const glm::vec2 _SLIDER_DOT_SIZE = glm::vec2(9.f, 9.f);
 
 		static f32 ui_buttons_scale = 0.9f;
-		static s32 offsetY = 20.f * ui_buttons_scale;
+		static f32 offsetY = 20.f * ui_buttons_scale;
 		const glm::vec2 _UI_BUTTONS_BACKGROUND_RIGHT_SIZE = glm::vec2(73.2f, 19.8f) * ui_buttons_scale;
 		const glm::vec2 _UI_BUTTONS_BACKGROUND_RIGHT_POS = glm::vec2(mdDefaultWidth - _UI_BUTTONS_BACKGROUND_RIGHT_SIZE.x - offsetY, 5.f);
 
@@ -127,42 +131,42 @@ namespace MP
 														 Data::_SETTINGS_BUTTON_BACKGROUND_POS.y + (Data::_SETTINGS_BUTTON_BACKGROUND_SIZE.y - Data::_SETTINGS_BUTTON_SIZE.y) / 2.f);
 
 
-		extern glm::vec2 _PLAY_BUTTON_POS;
-		extern glm::vec2 _PLAY_BUTTON_SIZE;
+		const glm::vec2 _PLAY_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f - 20.f - musicUIOffsetX, mdDefaultHeight - 80.f - musicUIOffsetY);;
+		const glm::vec2 _PLAY_BUTTON_SIZE = glm::vec2(40.f, 40.f);
 
-		extern glm::vec2 _NEXT_BUTTON_POS;
-		extern glm::vec2 _NEXT_BUTTON_SIZE;
+		const glm::vec2 _NEXT_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f + 40.f - musicUIOffsetX, mdDefaultHeight - 67.f - musicUIOffsetY);;
+		const glm::vec2 _NEXT_BUTTON_SIZE = glm::vec2(15.f, 15.f);
 
-		extern glm::vec2 _PREVIOUS_BUTTON_POS;
-		extern glm::vec2 _PREVIOUS_BUTTON_SIZE;
+		const glm::vec2 _PREVIOUS_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f - 60.f - musicUIOffsetX, mdDefaultHeight - 67.f - musicUIOffsetY);;
+		const glm::vec2 _PREVIOUS_BUTTON_SIZE = glm::vec2(15.f, 15.f);
 
-		extern glm::vec2 _SHUFFLE_BUTTON_POS;
-		extern glm::vec2 _SHUFFLE_BUTTON_SIZE;
+		const glm::vec2 _SHUFFLE_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f - 110.f - musicUIOffsetX, mdDefaultHeight - 65.f - musicUIOffsetY);;
+		const glm::vec2 _SHUFFLE_BUTTON_SIZE = glm::vec2(20.f, 12.f);
 
-		extern glm::vec2 _REPEAT_BUTTON_POS;
-		extern glm::vec2 _REPEAT_BUTTON_SIZE;
+		const glm::vec2 _REPEAT_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f + 90.f - musicUIOffsetX, mdDefaultHeight - 65.f - musicUIOffsetY);;
+		const glm::vec2 _REPEAT_BUTTON_SIZE = glm::vec2(20.f, 12.f);
 
-		extern glm::vec2 _DOT_BUTTON_STATE_SIZE;
+		const glm::vec2 _DOT_BUTTON_STATE_SIZE = glm::vec2(5.f);
 
-		extern glm::vec2 _PLAYLIST_BUTTON_POS;
-		extern glm::vec2 _PLAYLIST_BUTTON_SIZE;
+		const glm::vec2 _PLAYLIST_BUTTON_POS = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight - 40.f - musicUIOffsetY);;
+		const glm::vec2 _PLAYLIST_BUTTON_SIZE = glm::vec2(15.f, 15.f);
 
 		extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_POS;
 		extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 
-		extern glm::vec2 _PLAYLIST_ITEM_SIZE;
+		const glm::vec2 _PLAYLIST_ITEM_SIZE = glm::vec2(300.f, 30.f);;
 
-		extern glm::vec2 _PLAYLIST_SEPARATOR_POS_OFFSET;
-		extern glm::vec2 _PLAYLIST_SEPARATOR_SIZE;
+		const glm::vec2 _PLAYLIST_SEPARATOR_POS_OFFSET = glm::vec2(10.f, 0.f);
+		const glm::vec2 _PLAYLIST_SEPARATOR_SIZE = glm::vec2(300.f + _PLAYLIST_SEPARATOR_POS_OFFSET.x, 20.f);
 
-		extern glm::vec2 _PLAYLIST_SCROLL_BAR_POS;
-		extern glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE;
+		const glm::vec2 _PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdDefaultWidth - 60.f, _PLAYLIST_FOREGROUND_POS.y);
+		const glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, 20.f);;
 
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_POS;
-		extern glm::vec2 _PLAYLIST_ADD_BUTTON_SIZE;
+		const glm::vec2 _PLAYLIST_ADD_BUTTON_SIZE = glm::vec2(35.f, 35.f);
 
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_POS;
-		extern glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE;
+		const glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE = glm::vec2(120.f, 100);
 
 		const s16 _TEXT_BOX_ITEM_HEIGHT = 20;
 
@@ -191,7 +195,7 @@ namespace MP
 		extern f32 PlaylistScrollStep;
 
 		const s32 _MAX_SIZE_RAM_LOADED_MAX	= 300;
-		const s32 VolumeScrollStepMAX		= 100.f;
+		const s32 VolumeScrollStepMAX		= 100;
 		const s32 PauseFadeTimeMAX			= 10000;
 		const s32 VolumeFadeTimeMAX			= 10000;
 		const f32 PlaylistScrollStepMAX		= 150.f;
@@ -199,13 +203,13 @@ namespace MP
 		const f32 MusicInfoScrollingSpeed		= 30.f;
 		const f32 MusicInfoScrollingSpeedRewind = 120.f;
 		const s32 MusicInfoScrollStopTimer		= 1200;
-		const s32 MusicInfoScrollTextDistDiff	= 40.f;
+		const s32 MusicInfoScrollTextDistDiff	= 40;
 
 		namespace Default
 		{
 			const s32 _MAX_SIZE_RAM_LOADED		= 50;
 			const f32 VolumeKeyMultiplier		= 0.8f;
-			const s32 VolumeScrollStep			= 2.f;
+			const s32 VolumeScrollStep			= 2;
 			const s32 PauseFadeTime				= 500;
 			const s32 VolumeFadeTime			= 500;
 			const s32 PlaylistRollMultiplier	= 500;

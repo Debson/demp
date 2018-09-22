@@ -28,6 +28,7 @@
 #include "../app/realtime_application.h"
 #include "../player/music_player_system.h"
 #include "../player/music_player_state.h"
+#include "../player/music_player_config.h"
 #include "../ui/music_player_ui.h"
 #include "../audio/mp_audio.h"
 #include "../audio/mp_channel_attrib.h"
@@ -242,14 +243,12 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	Window::windowProperties.mWindowHeight = current.h;
 	mdActualWindowWidth = mdCurrentWindowWidth = Window::windowProperties.mWindowWidth;
 	mdActualWindowHeight = mdCurrentWindowHeight = Window::windowProperties.mWindowHeight;
-	
 
 	SetupOpenGL();
 
 	SetupImGui();
 
-	/* create window */
-
+	MP::Config::LoadConfig();
 	mdApplicationHandler->OnWindowOpen();
 	Graphics::StartGraphics();
 
@@ -531,6 +530,7 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 
 	Shell_NotifyIcon(NIM_DELETE, &icon);
 
+	MP::Config::SaveToConfig();
 	mdApplicationHandler->OnWindowClose();
 	MP::UI::GetOptionsWindow()->Free();
 	Graphics::CloseGraphics();

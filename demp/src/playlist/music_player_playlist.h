@@ -53,6 +53,8 @@ namespace MP
 		extern SongObject RamLoadedMusic;
 		extern PathContainer mdPathContainer;
 
+		void InitializeConfig();
+
 		void Start();
 
 		void NextMusic();

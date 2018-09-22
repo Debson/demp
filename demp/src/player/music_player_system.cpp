@@ -8,6 +8,8 @@
 #include "../utility/md_parser.h"
 #include "../settings/music_player_string.h"
 #include "../audio/mp_audio.h"
+#include "../player/music_player_config.h"
+#include "../graphics/graphics.h"
 
 #ifdef _WIN32_
 #define OUTPUT std::wcout
@@ -31,13 +33,9 @@ namespace MP
 	void OpenMusicPlayer(void)
 	{
 		UI::Start();
-		Parser::ReadPathsFromFile(Strings::_PATHS_FILE);
 		Playlist::Start();
 		Audio::StartAudio();
 
-		//Database::OpenDB();
-
-		//sqlite::PushToDatabase(path);
 
 	}
 
@@ -115,7 +113,6 @@ namespace MP
 		{
 			Playlist::RewindMusic(5);
 		}
-		
 	}
 
 	void UpdateLogic(void)
@@ -129,7 +126,6 @@ namespace MP
 		UI::Update();
 
 		Audio::UpdateAudioLogic();
-
 	}
 
 	void RenderMusicPlayer()
@@ -139,14 +135,9 @@ namespace MP
 
 	void MP::CloseMusicPlayer()
 	{
-		Parser::SavePathsToFile(Strings::_PATHS_FILE);
-		Parser::SaveSettingsToFile(Strings::_SETTINGS_FILE);
 		UI::Close();
-
-		//Database::CloseDB();
 		Audio::DeallocateAudioItems();
 		Interface::CloseInterface();
 	}
-
 }
 }

@@ -16,6 +16,8 @@ namespace Graphics
 		// TODO: It cant be an extern variable...
 		extern Interface::TextBox m_AddFileTextBox;
 
+		void InitializeConfig();
+
 		void StartMainWindow();
 
 		void UpdateMainWindow();

@@ -3,7 +3,9 @@
 #include "realtime_system_application.h"
 #include "../player/music_player.h"
 #include "../settings/music_player_settings.h"
+#include "../settings/music_player_string.h"
 #include "../player/music_player_state.h"
+#include "../utility/md_parser.h"
 
 namespace mdEngine
 {
@@ -44,6 +46,17 @@ namespace mdEngine
 						mWindowMode(WindowMode::Windowed),
 						mVerticalSync(true)
 	{ }
+
+	void App::InitializeConfig()
+	{
+		Window::windowProperties.mApplicationHeight = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_APP_HEIGHT);
+		Window::windowProperties.mStartApplicationHeight = Window::windowProperties.mApplicationHeight;
+
+		if (Window::windowProperties.mApplicationHeight < MP::Data::_MIN_PLAYER_SIZE.y)
+			Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + 20.f;
+		if (Window::windowProperties.mApplicationHeight > Window::windowProperties.mWindowHeight)
+			Window::windowProperties.mApplicationHeight = Window::windowProperties.mWindowHeight;
+	}
 
 	void App::ProcessMovable(Interface::Movable* bar)
 	{

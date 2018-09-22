@@ -17,7 +17,6 @@ namespace Audio
 			ID3() 
 			{ 
 				loaded		= false;
-				folder_rep	= false;
 				id			= L"";
 				title		= L"";
 				artist		= L"";
@@ -34,7 +33,6 @@ namespace Audio
 				freq		= 0;
 				size		= 0;
 				length		= 0;
-
 			}
 
 			std::wstring id;

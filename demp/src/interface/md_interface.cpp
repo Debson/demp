@@ -130,9 +130,6 @@ namespace mdEngine
 		return m_MousePos;
 	}
 
-	
-
-
 	/* *************************************************** */
 
 	Interface::PlaylistItem::PlaylistItem()
@@ -168,6 +165,7 @@ namespace mdEngine
 
 		m_TitleC = utf16_to_utf8(m_TextString);
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
+		m_TextString = GetShortenTextString();
 
 		m_PlaylistButtonsContainer[*id] = std::make_pair(id, this);
 	}
@@ -254,6 +252,7 @@ namespace mdEngine
 
 	glm::vec2& Interface::PlaylistItem::GetPlaylistItemPos()
 	{
+		assert(this != NULL);
 		m_PlaylistItemPos = glm::vec2(m_ButtonPos.x, m_ButtonPos.y - *m_PlaylistOffsetY);
 		return m_PlaylistItemPos;
 	}
@@ -274,14 +273,9 @@ namespace mdEngine
 		m_Visible = val;
 	}
 
-	void Interface::PlaylistItem::SetAsFolderRep()
+	void Interface::PlaylistItem::SetFolderRep(b8 val)
 	{
-		m_FolderRep = true;
-	}
-
-	void Interface::PlaylistItem::TakeFolderRep()
-	{
-		m_FolderRep = false;
+		m_FolderRep = val;
 	}
 
 	void Interface::PlaylistItem::SetClickCount(s8 count)

@@ -43,14 +43,13 @@ namespace Audio
 #endif
 	}
 
+	void InitializeConfig();
 
 	void StartAudio();
 
 	void FilesAddedByFileBrowser(b8 val);
 
-	b8 SavePathFiles(std::wstring path);
-
-	b8 SavePathFiles(std::wstring path, const Info::ID3 id3);
+	b8 LoadPathsFromFile(std::wstring path, const Info::ID3 id3);
 
 	b8 PushToPlaylist(std::wstring path);
 

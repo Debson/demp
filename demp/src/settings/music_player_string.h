@@ -9,8 +9,8 @@ namespace mdEngine
 	namespace Strings
 	{
 
-		const std::string _SETTINGS_FILE			= "E:\\SDL Projects\\demp\\demp\\settings\\settings.txt";
-		const std::string _PATHS_FILE				= "E:\\SDL Projects\\demp\\demp\\settings\\path.txt";
+		extern std::string _SETTINGS_FILE;
+		extern std::string _PLAYLIST_FILE;
 		const std::string _DATABASE_FILE			= "E:\\SDL Projects\\demp\\demp\\data.db";
 		extern std::string _SAVED_PATH;
 		const std::string _VOLUME					= "volume";
@@ -44,6 +44,7 @@ namespace mdEngine
 		const std::wstring _PLAYLIST_ADD_FILE	= L"Files";
 		const std::wstring _PLAYLIST_ADD_FOLDER = L"Folder";
 
+		void InitializeStrings();
 	}
 }
 

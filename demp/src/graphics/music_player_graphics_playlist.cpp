@@ -153,6 +153,7 @@ namespace mdEngine
 		std::wstring MP::PlaylistObject::GetMusicInfoScrollString() const
 		{
 			std::wstring str;
+			s32 id = GetPlayingID();
 			auto audioItem = Audio::Object::GetAudioObject(GetPlayingID());
 			assert(audioItem != NULL);
 			str += L".:: ";

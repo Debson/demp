@@ -33,6 +33,7 @@ namespace App
 
 	};
 
+	void InitializeConfig();
 
 	void SetButtonCheckBounds(s32 low, s32 high);
 

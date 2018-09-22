@@ -91,8 +91,7 @@ namespace mdEngine
 			void Click();
 			void HidePlaylistItem(b8 val);
 			void Visible(b8 val);
-			void SetAsFolderRep();
-			void TakeFolderRep();
+			void SetFolderRep(b8 val);
 			void SetClickCount(s8 count);
 			void SetItemColor(glm::vec3 color);
 			static void SetPlaylistOffsetY(f32* offsetY);

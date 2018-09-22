@@ -567,27 +567,8 @@ namespace MP
 			Window::MinimizeWindow();
 		}
 
-
-		if (App::Input::IsKeyPressed(App::KeyCode::F5))
-		{
-			//Window::ShowWindow();
-			s32 x, y;
-			Window::GetWindowPos(&x, &y);
-			md_log_compare(x, y);
-			Window::RestoreWindow();
-			Window::ShowWindow();
-			md_log("f5");
-		}
-
-		if (App::Input::IsKeyPressed(App::KeyCode::F6))
-		{
-			Window::MinimizeWindow();;
-			md_log("f6");
-		}
-
 		if (Input::isButtonPressed(Input::ButtonType::Options))
 		{
-			md_log("settings");
 			mdOptionsWindow.Init();
 		}
 

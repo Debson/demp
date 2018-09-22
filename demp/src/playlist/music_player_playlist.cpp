@@ -64,8 +64,6 @@ namespace MP
 		static s32 mdCurrentShuffleMusicPos = 0;
 
 
-		void InitializeConfig();
-
 		void SetActualVolume();
 
 		void RepeatMusicProcedure();
@@ -81,6 +79,8 @@ namespace MP
 		void PerformCrossfade();
 
 		void AudioChangeInTray();
+
+		b8 StartNextSong();
 
 		b8 check_size(u32);
 
@@ -244,6 +244,10 @@ namespace MP
 			std::string file = Strings::_SETTINGS_FILE;
 
 			Data::VolumeLevel = Parser::GetFloat(file, Strings::_VOLUME);
+			if (Data::VolumeLevel < 0)
+				Data::VolumeLevel = 0;
+			if (Data::VolumeLevel > 1.f)
+				Data::VolumeLevel = 1.f;
 			mdVolume = Data::VolumeLevel;
 			
 			/*s32 songID = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
@@ -284,8 +288,6 @@ namespace MP
 
 		void Playlist::Start()
 		{
-			InitializeConfig();
-
 			playFadeTimer = Time::Timer(Data::StartMusicFadeTime);
 		}
 
@@ -387,6 +389,8 @@ namespace MP
 		{
 			if (Audio::Object::GetSize() == 0)
 				return;
+
+			auto audioCon = Audio::Object::GetAudioObjectContainer();
 
 			/* Reset booleans that control music state */
 			mdVolumeFadeIn = false;
@@ -705,11 +709,7 @@ namespace MP
 			/* If Music Player has started his first song, next song(next on playlist) will be 
 			   played automatically. Check if next music was selected by user 
 			*/
-			if (mdMPStarted == true && 
-				IsPlaying() == false && 
-				mdRepeatMusic == false && 
-				mdStartNewOnEnd == true &&
-				State::CheckState(State::AudioChosen) == false)
+			if (StartNextSong() == true)
 			{
 				NextMusic();
 			}
@@ -756,10 +756,10 @@ namespace MP
 				s32 songID = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
 				if (songID < Audio::Object::GetSize())
 				{
-					md_log(songID);
+				/*	md_log(songID);
 					RamLoadedMusic.load(Audio::Object::GetAudioObject(songID));
 					Playlist::SetPosition((s32)Parser::GetFloat(file, Strings::_SONG_POSITION));
-					Graphics::MP::GetPlaylistObject()->SetPlayingID(songID);
+					Graphics::MP::GetPlaylistObject()->SetPlayingID(songID);*/
 					State::SetState(State::InitialLoadFromFile);
 				}
 				State::ResetState(State::InitMusicLoad);
@@ -827,6 +827,20 @@ namespace MP
 			{
 				State::ResetState(State::AudioChangedInTray);
 			}
+		}
+
+		b8 StartNextSong()
+		{
+			if (RamLoadedMusic.m_ID + 1 >= Audio::Object::GetSize())
+			{
+				mdStartNewOnEnd = false;
+			}
+			return mdMPStarted == true &&
+				IsPlaying() == false &&
+				mdRepeatMusic == false &&
+				mdStartNewOnEnd == true &&
+				State::CheckState(State::AudioChosen) == false &&
+				RamLoadedMusic.m_ID + 1 < Audio::Object::GetSize();
 		}
 
 		b8 IsLoaded()
