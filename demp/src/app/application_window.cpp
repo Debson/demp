@@ -5,6 +5,7 @@
 #include "../settings/music_player_settings.h"
 #include "../settings/music_player_string.h"
 #include "../player/music_player_state.h"
+#include "../ui/music_player_ui.h"
 #include "../utility/md_parser.h"
 
 namespace mdEngine
@@ -93,6 +94,17 @@ namespace mdEngine
 					inside = false;
 				}
 
+				for (auto & i : MP::UI::mdButtonsContainer)
+				{
+					if (insideX > i.second->GetButtonPos().x &&
+						insideX < i.second->GetButtonPos().x + i.second->GetButtonSize().x &&
+						insideY > i.second->GetButtonPos().y &&
+						insideY < i.second->GetButtonPos().y + i.second->GetButtonSize().y)
+					{
+						inside = false;
+					}
+				}
+
 
 				if (inside &&
 					Input::IsKeyPressed(KeyCode::MouseLeft) == true &&
@@ -133,6 +145,67 @@ namespace mdEngine
 				Window::GetWindowPos(&startX, &startY);
 			}
 		
+	}
+
+	void App::ProcessButton(std::shared_ptr<Interface::Button> button)
+	{
+		// Check if button positions is valid
+		if (button->GetButtonPos() == glm::vec2(POS_INVALID))
+		{
+			return;
+		}
+
+		s32 mouseX, mouseY;
+
+		s32 x, y;
+		s32 winX, winY;
+		Input::GetGlobalMousePosition(&x, &y);
+		Window::GetWindowPos(&winX, &winY);
+
+		if (checkBounds == true)
+		{
+			mouseX = x - winX;
+			mouseY = y - winY;
+		}
+		else
+		{
+			Input::GetMousePosition(&mouseX, &mouseY);
+		}
+
+		bool inside = mouseX > button->GetButtonPos().x && mouseX < (button->GetButtonPos().x + button->GetButtonSize().x) &&
+			mouseY > button->GetButtonPos().y && mouseY < (button->GetButtonPos().y + button->GetButtonSize().y);
+
+		if (inside && !button->wasDown)
+			button->hasFocus = true;
+		else
+		{
+			button->hasFocus = false;
+			button->wasDown = App::Input::IsKeyDown(App::KeyCode::MouseLeft);
+		}
+
+		if (inside)
+			button->hasFocusTillRelease = true;
+		else if (!Input::IsKeyDown(KeyCode::MouseLeft))
+			button->hasFocusTillRelease = false;
+
+		if (inside && Input::IsKeyPressed(KeyCode::MouseLeft))
+			button->isPressed = true;
+		else
+			button->isPressed = false;
+
+		if (inside && Input::IsKeyDown(KeyCode::MouseLeft))
+		{
+			button->isDown = true;
+			button->GetInButtonMousePos().x = mouseX;
+		}
+		else
+		{
+			button->isDown = false;
+			button->GetInButtonMousePos().y = mouseY;
+		}
+
+
+		button->isReleased = !(button->isPressed || button->isDown);
 	}
 
 	void App::ProcessButton(Interface::Button* button)
@@ -196,7 +269,7 @@ namespace mdEngine
 		button->isReleased = !(button->isPressed || button->isDown);
 	}
 
-	void App::ProcesPlaylistButton(Interface::PlaylistItem* button)
+	void App::ProcesPlaylistButton(std::shared_ptr<Interface::PlaylistItem> button)
 	{
 		if (button->GetPlaylistItemPos() == glm::vec2(POS_INVALID))
 		{

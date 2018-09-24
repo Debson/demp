@@ -9,7 +9,7 @@
 namespace Audio
 {
 	// Stores pointers to created audio objects
-	typedef std::vector<AudioObject*> AudioObjectContainer;
+	typedef std::vector<std::shared_ptr<AudioObject>> AudioObjectContainer;
 	// Stores only paths to folders
 	typedef std::vector<std::wstring> FolderContainer; // Stores only paths to folders
 	// Stores all paths of supported files	that are currently loaded into playlist
@@ -34,7 +34,7 @@ namespace Audio
 	namespace Object
 	{
 		AudioObjectContainer& GetAudioObjectContainer();
-		AudioObject* GetAudioObject(s32 id);
+		std::shared_ptr<AudioObject> GetAudioObject(s32 id);
 		u32 GetSize();
 		u32 GetProcessedSize();
 

@@ -27,6 +27,7 @@ namespace Audio
 		std::mutex mutex;
 	}
 
+
 	b8 Info::CheckIfAudio(std::wstring path)
 	{
 		fs::path p(path);

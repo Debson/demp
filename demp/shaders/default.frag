@@ -45,8 +45,8 @@ void main()
 	}
 	else
 	{
-		if(texColor.a < 0.2)
-			discard;
+		/*if(texColor.a < 0.1)
+			discard;*/
 	}
 
 

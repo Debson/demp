@@ -341,6 +341,7 @@ void Audio::UpdateAudioLogic()
 			}
 		}
 
+
 		for (s8 i = 0; i < threadsToUse; i++)
 		{
 			assert(tt[i].joinable());
@@ -350,6 +351,8 @@ void Audio::UpdateAudioLogic()
 				tt[i].detach();
 		}
 
+
+		State::ResetState(State::FileDropped);
 		// Keep track of size of containers
 		previousContainerSize = currentContainersSize;
 		currentContainersSize += toProcessCount;
@@ -366,11 +369,15 @@ void Audio::UpdateAudioLogic()
 		delete[] tt;
 	}
 
-	if (m_AudioObjectContainer.empty() == false)
+	if (m_AudioObjectContainer.empty() == false && 
+		State::CheckState(State::FileDropped) == false)
 	{
 		// If added files are loaded(only audio objets are created), set appropriate flag
 		if (currentContainersSize == currentlyLoadedItemsCount)
 		{
+			State::ResetState(State::FilesDroppedNotLoaded);
+
+
 			State::SetState(State::FilesLoaded);
 			State::ResetState(State::PlaylistEmpty);
 			firstFileFolderRepChecked = false;
@@ -431,8 +438,8 @@ void Audio::PerformDeletion(s32 index)
 		auto sepSubCon = sepCont->at(i).second->GetSubFilesContainer();
 		if (sepSubCon->empty() == true)
 		{
-			delete sepCont->at(i).second;
-			sepCont->at(i).second = nullptr;
+			//delete sepCont->at(i).second;
+			//sepCont->at(i).second = nullptr;
 			sepCont->erase(sepCont->begin() + i);
 		}
 	}
@@ -450,8 +457,8 @@ void Audio::PerformDeletion(s32 index)
 	for (s32 i = index; i < m_AudioObjectContainer.size(); i++)
 		m_AudioObjectContainer[i]->DecrementID();
 
-	delete m_AudioObjectContainer.at(index);
-	m_AudioObjectContainer.at(index) = nullptr;
+	//delete m_AudioObjectContainer.at(index);
+	//m_AudioObjectContainer.at(index) = nullptr;
 	m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + index);
 
 	// Delete that path from loaded paths container
@@ -475,6 +482,9 @@ void Audio::PerformDeletion(s32 index)
 		firstFilesLoaded = false;
 		m_FolderContainer.clear();
 		indexOfDroppedOnItem = -1;
+		currentContainersSize = 0;
+		currentlyLoadedItemsCount = 0;
+		Info::LoadedItemsInfoCount = 0;
 	}
 }
 
@@ -519,7 +529,7 @@ b8 Audio::AddAudioItem(std::wstring path, s32 id)
 
 	m_LoadedPathContainer[id] = path;
 	// Need to get basic properties before creating audio object
-	auto audioObject = new AudioObject();
+	auto audioObject = std::make_shared<AudioObject>();
 	if (filesLoadedFromFile == true)
 	{
 		State::SetState(State::PathLoadedFromFile);
@@ -580,7 +590,7 @@ void Audio::SetFoldersRep()
 			if (currentFolderPath.compare(previousFolderPath) != 0)
 			{
 				ps = new Interface::PlaylistSeparator(currentFolderPath);
-				ps->InitItem(counter);
+				ps->InitItem();
 				i->SetFolderRep(true);
 			}
 			else
@@ -627,7 +637,7 @@ void Audio::ResizeAllContainers(int size)
 
 			s32 newSize = currentContainersSize + size;
 			std::vector<std::wstring> tempLoadedPathsVec(newSize);
-			std::vector<AudioObject*> tempAudioObjectVec(newSize);
+			std::vector<std::shared_ptr<AudioObject>> tempAudioObjectVec(newSize);
 			std::vector<std::pair<s32*, Interface::Button*>> tempPlaylistButtonsVec(newSize);
 
 			for (s32 i = 0; i < indexOfDroppedOnItem; i++)
@@ -668,11 +678,11 @@ void Audio::ResizeAllContainers(int size)
 
 void Audio::DeallocateAudioItems()
 {
-	for (s32 i = 0; i < m_AudioObjectContainer.size(); i++)
+	/*for (s32 i = 0; i < m_AudioObjectContainer.size(); i++)
 	{
 		delete m_AudioObjectContainer[i];
 		m_AudioObjectContainer[i] = nullptr;
-	}
+	}*/
 
 	// Vector's destructor is called automatically so I dont have to clear them(recheck all containers)
 	m_AudioObjectContainer.clear();
@@ -735,7 +745,7 @@ Audio::AudioObjectContainer& Audio::Object::GetAudioObjectContainer()
 	return m_AudioObjectContainer;
 }
 
-Audio::AudioObject* Audio::Object::GetAudioObject(s32 id)
+std::shared_ptr<Audio::AudioObject> Audio::Object::GetAudioObject(s32 id)
 {
 	if (id < m_AudioObjectContainer.size() && id >= 0 &&
 		m_AudioObjectContainer.empty() == false &&

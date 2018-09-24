@@ -46,6 +46,10 @@ namespace MP
 		ButtonContainer			mdButtonsContainer;
 		Window::OptionsWindow	mdOptionsWindow;
 		SDL_Cursor*				mdCursor;
+		Interface::Movable*		mdPlaylistMovableLeft;
+		Interface::Movable*		mdPlaylistMovableRight;
+		Interface::Movable*		mdPlaylistMovableBottom;
+		Interface::Button*		mdAddFilesButton;
 
 		std::atomic<bool> fileBrowserFinished(false);
 		
@@ -91,7 +95,7 @@ namespace MP
 
 		void PlaylistFileExplorer();
 
-		void UpdateOptionsWindow();
+		void UpdateInterfaceObjects();
 
 		void DebugStart();
 
@@ -114,7 +118,16 @@ namespace MP
 		mdDefaultWidth = 500.f;
 		mdDefaultHeight = 350.f;
 
-		new Interface::Movable(glm::vec2(mdDefaultWidth, 20), glm::vec2(0.f, 5.f));
+		new Interface::Movable(glm::vec2(mdDefaultWidth, 40), glm::vec2(0.f, 0.f));
+		//new Interface::Movable(glm::vec2(20, Data::_DEFAULT_PLAYER_SIZE.y), glm::vec2(0.f, 0.f));
+		//new Interface::Movable(glm::vec2(20, Data::_DEFAULT_PLAYER_SIZE.y), glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x - 20, 0.f));
+		s32 sizeX = 110;
+		new Interface::Movable(glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x, sizeX), glm::vec2(0.f, Data::_DEFAULT_PLAYER_SIZE.y - sizeX));
+		sizeX = 20;
+		mdPlaylistMovableLeft	= new Interface::Movable(glm::vec2(sizeX, Window::windowProperties.mApplicationHeight), glm::vec2(0.f));
+		mdPlaylistMovableRight	= new Interface::Movable(glm::vec2(sizeX, Window::windowProperties.mApplicationHeight), glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x - sizeX, 0.f));
+		sizeX = 25;
+		mdPlaylistMovableBottom = new Interface::Movable(glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x, sizeX), glm::vec2(0.f, Window::windowProperties.mApplicationHeight - sizeX));
 
 
 		mdResizableTop		= Interface::Resizable(glm::vec2(mdCurrentWidth, 5.f), glm::vec2(0, 0.f));
@@ -161,7 +174,7 @@ namespace MP
 
 		new Interface::Button(Input::ButtonType::SliderPlaylist, Data::_PLAYLIST_SCROLL_BAR_SIZE, Data::_PLAYLIST_SCROLL_BAR_POS);
 
-		new Interface::Button(Input::ButtonType::PlaylistAddFile, Data::_PLAYLIST_ADD_BUTTON_SIZE, Data::_PLAYLIST_ADD_BUTTON_POS);
+		mdAddFilesButton = new Interface::Button(Input::ButtonType::PlaylistAddFile, Data::_PLAYLIST_ADD_BUTTON_SIZE, Data::_PLAYLIST_ADD_BUTTON_POS);
 		// temporary
 		//new Interface::Button(Input::ButtonType::PlaylistAddFolder, Data::_PLAYLIST_ADD_BUTTON_SIZE, Data::_PLAYLIST_ADD_BUTTON_POS);
 
@@ -201,7 +214,7 @@ namespace MP
 		auto sepCon = Interface::Separator::GetContainer();
 		for (u16 i = 0; i < Interface::Separator::GetSize(); i++)
 		{
-			App::ProcesPlaylistButton(sepCon->at(i).second);
+			//App::ProcesPlaylistButton(sepCon->at(i).second);
 		}
 
 		// Proces interface buttons
@@ -221,6 +234,7 @@ namespace MP
 		}
 
 		PlaylistFileExplorer();
+		UpdateInterfaceObjects();
 	}
 
 	void UI::Render()
@@ -247,8 +261,8 @@ namespace MP
 
 		for (size_t i = 0; i < Interface::m_InterfaceButtonContainer.size(); i++)
 		{
-			delete Interface::m_InterfaceButtonContainer[i].second;
-			Interface::m_InterfaceButtonContainer[i].second = nullptr;
+			//delete Interface::m_InterfaceButtonContainer[i].second;
+			//Interface::m_InterfaceButtonContainer[i].second = nullptr;
 		}
 		Interface::m_InterfaceButtonContainer.clear();
 
@@ -267,7 +281,6 @@ namespace MP
 		s32 len = Audio::Object::GetSize();
 		while(Audio::Object::GetSize() > 0)
 		{
-
 			Playlist::DeleteMusic(Audio::Object::GetSize() - 1);
 		}
 		Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
@@ -497,20 +510,18 @@ namespace MP
 			Shader::shaderDefault->setFloat("aspectXY", 0.8f);
 			Shader::shaderDefault->setMat4("model", model);
 			Shader::Draw(Shader::shaderDefault);
-			
 
-			for (u16 i = 0; i < Interface::PlaylistButton::GetSize(); i++)
+			for(auto & i : Audio::Object::GetAudioObjectContainer())
 			{
-				if (Interface::PlaylistButton::GetButton(i) != nullptr)
+				if (i != nullptr)
 				{
-
-					if (Interface::PlaylistButton::GetButton(i)->GetButtonPos() != glm::vec2(POS_INVALID))
+					if (i->GetPlaylistItemPos() != glm::vec2(POS_INVALID))
 					{
 						model = glm::mat4();
-						model = glm::translate(model, glm::vec3(Interface::PlaylistButton::GetButton(i)->GetButtonPos(), 1.f));
-						model = glm::scale(model, glm::vec3(Interface::PlaylistButton::GetButton(i)->GetButtonSize(), 1.f));;
-						Shader::shaderDefault->setFloat("aspectXY", Interface::PlaylistButton::GetButton(i)->GetButtonSize().x / Interface::PlaylistButton::GetButton(i)->GetButtonSize().y);
-						Shader::shaderDefault->setMat4("model", model);
+						model = glm::translate(model, glm::vec3(i->GetPlaylistItemPos(), 1.f));
+						model = glm::scale(model, glm::vec3(i->GetButtonSize(), 1.f));;
+						Shader::shaderDefault->setFloat("aspectXY", i->GetButtonSize().x / i->GetButtonSize().y);
+						Shader::shaderDefault->setMat4("model", model);		
 						Shader::Draw(Shader::shaderDefault);;
 					}
 				}
@@ -532,13 +543,12 @@ namespace MP
 				}
 			}
 
-			auto sepCon = Interface::Separator::GetContainer();
-			for (u16 i = 0; i < Interface::Separator::GetSize(); i++)
+			for (auto & i : *Interface::Separator::GetContainer())
 			{
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(sepCon->at(i).second->GetButtonPos(), 1.f));
-				model = glm::scale(model, glm::vec3(sepCon->at(i).second->GetButtonSize(), 1.f));;
-				Shader::shaderDefault->setFloat("aspectXY", sepCon->at(i).second->GetButtonSize().x / sepCon->at(i).second->GetButtonSize().y);
+				model = glm::translate(model, glm::vec3(i.second->GetPlaylistItemPos(), 1.f));
+				model = glm::scale(model, glm::vec3(i.second->GetButtonSize(), 1.f));;
+				Shader::shaderDefault->setFloat("aspectXY", i.second->GetButtonSize().x / i.second->GetButtonSize().y);
 				Shader::shaderDefault->setMat4("model", model);
 				Shader::Draw(Shader::shaderDefault);;
 			}
@@ -722,12 +732,14 @@ namespace MP
 			*/
 			std::sort(Graphics::MP::GetPlaylistObject()->multipleSelect.begin(), 
 					  Graphics::MP::GetPlaylistObject()->multipleSelect.end(),
-				[&](const s32* first, const s32* second) -> bool { return *first < *second; });
+				[&](const s32* first, const s32* second) -> bool { return *first > *second; });
 
-			s32 temp = *Graphics::MP::GetPlaylistObject()->multipleSelect[0];
-			for (s32 j = 0; j < Graphics::MP::GetPlaylistObject()->multipleSelect.size(); j++)
+			// WHY WHEN IT IS SORTED IN DESCENDING ORDER IT DELETES FASTER????????????????
+			s32 temp = *Graphics::MP::GetPlaylistObject()->multipleSelect.back();
+			auto multipleSelect = Graphics::MP::GetPlaylistObject()->multipleSelect;
+			for (auto & i : multipleSelect)
 			{
-				Playlist::DeleteMusic(*Graphics::MP::GetPlaylistObject()->multipleSelect[j]);
+				Playlist::DeleteMusic(*i);
 			}
 			Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
 			
@@ -904,6 +916,17 @@ namespace MP
 			fileBrowserFinished = false;
 		}
 
+	}
+
+	void UI::UpdateInterfaceObjects()
+	{
+		mdPlaylistMovableLeft->m_Size = glm::vec2(mdPlaylistMovableLeft->m_Size.x, Window::windowProperties.mApplicationHeight);
+		mdPlaylistMovableRight->m_Size = glm::vec2(mdPlaylistMovableRight->m_Size.x, Window::windowProperties.mApplicationHeight);
+		mdPlaylistMovableBottom->m_Pos = glm::vec2(mdPlaylistMovableBottom->m_Pos.x, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
+		mdPlaylistMovableBottom->m_Size = glm::vec2(mdPlaylistMovableBottom->m_Size.x, Window::windowProperties.mApplicationHeight - Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
+
+		mdAddFilesButton->SetButtonPos(Data::_PLAYLIST_ADD_BUTTON_POS);
+		mdAddFilesButton->SetButtonSize(Data::_PLAYLIST_ADD_BUTTON_SIZE);
 	}
 
 	Window::OptionsWindow* UI::GetOptionsWindow()

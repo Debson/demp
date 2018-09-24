@@ -46,10 +46,13 @@ namespace Graphics
 		GLuint play_button, stop_button, next_button, previous_button, shuffle_button, repeat_button, dot_icon, playlist_button,
 			   playlist_add_file;
 		GLuint music_progress_bar;
+		GLuint playlist_add_file_icon, playlist_add_folder_icon, playlist_add_textbox_background, playlist_add_textbox_select;
 
 
 
 		std::vector<s32> playlistSeparatorsIDsVec;
+
+		std::vector<std::shared_ptr<Audio::AudioObject>> audioVecToRenderTemp;
 
 
 		//std::vector<s32> indexesToRenderVec;
@@ -90,7 +93,15 @@ namespace Graphics
 
 		b8 windowResizeStarted(false);
 
+		b8 reloadAfterFilesLoaded(false);
+
 		s32 visibleSeparatorsCount;
+
+		b8 useAudioVecTemp(false);
+
+
+		s32 previousMinPosToRender;
+		s32 previousMaxPosToRender;
 
 		//
 		b8 musicInfoScrollTextLoaded(false);
@@ -206,11 +217,13 @@ namespace Graphics
 													  Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_POS.y +
 													  Data::_PLAYLIST_ADD_BUTTON_SIZE.y),
 											Shader::shaderDefault);
+
+		m_AddFileTextBox.SetTextColor(Color::White);
+		m_AddFileTextBox.SetBackgroundTexture(playlist_add_textbox_background);
+		m_AddFileTextBox.SetSelectTexture(playlist_add_textbox_select);
 		m_AddFileTextBox.SetItemScale(1.f);
-		m_AddFileTextBox.AddItem(Strings::_PLAYLIST_ADD_FILE);
-		m_AddFileTextBox.AddItem(Strings::_PLAYLIST_ADD_FOLDER);
-		m_AddFileTextBox.AddItem(L"hehe");
-		m_AddFileTextBox.SetColor(Color::Grey);
+		m_AddFileTextBox.AddItem(Strings::_PLAYLIST_ADD_FILE, playlist_add_file_icon);
+		m_AddFileTextBox.AddItem(Strings::_PLAYLIST_ADD_FOLDER, playlist_add_folder_icon);
 	}
 
 	void MP::InitializeConfig()
@@ -1014,7 +1027,8 @@ namespace Graphics
 			m_PlaylistBarSlider->GetButtonSize().y = scaleY;
 
 
-			if (App::Input::IsKeyDown(App::KeyCode::MouseLeft))
+			if (App::Input::IsKeyDown(App::KeyCode::MouseLeft) && 
+				State::CheckState(State::FilesDroppedNotLoaded) == false)
 			{
 
 				App::Input::GetGlobalMousePosition(&mouseX, &mouseY);
@@ -1212,6 +1226,9 @@ namespace Graphics
 
 
 
+			previousMinPosToRender = minPosToRender;
+			previousMaxPosToRender = maxPosToRender;
+
 
 			if (mdEngine::App::Input::IsScrollForwardActive() && GetPlaylistObject()->hasFocus())
 			{
@@ -1237,7 +1254,8 @@ namespace Graphics
 		
 			if ((State::CheckState(State::AudioChanged) == true ||
 				State::CheckState(State::InitialLoadFromFile) == true) &&
-				GetPlaylistObject()->GetPlayingID() >= 0)
+				State::CheckState(State::FilesDroppedNotLoaded) == false &&
+				GetPlaylistObject()->GetPlayingID() >= 0 )
 			{
 				s32 playingID = GetPlaylistObject()->GetPlayingID();
 
@@ -1282,7 +1300,9 @@ namespace Graphics
 			/*if(displayedItems > audioCon.size())
 				playlistPositionOffset = 0;*/
 
-			if (abs(playlistPositionOffsetPrevious - playlistPositionOffset) > 0)
+
+			if (abs(playlistPositionOffsetPrevious - playlistPositionOffset) > 0 &&
+				State::CheckState(State::FilesDroppedNotLoaded) == false)
 			{
 				// Reduce loop iterations(now most of the time O(1))
 
@@ -1308,13 +1328,25 @@ namespace Graphics
 					}
 				}
 
+				/*for (s32 i = previousMinPosToRender - 5 > 0 ? previousMinPosToRender - 5 : previousMinPosToRender;
+					i < (previousMaxPosToRender + 5 < audioCon.size() ? previousMaxPosToRender + 5 : previousMaxPosToRender);
+					i++)
+				{
+					audioCon[i]->DeleteTexture();
+				}*/
+
 				playlistPositionOffsetPrevious = playlistPositionOffset;
 
 				loadItemsTextures = true;
 			}
+			else if (abs(playlistPositionOffsetPrevious - playlistPositionOffset) > 0)
+			{
+				playlistPositionOffset += playlistPositionOffsetPrevious - playlistPositionOffset;
+			}
 
 			//displayedItems -= (visibleSeparatorsCount * separatorH) / itemH;
 
+			//if(State::CheckState(State::FilesDroppedNotLoaded) == false)
 			RenderScrollBar(&playlistPositionOffset, displayedItems, audioCon.size());
 
 			if (playlistPositionOffset < 0)
@@ -1322,7 +1354,7 @@ namespace Graphics
 				playlistPositionOffset = 0;
 			}
 
-			if (State::CheckState(State::ContainersResized) == false)
+			if (State::CheckState(State::ContainersResized) == false && audioCon.back() != NULL)
 			{
 				if (audioCon.back()->GetPlaylistItemPos().y + itemH < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y &&
 					playlistPositionOffset > 0)
@@ -1352,6 +1384,8 @@ namespace Graphics
 			{
 				minPosToRender++;
 			}
+
+		
 
 
 			if (minPosToRender < 0)
@@ -1450,35 +1484,42 @@ namespace Graphics
 				loadItemsTextures = true;
 			}
 
+			if (State::CheckState(State::FilesDroppedNotLoaded) == true &&
+				audioVecToRenderTemp.empty() == true)
+			{
+				md_log("new files incoming!");
+				for (auto i : GetPlaylistObject()->GetIndexesToRender())
+				{
+				
+					audioVecToRenderTemp.push_back(audioCon[i]);
+				}
+				useAudioVecTemp = true;
+			}
+			else if(State::CheckState(State::FilesDroppedNotLoaded) == false)
+			{
+				useAudioVecTemp = false;
+				audioVecToRenderTemp.clear();
+			}
+
+
 			if (loadItemsTextures == true)
 			{
-
 				std::vector<s32> indexes;
-				//md_log_compare(minPosToRender, maxPosToRender);
-
-				if (State::CheckState(State::AudioAdded) == true && Audio::Object::GetSize() > 0 && 
-					State::CheckState(State::PathLoadedFromFileVolatile) == false)
+				
+				// The most reliable solution... A bit slow though
+				for (auto & i : audioCon)
 				{
-					s32 diff = 0;
-					s32 count = maxPosToRender - minPosToRender;
-					for (s32 i = minPosToRender; i < Audio::GetDroppedOnIndex(); i++)
-					{
-						std::cout << i << ", ";
-						diff++;
-					}
+					i->DeleteTexture();
+				}
 
-					for (s32 i = maxPosToRender + Audio::GetFilesAddedCount(); i < maxPosToRender + Audio::GetFilesAddedCount() + count - diff; i++)
-					{
-						if (i > Audio::Object::GetSize() - 1)
-							break;
-						std::cout << i << ", ";
-					}
-
-					std::cout << std::endl;
+				for (auto & i : *sepCon)
+				{
+					i.second->DeleteTexture();
 				}
 
 				for (s32 i = minPosToRender; i < maxPosToRender; i++)
 				{
+					//if(coverGap == false)
 					indexes.push_back(i);
 					audioCon[i]->ReloadTextTexture();
 				}
@@ -1502,6 +1543,7 @@ namespace Graphics
 
 				GetPlaylistObject()->SetIndexesToRender(indexes);
 				loadItemsTextures = false;
+				reloadAfterFilesLoaded = false;
 			}
 
 			// ACTUAL RENDERING
@@ -1524,25 +1566,34 @@ namespace Graphics
 			}
 
 			// Render VISIBLE playlist items
-			for (s32 i = minPosToRender; i < maxPosToRender; i++)
+			for (auto i : GetPlaylistObject()->GetIndexesToRender())
 			{
-				if (audioCon[i] == NULL)
+				auto item = audioCon[i];
+				if (useAudioVecTemp == true)
+					item = audioVecToRenderTemp[i];
+
+				if (item == NULL)
 					break;
 
-				if (audioCon[i]->HasTexture() == false)
+				if (item->HasTexture() == false)
 				{
 					Shader::shaderDefault->setVec3("color", Color::White);
 					continue;
 				}
-				audioCon[i]->DrawItem(main_foreground);
+				item->DrawItem(main_foreground);
 			}
+
 
 			
 			for (auto & i : GetPlaylistObject()->multipleSelect)
 			{
 				if (*i < 0 && *i > Audio::Object::GetSize() - 1)
 					break;
-				audioCon[*i]->DrawDottedBorder();
+				if (*i >= GetPlaylistObject()->GetIndexesToRender().front() &&
+					*i <= GetPlaylistObject()->GetIndexesToRender().back())
+				{
+					audioCon[*i]->DrawDottedBorder();
+				}
 			}
 
 			Shader::shaderDefault->use();
@@ -1605,13 +1656,10 @@ namespace Graphics
 				playlistAddFileActive = false;
 			}
 
-			if (m_AddFileTextBox.isItemPressed(L"hehe"))
-			{
-				std::wcout << L"hehehe\n";
-			}
 		}
 
-		model = glm::translate(model, glm::vec3(glm::vec2(Data::_PLAYLIST_ADD_BUTTON_POS.x, Window::windowProperties.mApplicationHeight - 35.f), 0.6));
+		// Add button
+		model = glm::translate(model, glm::vec3(Data::_PLAYLIST_ADD_BUTTON_POS, 0.6));
 		model = glm::scale(model, glm::vec3(Data::_PLAYLIST_ADD_BUTTON_SIZE, 1.0));
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setVec3("color", color);
@@ -1802,6 +1850,12 @@ namespace Graphics
 		playlist_add_file		= mdLoadTexture("assets/playlist_add.png");
 
 		music_progress_bar		= mdLoadTexture("assets/music_progress_bar.png");
+
+
+		playlist_add_file_icon			= mdLoadTexture("assets/playlist_add_file_icon.png");;
+		playlist_add_folder_icon		= mdLoadTexture("assets/playlist_add_folder_icon.png");
+		playlist_add_textbox_background = mdLoadTexture("assets/playlist_add_files_textbox.png");
+		playlist_add_textbox_select		= mdLoadTexture("assets/playlist_add_select_background.png");
 
 
 		deltaVolumePos = (s32)(mdEngine::MP::Playlist::GetVolume() * 100.f * 0.9f);

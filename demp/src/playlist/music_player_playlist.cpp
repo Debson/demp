@@ -134,7 +134,7 @@ namespace MP
 		}
    
 #ifdef _WIN32_
-		b8 SongObject::load(Audio::AudioObject* audioObject)
+		b8 SongObject::load(std::shared_ptr<Audio::AudioObject> audioObject)
 		{
 			FILE* file = NULL;
 			if (_wfopen_s(&file, audioObject->GetPath().c_str(), L"rb+") != 0)
@@ -778,8 +778,11 @@ namespace MP
 
 		void DeleteMusic(s32 pos)
 		{
-			if (pos < 0)
+			if (State::CheckState(State::FilesDroppedNotLoaded) == true ||
+				pos < 0)
+			{
 				return;
+			}
 
 			lastDeletionTimer.Start();
 		
@@ -831,16 +834,28 @@ namespace MP
 
 		b8 StartNextSong()
 		{
-			if (RamLoadedMusic.m_ID + 1 >= Audio::Object::GetSize())
+
+			/*	Uncomment so music won't repeat after it reaches last song on the playlist or 
+				last song in the shuffle container
+			*/
+
+			/*if (RamLoadedMusic.m_ID + 1 >= Audio::Object::GetSize() &&
+				mdShuffleMusic == false)
 			{
 				mdStartNewOnEnd = false;
 			}
-			return mdMPStarted == true &&
-				IsPlaying() == false &&
-				mdRepeatMusic == false &&
-				mdStartNewOnEnd == true &&
-				State::CheckState(State::AudioChosen) == false &&
-				RamLoadedMusic.m_ID + 1 < Audio::Object::GetSize();
+
+			if (mdCurrentShuffleMusicPos + 1 >= mdShuffleMusicPosContainer.size() && 
+				mdShuffleMusic == true)
+			{
+				mdStartNewOnEnd = false;
+			}*/
+
+			return	mdMPStarted == true &&
+					IsPlaying() == false &&
+					mdRepeatMusic == false &&
+					mdStartNewOnEnd == true &&
+					State::CheckState(State::AudioChosen) == false;
 		}
 
 		b8 IsLoaded()

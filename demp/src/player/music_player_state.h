@@ -35,6 +35,8 @@ namespace mdEngine
 		enum MusicPlayerState : u64
 		{
 			FileDropped				= (1llu << 18),
+			FilesDroppedNotLoaded	= (1llu << 42),
+			DropComplete			= (1llu << 43),
 			ContainersResized		= (1llu << 19),
 			PlaylistMovement		= (1llu << 20),
 			VolumeChanged			= (1llu << 21),

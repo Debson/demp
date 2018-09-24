@@ -154,15 +154,17 @@ void mdEngine::SetupSDL()
 		icon.hIcon = LoadIcon(NULL, IDI_INFORMATION);
 		icon.cbSize = sizeof(icon);
 		icon.hWnd = wmInfo.info.win.window;
-		strcpy_s(icon.szTip, "Test tip");
+		strcpy_s(icon.szTip, "demp");
 
 		bool success = Shell_NotifyIcon(NIM_ADD, &icon);
-
-
 	}
 
-#endif
+#else
 
+
+
+
+#endif
 }
 
 void mdEngine::SetupOpenGL()
@@ -309,9 +311,13 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				break;
 			case (SDL_DROPFILE):
 			{
-#ifdef _WIN32_
+				if (State::CheckState(State::FilesLoaded) == false && State::CheckState(State::PlaylistEmpty) == false)
+					break;
 				State::SetState(State::FileDropped);
 				State::ResetState(State::PathLoadedFromFileVolatile);
+				State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
+				State::ResetState(State::DropComplete);
+#ifdef _WIN32_
 				std::wstring p(utf8_to_utf16(event.drop.file));
 				Audio::PushToPlaylist(p);
 #else
@@ -320,6 +326,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				SDL_free(SDL_GetClipboardText());
 				break;
 			}
+			case (SDL_DROPCOMPLETE):
+				State::SetState(State::DropComplete);
+				break;
 			case (SDL_MOUSEWHEEL):
 				UpdateScrollPosition(event.wheel.x, event.wheel.y);
 				break;
@@ -457,7 +466,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 			SDL_GL_MakeCurrent(mdWindow, gl_context);
 #ifdef _DEBUG_
-			glClearColor(MP::UI::ClearColor.x, MP::UI::ClearColor.y, MP::UI::ClearColor.z, MP::UI::ClearColor.w);
+			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			if (State::CheckState(State::Window::Minimized) == false ||
@@ -478,7 +487,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 #else
-			glClearColor(1.f, 254.f / 255.f, 1.f, 1.f);
+			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, Color::TransparentClearColor.w);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			if (State::CheckState(State::Window::Minimized) == false ||
 				State::CheckState(State::Window::InTray) == false)
@@ -517,7 +526,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			}
 		}
 	}
-
 
 void mdEngine::StopRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
@@ -577,6 +585,7 @@ void mdEngine::Window::HideToTray()
 {
 #ifdef _WIN32_
 
+	//SDL_GL_DeleteContext(gl_context);
 	State::SetState(State::Window::InTray);
 	MinimizeWindow();
 	HideWindow();

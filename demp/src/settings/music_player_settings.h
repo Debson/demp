@@ -163,12 +163,16 @@ namespace MP
 		const glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, 20.f);;
 
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_POS;
-		const glm::vec2 _PLAYLIST_ADD_BUTTON_SIZE = glm::vec2(35.f, 35.f);
+		extern glm::vec2 _PLAYLIST_ADD_BUTTON_SIZE;
 
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_POS;
-		const glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE = glm::vec2(120.f, 100);
+		const glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE = glm::vec2(120.f, 60);
 
 		const s16 _TEXT_BOX_ITEM_HEIGHT = 20;
+
+		extern glm::vec2 _PLAYLIST_ADD_ICON_POS;
+		const glm::vec2 _PLAYLIST_ADD_ICON_SIZE = glm::vec2(_TEXT_BOX_ITEM_HEIGHT - 4);
+
 
 		static f32 textOffsetY = 1.f;
 		const glm::vec2 _TEXT_ITEMS_DURATION_POS = glm::vec2(20, mdDefaultHeight + textOffsetY);

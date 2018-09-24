@@ -39,9 +39,11 @@ namespace App
 
 	void ProcessMovable(Interface::Movable* bar);
 
+	void ProcessButton(std::shared_ptr<Interface::Button> button);
+
 	void ProcessButton(Interface::Button* button);
 
-	void ProcesPlaylistButton(Interface::PlaylistItem* button);
+	void ProcesPlaylistButton(std::shared_ptr<Interface::PlaylistItem> button);
 
 	void ProcessResizableTop(Interface::Resizable* barTop, Interface::Resizable* barBottom);
 

@@ -19,7 +19,7 @@ namespace mdEngine
 		ResetState(AudioChosen);
 		ResetState(AudioChanged);
 		ResetState(ContainersResized);
-		ResetState(FileDropped);
+		//ResetState(FileDropped);
 		ResetState(AudioHidden);
 	}
 
@@ -38,7 +38,6 @@ namespace mdEngine
 		ResetState(AudioChosen);
 		ResetState(AudioChanged);
 		ResetState(ContainersResized);
-		ResetState(FileDropped);
 		ResetState(AudioHidden);
 		ResetState(Window::PositionChanged);
 		ResetState(State::DeletionFinished);

@@ -97,11 +97,19 @@ namespace mdEngine
 		{
 			dot->Draw(*shaderBorder);
 		}
+
+		void Shader::Free()
+		{
+			delete shaderDefault;
+			delete shaderBorder;
+			delete shaderWindow;
+			//delete quad;
+			//delete dot;
+		}
 	}
 
 	void Graphics::StartGraphics()
 	{
-		
 		Text::InitializeText();
 		Shader::InitShader();
 		MP::StartMainWindow();
@@ -118,6 +126,7 @@ namespace mdEngine
 	}
 	void Graphics::CloseGraphics()
 	{
+		Shader::Free();
 		MP::CloseMainWindow();
 	}
 

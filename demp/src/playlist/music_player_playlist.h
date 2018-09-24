@@ -37,7 +37,7 @@ namespace MP
 
 
 #ifdef _WIN32_
-			b8 load(Audio::AudioObject* audioObject);
+			b8 load(std::shared_ptr<Audio::AudioObject> audioObject);
 			std::wstring m_Path;
 #else
 			b8 init(const char* songPath);

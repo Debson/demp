@@ -33,20 +33,14 @@ namespace mdEngine
 
 	void Interface::CloseInterface()
 	{
-		for (s32 i = 0; i < m_PlaylistSeparatorContainer.size(); i++)
+		/*for (s32 i = 0; i < m_PlaylistButtonsContainer.size(); i++)
 		{
-			delete m_PlaylistSeparatorContainer[i].second;
-			m_PlaylistSeparatorContainer[i].second = nullptr;
-		}
-
-		for (s32 i = 0; i < m_PlaylistButtonsContainer.size(); i++)
-		{
-			//delete m_PlaylistButtonsContainer[i].second;
+			delete m_PlaylistButtonsContainer[i].second;
 			m_PlaylistButtonsContainer[i].second = nullptr;
-		}
+		}*/
 
-		m_PlaylistSeparatorContainer.clear();
 		m_PlaylistButtonsContainer.clear();
+		m_PlaylistSeparatorContainer.clear();
 	}
 
 	void Interface::PrintSeparatorAndItsSubFiles()
@@ -138,7 +132,10 @@ namespace mdEngine
 		m_ClickCount = 0;
 	}
 
-	Interface::PlaylistItem::~PlaylistItem() { }
+	Interface::PlaylistItem::~PlaylistItem() 
+	{ 
+		DeleteTexture();
+	}
 
 	void Interface::PlaylistItem::InitItem(s32* id)
 	{
@@ -368,7 +365,7 @@ namespace mdEngine
 		m_ButtonSize = Data::_PLAYLIST_SEPARATOR_SIZE;
 	}
 
-	void Interface::PlaylistSeparator::InitItem(s32 posOfFirstFile)
+	void Interface::PlaylistSeparator::InitItem()
 	{
 		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
@@ -384,7 +381,9 @@ namespace mdEngine
 
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 
-		m_PlaylistSeparatorContainer.push_back(std::make_pair(m_Path, this));
+		std::shared_ptr<PlaylistSeparator> shrPtr(this);
+
+		m_PlaylistSeparatorContainer.push_back(std::make_pair(m_Path, shrPtr));
 	}
 
 	void Interface::PlaylistSeparator::DrawItem(GLuint texture)
@@ -498,24 +497,32 @@ namespace mdEngine
 	/* *************************************************** */
 	Interface::TextBoxItem::TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos,
 																 glm::vec2 textSize, glm::vec2 textPos,
-										GLuint tex)
+										GLuint textTexture, GLuint iconTexture)
 	{
 		m_ButtonPos = itemPos;
 		m_ButtonSize = itemSize;
 		m_TextPos = textPos;
 		m_TextSize = textSize;
-		m_TextTexture = tex;
+		m_TextTexture = textTexture;
+		m_IconTexture = iconTexture;
 		m_InterfaceButtonContainer.push_back(make_pair(name, this));
 	}
 
 	void Interface::TextBoxItem::UpdateTextBoxItemPos(glm::vec2 pos)
 	{
-		m_ButtonPos = glm::vec2(pos.x, pos.y + m_Index * Data::_TEXT_BOX_ITEM_HEIGHT);
-		m_TextPos = glm::vec2(m_ButtonPos.x + 40.f, m_ButtonPos.y);
+		s32 itemOffsetY = 5;
+		s32 textOffsetX = 45;
+		m_ButtonPos = glm::vec2(pos.x, pos.y + m_Index * Data::_TEXT_BOX_ITEM_HEIGHT + itemOffsetY);
+		m_TextPos = glm::vec2(m_ButtonPos.x + textOffsetX, m_ButtonPos.y);
 	}
 
 	/* *************************************************** */
 	Interface::TextBox::TextBox() { }
+
+	Interface::TextBox::~TextBox()
+	{
+		m_Items.clear();
+	}
 
 	Interface::TextBox::TextBox(MP::UI::Input::ButtonType code, glm::vec2 size, glm::vec2 pos, mdShader* shader) : 
 								m_Shader(shader)
@@ -524,6 +531,7 @@ namespace mdEngine
 		m_Size = size;
 		m_Type = code;
 		m_ItemsCount = 0;
+		m_TextBoxBackgroundTexture = 0;
 		new Button(code, size, pos);
 	}
 
@@ -534,32 +542,51 @@ namespace mdEngine
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(m_Pos, 0.7));
 		model = glm::scale(model, glm::vec3(m_Size, 1.0));
-		m_Shader->setBool("plain", true);
-		m_Shader->setVec3("color", m_Color);
+		//m_Shader->setBool("plain", true);
+		m_Shader->setVec3("color", Color::White);
 		m_Shader->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindTexture(GL_TEXTURE_2D, m_TextBoxBackgroundTexture);
 		Graphics::Shader::Draw(m_Shader);
-		m_Shader->setBool("plain", false);
-		m_Shader->setVec3("color", 1.f, 1.f, 1.f);
+		//m_Shader->setBool("plain", false);
 
 		for (s32 i = 0; i < m_Items.size(); i++)
 		{
-			TextBoxItem* item = m_Items[i];
-			//render item rect
+			auto item = m_Items[i];
+			/*//render item rect
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(item->m_ButtonPos, 0.7));
+			model = glm::translate(model, glm::vec3(item->m_ButtonPos, 0.6));
 			model = glm::scale(model, glm::vec3(item->m_ButtonSize, 1.0));;
 			m_Shader->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, 0);
-			Graphics::Shader::Draw(m_Shader);
+			Graphics::Shader::Draw(m_Shader);*/
 
-			//render text on the item
-			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(item->m_TextPos, 0.8));
-			model = glm::scale(model, glm::vec3(item->m_TextSize, 1.0));;
-			m_Shader->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, item->m_TextTexture);
-			Graphics::Shader::Draw(m_Shader);
+
+			if (item->m_IconTexture > 0)
+			{
+				model = glm::mat4();
+				model = glm::translate(model, glm::vec3(Data::_PLAYLIST_ADD_ICON_POS.x, item->m_TextPos.y + (item->m_TextSize.y - Data::_PLAYLIST_ADD_ICON_SIZE.y) / 2.f, 0.8));
+				model = glm::scale(model, glm::vec3(Data::_PLAYLIST_ADD_ICON_SIZE, 1.0));;
+				m_Shader->setMat4("model", model);
+				glBindTexture(GL_TEXTURE_2D, item->m_IconTexture);
+				Graphics::Shader::Draw(m_Shader);
+			}
+			if(item->hasFocus == true)
+				item->SetTextColor(Color::Green);
+			else
+				item->SetTextColor(Color::Grey);
+
+			item->DrawString();
+
+			if (item->hasFocus == true)
+			{
+				s32 offsetX = 3;
+				model = glm::mat4();
+				model = glm::translate(model, glm::vec3(glm::vec2(m_Pos.x + offsetX, item->m_ButtonPos.y), 1.0));
+				model = glm::scale(model, glm::vec3(glm::vec2(m_Size.x - 2 * offsetX, item->m_ButtonSize.y), 1.0));;
+				m_Shader->setMat4("model", model);
+				glBindTexture(GL_TEXTURE_2D, m_TextBoxSelectTexture);
+				Graphics::Shader::Draw(m_Shader);
+			}
 		}
 
 	}
@@ -570,6 +597,16 @@ namespace mdEngine
 		{
 			m_Items[i]->UpdateTextBoxItemPos(m_Pos);
 		}
+	}
+
+	void Interface::TextBox::SetBackgroundTexture(GLuint tex)
+	{
+		m_TextBoxBackgroundTexture = tex;
+	}
+
+	void Interface::TextBox::SetSelectTexture(GLuint tex)
+	{
+		m_TextBoxSelectTexture = tex;
 	}
 
 	void Interface::TextBox::SetPos(glm::vec2 pos)
@@ -614,18 +651,17 @@ namespace mdEngine
 		m_ItemSize = itemSize;
 	}
 
-	void Interface::TextBox::AddItem(const std::wstring itemName)
+	void Interface::TextBox::AddItem(const std::wstring itemName, GLuint iconTexture)
 	{
-		SDL_Color color = { 0, 0, 0 };
-		GLuint tex = Text::LoadText(Data::_MUSIC_PLAYER_FONT, itemName, color);
+		GLuint tex = Text::LoadText(Data::_MUSIC_PLAYER_FONT, itemName, m_TextColorSDL);
 
 		glm::ivec2 textSize;
 		std::string name = utf16_to_utf8(itemName);
 		TTF_SizeText(Data::_MUSIC_PLAYER_FONT, name.c_str(), &textSize.x, &textSize.y);
 
-		TextBoxItem* item = new TextBoxItem(itemName, glm::vec2(m_Size.x, Data::_TEXT_BOX_ITEM_HEIGHT), glm::vec2(m_Pos.x, m_Pos.y + m_ItemsCount * Data::_TEXT_BOX_ITEM_HEIGHT),
-													   glm::vec2(textSize) * m_ItemScale, glm::vec2(m_Pos.x + 40.f, m_Pos.y + m_ItemsCount * textSize.y * m_ItemScale),
-											 tex);
+		auto item = std::make_shared<TextBoxItem>(itemName, glm::vec2(m_Size.x, Data::_TEXT_BOX_ITEM_HEIGHT), glm::vec2(m_Pos.x, m_Pos.y + m_ItemsCount * Data::_TEXT_BOX_ITEM_HEIGHT),
+																		  glm::vec2(textSize) * m_ItemScale, glm::vec2(m_Pos.x + 40.f, m_Pos.y + m_ItemsCount * textSize.y * m_ItemScale),
+																		  tex, iconTexture);
 		item->m_Index = m_ItemsCount;
 		m_Items.push_back(item);
 		m_ItemsCount++;
@@ -999,6 +1035,7 @@ namespace mdEngine
 		m_LeftTexture	= NULL;
 		m_RightTexture	= NULL;
 
+		// Buttons are deleted anyway
 		m_RightButton	= NULL;
 		m_LeftButton	= NULL;
 		m_DefaultButton = NULL;
@@ -1100,13 +1137,13 @@ namespace mdEngine
 		return &m_PlaylistSeparatorContainer;
 	}
 
-	Interface::PlaylistSeparator* Interface::Separator::GetSeparator(std::wstring text)
+	std::shared_ptr<Interface::PlaylistSeparator> Interface::Separator::GetSeparator(std::wstring text)
 	{
 		if (m_PlaylistSeparatorContainer.empty() == true)
 			return nullptr;
 
 		auto it = find_if(m_PlaylistSeparatorContainer.begin(), m_PlaylistSeparatorContainer.end(),
-			[&](std::pair<std::wstring, Interface::PlaylistSeparator*> const & ref) { return ref.first.compare(text) == 0; });
+			[&](std::pair<std::wstring, std::shared_ptr<Interface::PlaylistSeparator>> const & ref) { return ref.first.compare(text) == 0; });
 
 		if (it == m_PlaylistSeparatorContainer.end())
 			return nullptr;
@@ -1114,7 +1151,7 @@ namespace mdEngine
 		return it->second;
 	}
 
-	Interface::PlaylistSeparator* Interface::Separator::GetSeparatorByID(s32 id)
+	std::shared_ptr<Interface::PlaylistSeparator> Interface::Separator::GetSeparatorByID(s32 id)
 	{
 		if (m_PlaylistSeparatorContainer.empty() == true)
 			return nullptr;

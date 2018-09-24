@@ -58,6 +58,7 @@ namespace mdEngine
 		const glm::vec3 Silver(192.f / 255.f);
 		const glm::vec3 Orange(1.f, 140.f / 255.f, 0);
 		const glm::vec3 WhiteGlow(20.f);
+		const glm::vec3 TransparentClearColor(1.f, 254.f / 255.f, 1.f);
 	}
 
 	namespace SDLColor

@@ -125,7 +125,7 @@ namespace mdEngine
 			PlaylistSeparator();
 			PlaylistSeparator(std::wstring name);
 
-			virtual void InitItem(s32 posOfFirstFile);
+			virtual void InitItem();
 			virtual void DrawItem(GLuint texture);
 
 			void			SetSeperatorPath(std::wstring path);
@@ -152,15 +152,18 @@ namespace mdEngine
 
 		};
 
-		struct TextBoxItem : public Button, public TextObject
+		class TextBoxItem : public Button, public TextObject
 		{
 			friend class TextBox;
+			public:
 			TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos, 
 												 glm::vec2 textSize, glm::vec2 textPos,
-						GLuint tex);
+						GLuint textTexture, GLuint iconTexture = 0);
 
 			
+		private:
 			s8			m_Index;
+			GLuint		m_IconTexture;
 			void UpdateTextBoxItemPos(glm::vec2 pos);
 
 		};
@@ -169,16 +172,19 @@ namespace mdEngine
 		{
 		public:
 			TextBox();
+			~TextBox();
 			TextBox(MP::UI::Input::ButtonType code, glm::vec2 size, glm::vec2 pos, mdShader* shader);
 
 			void Render();
 			void UpdateItemPos();
+			void SetBackgroundTexture(GLuint tex);
+			void SetSelectTexture(GLuint tex);
 			void SetPos(glm::vec2 pos);
 			void SetSize(glm::vec2 size);
 			void SetColor(glm::vec3 color);
 			void SetItemScale(f32 scale);
 			void SetItemSize(glm::vec2 itemSize);
-			void AddItem(const std::wstring itemName);
+			void AddItem(const std::wstring itemName, GLuint iconTexture = 0);
 
 			b8			hasItemFocus(const std::wstring name) const;
 			b8			isItemPressed(const std::wstring name) const;
@@ -186,16 +192,18 @@ namespace mdEngine
 			glm::vec2	GetSize() const;
 
 		private:
-			mdShader*					m_Shader;
-			std::vector<TextBoxItem*>	m_Items;
-			MP::UI::Input::ButtonType	m_Type;
-			glm::vec2					m_Pos;
-			glm::vec2					m_Size;
-			glm::vec3					m_Color;
-			f32							m_ItemScale;
-			glm::vec2					m_ItemSize;
-			u16							m_ItemsCount;
 			b8							m_Active;
+			u16							m_ItemsCount;
+			f32							m_ItemScale;
+			GLuint						m_TextBoxBackgroundTexture;
+			GLuint						m_TextBoxSelectTexture;
+			mdShader*					m_Shader;
+			glm::vec2					m_Pos;
+			glm::vec2					m_ItemSize;
+			glm::vec3					m_Color;
+			glm::vec2					m_Size;
+			MP::UI::Input::ButtonType	m_Type;
+			std::vector<std::shared_ptr<TextBoxItem>>	m_Items;
 
 		};
 
@@ -270,18 +278,14 @@ namespace mdEngine
 			void Free();
 
 		private:
-			void ReloadCheckBoxInfo();
-		
-
 			b8* m_Value;
-			SDL_Renderer* m_Renderer;
 			SDL_Rect m_CheckBoxOutline;
 			SDL_Color m_CheckBoxColor;
+			SDL_Renderer* m_Renderer;
 		};
 
 
-
-		typedef std::vector<std::pair<std::wstring, PlaylistSeparator*>>	PlaylistSeparatorContainer;
+		typedef std::vector<std::pair<std::wstring, std::shared_ptr<PlaylistSeparator>>>	PlaylistSeparatorContainer;
 		typedef std::vector<std::pair<s32*, Interface::Button*>>			PlaylistButtonContainer;
 		typedef std::vector<std::pair<const std::wstring, Button*>>			InterfaceButtonContainer;
 		
@@ -293,8 +297,8 @@ namespace mdEngine
 		namespace Separator
 		{
 			PlaylistSeparatorContainer* GetContainer();
-			PlaylistSeparator* GetSeparator(std::wstring text);
-			PlaylistSeparator* GetSeparatorByID(s32 id);
+			std::shared_ptr<PlaylistSeparator> GetSeparator(std::wstring text);
+			std::shared_ptr<PlaylistSeparator> GetSeparatorByID(s32 id);
 			s32 GetSize();
 
 #ifdef _DEBUG_
