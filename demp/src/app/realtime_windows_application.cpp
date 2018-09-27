@@ -316,6 +316,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				State::SetState(State::FileDropped);
 				State::ResetState(State::PathLoadedFromFileVolatile);
 				State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
+
+				State::SetState(State::FilesAddedInfoNotLoaded);
 				State::ResetState(State::DropComplete);
 #ifdef _WIN32_
 				std::wstring p(utf8_to_utf16(event.drop.file));
@@ -515,7 +517,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 			if (State::CheckState(State::Window::PositionChanged) == false &&
 				State::CheckState(State::Window::Resized) == false &&
-				State::CheckState(State::PlaylistMovement) == false)
+				State::CheckState(State::PlaylistMovement) == false &&
+				State::CheckState(State::FilesDroppedNotLoaded) == false)
 			{
 				f32 frameTicks = capTimer.GetTicks();
 				if (frameTicks < MP::Data::_SCREEN_TICK_PER_FRAME)

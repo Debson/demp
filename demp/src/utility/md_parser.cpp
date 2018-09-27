@@ -55,21 +55,11 @@ namespace mdEngine
 		template <typename T>
 		b8 AddToFile(std::fstream* file, std::string name, T param);
 
-		
+		void GetFloatAtPos(wchar_t* str, f32* info, s32 pos);
 
-		template <typename T>
-		T GetValueAtPos(std::wstring path, s32 pos);
-
-		std::wstring GetStringAtPos(std::wstring path, s32 pos);
+		void GetStringAtPos(wchar_t* str, std::wstring& info, s32 pos);
 
 		b8 is_number(const std::string& s);
-
-		size_t GetSizeOfFile(const std::wstring& path)
-		{
-			struct _stat fileinfo;
-			_wstat(path.c_str(), &fileinfo);
-			return fileinfo.st_size;
-		}
 
 		std::wstring LoadUtf8FileToString(const std::wstring& filename)
 		{
@@ -83,7 +73,9 @@ namespace mdEngine
 				return buffer;
 			}
 
-			size_t filesize = GetSizeOfFile(filename);
+			fseek(f, 0L, SEEK_END);
+			size_t filesize = ftell(f);
+			fseek(f, 0L, SEEK_SET);
 
 			// Read entire file contents in to memory
 			if (filesize > 0)
@@ -140,31 +132,31 @@ namespace mdEngine
 			for (auto k : *i.second->GetSubFilesContainer())
 			{
 				// title, artist, album, genre, year, track num, composer, bitrate, channels, freq, size, length,  
-				file << utf16_to_utf8(k.second);
+				file << utf16_to_utf8(*k.second);
 				file << SEPARATOR;
-				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().title);
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->title);
 				file << SEPARATOR;
-				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().artist);
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->artist);
 				file << SEPARATOR;
-				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().album);
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->album);
 				file << SEPARATOR;
-				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().genre);
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->genre);
 				file << SEPARATOR;
-				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().year);
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->year);
 				file << SEPARATOR;
-				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().track_num);
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->track_num);
 				file << SEPARATOR;
-				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().composer);
+				file << utf16_to_utf8(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->composer);
 				file << SEPARATOR;
-				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().bitrate);
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->bitrate);
 				file << SEPARATOR;
-				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().channels);
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->channels);
 				file << SEPARATOR;
-				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().freq);
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->freq);
 				file << SEPARATOR;
-				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().size);
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->size);
 				file << SEPARATOR;
-				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct().length);
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->length);
 				file << "\n";
 
 				//buffer << k.second;
@@ -187,61 +179,98 @@ namespace mdEngine
 			filesInfoScanned = 0;
 		}
 
-		f32 start = SDL_GetTicks();
+
 		std::wstring input = LoadUtf8FileToString(utf8_to_utf16(Strings::_PLAYLIST_FILE));
 		std::wstringstream buffer(input);
 		input = std::wstring();
 
-		while(getline(buffer, input) && input.compare(L"#-----CONTENT-----#") != 0) { }
+		f32 start = SDL_GetTicks();
+		FILE* f = _wfopen(utf8_to_utf16(fileName).c_str(), L"rtS, ccs=UTF-8");
 
-		while(getline(buffer, input))
+		if (f == NULL)
 		{
-			[&] 
+			MD_ERROR("file_open");
+		}
+		//FILE* f = fopen(fileName.c_str(), "r");
+
+		fseek(f, 0L, SEEK_END);
+		size_t filesize = ftell(f);
+		fseek(f, 0L, SEEK_SET);
+
+
+		size_t linesz = 512;
+		wchar_t line[512];
+		line[511] = '\0';
+		//std::wstring path;
+		//path[511] = '\0';
+		wchar_t otherHalf[512];
+		otherHalf[511] = '\0';
+
+		size_t len;
+		u32 i = 0;
+
+		std::vector<std::wstring*> pathVec;
+
+		while ((fgetws(line, linesz, f) != NULL) && (wcscmp(line, L"#-----CONTENT-----#\n") != 0)) { }
+
+		while (fgetws(line, linesz, f) != NULL)
+		{
+			if (line[0] == '-')
+				continue;
+
+			State::SetState(State::PathLoadedFromFileVolatile);
+			State::SetState(State::PathLoadedFromFile);
+
+			len = wcslen(line);
+			line[len - 1] = '\0';
+
+			i = 0;
+			while (line[i] != '|' && line[i] != '\0')
 			{
-				if (input[0] == '-')
-				{
-					if (Audio::Folders::AddFolder(input.substr(1, input.length())) == false)
-					{
-						while (getline(buffer, input) && input[0] != '-') { }
-						return;
-					}
-				}
-				else
-				{
-					// title, artist, album, genre, year, track num, composer, bitrate, channels, freq, size, length,  
+				i++;
+			}
 
-					/* Read path and file properties from file, save it to ID3 structure and send it to the
-					   function that will process sent informations
-					*/
-					State::SetState(State::PathLoadedFromFileVolatile);
-					State::SetState(State::PathLoadedFromFile);
+			Audio::Info::ID3* info = new Audio::Info::ID3();
 
-					s32 pos = input.find_first_of(L'|');
-					std::wstring path = input.substr(0, pos);
-					Audio::Info::ID3 info;
-					// optimize this, somehow
-					if (filesInfoScanned == 1)
-					{
-						info.title = GetStringAtPos(input.substr(pos, input.length()), POSITION_TITLE);
-						info.artist = GetStringAtPos(input.substr(pos, input.length()), POSITION_ARTIST);
-						info.album = GetStringAtPos(input.substr(pos, input.length()), POSITION_ALBUM);
-						info.genre = GetStringAtPos(input.substr(pos, input.length()), POSITION_GENRE);
-						info.year = GetStringAtPos(input.substr(pos, input.length()), POSITION_YEAR);
-						info.track_num = GetStringAtPos(input.substr(pos, input.length()), POSITION_TRACK_NUM);
-						info.composer = GetStringAtPos(input.substr(pos, input.length()), POSITION_COMPOSER);
-						info.bitrate = GetValueAtPos<f32>(input.substr(pos, input.length()), POSITION_BITRATE);
-						info.channels = GetValueAtPos<s16>(input.substr(pos, input.length()), POSITION_CHANNELS);
-						info.freq = GetValueAtPos<f32>(input.substr(pos, input.length()), POSITION_FREQUENCY);
-						info.size = GetValueAtPos<f32>(input.substr(pos, input.length()), POSITION_SIZE);
-						info.length = GetValueAtPos<f64>(input.substr(pos, input.length()), POSITION_LENGTH);
-					}
 
-					Audio::LoadPathsFromFile(path, info);
-				}
-			}();
+			auto path = new std::wstring();
+			path->resize(i);
+			wcsncat(&path->at(0), line, i);
+
+			/*path.resize(i + 1);
+			wcsncat(&path[0], line, i);
+			//wmemcpy(&path[0], line, i);
+			path[i] = '\0';*/
+			wmemcpy(otherHalf, line + i, (len - i));
+			//std::wcout << path << std::endl;
+			memset(line, 0, sizeof(line));
+			//md_log(otherHalf);
+
+			GetStringAtPos(otherHalf, info->title, POSITION_TITLE);
+			GetStringAtPos(otherHalf, info->artist, POSITION_ARTIST);
+			GetStringAtPos(otherHalf, info->album, POSITION_ALBUM);
+			GetStringAtPos(otherHalf, info->genre, POSITION_GENRE);
+			GetStringAtPos(otherHalf, info->year, POSITION_YEAR);
+			GetStringAtPos(otherHalf, info->track_num, POSITION_TRACK_NUM);
+			GetStringAtPos(otherHalf, info->composer, POSITION_COMPOSER);
+			GetFloatAtPos(otherHalf, &info->bitrate, POSITION_BITRATE);
+			GetFloatAtPos(otherHalf, &info->channels, POSITION_CHANNELS);
+			GetFloatAtPos(otherHalf, &info->freq, POSITION_FREQUENCY);
+			GetFloatAtPos(otherHalf, &info->size, POSITION_SIZE);
+			GetFloatAtPos(otherHalf, &info->length, POSITION_LENGTH);
+
+			//pathVec.push_back(path);
+
+			Audio::LoadPathsFromFile(*path, info);
+
+
 		}
 
-		
+
+		md_log(SDL_GetTicks() - start);
+
+		fclose(f);
+
 		return true;
 	}
 
@@ -448,45 +477,73 @@ namespace mdEngine
 		return utf8_to_utf16(t);
 	}
 
-	std::wstring Parser::GetStringAtPos(std::wstring path, s32 pos)
+	void Parser::GetStringAtPos(wchar_t* str, std::wstring& info, s32 pos)
 	{
 		s32 count = 0;
-		s32 strPos = 0;
-		std::wstring p(path);
-		while (p.find(SEPARATOR) != std::string::npos && count < pos)
+		s32 i = 0;
+		s32 start_pos = -1;
+		s32 end_pos = -1;
+
+		while (str[i] != L'\0')
 		{
-			p = p.substr(p.find(SEPARATOR) + 1, p.length());
-			count++;
+			if (str[i] == SEPARATOR_W)
+				count++;
+			if (count == pos && start_pos == -1)
+				start_pos = i;
+			else if (count == pos + 1)
+			{
+				end_pos = i - 1;
+				break;
+			}
+			else if (str[i + 1] == L'\0')
+			{
+				end_pos = i;
+				break;
+			}
+			i++;
 		}
 
+		info.resize(end_pos - start_pos + 1);
+		wmemcpy(&info[0], str + start_pos + 1, end_pos - start_pos);
 
-		p = p.substr(0, p.find_first_of(SEPARATOR));
-		
-		return p;
+		if (end_pos - start_pos > 1)
+			info[end_pos - start_pos] = L'\0';
+		else
+			info = L"";
 	}
 
-	template <typename T>
-	T Parser::GetValueAtPos(std::wstring path, s32 pos)
+	void Parser::GetFloatAtPos(wchar_t* str, f32* info, s32 pos)
 	{
 		s32 count = 0;
-		s32 strPos = 0;
-		std::wstring p(path);
-		std::wstringstream ss;
-		while (p.find(SEPARATOR_W) != std::wstring::npos && count < pos)
+		s32 i = 0;
+		s32 start_pos = -1;
+		s32 end_pos = -1;
+
+		while (str[i] != L'\0')
 		{
-			p = p.substr(p.find(SEPARATOR_W) + 1, p.length());
-			count++;
+			if (str[i] == SEPARATOR_W)
+				count++;
+			if (count == pos && start_pos == -1)
+				start_pos = i;
+			else if (count == pos + 1)
+			{
+				end_pos = i - 1;
+				break;
+			}
+			else if (str[i + 1] == L'\0')
+			{
+				end_pos = i;
+				break;
+			}
+			i++;
 		}
 
-		T value = 0;
+		wchar_t strInfo[30];
 
-		p = p.substr(0, p.find_first_of(SEPARATOR_W));
+		wmemcpy(strInfo, str + start_pos + 1, end_pos - start_pos);
+		strInfo[end_pos - start_pos] = L'\0';
 
-		ss << p;
-		ss >> value;
-		
-		return (T)value;
+		*info = _wtof(strInfo);
 	}
-	
 }
 

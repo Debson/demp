@@ -51,7 +51,7 @@ namespace Audio
 			f32 channels;
 			f32 freq;
 			f32 size;	// in bytes
-			f64 length;	// in sec
+			f32 length;	// in sec
 
 			b8 folder_rep;
 			b8 loaded;
@@ -64,15 +64,15 @@ namespace Audio
 
 		b8 CheckIfHasItems(std::wstring path);
 		
-		b8 CheckIfAlreadyLoaded(std::vector<std::wstring>* v, std::wstring path);
+		b8 IsPathLoaded(std::wstring& path);
 
 		// Returns a full path of a file folder(path without a filename)
-		std::wstring GetFolderPath(std::wstring path);
+		std::wstring GetFolderPath(std::wstring& path);
 
 		// Returns only a name of a file's folder
 		std::wstring GetFolder(std::wstring path);
 
-		std::wstring GetCompleteTitle(std::wstring path);
+		std::wstring GetCompleteTitle(std::wstring& path);
 
 		std::wstring GetArtist(std::wstring path);
 

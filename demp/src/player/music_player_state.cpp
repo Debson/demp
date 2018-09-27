@@ -40,7 +40,7 @@ namespace mdEngine
 		ResetState(ContainersResized);
 		ResetState(AudioHidden);
 		ResetState(Window::PositionChanged);
-		ResetState(State::DeletionFinished);
+		ResetState(State::DeletionInProgress);
 		State::ResetState(State::PlaylistMovement);
 
 	}

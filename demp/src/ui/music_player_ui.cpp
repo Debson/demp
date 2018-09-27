@@ -279,10 +279,14 @@ namespace MP
 	void UI::DeleteAllFiles()
 	{
 		s32 len = Audio::Object::GetSize();
-		while(Audio::Object::GetSize() > 0)
-		{
-			Playlist::DeleteMusic(Audio::Object::GetSize() - 1);
-		}
+		std::vector<s32> vec;
+		for (s32 i = 0; i < len; i++)
+			vec.push_back(i);
+
+		std::reverse(vec.begin(), vec.end());
+
+		Playlist::DeleteMusic(vec);
+		
 		Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
 	}
 
@@ -421,10 +425,6 @@ namespace MP
 			}
 
 
-			if (ImGui::Button("Print loaded folders") == true)
-			{
-				Audio::Folders::PrintContent();
-			}
 
 			if (ImGui::Button("Print folder sep and items") == true)
 			{
@@ -720,7 +720,6 @@ namespace MP
 			{
 				Audio::Object::GetAudioObject(i)->SetClickCount(0);
 			}
-
 		}
 
 		// If delete pressed, delete every item on position from selected positions vector
@@ -737,10 +736,14 @@ namespace MP
 			// WHY WHEN IT IS SORTED IN DESCENDING ORDER IT DELETES FASTER????????????????
 			s32 temp = *Graphics::MP::GetPlaylistObject()->multipleSelect.back();
 			auto multipleSelect = Graphics::MP::GetPlaylistObject()->multipleSelect;
-			for (auto & i : multipleSelect)
+			std::vector<s32> indexes;
+			for (auto i : multipleSelect)
 			{
-				Playlist::DeleteMusic(*i);
+				indexes.push_back(*i);
 			}
+
+			Playlist::DeleteMusic(indexes);
+			
 			Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
 			
 			if (Audio::Object::GetSize() <= temp && Audio::Object::GetAudioObjectContainer().empty() == false)

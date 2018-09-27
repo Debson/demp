@@ -51,7 +51,7 @@ namespace mdEngine
 			for (auto & k : *i.second->GetSubFilesContainer())
 			{
 				std::cout << "  ";
-				std::cout << "ID: " << *k.first  << "   Path: " << utf16_to_utf8(k.second) << std::endl;
+				std::cout << "ID: " << *k.first  << "   Path: " << utf16_to_utf8(*k.second) << std::endl;
 			}
 		}
 	}
@@ -352,10 +352,17 @@ namespace mdEngine
 	/* *************************************************** */
 	Interface::PlaylistSeparator::PlaylistSeparator() { }
 
-	Interface::PlaylistSeparator::PlaylistSeparator(std::wstring name)
+	Interface::PlaylistSeparator::~PlaylistSeparator()
+	{
+		m_SubFilesPaths.clear();
+	}
+
+	Interface::PlaylistSeparator::PlaylistSeparator(std::wstring& name)
 	{ 
-		m_Path = name;
-		m_TextString = Audio::Info::GetFolder(name);
+		u16 pos = name.find_last_of(L'\\');
+		m_Path = std::wstring(name.substr(0, pos));
+
+		m_TextString = Audio::Info::GetFolder(m_Path);
 		m_Visible = false;
 		m_ButtonPos = glm::vec2(POS_INVALID);
 		m_TextPos = glm::vec2(POS_INVALID);
@@ -383,7 +390,7 @@ namespace mdEngine
 
 		std::shared_ptr<PlaylistSeparator> shrPtr(this);
 
-		m_PlaylistSeparatorContainer.push_back(std::make_pair(m_Path, shrPtr));
+		m_PlaylistSeparatorContainer.push_back(std::make_pair(&m_Path, shrPtr));
 	}
 
 	void Interface::PlaylistSeparator::DrawItem(GLuint texture)
@@ -405,29 +412,17 @@ namespace mdEngine
 		DrawString();
 	}
 
-	void Interface::PlaylistSeparator::SetSeperatorPath(std::wstring path)
+	void Interface::PlaylistSeparator::SetSeperatorPath(std::wstring& path)
 	{
 		m_Path = path;
 	}
 
-	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(s32* fileIndex, std::wstring path)
+	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(s32* fileIndex, std::wstring& const path)
 	{
-		m_SubFilesPaths.push_back(std::make_pair(fileIndex, path));
+		m_SubFilesPaths.push_back(std::make_pair(fileIndex, &path));
 		m_SepItemCount++;
 	}
 
-	void Interface::PlaylistSeparator::SeparatorSubFileInsert(s32* fileIndex, const std::wstring path, s32 pos)
-	{
-		assert(pos < m_SubFilesPaths.size());
-		m_SubFilesPaths.insert(m_SubFilesPaths.begin() + pos, std::make_pair(fileIndex, path));
-		m_SepItemCount++;
-	}
-
-	void Interface::PlaylistSeparator::SeparatorSubFileErased()
-	{
-		m_SepItemCount--;
-	}
-	
 	b8 Interface::PlaylistSeparator::IsSeparatorHidden() const
 	{
 		return m_SeparatorHidden;
@@ -1143,7 +1138,7 @@ namespace mdEngine
 			return nullptr;
 
 		auto it = find_if(m_PlaylistSeparatorContainer.begin(), m_PlaylistSeparatorContainer.end(),
-			[&](std::pair<std::wstring, std::shared_ptr<Interface::PlaylistSeparator>> const & ref) { return ref.first.compare(text) == 0; });
+			[&](std::pair<std::wstring*, std::shared_ptr<Interface::PlaylistSeparator>> const & ref) { return ref.first->compare(text) == 0; });
 
 		if (it == m_PlaylistSeparatorContainer.end())
 			return nullptr;

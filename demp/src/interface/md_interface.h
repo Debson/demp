@@ -118,20 +118,19 @@ namespace mdEngine
 			static f32*	 m_PlaylistOffsetY;
 		};
 
-		typedef std::vector<std::pair<s32*, std::wstring>> SeparatorSubContainer;
+		typedef std::vector<std::pair<s32*, std::wstring*>> SeparatorSubContainer;
 		class PlaylistSeparator : public PlaylistItem
 		{
 		public:
 			PlaylistSeparator();
-			PlaylistSeparator(std::wstring name);
+			~PlaylistSeparator();
+			PlaylistSeparator(std::wstring& name);
 
 			virtual void InitItem();
 			virtual void DrawItem(GLuint texture);
 
-			void			SetSeperatorPath(std::wstring path);
-			void			SeparatorSubFilePushBack(s32* fileIndex, const std::wstring path);
-			void			SeparatorSubFileInsert(s32* fileIndex, const std::wstring path, s32 pos);
-			void			SeparatorSubFileErased();
+			void			SetSeperatorPath(std::wstring& path);
+			void			SeparatorSubFilePushBack(s32* fileIndex, std::wstring& const path);
 			b8				IsSeparatorHidden() const;
 			b8				IsSelected()		const;
 			//void			Visible(b8 val);
@@ -285,7 +284,7 @@ namespace mdEngine
 		};
 
 
-		typedef std::vector<std::pair<std::wstring, std::shared_ptr<PlaylistSeparator>>>	PlaylistSeparatorContainer;
+		typedef std::vector<std::pair<std::wstring*, std::shared_ptr<PlaylistSeparator>>>	PlaylistSeparatorContainer;
 		typedef std::vector<std::pair<s32*, Interface::Button*>>			PlaylistButtonContainer;
 		typedef std::vector<std::pair<const std::wstring, Button*>>			InterfaceButtonContainer;
 		

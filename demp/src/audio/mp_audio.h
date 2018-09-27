@@ -10,26 +10,9 @@ namespace Audio
 {
 	// Stores pointers to created audio objects
 	typedef std::vector<std::shared_ptr<AudioObject>> AudioObjectContainer;
-	// Stores only paths to folders
-	typedef std::vector<std::wstring> FolderContainer; // Stores only paths to folders
-	// Stores all paths of supported files	that are currently loaded into playlist
-	typedef std::vector<std::wstring> LoadedPathContainer;
 	// Stores all unique valid paths of supported file formats just from one event(drag and drop, file expl. folder expl.)
-	typedef std::vector<std::wstring> AddedFilesPathContainer;
-	// Stores all unqiue folders paths of supported file formats just from one event(drag and drop, file expl. folder expl.)
-	typedef std::vector<std::wstring> AddedFilesFolderContainer;
-	typedef std::vector<std::pair<std::wstring, Interface::PlaylistSeparator*>> PlaylistItemFolderContainer;
+	typedef std::vector<std::wstring*> AddedFilesPathContainer;
 
-	namespace Folders
-	{
-		FolderContainer& GetAudioFoldersContainer();
-		std::wstring GetAudioFolder(s32 id);
-		u32 GetSize();
-		b8 AddFolder(std::wstring name);
-#ifdef _DEBUG_
-		void PrintContent();
-#endif
-	}
 
 	namespace Object
 	{
@@ -49,16 +32,17 @@ namespace Audio
 
 	void FilesAddedByFileBrowser(b8 val);
 
-	b8 LoadPathsFromFile(std::wstring path, const Info::ID3 id3);
+	b8 LoadPathsFromFile(std::wstring& const path, Info::ID3* const id3);
 
-	b8 PushToPlaylist(std::wstring path);
+	b8 PushToPlaylist(std::wstring& const path);
 
 	void DeallocateAudioItems();
 
 	void UpdateAudioLogic();
 	
-	void PerformDeletion(s32 index);
-
+	/* @param: index of deleted file 
+	   @param: is amount of deleted files small? */
+	void PerformDeletion(s32 index, b8 smallDeletion);
 
 	// Returns amount of added items to he playlist from event + index in playlist on which files were dropped
 	s32 GetFilesAddedCount();
@@ -70,11 +54,7 @@ namespace Audio
 	u32 GetProcessedID3Tags();
 
 #ifdef _DEBUG_
-
 	void GetItemsInfo();
-
-
-	void PrintTest();
 #endif
 }
 

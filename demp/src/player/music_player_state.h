@@ -25,7 +25,7 @@ namespace mdEngine
 			FilesInfoLoaded				= (1llu << 11),
 			PathLoadedFromFile			= (1llu << 12),
 			PathLoadedFromFileVolatile	= (1llu << 13),
-			DeletionFinished			= (1llu << 14),
+			DeletionInProgress			= (1llu << 14),
 			ShuffleAfterLoad			= (1llu << 15),
 			ShuffleAfterAddition		= (1llu << 16),
 			CurrentlyPlayingDeleted		= (1llu << 17)
@@ -34,17 +34,18 @@ namespace mdEngine
 
 		enum MusicPlayerState : u64
 		{
-			FileDropped				= (1llu << 18),
-			FilesDroppedNotLoaded	= (1llu << 42),
-			DropComplete			= (1llu << 43),
-			ContainersResized		= (1llu << 19),
-			PlaylistMovement		= (1llu << 20),
-			VolumeChanged			= (1llu << 21),
-			CrossfadeEnabled		= (1llu << 22),
-			PlaylistRolling			= (1llu << 23),
-			OnExitMinimizeToTray	= (1llu << 24),
-			InitMusicLoad			= (1llu << 25),
-			InitialLoadFromFile		= (1llu << 26),
+			FileDropped					= (1llu << 18),
+			FilesDroppedNotLoaded		= (1llu << 42),
+			FilesAddedInfoNotLoaded		= (1llu << 43),
+			DropComplete				= (1llu << 43),
+			ContainersResized			= (1llu << 19),
+			PlaylistMovement			= (1llu << 20),
+			VolumeChanged				= (1llu << 21),
+			CrossfadeEnabled			= (1llu << 22),
+			PlaylistRolling				= (1llu << 23),
+			OnExitMinimizeToTray		= (1llu << 24),
+			InitMusicLoad				= (1llu << 25),
+			InitialLoadFromFile			= (1llu << 26),
 		};
 
 		namespace Window

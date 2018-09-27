@@ -46,11 +46,9 @@ namespace Audio
 
 	b8 Info::CheckIfHasItems(std::wstring path)
 	{
-		fs::path p(path);
-
 		for (auto & i : fs::directory_iterator(path))
 		{
-			if (fs::is_regular_file(i.path()))
+			if (fs::is_regular_file(path))
 				return true;
 		}
 
@@ -58,16 +56,20 @@ namespace Audio
 	}
 
 	
-	b8 Info::CheckIfAlreadyLoaded(std::vector<std::wstring>* v, std::wstring path)
+	b8 Info::IsPathLoaded(std::wstring& path)
 	{
-		auto it = std::find(v->begin(), v->end(), path);
-		if (it != v->end())
-			return true;
+		for (auto & i : Audio::Object::GetAudioObjectContainer())
+		{
+			if (path.compare(i->GetPath()) == 0)
+			{
+				return true;
+			}
+		}
 
 		return false;
 	}
 
-	std::wstring Info::GetFolderPath(std::wstring path)
+	std::wstring Info::GetFolderPath(std::wstring& path)
 	{
 		fs::path p(path);
 
@@ -77,19 +79,18 @@ namespace Audio
 	std::wstring Info::GetFolder(std::wstring path)
 	{
 		// Shouldn't be hardcoded!!! change it
-		s32 pos = path.find_last_of('\\');
+		s16 pos = path.find_last_of('\\');
 
 		return path.substr(pos + 1, path.length());
 	}
 
-	std::wstring Info::GetCompleteTitle(std::wstring path)
+	// make it faster
+	std::wstring Info::GetCompleteTitle(std::wstring& path)
 	{
-		fs::path p(path);
-
-		s16 len = p.filename().string().length();
-		s16 extLen = p.extension().string().length();
-		std::wstring title = p.filename().wstring();
-		title = title.substr(0, len - extLen);
+		s16 pos = path.find_last_of(L'\\');
+		std::wstring title = path.substr(pos + 1, path.length());
+		pos = title.find_last_of(L'.');
+		title = title.substr(0, pos);
 
 		return title;
 	}
@@ -162,8 +163,6 @@ namespace Audio
 		info->year = std::to_wstring(file.tag()->year());
 		info->comment = file.tag()->comment().toWString();
 		info->genre = file.tag()->genre().toWString();
-
-
 	}
 
 	std::wstring Info::GetProcessedItemsCountStr()

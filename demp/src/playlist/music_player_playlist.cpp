@@ -296,7 +296,7 @@ namespace MP
 			if (lastDeletionTimer.GetTicksStart() > LAST_EVENT_TIME)
 			{
 				lastDeletionTimer.Stop();
-				State::SetState(State::DeletionFinished);
+				State::SetState(State::DeletionInProgress);
 			}
 
 			if (mdNextRequest)
@@ -318,7 +318,7 @@ namespace MP
 			}
 
 
-			if (State::CheckState(State::DeletionFinished) == true)
+			if (State::CheckState(State::DeletionInProgress) == true)
 			{
 				ShuffleMusicProcedure();
 				//ShuffleMusic();
@@ -776,32 +776,35 @@ namespace MP
 				mdVolume = 0.0;
 		}
 
-		void DeleteMusic(s32 pos)
+		void DeleteMusic(const std::vector<s32>& indexes)
 		{
-			if (State::CheckState(State::FilesDroppedNotLoaded) == true ||
-				pos < 0)
+			if (State::CheckState(State::FilesDroppedNotLoaded) == true)
 			{
 				return;
 			}
 
-			lastDeletionTimer.Start();
-		
+			State::SetState(State::DeletionInProgress);
+			Interface::Separator::GetContainer()->clear();
+			b8 smallDeletion = indexes.size() < (0.1f * float(Audio::Object::GetSize())) ? true : false;
+			for (auto i : indexes)
+			{
+				// BUG: Can't erase pos in playlist button container
+				auto playlistButtonCon = Interface::PlaylistButton::GetContainer();
+				assert(Interface::PlaylistButton::GetButton(i) != nullptr);
+				playlistButtonCon->erase(playlistButtonCon->begin() + i);
 
-			// BUG: Can't erase pos in playlist button container
-			auto playlistButtonCon = Interface::PlaylistButton::GetContainer();
-			assert(Interface::PlaylistButton::GetButton(pos) != nullptr);
-			playlistButtonCon->erase(playlistButtonCon->begin() + pos);
 
+				Audio::PerformDeletion(i, smallDeletion);
 
-			Audio::PerformDeletion(pos);
-			
-			if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == pos)
-				State::SetState(State::CurrentlyPlayingDeleted);
+				if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == i)
+					State::SetState(State::CurrentlyPlayingDeleted);
 
-			if (Graphics::MP::GetPlaylistObject()->GetSelectedID() > Audio::Object::GetSize() - 1)
-				Graphics::MP::GetPlaylistObject()->SetSelectedID(Audio::Object::GetSize() - 1);
+				if (Graphics::MP::GetPlaylistObject()->GetSelectedID() > Audio::Object::GetSize() - 1)
+					Graphics::MP::GetPlaylistObject()->SetSelectedID(Audio::Object::GetSize() - 1);
 
-			State::SetState(State::AudioDeleted);
+				State::SetState(State::AudioDeleted);
+			}
+
 		}
 
 		void CrossfadeSong()

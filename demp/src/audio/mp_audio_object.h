@@ -13,10 +13,10 @@ namespace Audio
 	{
 		virtual ~AudioProperties() { };
 		s32 id;
-		std::wstring path;
+		std::wstring* path;
 		std::wstring folder;
 
-		Info::ID3 info;
+		Info::ID3* info;
 	};
 
 	class AudioObject : private AudioProperties, public Interface::PlaylistItem
@@ -31,24 +31,25 @@ namespace Audio
 		s32* GetIDP();
 		void DecrementID();
 		void IncrementID();
-		std::wstring GetPath()			const;
-		std::wstring GetFolderPath()	const;
-		std::wstring GetArtist()		const;
-		std::wstring GetTitle();
-		std::wstring GetTrackNum()		const;
-		std::wstring GetAlbum()			const;
-		std::wstring GetYear()			const;
-		std::wstring GetComment()		const;
-		std::wstring GetGenre()			const;
-		std::wstring GetFormat()		const;
+		std::wstring& GetPath()		const;
+		const std::wstring GetFolderPath()	const;
+		const std::wstring& GetArtist()		const;
+		const std::wstring GetTitle();
+		const std::wstring& GetTrackNum()	const;
+		const std::wstring& GetAlbum()		const;
+		const std::wstring& GetYear()		const;
+		const std::wstring& GetComment()	const;
+		const std::wstring& GetGenre()		const;
+		const std::wstring& GetFormat()		const;
 		void SetID(s32 id);
-		void SetPath(std::wstring path);
-		void SetFolderPath(std::wstring path);
+		void SetPath(std::wstring& path);
+		void SetFolderPath(std::wstring& path);
 		f32 GetFrequency()				const;
 		f32 GetBitrate()				const;
 		s32 GetObjectSize()				const;
 		f64 GetLength()					const;
-		Info::ID3& GetID3Struct();
+		Info::ID3* GetID3Struct();
+		void SetID3Struct(Info::ID3* const id3);
 
 	private:
 

@@ -79,7 +79,7 @@ namespace MP
 
 		void ReloadMusic(std::wstring path);
 
-		void DeleteMusic(s32 pos);
+		void DeleteMusic(const std::vector<s32>& indexes);
 
 
 		b8 IsLoaded();
