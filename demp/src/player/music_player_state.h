@@ -24,7 +24,7 @@ namespace mdEngine
 			FilesLoaded					= (1llu << 10),
 			FilesInfoLoaded				= (1llu << 11),
 			PathLoadedFromFile			= (1llu << 12),
-			PathLoadedFromFileVolatile	= (1llu << 13),
+			InitialLoadFromFile			= (1llu << 13),
 			DeletionInProgress			= (1llu << 14),
 			ShuffleAfterLoad			= (1llu << 15),
 			ShuffleAfterAddition		= (1llu << 16),
@@ -45,7 +45,7 @@ namespace mdEngine
 			PlaylistRolling				= (1llu << 23),
 			OnExitMinimizeToTray		= (1llu << 24),
 			InitMusicLoad				= (1llu << 25),
-			InitialLoadFromFile			= (1llu << 26),
+			UpdatePlaylistInfoStrings	= (1llu << 26)
 		};
 
 		namespace Window

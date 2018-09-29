@@ -26,6 +26,8 @@ namespace mdEngine
 			m_PlayingID = -1;
 			m_CurrentMinIndex = 0;
 			m_CurrentMaxIndex = 0;
+			m_ItemsDuration = 0;
+			m_ItemsSize = 0;
 		}
 
 		void MP::PlaylistObject::Enable()
@@ -96,13 +98,21 @@ namespace mdEngine
 		void MP::PlaylistObject::SetItemsSize(f64 itemsSize)
 		{
 			m_ItemsSize = itemsSize;
-			m_ItemsSizeStr = Converter::BytesToProperSizeFormat(itemsSize);
 		}
 
 		void MP::PlaylistObject::SetItemsDuration(f64 itemsDuration)
 		{
 			m_ItemsDuration = itemsDuration;
-			m_ItemsDurationStr = Converter::SecToProperTimeFormat(itemsDuration);
+		}
+
+		void MP::PlaylistObject::AddToItemsDuration(f32 itemDuration)
+		{
+			m_ItemsDuration += itemDuration;
+		}
+
+		void MP::PlaylistObject::AddToItemsSize(f32 itemSize)
+		{
+			m_ItemsSize += itemSize;
 		}
 
 		void MP::PlaylistObject::SetIndexesToRender(std::vector<s32> indexesVec)
@@ -140,13 +150,15 @@ namespace mdEngine
 			return m_ItemsDuration;
 		}
 
-		std::string MP::PlaylistObject::GetItemsSizeString() const
+		std::string MP::PlaylistObject::GetItemsSizeString()
 		{
+			m_ItemsSizeStr = Converter::BytesToProperSizeFormat(m_ItemsSize);
 			return m_ItemsSizeStr;
 		}
 
-		std::string MP::PlaylistObject::GetItemsDurationString() const
+		std::string MP::PlaylistObject::GetItemsDurationString()
 		{
+			m_ItemsDurationStr = Converter::SecToProperTimeFormat(m_ItemsDuration);
 			return m_ItemsDurationStr;
 		}
 

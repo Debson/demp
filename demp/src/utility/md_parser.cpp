@@ -124,9 +124,10 @@ namespace mdEngine
 		file << SEPARATOR_CONTENT;
 		file << "\n";
 
+		u32 start = SDL_GetTicks();
 		//std::wstringstream buffer;
 		auto sepCon = Interface::Separator::GetContainer();
-		for (auto & i : *Interface::Separator::GetContainer())
+		for (auto & i : *sepCon)
 		{
 			file << "-" << utf16_to_utf8(i.second->GetSeparatorPath()) << "\n";
 			for (auto k : *i.second->GetSubFilesContainer())
@@ -159,11 +160,10 @@ namespace mdEngine
 				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->length);
 				file << "\n";
 
-				//buffer << k.second;
-				//buffer << std::endl;
 			}
 		}
 
+		md_log(SDL_GetTicks() - start);
 		file.close();
 
 		return true;
@@ -179,37 +179,25 @@ namespace mdEngine
 			filesInfoScanned = 0;
 		}
 
-
-		std::wstring input = LoadUtf8FileToString(utf8_to_utf16(Strings::_PLAYLIST_FILE));
-		std::wstringstream buffer(input);
-		input = std::wstring();
-
-		f32 start = SDL_GetTicks();
 		FILE* f = _wfopen(utf8_to_utf16(fileName).c_str(), L"rtS, ccs=UTF-8");
 
 		if (f == NULL)
 		{
 			MD_ERROR("file_open");
 		}
-		//FILE* f = fopen(fileName.c_str(), "r");
 
 		fseek(f, 0L, SEEK_END);
 		size_t filesize = ftell(f);
 		fseek(f, 0L, SEEK_SET);
 
-
 		size_t linesz = 512;
 		wchar_t line[512];
 		line[511] = '\0';
-		//std::wstring path;
-		//path[511] = '\0';
 		wchar_t otherHalf[512];
 		otherHalf[511] = '\0';
 
 		size_t len;
 		u32 i = 0;
-
-		std::vector<std::wstring*> pathVec;
 
 		while ((fgetws(line, linesz, f) != NULL) && (wcscmp(line, L"#-----CONTENT-----#\n") != 0)) { }
 
@@ -218,8 +206,7 @@ namespace mdEngine
 			if (line[0] == '-')
 				continue;
 
-			State::SetState(State::PathLoadedFromFileVolatile);
-			State::SetState(State::PathLoadedFromFile);
+			State::SetState(State::InitialLoadFromFile);
 
 			len = wcslen(line);
 			line[len - 1] = '\0';
@@ -237,14 +224,8 @@ namespace mdEngine
 			path->resize(i);
 			wcsncat(&path->at(0), line, i);
 
-			/*path.resize(i + 1);
-			wcsncat(&path[0], line, i);
-			//wmemcpy(&path[0], line, i);
-			path[i] = '\0';*/
 			wmemcpy(otherHalf, line + i, (len - i));
-			//std::wcout << path << std::endl;
 			memset(line, 0, sizeof(line));
-			//md_log(otherHalf);
 
 			GetStringAtPos(otherHalf, info->title, POSITION_TITLE);
 			GetStringAtPos(otherHalf, info->artist, POSITION_ARTIST);
@@ -259,15 +240,10 @@ namespace mdEngine
 			GetFloatAtPos(otherHalf, &info->size, POSITION_SIZE);
 			GetFloatAtPos(otherHalf, &info->length, POSITION_LENGTH);
 
-			//pathVec.push_back(path);
-
 			Audio::LoadPathsFromFile(*path, info);
 
 
 		}
-
-
-		md_log(SDL_GetTicks() - start);
 
 		fclose(f);
 

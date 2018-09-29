@@ -440,14 +440,14 @@ namespace mdEngine
 		{
 			for (auto i : m_SubFilesPaths)
 			{
-				audioCon[*i.first]->HidePlaylistItem(true);
+				audioCon->at(*i.first)->HidePlaylistItem(true);
 			}
 		}
 		else
 		{
 			for (auto i : m_SubFilesPaths)
 			{
-				audioCon[*i.first]->HidePlaylistItem(false);
+				audioCon->at(*i.first)->HidePlaylistItem(false);
 			}
 		}
 		m_SeparatorHidden = val;

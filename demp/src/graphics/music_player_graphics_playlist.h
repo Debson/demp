@@ -40,6 +40,8 @@ namespace mdEngine
 				void SetSize(glm::vec2 size);
 				void SetItemsSize(f64 itemsSize);
 				void SetItemsDuration(f64 itemsDuration);
+				void AddToItemsDuration(f32 itemDuration);
+				void AddToItemsSize(f32 itemSize);
 				void SetIndexesToRender(std::vector<s32> indexesVec);
 				void SetCurrentMinIndex(s32 min);
 				void SetCurrentMaxIndex(s32 max);
@@ -53,8 +55,8 @@ namespace mdEngine
 				s32  GetCurrentOffset()			const;
 				s32  GetHiddenSeparatorCount()  const;
 
-				std::string  GetItemsSizeString()		const;
-				std::string  GetItemsDurationString()	const;
+				std::string  GetItemsSizeString()		;
+				std::string  GetItemsDurationString()	;
 				std::wstring GetMusicInfoScrollString() const;
 
 				glm::vec2 GetPos()  const;

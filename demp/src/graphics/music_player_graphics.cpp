@@ -172,7 +172,7 @@ namespace Graphics
 		f32 separatorH = Data::_PLAYLIST_SEPARATOR_SIZE.y;
 		f32 dividor = itemH;
 
-		f32 sumPos = Audio::Object::GetAudioObjectContainer().size() * itemH + Interface::Separator::GetContainer()->size() * separatorH;
+		f32 sumPos = Audio::Object::GetSize() * itemH + Interface::Separator::GetContainer()->size() * separatorH;
 
 		s32 upperBoundOfVisible = Data::_PLAYLIST_ITEMS_SURFACE_POS.y - 2 * itemH;
 		s32 lowerBoundOfVisible = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y + 2 * itemH;
@@ -851,7 +851,6 @@ namespace Graphics
 
 			if (State::CheckState(State::FilesInfoLoaded) == false)
 			{
-				//md_log(utf16_to_utf8(Audio::Info::GetProcessedItemsCountStr()));
 				loadedItemsCountText.SetTextString(Audio::Info::GetProcessedItemsCountStr());
 				loadedItemsCountText.ReloadTextTexture();
 				loadedItemsCountText.DrawString();
@@ -1024,7 +1023,7 @@ namespace Graphics
 	void MP::RenderScrollBar(f32* playlistOffset, f32 displayedItems, f32 maxItems)
 	{
 		//auto Interface::Separator::GetContainer() = Interface::Separator::GetContainer();
-		//auto Audio::Object::GetAudioObjectContainer() = Audio::Object::GetAudioObjectContainer();
+		auto audioCon = Audio::Object::GetAudioObjectContainer();
 		f32 separatorH = Data::_PLAYLIST_SEPARATOR_SIZE.y;
 		f32 itemH = Data::_PLAYLIST_ITEM_SIZE.y;
 		s32 bottomPlaylistBorder = Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y;
@@ -1087,7 +1086,7 @@ namespace Graphics
 				if(relY != 0)
 					State::SetState(State::PlaylistMovement);
 
-				f32 diff = abs(Audio::Object::GetAudioObjectContainer().back()->GetPlaylistItemPos().y - Audio::Object::GetAudioObjectContainer().front()->GetPlaylistItemPos().y) / scrollSurface;
+				f32 diff = abs(audioCon->back()->GetPlaylistItemPos().y - audioCon->front()->GetPlaylistItemPos().y) / scrollSurface;
 				*playlistOffset += ((relY * (maxItems + separatorsOffset / itemH)) / (displayedItems));
 
 
@@ -1118,7 +1117,7 @@ namespace Graphics
 			{
 				m_PlaylistBarSlider->SetButtonPos(glm::vec2(m_PlaylistBarSlider->GetButtonPos().x,
 															Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - m_PlaylistBarSlider->GetButtonSize().y));
-				*playlistOffset = Audio::Object::GetAudioObjectContainer().size() * itemH + Interface::Separator::GetContainer()->size() * separatorH;
+				*playlistOffset = audioCon->size() * itemH + Interface::Separator::GetContainer()->size() * separatorH;
 			}
 
 			if (playlistSliderActive)
@@ -1153,14 +1152,14 @@ namespace Graphics
 							divider = 0;
 						if (divider > 1.f)
 							divider = 1.f;
-						*playlistOffset = (Audio::Object::GetAudioObjectContainer().size() * itemH + Interface::Separator::GetContainer()->size() * separatorH) * divider;
+						*playlistOffset = (audioCon->size() * itemH + Interface::Separator::GetContainer()->size() * separatorH) * divider;
 						if (mouseY < Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
 						{
 							*playlistOffset = 0;
 						}
 						if (mouseY > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y)
 						{
-							*playlistOffset = Audio::Object::GetAudioObjectContainer().size() * itemH + Interface::Separator::GetContainer()->size() * separatorH;
+							*playlistOffset = audioCon->size() * itemH + Interface::Separator::GetContainer()->size() * separatorH;
 						}
 
 
@@ -1204,7 +1203,7 @@ namespace Graphics
 			GetPlaylistObject()->IsEnabled() &&
 			State::CheckState(State::PlaylistEmpty) == false)
 		{
-			//auto Audio::Object::GetAudioObjectContainer() = Audio::Object::GetAudioObjectContainer();
+			auto audioCon = Audio::Object::GetAudioObjectContainer();
 			//auto Interface::Separator::GetContainer() = Interface::Separator::GetContainer();
 			b8 loadItemsPositions(false);
 			b8 loadItemsTextures(false);
@@ -1231,11 +1230,11 @@ namespace Graphics
 			}
 
 			// Render playlist scroll bar
-			//RenderScrollBar(&playlistPositionOffset, displayedItems, Audio::Object::GetAudioObjectContainer().size());
+			//RenderScrollBar(&playlistPositionOffset, displayedItems, Audio::Object::GetAudioObjectContainer()->size());
 
 			if (State::CheckState(State::PlaylistMovement) == true)
 			{
-				if (displayedItems > Audio::Object::GetAudioObjectContainer().size() + (Interface::Separator::GetContainer()->size() * separatorH) / itemH)
+				if (displayedItems > Audio::Object::GetAudioObjectContainer()->size() + (Interface::Separator::GetContainer()->size() * separatorH) / itemH)
 				{
 					playlistPositionOffset = 0;
 				}
@@ -1250,7 +1249,7 @@ namespace Graphics
 
 				s32 indexOfLast = minPosToRender + displayedItems - 2;
 				s32 indexOfFirst = minPosToRender + 3;
-				if (indexOfLast == Audio::Object::GetAudioObjectContainer().size() - 2 ||
+				if (indexOfLast == Audio::Object::GetAudioObjectContainer()->size() - 2 ||
 					indexOfFirst == 0)
 				{
 					State::ResetState(State::AudioChanged);
@@ -1258,16 +1257,16 @@ namespace Graphics
 					loadItemsTextures = true;
 				}
 
-				if (indexOfLast > Audio::Object::GetAudioObjectContainer().size() - 1)
-					indexOfLast > Audio::Object::GetAudioObjectContainer().size() - 1;
+				if (indexOfLast > Audio::Object::GetAudioObjectContainer()->size() - 1)
+					indexOfLast > Audio::Object::GetAudioObjectContainer()->size() - 1;
 
-				assert(Audio::Object::GetAudioObjectContainer()[playingID] != NULL);
-				while (Audio::Object::GetAudioObjectContainer()[playingID]->GetPlaylistItemPos().y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - 2 * itemH)
+				assert(audioCon->at(playingID) != NULL);
+				while (audioCon->at(playingID)->GetPlaylistItemPos().y > Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - 2 * itemH)
 				{
 					playlistPositionOffset += itemH;
 				}
 
-				while(Audio::Object::GetAudioObjectContainer()[playingID]->GetPlaylistItemPos().y < Data::_PLAYLIST_ITEMS_SURFACE_POS.y + 1 * itemH &&
+				while(audioCon->at(playingID)->GetPlaylistItemPos().y < Data::_PLAYLIST_ITEMS_SURFACE_POS.y + 1 * itemH &&
 						playlistPositionOffset > 0)
 				{
 					playlistPositionOffset -= itemH;
@@ -1302,13 +1301,13 @@ namespace Graphics
 				}
 
 				for (s32 i = (minPosToRender - diff >= 0 ? minPosToRender - diff : 0);
-					     i < Audio::Object::GetAudioObjectContainer().size(); 
+					     i < Audio::Object::GetAudioObjectContainer()->size(); 
 					     i++)
 				{
-					if (Audio::Object::GetAudioObjectContainer()[i]->GetPlaylistItemPos().y <= upperBoundOfVisible &&
-						Audio::Object::GetAudioObjectContainer()[i]->GetPlaylistItemPos().y + itemH + separatorH >= upperBoundOfVisible)
+					if (audioCon->at(i)->GetPlaylistItemPos().y <= upperBoundOfVisible &&
+						audioCon->at(i)->GetPlaylistItemPos().y + itemH + separatorH >= upperBoundOfVisible)
 					{
-						minPosToRender = Audio::Object::GetAudioObjectContainer()[i]->GetID();
+						minPosToRender = audioCon->at(i)->GetID();
 						break;
 					}
 				}
@@ -1323,7 +1322,7 @@ namespace Graphics
 			}
 
 			// Render and update logic of playlist scroll bar
-			RenderScrollBar(&playlistPositionOffset, displayedItems, Audio::Object::GetAudioObjectContainer().size());
+			RenderScrollBar(&playlistPositionOffset, displayedItems, Audio::Object::GetAudioObjectContainer()->size());
 
 
 
@@ -1332,12 +1331,12 @@ namespace Graphics
 				playlistPositionOffset = 0;
 			}
 
-			if (State::CheckState(State::ContainersResized) == false && Audio::Object::GetAudioObjectContainer().back() != NULL)
+			if (State::CheckState(State::ContainersResized) == false && Audio::Object::GetAudioObjectContainer()->back() != NULL)
 			{
-				if (Audio::Object::GetAudioObjectContainer().back()->GetPlaylistItemPos().y + itemH < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y &&
+				if (Audio::Object::GetAudioObjectContainer()->back()->GetPlaylistItemPos().y + itemH < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y &&
 					playlistPositionOffset > 0)
 				{
-					playlistPositionOffset = Audio::Object::GetAudioObjectContainer().back()->GetButtonPos().y - Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y + itemH;
+					playlistPositionOffset = Audio::Object::GetAudioObjectContainer()->back()->GetButtonPos().y - Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y + itemH;
 				}
 			}
 
@@ -1346,23 +1345,20 @@ namespace Graphics
 				TRY TO FIX THAT IN MORE EFFICIENT WAY
 			*/
 
-			if (minPosToRender > Audio::Object::GetAudioObjectContainer().size() - 1)
-				minPosToRender = Audio::Object::GetAudioObjectContainer().size() - 1;
-			assert(Audio::Object::GetAudioObjectContainer()[minPosToRender] != NULL);
-			while (playlistCursorPosition < Audio::Object::GetAudioObjectContainer()[minPosToRender]->GetPlaylistItemPos().y &&
+			if (minPosToRender > Audio::Object::GetAudioObjectContainer()->size() - 1)
+				minPosToRender = Audio::Object::GetAudioObjectContainer()->size() - 1;
+			assert(audioCon->at(minPosToRender) != NULL);
+			while (playlistCursorPosition < audioCon->at(minPosToRender)->GetPlaylistItemPos().y &&
 				minPosToRender > 0)
 			{
 				minPosToRender--;
 			}
-			assert(Audio::Object::GetAudioObjectContainer()[minPosToRender] != NULL);
-			while (playlistCursorPosition > Audio::Object::GetAudioObjectContainer()[minPosToRender]->GetPlaylistItemPos().y + Audio::Object::GetAudioObjectContainer()[minPosToRender]->GetButtonSize().y &&
-				minPosToRender < Audio::Object::GetAudioObjectContainer().size() - 1)
+			assert(audioCon->at(minPosToRender) != NULL);
+			while (playlistCursorPosition > audioCon->at(minPosToRender)->GetPlaylistItemPos().y + audioCon->at(minPosToRender)->GetButtonSize().y &&
+				minPosToRender < Audio::Object::GetAudioObjectContainer()->size() - 1)
 			{
 				minPosToRender++;
 			}
-
-		
-
 
 			if (minPosToRender < 0)
 				minPosToRender = 0;
@@ -1371,28 +1367,25 @@ namespace Graphics
 
 			// Find the max position that will be visible considering playlist separators size
 			maxPosToRender = minPosToRender + displayedItems + 2;
-			if (maxPosToRender > Audio::Object::GetAudioObjectContainer().size() - 1)
-				maxPosToRender = Audio::Object::GetAudioObjectContainer().size() - 1;
+			if (maxPosToRender > Audio::Object::GetAudioObjectContainer()->size() - 1)
+				maxPosToRender = Audio::Object::GetAudioObjectContainer()->size() - 1;
 
-			if (Audio::Object::GetAudioObjectContainer()[maxPosToRender] == NULL || Audio::Object::GetAudioObjectContainer()[minPosToRender] == NULL)
+			if (audioCon->at(maxPosToRender) == NULL || audioCon->at(minPosToRender) == NULL)
 			{
 				maxPosToRender = displayedItems + 3;
 			}
 			else
 			{
-				assert(Audio::Object::GetAudioObjectContainer()[minPosToRender] != NULL);
-				assert(Audio::Object::GetAudioObjectContainer()[maxPosToRender] != NULL);
-				f32 posDifference = Audio::Object::GetAudioObjectContainer()[maxPosToRender]->GetPlaylistItemPos().y - Audio::Object::GetAudioObjectContainer()[minPosToRender]->GetPlaylistItemPos().y;
+				assert(audioCon->at(minPosToRender) != NULL);
+				assert(audioCon->at(maxPosToRender) != NULL);
+				f32 posDifference = audioCon->at(maxPosToRender)->GetPlaylistItemPos().y - audioCon->at(minPosToRender)->GetPlaylistItemPos().y;
 				displayedItems = posDifference / itemH;
 				displayedItems += 2;
 				maxPosToRender = minPosToRender + displayedItems + 2;
 			}
-			if (maxPosToRender > Audio::Object::GetAudioObjectContainer().size())
-				maxPosToRender = Audio::Object::GetAudioObjectContainer().size();
+			if (maxPosToRender > Audio::Object::GetAudioObjectContainer()->size())
+				maxPosToRender = Audio::Object::GetAudioObjectContainer()->size();
 
-
-
-			//md_log_compare(minPosToRender, maxPosToRender);
 
 			b8 loadTextureFirstEnter(false);
 			if (State::CheckState(State::AudioAdded) == true ||
@@ -1404,8 +1397,6 @@ namespace Graphics
 				playlistFirstEnter = false;
 				loadTextureFirstEnter = true;
 				playlistOpened = true;
-				//State::ResetMusicPlayerState();
-				//State::ResetState(State::Window::Resized);
 			}
 
 
@@ -1420,13 +1411,13 @@ namespace Graphics
 				{
 					for (s32 i = minPosToRender; i < maxPosToRender; i++)
 					{
-						Audio::Object::GetAudioObjectContainer()[i]->ReloadTextTexture();
+						audioCon->at(i)->ReloadTextTexture();
 					}
 
 					loadItemsTextures = false;
 				}
 
-				for (auto & i : Audio::Object::GetAudioObjectContainer())
+				for (auto & i : *audioCon)
 				{
 					if (i->IsFolderRep() == true)
 					{
@@ -1440,7 +1431,6 @@ namespace Graphics
 
 					i->SetButtonPos(startPos);
 					i->DeleteTexture();
-					//i->InitTextTexture();
 
 					startPos.y += itemH;
 				}
@@ -1467,7 +1457,7 @@ namespace Graphics
 				for (auto i : GetPlaylistObject()->GetIndexesToRender())
 				{
 				
-					audioVecToRenderTemp.push_back(Audio::Object::GetAudioObjectContainer()[i]);
+					audioVecToRenderTemp.push_back(audioCon->at(i));
 				}
 				useAudioVecTemp = true;
 			}
@@ -1483,7 +1473,7 @@ namespace Graphics
 				std::vector<s32> indexes;
 				
 				// The most reliable solution... A bit slow though
-				for (auto & i : Audio::Object::GetAudioObjectContainer())
+				for (auto & i : *audioCon)
 				{
 					i->DeleteTexture();
 				}
@@ -1497,7 +1487,7 @@ namespace Graphics
 				{
 					//if(coverGap == false)
 					indexes.push_back(i);
-					Audio::Object::GetAudioObjectContainer()[i]->ReloadTextTexture();
+					audioCon->at(i)->ReloadTextTexture();
 				}
 
 				visibleSeparatorsCount = 0;
@@ -1542,7 +1532,7 @@ namespace Graphics
 			// Render VISIBLE playlist items
 			for (auto i : GetPlaylistObject()->GetIndexesToRender())
 			{
-				auto item = Audio::Object::GetAudioObjectContainer()[i];
+				auto item = audioCon->at(i);
 				if (useAudioVecTemp == true)
 					item = audioVecToRenderTemp[i];
 
@@ -1566,7 +1556,7 @@ namespace Graphics
 				if (*i >= GetPlaylistObject()->GetIndexesToRender().front() &&
 					*i <= GetPlaylistObject()->GetIndexesToRender().back())
 				{
-					Audio::Object::GetAudioObjectContainer()[*i]->DrawDottedBorder();
+					audioCon->at(*i)->DrawDottedBorder();
 				}
 			}
 
@@ -1856,95 +1846,53 @@ namespace Graphics
 
 		Interface::PlaylistSeparator::SetPlaylistOffsetY(&playlistPositionOffset);
 		Audio::AudioObject::SetPlaylistOffsetY(&playlistPositionOffset);
+
+		// Initial load
+		State::SetState(State::UpdatePlaylistInfoStrings);
 	}
 
 	void MP::UpdateMainWindow()
 	{
-		/* On every file addition or deletion update the overall file durations and size
-		   (if more files are added, it will update only once, after all files are loaded)
-		*/
-		if ((State::CheckState(State::FilesInfoLoaded) == true && updatePlaylistInfoPrevious == false) ||
-			(State::CheckState(State::FilesLoaded) == true &&
-				State::CheckState(State::PathLoadedFromFileVolatile) == true &&
-				updatePlaylistInfoPrevious == false) ||
-			State::CheckState(State::AudioDeleted) == true)
+		// If items info is loaded, reload strings ONCE
+		if (State::CheckState(State::FilesInfoLoaded) == true && 
+			updatePlaylistInfo == false)
 		{
-			updatePlaylistInfoPrevious = true;
+			State::SetState(State::UpdatePlaylistInfoStrings);
 			updatePlaylistInfo = true;
 		}
-
-		updatePlaylistInfoPrevious = State::CheckState(State::FilesInfoLoaded);
-
-		if (State::CheckState(State::PlaylistEmpty) == true &&
-			playlistWasEmpty == false)
+		else if (State::CheckState(State::FilesInfoLoaded) == false ||
+				 Audio::Object::GetSize() == 0)
 		{
-			updatePlaylistInfo = true;
-		}
-
-			
-		// Load items duration and size form file is commented right now
-		if (updatePlaylistInfo == true &&
-			State::CheckState(State::PlaylistEmpty) == true)
-		{
-			GetPlaylistObject()->SetItemsDuration(0.f);
-			GetPlaylistObject()->SetItemsSize(0.f);
-
-			durationText.SetTextString(utf8_to_utf16(GetPlaylistObject()->GetItemsDurationString()));
-			itemsSizeText.SetTextString(utf8_to_utf16(GetPlaylistObject()->GetItemsSizeString()));
-			itemsCountText.SetTextString(std::to_wstring(Audio::Object::GetSize()));
-
-			durationText.ReloadTextTexture();
-			itemsSizeText.ReloadTextTexture();
-			itemsCountText.ReloadTextTexture();
-
 			updatePlaylistInfo = false;
 		}
-		else if(updatePlaylistInfo == true)
+
+		// If files info is loading and any of visible playlist items is pressed, update strings
+		if (State::CheckState(State::FilesInfoLoaded) == false)
 		{
-			f64 duration = 0;
-			f64 size = 0;
-
-
-			if (Audio::Object::GetAudioObject(0) == nullptr)
-				return;
-			s32 k = 0;
-			//auto Interface::Separator::GetContainer() = Interface::Separator::GetContainer();
-			auto itSep = Interface::Separator::GetSeparator(Audio::Object::GetAudioObject(0)->GetFolderPath());
-			if (itSep == nullptr)
-				return;
-			itSep->SepItemDuration = 0;
-			for (auto & i : Audio::Object::GetAudioObjectContainer())
+			for (auto & i : GetPlaylistObject()->GetIndexesToRender())
 			{
-				assert(i != nullptr);
-				assert(itSep != NULL);
-				
-				if (itSep->GetSeparatorPath().compare(i->GetFolderPath()) != 0)
-				{
-					std::wstring test = i->GetFolderPath();
-					itSep = Interface::Separator::GetSeparator(i->GetFolderPath());
-					k++;
-					assert(itSep != NULL);
-					if (k > Interface::Separator::GetSize())
-						break;
-					itSep->SepItemDuration = 0;
-				}
-				
-				if (itSep == nullptr)
+				if(Audio::Object::GetAudioObject(i) == nullptr)
 					break;
 
-				itSep->SepItemDuration += i->GetLength();
-
-				size += i->GetObjectSize();
+				if (Audio::Object::GetAudioObject(i)->isPressed == true)
+				{
+					State::SetState(State::UpdatePlaylistInfoStrings);
+					updatePlaylistInfo = true;
+					break;
+				}
 			}
+		}
 
-			for (auto & i : *Interface::Separator::GetContainer())
+
+		if(State::CheckState(State::UpdatePlaylistInfoStrings) == true)
+		{
+			State::ResetState(State::UpdatePlaylistInfoStrings);
+
+			if (Audio::Object::GetAudioObjectContainer()->empty() == true)
 			{
-				duration += i.second->SepItemDuration;
+				GetPlaylistObject()->SetItemsDuration(0.f);
+				GetPlaylistObject()->SetItemsSize(0.f);
 			}
-
-
-			GetPlaylistObject()->SetItemsDuration(duration);
-			GetPlaylistObject()->SetItemsSize(size);
 
 			durationText.SetTextString(utf8_to_utf16(GetPlaylistObject()->GetItemsDurationString()));
 			itemsSizeText.SetTextString(utf8_to_utf16(GetPlaylistObject()->GetItemsSizeString()));
@@ -1953,33 +1901,7 @@ namespace Graphics
 			durationText.ReloadTextTexture();
 			itemsSizeText.ReloadTextTexture();
 			itemsCountText.ReloadTextTexture();
-
-			updatePlaylistInfo = false;
-
-			// Should I delete it?
-			State::SetState(State::AudioAdded);
 		}
-
-
-
-		/*else if (updatePlaylistInfo == true && State::PathLoadedFromFileConst == true)
-		{
-
-			GetPlaylistObject()->SetItemsDuration(m_Playlist.GetItemsDuration());
-			GetPlaylistObject()->SetItemsSize(m_Playlist.GetItemsSize());
-
-			durationText.SetTextString(utf8_to_utf16(GetPlaylistObject()->GetItemsDurationString()));
-			itemsSizeText.SetTextString(utf8_to_utf16(GetPlaylistObject()->GetItemsSizeString()));
-			itemsCountText.SetTextString(std::to_wstring(Audio::Object::GetSize()));
-
-			durationText.InitTextTexture();
-			itemsSizeText.InitTextTexture();
-			itemsCountText.InitTextTexture();
-
-			updatePlaylistInfo = false;
-
-			mdEngine::MP::musicPlayerState = mdEngine::MP::MusicPlayerState::kMusicAdded;
-		}*/
 	}
 
 	void MP::RenderMainWindow()
@@ -2041,25 +1963,25 @@ namespace Graphics
 	void MP::PrintVisibleItemsInfo()
 	{
 		s32 maxNameLen = 100;
-		//auto Audio::Object::GetAudioObjectContainer() = Audio::Object::GetAudioObjectContainer();
+		auto audioCon = Audio::Object::GetAudioObjectContainer();
 		for (s32 i = minPos; i < maxPos; i++)
 		{
-			std::cout << utf16_to_utf8(Audio::Object::GetAudioObjectContainer()[i]->GetTitle());
-			for (s32 k = utf16_to_utf8(Audio::Object::GetAudioObjectContainer()[i]->GetTitle()).length(); k < maxNameLen; k++)
+			std::cout << utf16_to_utf8(audioCon->at(i)->GetTitle());
+			for (s32 k = utf16_to_utf8(audioCon->at(i)->GetTitle()).length(); k < maxNameLen; k++)
 				std::cout << " ";
 			std::cout << " || ";
 			std::cout << "Pos X: ";
-			std::cout << Audio::Object::GetAudioObjectContainer()[i]->GetPlaylistItemPos().x;
+			std::cout << audioCon->at(i)->GetPlaylistItemPos().x;
 			std::cout << " || ";
 			std::cout << "Pos Y: ";
-			std::cout << Audio::Object::GetAudioObjectContainer()[i]->GetPlaylistItemPos().y;
+			std::cout << audioCon->at(i)->GetPlaylistItemPos().y;
 			std::cout << "\n";
 		}
 	}
 
 	void MP::PrintAudioObjectInfo()
 	{
-		for (auto & i : Audio::Object::GetAudioObjectContainer())
+		for (auto & i : *Audio::Object::GetAudioObjectContainer())
 		{
 			std::cout << "ID: ";
 			std::cout << i->GetID();

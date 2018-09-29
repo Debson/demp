@@ -511,7 +511,7 @@ namespace MP
 			Shader::shaderDefault->setMat4("model", model);
 			Shader::Draw(Shader::shaderDefault);
 
-			for(auto & i : Audio::Object::GetAudioObjectContainer())
+			for(auto & i : *Audio::Object::GetAudioObjectContainer())
 			{
 				if (i != nullptr)
 				{
@@ -627,7 +627,7 @@ namespace MP
 		{
 			auto audioCon = Audio::Object::GetAudioObjectContainer();
 			Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
-			for (auto & i : audioCon)
+			for (auto & i : *audioCon)
 			{
 				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&i->GetID());
 			}
@@ -671,7 +671,6 @@ namespace MP
 
 	void UI::HandlePlaylistInput()
 	{
-
 		for (auto & i : Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
 		{
 			if (Audio::Object::GetAudioObject(i) == NULL)
@@ -746,7 +745,7 @@ namespace MP
 			
 			Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
 			
-			if (Audio::Object::GetSize() <= temp && Audio::Object::GetAudioObjectContainer().empty() == false)
+			if (Audio::Object::GetSize() <= temp && Audio::Object::GetAudioObjectContainer()->empty() == false)
 			{
 				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(
 								&Audio::Object::GetAudioObject(Audio::Object::GetSize() - 1)->GetID());

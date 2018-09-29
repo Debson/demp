@@ -16,7 +16,7 @@ namespace Audio
 
 	namespace Object
 	{
-		AudioObjectContainer& GetAudioObjectContainer();
+		AudioObjectContainer* GetAudioObjectContainer();
 		std::shared_ptr<AudioObject> GetAudioObject(s32 id);
 		u32 GetSize();
 		u32 GetProcessedSize();

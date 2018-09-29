@@ -10,6 +10,8 @@ using namespace mdEngine;
 
 namespace Audio
 {
+	struct AudioObject;
+
 	namespace Info
 	{
 		struct ID3
@@ -53,16 +55,15 @@ namespace Audio
 			f32 size;	// in bytes
 			f32 length;	// in sec
 
-			b8 folder_rep;
+			b8 is_processed;
 			b8 loaded;
 		};
 
-		extern b8 SingleItemInfoLoaded;
 		extern s32 LoadedItemsInfoCount;
 
-		b8 CheckIfAudio(std::wstring path);
+		b8 CheckIfAudio(std::wstring& path);
 
-		b8 CheckIfHasItems(std::wstring path);
+		b8 CheckIfHasItems(std::wstring& path);
 		
 		b8 IsPathLoaded(std::wstring& path);
 
@@ -70,17 +71,17 @@ namespace Audio
 		std::wstring GetFolderPath(std::wstring& path);
 
 		// Returns only a name of a file's folder
-		std::wstring GetFolder(std::wstring path);
+		std::wstring GetFolder(std::wstring& path);
 
 		std::wstring GetCompleteTitle(std::wstring& path);
 
-		std::wstring GetArtist(std::wstring path);
+		std::wstring GetArtist(std::wstring& path);
 
-		std::wstring GetExt(std::wstring path);
+		std::wstring GetExt(std::wstring& path);
 
-		void GetInfo(Info::ID3* info, std::wstring path);
+		void GetInfo(std::shared_ptr<AudioObject> audioObj);
 
-		void GetID3Info(Info::ID3* info, std::wstring path);
+		void GetID3Info(Info::ID3* info, std::wstring& path);
 
 		std::wstring GetProcessedItemsCountStr();
 

@@ -13,6 +13,8 @@
 
 #include "mp_audio.h"
 #include "../settings/music_player_settings.h"
+#include "../player/music_player_state.h"
+#include "../graphics/music_player_graphics_playlist.h"
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_util.h"
 
@@ -23,12 +25,11 @@ namespace Audio
 	namespace Info
 	{
 		s32 LoadedItemsInfoCount = 0;
-		b8 SingleItemInfoLoaded(false);
 		std::mutex mutex;
 	}
 
 
-	b8 Info::CheckIfAudio(std::wstring path)
+	b8 Info::CheckIfAudio(std::wstring& path)
 	{
 		fs::path p(path);
 
@@ -44,7 +45,7 @@ namespace Audio
 		return false;
 	}
 
-	b8 Info::CheckIfHasItems(std::wstring path)
+	b8 Info::CheckIfHasItems(std::wstring& path)
 	{
 		for (auto & i : fs::directory_iterator(path))
 		{
@@ -58,7 +59,7 @@ namespace Audio
 	
 	b8 Info::IsPathLoaded(std::wstring& path)
 	{
-		for (auto & i : Audio::Object::GetAudioObjectContainer())
+		for (auto & i : *Audio::Object::GetAudioObjectContainer())
 		{
 			if (path.compare(i->GetPath()) == 0)
 			{
@@ -76,7 +77,7 @@ namespace Audio
 		return p.remove_filename().wstring();
 	}
 
-	std::wstring Info::GetFolder(std::wstring path)
+	std::wstring Info::GetFolder(std::wstring& path)
 	{
 		// Shouldn't be hardcoded!!! change it
 		s16 pos = path.find_last_of('\\');
@@ -95,7 +96,7 @@ namespace Audio
 		return title;
 	}
 
-	std::wstring Info::GetArtist(std::wstring path)
+	std::wstring Info::GetArtist(std::wstring& path)
 	{
 		fs::path p(path);
 
@@ -107,7 +108,7 @@ namespace Audio
 		return artist;
 	}
 
-	std::wstring Info::GetExt(std::wstring path)
+	std::wstring Info::GetExt(std::wstring& path)
 	{
 		fs::path p(path);
 
@@ -120,15 +121,19 @@ namespace Audio
 		return p.wstring();
 	}
 
-	
-	void Info::GetInfo(Info::ID3* info, std::wstring path)
+	void Info::GetInfo(std::shared_ptr<Audio::AudioObject> audioObj)
 	{
 		std::lock_guard<std::mutex> lockGuard(mutex);
 
-		HSTREAM stream;;
-		stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE);
+		if(audioObj == nullptr || State::CheckState(State::AudioDeleted) == true)
+			return;
 
-		boost::intmax_t fileSize = boost::filesystem::file_size(path);
+		auto info = audioObj->GetID3Struct();
+		info->is_processed = true;
+		HSTREAM stream;;
+		stream = BASS_StreamCreateFile(FALSE, audioObj->GetPath().c_str(), 0, 0, BASS_STREAM_DECODE);
+
+		boost::intmax_t fileSize = boost::filesystem::file_size(audioObj->GetPath());
 
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_FREQ, &info->freq);
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_BITRATE, &info->bitrate);
@@ -136,15 +141,17 @@ namespace Audio
 		f32 size = BASS_ChannelGetLength(stream, BASS_POS_BYTE);
 		info->length = BASS_ChannelBytes2Seconds(stream, size);
 		info->size = fileSize;
-
-		LoadedItemsInfoCount++;
-
 		BASS_StreamFree(stream);
 
-		SingleItemInfoLoaded = true;
+		Graphics::MP::GetPlaylistObject()->AddToItemsDuration(info->length);
+		Graphics::MP::GetPlaylistObject()->AddToItemsSize(info->size);
+
+		info->loaded = true;
+		LoadedItemsInfoCount++;
+		info->is_processed = false;
 	}
 
-	void Info::GetID3Info(Info::ID3* info, std::wstring path)
+	void Info::GetID3Info(Info::ID3* info, std::wstring& path)
 	{
 		TagLib::FileRef file(path.c_str());
 		TagLib::String buff = file.tag()->title();

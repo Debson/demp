@@ -313,12 +313,11 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			{
 				if (State::CheckState(State::FilesLoaded) == false && State::CheckState(State::PlaylistEmpty) == false)
 					break;
-				State::SetState(State::FileDropped);
-				State::ResetState(State::PathLoadedFromFileVolatile);
-				State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
 
+				State::SetState(State::FileDropped);
+				State::ResetState(State::InitialLoadFromFile);
+				State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
 				State::SetState(State::FilesAddedInfoNotLoaded);
-				State::ResetState(State::DropComplete);
 #ifdef _WIN32_
 				std::wstring p(utf8_to_utf16(event.drop.file));
 				Audio::PushToPlaylist(p);
@@ -329,7 +328,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				break;
 			}
 			case (SDL_DROPCOMPLETE):
-				State::SetState(State::DropComplete);
+				State::SetState(State::FileDropped);
 				break;
 			case (SDL_MOUSEWHEEL):
 				UpdateScrollPosition(event.wheel.x, event.wheel.y);

@@ -778,14 +778,19 @@ namespace MP
 
 		void DeleteMusic(const std::vector<s32>& indexes)
 		{
-			if (State::CheckState(State::FilesDroppedNotLoaded) == true)
+			/*if (State::CheckState(State::FilesDroppedNotLoaded) == true)
 			{
 				return;
-			}
+			}*/
 
+			State::SetState(State::AudioDeleted);
+
+			auto sepCont = Interface::Separator::GetContainer();
 			State::SetState(State::DeletionInProgress);
-			Interface::Separator::GetContainer()->clear();
-			b8 smallDeletion = indexes.size() < (0.1f * float(Audio::Object::GetSize())) ? true : false;
+			//Interface::Separator::GetContainer()->clear();
+
+			// If deleted file is smaller than 10% of the playlist size, use different algorithm
+			b8 smallDeletion = (indexes.size() < (0.1f * float(Audio::Object::GetSize())) || Audio::Object::GetSize() < 100) ? true : false;
 			for (auto i : indexes)
 			{
 				// BUG: Can't erase pos in playlist button container
@@ -802,9 +807,7 @@ namespace MP
 				if (Graphics::MP::GetPlaylistObject()->GetSelectedID() > Audio::Object::GetSize() - 1)
 					Graphics::MP::GetPlaylistObject()->SetSelectedID(Audio::Object::GetSize() - 1);
 
-				State::SetState(State::AudioDeleted);
 			}
-
 		}
 
 		void CrossfadeSong()
