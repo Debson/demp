@@ -19,27 +19,27 @@ Audio::AudioObject::~AudioObject()
 
 void Audio::AudioObject::Init()
 {
-	InitItem(&id);
+	InitItem();
 }
 
 s32& Audio::AudioObject::GetID()
 {
-	return id;
+	return m_ItemID;
 }
 
 s32* Audio::AudioObject::GetIDP()
 {
-	return &id;
+	return &m_ItemID;
 }
 
 void Audio::AudioObject::DecrementID()
 {
-	id > 0 ? id-- : 0;
+	m_ItemID > 0 ? m_ItemID-- : 0;
 }
 
 void Audio::AudioObject::IncrementID()
 {
-	id++;
+	m_ItemID++;
 }
 
 std::wstring& Audio::AudioObject::GetPath() const
@@ -106,7 +106,7 @@ const std::wstring& Audio::AudioObject::GetFormat() const
 
 void Audio::AudioObject::SetID(s32 id)
 {
-	this->id = id;
+	this->m_ItemID = id;
 }
 
 void Audio::AudioObject::SetPath(std::wstring& path)

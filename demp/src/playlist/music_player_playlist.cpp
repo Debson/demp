@@ -776,30 +776,41 @@ namespace MP
 				mdVolume = 0.0;
 		}
 
-		void DeleteMusic(const std::vector<s32>& indexes)
+		void DeleteMusic(const std::vector<s32>* indexes)
 		{
-			/*if (State::CheckState(State::FilesDroppedNotLoaded) == true)
+			if (State::CheckState(State::FilesDroppedNotLoaded) == true)
 			{
 				return;
-			}*/
+			}
 
-			State::SetState(State::AudioDeleted);
+			//State::SetState(State::AudioDeleted);
 
 			auto sepCont = Interface::Separator::GetContainer();
 			State::SetState(State::DeletionInProgress);
 			//Interface::Separator::GetContainer()->clear();
 
 			// If deleted file is smaller than 10% of the playlist size, use different algorithm
-			b8 smallDeletion = (indexes.size() < (0.1f * float(Audio::Object::GetSize())) || Audio::Object::GetSize() < 100) ? true : false;
-			for (auto i : indexes)
+			b8 smallDeletion = (indexes->size() < (0.1f * float(Audio::Object::GetSize())) || Audio::Object::GetSize() < 100) ? true : false;
+
+			/*	Note: Useful only where files are being processed and deletion occurs.
+				Save audio container's size before deletion(if deletion is a large deletion of files
+				and some files are still left, it will terminate threads that were working on extracting
+				info with old audio container data)
+			*/
+			Audio::AudioContainerSizeBeforeDeletion = 0.1f * float(Audio::Object::GetSize());
+
+			for (auto i : *indexes)
 			{
+				if (i < 0 || i > Audio::Object::GetSize() - 1)
+					return;
+				State::SetState(State::AudioDeleted);
 				// BUG: Can't erase pos in playlist button container
+
+				Audio::PerformDeletion(i, smallDeletion);
+
 				auto playlistButtonCon = Interface::PlaylistButton::GetContainer();
 				assert(Interface::PlaylistButton::GetButton(i) != nullptr);
 				playlistButtonCon->erase(playlistButtonCon->begin() + i);
-
-
-				Audio::PerformDeletion(i, smallDeletion);
 
 				if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == i)
 					State::SetState(State::CurrentlyPlayingDeleted);
@@ -808,6 +819,19 @@ namespace MP
 					Graphics::MP::GetPlaylistObject()->SetSelectedID(Audio::Object::GetSize() - 1);
 
 			}
+
+			/*	If there is large deletion of files and some items are left after deletion
+				set folders rep again(because separator's vector was cleared) and load info 
+				for left items
+			*/
+			if (smallDeletion == false && 
+				Audio::Object::GetSize() > 0)
+			{
+				Audio::PerformSetFoldersRep();
+				Audio::LoadFilesInfo();
+			}
+
+			Audio::AudioContainerSizeBeforeDeletion = 0;
 		}
 
 		void CrossfadeSong()

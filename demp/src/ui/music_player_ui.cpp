@@ -200,7 +200,7 @@ namespace MP
 
 		// Make sure that hitboxes that are not visible cannot be clicked
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
-		for (auto i : Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
+		for (auto i : *Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
 		{
 			if (Audio::Object::GetAudioObject(i) == nullptr || State::CheckState(State::Window::Resized) == true)
 				break;
@@ -285,7 +285,7 @@ namespace MP
 
 		std::reverse(vec.begin(), vec.end());
 
-		Playlist::DeleteMusic(vec);
+		Playlist::DeleteMusic(&vec);
 		
 		Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
 	}
@@ -671,7 +671,7 @@ namespace MP
 
 	void UI::HandlePlaylistInput()
 	{
-		for (auto & i : Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
+		for (auto & i : *Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
 		{
 			if (Audio::Object::GetAudioObject(i) == NULL)
 				return;
@@ -687,13 +687,15 @@ namespace MP
 
 				// Check if current's item position is in vector with selected item's positions
 				it = std::find(Graphics::MP::GetPlaylistObject()->multipleSelect.begin(),
-									Graphics::MP::GetPlaylistObject()->multipleSelect.end(),
-									&Audio::Object::GetAudioObject(i)->GetID());
-				
+							   Graphics::MP::GetPlaylistObject()->multipleSelect.end(),
+							   &Audio::Object::GetAudioObject(i)->GetID());
+
 				if (App::Input::IsKeyDown(App::KeyCode::LCtrl))
 				{
-					if(it == Graphics::MP::GetPlaylistObject()->multipleSelect.end())
+					if (it == Graphics::MP::GetPlaylistObject()->multipleSelect.end())
+					{
 						Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(currentPlaylistItemID);
+					}
 					else
 					{
 						Graphics::MP::GetPlaylistObject()->multipleSelect.erase(it);
@@ -734,14 +736,13 @@ namespace MP
 
 			// WHY WHEN IT IS SORTED IN DESCENDING ORDER IT DELETES FASTER????????????????
 			s32 temp = *Graphics::MP::GetPlaylistObject()->multipleSelect.back();
-			auto multipleSelect = Graphics::MP::GetPlaylistObject()->multipleSelect;
 			std::vector<s32> indexes;
-			for (auto i : multipleSelect)
+			for (auto i : Graphics::MP::GetPlaylistObject()->multipleSelect)
 			{
 				indexes.push_back(*i);
 			}
 
-			Playlist::DeleteMusic(indexes);
+			Playlist::DeleteMusic(&indexes);
 			
 			Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
 			

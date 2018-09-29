@@ -25,6 +25,7 @@ namespace Audio
 	namespace Info
 	{
 		s32 LoadedItemsInfoCount = 0;
+		b8 ItemBeingProcessed;
 		std::mutex mutex;
 	}
 
@@ -123,13 +124,14 @@ namespace Audio
 
 	void Info::GetInfo(std::shared_ptr<Audio::AudioObject> audioObj)
 	{
+		ItemBeingProcessed = true;
 		std::lock_guard<std::mutex> lockGuard(mutex);
 
-		if(audioObj == nullptr || State::CheckState(State::AudioDeleted) == true)
+		if(audioObj == nullptr)
 			return;
 
 		auto info = audioObj->GetID3Struct();
-		info->is_processed = true;
+
 		HSTREAM stream;;
 		stream = BASS_StreamCreateFile(FALSE, audioObj->GetPath().c_str(), 0, 0, BASS_STREAM_DECODE);
 
@@ -148,7 +150,7 @@ namespace Audio
 
 		info->loaded = true;
 		LoadedItemsInfoCount++;
-		info->is_processed = false;
+		ItemBeingProcessed = false;
 	}
 
 	void Info::GetID3Info(Info::ID3* info, std::wstring& path)

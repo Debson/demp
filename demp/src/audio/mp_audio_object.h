@@ -12,7 +12,6 @@ namespace Audio
 	struct AudioProperties
 	{
 		virtual ~AudioProperties() { };
-		s32 id;
 		std::wstring* path;
 		std::wstring folder;
 

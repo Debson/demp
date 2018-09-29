@@ -55,11 +55,11 @@ namespace Audio
 			f32 size;	// in bytes
 			f32 length;	// in sec
 
-			b8 is_processed;
 			b8 loaded;
 		};
 
 		extern s32 LoadedItemsInfoCount;
+		extern b8 ItemBeingProcessed;
 
 		b8 CheckIfAudio(std::wstring& path);
 

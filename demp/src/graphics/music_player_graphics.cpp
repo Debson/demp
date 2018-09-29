@@ -1422,6 +1422,8 @@ namespace Graphics
 					if (i->IsFolderRep() == true)
 					{
 						auto playlistSeparator = Interface::Separator::GetSeparatorByID(i->GetID());
+						if (playlistSeparator == nullptr)
+							break;
 						assert(playlistSeparator != nullptr);
 
 						playlistSeparator->SetButtonPos(glm::vec2(startPos.x - Data::_PLAYLIST_SEPARATOR_POS_OFFSET.x,
@@ -1454,9 +1456,8 @@ namespace Graphics
 				audioVecToRenderTemp.empty() == true)
 			{
 				md_log("new files incoming!");
-				for (auto i : GetPlaylistObject()->GetIndexesToRender())
+				for (auto i : *GetPlaylistObject()->GetIndexesToRender())
 				{
-				
 					audioVecToRenderTemp.push_back(audioCon->at(i));
 				}
 				useAudioVecTemp = true;
@@ -1530,7 +1531,7 @@ namespace Graphics
 			}
 
 			// Render VISIBLE playlist items
-			for (auto i : GetPlaylistObject()->GetIndexesToRender())
+			for (auto i : *GetPlaylistObject()->GetIndexesToRender())
 			{
 				auto item = audioCon->at(i);
 				if (useAudioVecTemp == true)
@@ -1546,15 +1547,15 @@ namespace Graphics
 				}
 				item->DrawItem(main_foreground);
 			}
-
-
 			
 			for (auto & i : GetPlaylistObject()->multipleSelect)
 			{
 				if (*i < 0 && *i > Audio::Object::GetSize() - 1)
 					break;
-				if (*i >= GetPlaylistObject()->GetIndexesToRender().front() &&
-					*i <= GetPlaylistObject()->GetIndexesToRender().back())
+
+				// Note: indexes in multipleSelect vector are in descending order
+				if (*i >= GetPlaylistObject()->GetIndexesToRender()->front() &&
+					*i <= GetPlaylistObject()->GetIndexesToRender()->back())
 				{
 					audioCon->at(*i)->DrawDottedBorder();
 				}
@@ -1869,7 +1870,7 @@ namespace Graphics
 		// If files info is loading and any of visible playlist items is pressed, update strings
 		if (State::CheckState(State::FilesInfoLoaded) == false)
 		{
-			for (auto & i : GetPlaylistObject()->GetIndexesToRender())
+			for (auto & i : *GetPlaylistObject()->GetIndexesToRender())
 			{
 				if(Audio::Object::GetAudioObject(i) == nullptr)
 					break;
@@ -1997,7 +1998,7 @@ namespace Graphics
 
 	void MP::PrintIndexesToRender()
 	{
-		for (auto i : GetPlaylistObject()->GetIndexesToRender())
+		for (auto i : *GetPlaylistObject()->GetIndexesToRender())
 		{
 			std::cout << i << " : ";
 		}

@@ -84,7 +84,7 @@ namespace mdEngine
 
 			void DrawDottedBorder();
 			virtual void DrawItem(GLuint texture);
-			virtual void InitItem(s32* id);
+			virtual void InitItem();
 			virtual void SetButtonPos(glm::vec2 pos);
 			glm::vec2& GetPlaylistItemPos();
 
@@ -94,6 +94,7 @@ namespace mdEngine
 			void SetFolderRep(b8 val);
 			void SetClickCount(s8 count);
 			void SetItemColor(glm::vec3 color);
+			b8 IsSelected();
 			static void SetPlaylistOffsetY(f32* offsetY);
 
 			b8			 IsVisible() const;
@@ -109,7 +110,7 @@ namespace mdEngine
 			b8			 m_PlaylistItemHidden;
 			b8			 m_FolderRep;
 			u8			 m_ClickCount;
-			s32*		 m_ItemID;
+			s32			 m_ItemID;
 			glm::vec3	 m_ItemColor;
 			glm::vec2	 m_StartPos;
 			glm::vec2	 m_PlaylistItemPos;

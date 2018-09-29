@@ -42,6 +42,8 @@ namespace Audio
 
 	static std::mutex mutex;
 
+	u32 AudioContainerSizeBeforeDeletion = 0;
+
 	Time::Timer lastFunctionCallTimer;
 	Time::Timer lastPathPushTimer;
 	b8 startLoadingProperties(false);
@@ -67,7 +69,6 @@ namespace Audio
 	void SetFoldersRep();
 	void CalculateDroppedPosInPlaylist();
 
-	void LoadFilesInfo();
 	void LoadFilesInfoWrap(std::vector<std::shared_ptr<Audio::AudioObject>*>* tempVec);
 
 
@@ -127,7 +128,7 @@ void Audio::CalculateDroppedPosInPlaylist()
 		if (m_AudioObjectContainer.empty() == true)
 			return;
 
-		for (auto i : indexesToRender)
+		for (auto i : *indexesToRender)
 		{
 			if (m_AudioObjectContainer[i]->topHasFocus)
 			{
@@ -354,7 +355,7 @@ void Audio::UpdateAudioLogic()
 	if (m_AudioObjectContainer.empty() == false && 
 		State::CheckState(State::FileDropped) == false)
 	{
-		//currentContainersSize = m_AudioObjectContainer.size();
+		currentContainersSize = m_AudioObjectContainer.size();
 		// If added files are loaded(only audio objets are created), set appropriate flag
 		if (currentContainersSize == currentlyLoadedItemsCount)
 		{
@@ -386,8 +387,8 @@ void Audio::UpdateAudioLogic()
 
 void Audio::PerformDeletion(s32 index, b8 smallDeletion)
 {
-	assert(index >= 0);
-	assert(index < m_AudioObjectContainer.size());
+	//assert(index >= 0);
+	//assert(index < m_AudioObjectContainer.size());
 
 	State::SetState(State::UpdatePlaylistInfoStrings);
 
@@ -396,7 +397,7 @@ void Audio::PerformDeletion(s32 index, b8 smallDeletion)
 
 
 	// TODO add possibility to delete items when their info is still loading
-	while(audioCon->at(index)->GetID3Struct()->is_processed == true) { }
+	while(Info::ItemBeingProcessed == true) { }
 		
 
 	// Find separator sub files container that has id of deleted index
@@ -465,16 +466,20 @@ void Audio::PerformDeletion(s32 index, b8 smallDeletion)
 	//m_AudioObjectContainer.at(index) = nullptr;
 	m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + index);
 
+	if(m_AudioObjectContainer.empty() == true)
+		md_log(m_AudioObjectContainer.size());
+
 	// Decrement variables that manages the size of all containers and currently loaded items
 	currentContainersSize--;
 	currentlyLoadedItemsCount--;
-	if(State::CheckState(State::FilesInfoLoaded) == true)
+	//if(State::CheckState(State::FilesInfoLoaded) == true)
 		Info::LoadedItemsInfoCount--;
 
 	// These values cant be less than 0
 	currentContainersSize < 0 ? (currentContainersSize = 0) : 0;
 	currentlyLoadedItemsCount < 0 ? (currentlyLoadedItemsCount = 0) : 0;
 	Info::LoadedItemsInfoCount < 0 ? (Info::LoadedItemsInfoCount = 0) : 0;
+
 
 	// If there is no audio objects, set playlist state to empty
 	if (m_AudioObjectContainer.empty() == true)
@@ -527,7 +532,7 @@ b8 Audio::AddAudioItem(std::wstring& path, s32 id)
 	{
 		//State::SetState(State::PathLoadedFromFile);
 		audioObject->SetID3Struct(m_ID3Container[id]);
-		m_ID3Container[id]->is_processed == true ? audioObject->SetFolderRep(true) : (void)0;
+		//m_ID3Container[id]->is_processed == true ? audioObject->SetFolderRep(true) : (void)0;
 	}
 	else
 	{
@@ -564,6 +569,12 @@ b8 Audio::AddAudioItem(std::wstring& path, s32 id)
 	return true;
 }
 
+void Audio::PerformSetFoldersRep()
+{
+	foldersRepSet = false;
+	SetFoldersRep();
+}
+
 void Audio::SetFoldersRep()
 {
 	if (foldersRepSet == false)
@@ -572,6 +583,7 @@ void Audio::SetFoldersRep()
 			and add sub files to it
 		*/
 		
+		// ??????????????????
 		State::SetState(State::AudioAdded);
 		State::SetState(State::ShuffleAfterLoad);
 		State::ResetState(State::CurrentlyPlayingDeleted);
@@ -601,14 +613,13 @@ void Audio::SetFoldersRep()
 			ps->SeparatorSubFilePushBack(&i->GetID(), i->GetPath());
 
 			counter++;
-			if(filesLoadedFromFile == true && filesInfoScanned == true)
-				Info::LoadedItemsInfoCount++;
+			/*if(filesLoadedFromFile == true)
+				Info::LoadedItemsInfoCount++;*/
 
 		}
 		if (Graphics::MP::GetPlaylistObject()->GetPlayingID() >= 0)
 			 MP::Playlist::RamLoadedMusic.m_ID += m_AddedFilesPathContainer.size();
 
-		filesLoadedFromFile = false;
 
 		//md_log(SDL_GetTicks() - start);
 
@@ -619,8 +630,11 @@ void Audio::SetFoldersRep()
 
 		sepCon = Interface::Separator::GetContainer();
 		State::SetState(State::UpdatePlaylistInfoStrings);
+		
+		if(filesLoadedFromFile == false)
+			LoadFilesInfo();
 
-		LoadFilesInfo();
+		filesLoadedFromFile = false;
 	}
 }
 
@@ -708,11 +722,28 @@ void Audio::ResetStateFlags()
 
 void Audio::LoadFilesInfoWrap(std::vector<std::shared_ptr<AudioObject>*>* tempVec)
 {
-	for (auto i : *tempVec)
+	u32 size = tempVec->size();
+	for(u32 i = 0 ;i < size;)
 	{
-		if (i == NULL)
-			continue;
-		Info::GetInfo(*i);
+		// If deletion or addition occurs, exit thread that is currently working on retreiving info
+		if (m_AudioObjectContainer.size() <= AudioContainerSizeBeforeDeletion ||
+			State::CheckState(State::FileDropped) == true)
+			break;
+
+		if (State::CheckState(State::AudioDeleted) == false)
+		{
+			if (tempVec->at(i) == nullptr)
+			{
+				i++;
+				continue;
+			}
+			Info::GetInfo(*tempVec->at(i));
+			i++;
+		}
+		else
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
 	}
 	
 	delete tempVec;

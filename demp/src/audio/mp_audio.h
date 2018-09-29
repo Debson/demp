@@ -13,6 +13,7 @@ namespace Audio
 	// Stores all unique valid paths of supported file formats just from one event(drag and drop, file expl. folder expl.)
 	typedef std::vector<std::wstring*> AddedFilesPathContainer;
 
+	extern u32 AudioContainerSizeBeforeDeletion;
 
 	namespace Object
 	{
@@ -43,6 +44,10 @@ namespace Audio
 	/* @param: index of deleted file 
 	   @param: is amount of deleted files small? */
 	void PerformDeletion(s32 index, b8 smallDeletion);
+
+	void PerformSetFoldersRep();
+
+	void LoadFilesInfo();
 
 	// Returns amount of added items to he playlist from event + index in playlist on which files were dropped
 	s32 GetFilesAddedCount();

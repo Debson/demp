@@ -117,7 +117,7 @@ namespace mdEngine
 
 		void MP::PlaylistObject::SetIndexesToRender(std::vector<s32> indexesVec)
 		{
-			indexesToRender = indexesVec;
+			m_IndexesToRender = indexesVec;
 		}
 
 		void MP::PlaylistObject::SetCurrentMinIndex(s32 min)
@@ -185,9 +185,9 @@ namespace mdEngine
 			return str;
 		}
 
-		std::vector<s32> MP::PlaylistObject::GetIndexesToRender() const
+		std::vector<s32>* MP::PlaylistObject::GetIndexesToRender()
 		{
-			return indexesToRender;
+			return &m_IndexesToRender;
 		}
 
 		/*s32 MP::PlaylistObject::GetCurrentMinIndex() const

@@ -49,7 +49,7 @@ namespace mdEngine
 				void SetHiddenSeparatorCount(s32 count);
 				f64  GetItemsSize()				const;
 				f64  GetItemsDuration()			const;
-				std::vector<s32> GetIndexesToRender() const;
+				std::vector<s32>* GetIndexesToRender();
 				//s32  GetCurrentMinIndex()		const;
 				//s32  GetCurrentMaxIndex()		const;
 				s32  GetCurrentOffset()			const;
@@ -84,7 +84,7 @@ namespace mdEngine
 				glm::vec2	m_Size;
 				std::string m_ItemsDurationStr;
 				std::string m_ItemsSizeStr;
-				std::vector<s32> indexesToRender;
+				std::vector<s32> m_IndexesToRender;
 
 
 			};

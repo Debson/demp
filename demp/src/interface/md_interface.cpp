@@ -137,34 +137,32 @@ namespace mdEngine
 		DeleteTexture();
 	}
 
-	void Interface::PlaylistItem::InitItem(s32* id)
+	void Interface::PlaylistItem::InitItem()
 	{
 		m_ItemColor = Color::White;
 		m_ButtonSize = Data::_PLAYLIST_ITEM_SIZE;
 		m_ClickCount = 0;
 		m_PlaylistItemHidden = false;
 		m_ItemColor = Color::White;
-		
-		m_ItemID = id;
 
 		// Button position is predefined in playlist items rendering algorithm anyway, but leave it for now
 		m_StartPos = Data::_PLAYLIST_ITEMS_SURFACE_POS;
-		m_ButtonPos = glm::vec2(m_StartPos.x, m_StartPos.y + *m_ItemID * (m_ButtonSize.y));
+		m_ButtonPos = glm::vec2(m_StartPos.x, m_StartPos.y + m_ItemID * (m_ButtonSize.y));
 		m_TextPos = m_ButtonPos;
 
 		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
 		SetTextColor(Color::White);
 
-		m_TextString = Audio::Object::GetAudioObject(*m_ItemID)->GetTitle();
+		m_TextString = Audio::Object::GetAudioObject(m_ItemID)->GetTitle();
 
-		assert(Audio::Object::GetAudioObject(*m_ItemID) != nullptr);
+		assert(Audio::Object::GetAudioObject(m_ItemID) != nullptr);
 
 		m_TitleC = utf16_to_utf8(m_TextString);
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 		m_TextString = GetShortenTextString();
 
-		m_PlaylistButtonsContainer[*id] = std::make_pair(id, this);
+		m_PlaylistButtonsContainer[m_ItemID] = std::make_pair(&m_ItemID, this);
 	}
 
 	void Interface::PlaylistItem::DrawDottedBorder()
@@ -194,7 +192,7 @@ namespace mdEngine
 		m_PlaylistItemPos = glm::vec2(m_ButtonPos.x, m_ButtonPos.y - *m_PlaylistOffsetY);
 		m_TextPos = m_PlaylistItemPos;
 
-		if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == *m_ItemID &&
+		if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == m_ItemID &&
 			State::CheckState(State::CurrentlyPlayingDeleted) == false)
 		{
 			m_ItemColor *= Color::Red;
@@ -285,6 +283,11 @@ namespace mdEngine
 		m_ItemColor = color;
 	}
 
+	b8 Interface::PlaylistItem::IsSelected()
+	{
+		return m_ClickCount > 0 ? true : false;
+	}
+
 	void Interface::PlaylistItem::SetPlaylistOffsetY(f32* offsetY)
 	{
 		m_PlaylistOffsetY = offsetY;
@@ -297,7 +300,7 @@ namespace mdEngine
 
 	b8 Interface::PlaylistItem::IsPlaying() const
 	{
-		return MP::Playlist::RamLoadedMusic.m_ID == *m_ItemID;
+		return MP::Playlist::RamLoadedMusic.m_ID == m_ItemID;
 	}
 
 	b8 Interface::PlaylistItem::IsFolderRep() const
