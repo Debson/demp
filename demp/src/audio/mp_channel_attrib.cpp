@@ -27,17 +27,39 @@ namespace Audio
 		s32 LoadedItemsInfoCount = 0;
 		b8 ItemBeingProcessed;
 		std::mutex mutex;
+
+		std::vector<std::wstring> m_LoadedPaths;
 	}
 
+	void Info::Update()
+	{
+		if (State::CheckState(State::SortPathsOnNewFileLoad) == true)
+		{
+			m_LoadedPaths.clear();
+			for (auto & i : *Audio::Object::GetAudioObjectContainer())
+			{
+				m_LoadedPaths.push_back(i->GetPath());
+			}
+
+			std::sort(m_LoadedPaths.begin(), m_LoadedPaths.end());
+
+			State::SetState(State::PathContainerSorted);
+			State::ResetState(State::SortPathsOnNewFileLoad);
+		}
+	}
+
+	std::vector<std::wstring>* Info::GetLoadedPathsContainer()
+	{
+		return &m_LoadedPaths;
+	}
 
 	b8 Info::CheckIfAudio(std::wstring& path)
 	{
-		fs::path p(path);
-
 		std::string ext = fs::extension(path);
 		boost::algorithm::to_lower(ext);
 
-		for (u8 i = 0; i < mdEngine::MP::Data::SupportedFormats.size(); i++)
+		u32 size = mdEngine::MP::Data::SupportedFormats.size();
+		for (u8 i = 0; i < size; i++)
 		{
 			if(ext.compare(mdEngine::MP::Data::SupportedFormats[i]) == 0)
 				return true;
@@ -60,13 +82,26 @@ namespace Audio
 	
 	b8 Info::IsPathLoaded(std::wstring& path)
 	{
-		for (auto & i : *Audio::Object::GetAudioObjectContainer())
+
+		if (std::binary_search(m_LoadedPaths.begin(), m_LoadedPaths.end(), path) == true)
+			return true;
+
+		
+		/*auto audioCon = Audio::Object::GetAudioObjectContainer();
+		auto it = std::find_if(audioCon->begin(), audioCon->end(),
+			[&](std::shared_ptr<AudioObject> const & ref) {  return ref->GetPath().compare(path) == 0; });
+
+
+		if (it != audioCon->end())
+			return true;*/
+
+		/*for (auto & i : *Audio::Object::GetAudioObjectContainer())
 		{
 			if (path.compare(i->GetPath()) == 0)
 			{
 				return true;
 			}
-		}
+		}*/
 
 		return false;
 	}
@@ -190,11 +225,5 @@ namespace Audio
 	s32 Info::GetProcessedItemsCount()
 	{
 		return LoadedItemsInfoCount;
-	}
-
-	void Info::WaitTillFileInfoLoaded()
-	{
-
-		md_log(LoadedItemsInfoCount);
 	}
 }

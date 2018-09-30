@@ -12,6 +12,14 @@ namespace mdEngine
 		State::ResetState(State::InitialLoadFromFile);
 	}
 
+	void State::ResetStateOnUnsupportedFormat()
+	{
+		SetState(OldAudioObjectsSaved);
+		ResetState(FilesDroppedNotLoaded);
+		State::ResetState(State::FileDropped);
+		State::ResetState(State::FilesAddedInfoNotLoaded);
+	}
+
 	void State::ResetMusicPlayerState()
 	{
 		ResetState(AudioAdded);

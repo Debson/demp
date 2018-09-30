@@ -220,8 +220,6 @@ void mdEngine::UpdateWindowSize()
 
 void mdEngine::ProceedToSafeClose()
 {
-	Audio::Info::WaitTillFileInfoLoaded();
-
 	mdIsRunning = false;
 }
 
@@ -311,8 +309,11 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				break;
 			case (SDL_DROPFILE):
 			{
-				if (State::CheckState(State::FilesLoaded) == false && State::CheckState(State::PlaylistEmpty) == false)
+				if (State::CheckState(State::FilesLoaded) == false)
 					break;
+
+				if(State::CheckState(State::PathContainerSorted) == false)
+					State::SetState(State::SortPathsOnNewFileLoad);
 
 				State::SetState(State::FileDropped);
 				State::ResetState(State::InitialLoadFromFile);
@@ -328,7 +329,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				break;
 			}
 			case (SDL_DROPCOMPLETE):
-				State::SetState(State::FileDropped);
+				//State::SetState(State::FileDropped);
 				break;
 			case (SDL_MOUSEWHEEL):
 				UpdateScrollPosition(event.wheel.x, event.wheel.y);
@@ -567,7 +568,12 @@ void mdEngine::AppExit()
 {
 	mdAppClosing = true;
 
-	Audio::Info::WaitTillFileInfoLoaded();
+	State::SetState(State::Window::Exit);
+
+	if(State::CheckState(State::FilesAddedInfoNotLoaded) == true)
+		State::SetState(State::SafeExitPossible);
+
+	while(State::CheckState(State::SafeExitPossible) == true) { }
 
 	mdIsRunning = false;
 }

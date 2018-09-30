@@ -61,6 +61,10 @@ namespace Audio
 		extern s32 LoadedItemsInfoCount;
 		extern b8 ItemBeingProcessed;
 
+		void Update();
+
+		std::vector<std::wstring>* GetLoadedPathsContainer();
+
 		b8 CheckIfAudio(std::wstring& path);
 
 		b8 CheckIfHasItems(std::wstring& path);
@@ -86,10 +90,6 @@ namespace Audio
 		std::wstring GetProcessedItemsCountStr();
 
 		s32 GetProcessedItemsCount();
-
-		void WaitTillFileInfoLoaded();
-
-
 	}
 }
 

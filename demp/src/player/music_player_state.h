@@ -28,7 +28,8 @@ namespace mdEngine
 			DeletionInProgress			= (1llu << 14),
 			ShuffleAfterLoad			= (1llu << 15),
 			ShuffleAfterAddition		= (1llu << 16),
-			CurrentlyPlayingDeleted		= (1llu << 17)
+			CurrentlyPlayingDeleted		= (1llu << 17),
+			OldAudioObjectsSaved		= (1llu << 44)
 
 		};
 
@@ -45,7 +46,11 @@ namespace mdEngine
 			PlaylistRolling				= (1llu << 23),
 			OnExitMinimizeToTray		= (1llu << 24),
 			InitMusicLoad				= (1llu << 25),
-			UpdatePlaylistInfoStrings	= (1llu << 26)
+			UpdatePlaylistInfoStrings	= (1llu << 26),
+			SafeExitPossible			= (1llu << 46),
+			SortPathsOnNewFileLoad		= (1llu << 47),
+			PathContainerSorted			= (1llu << 48),
+			TerminateWorkingThreads		= (1llu << 49)
 		};
 
 		namespace Window
@@ -63,7 +68,8 @@ namespace mdEngine
 				MouseLeave		= (1llu << 35),
 				PositionChanged	= (1llu << 36),
 				InTray			= (1llu << 37),
-				MouseOnTrayIcon = (1llu << 38)
+				MouseOnTrayIcon = (1llu << 38),
+				Exit			= (1llu << 45),
 			};
 		};
 
@@ -93,6 +99,8 @@ namespace mdEngine
 		{
 			m_currentState &= ~state;
 		}
+
+		void ResetStateOnUnsupportedFormat();
 
 		// Reset all flags associated with Music player state, and set 
 		void ResetMusicPlayerState();

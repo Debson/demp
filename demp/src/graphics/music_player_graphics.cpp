@@ -1400,6 +1400,9 @@ namespace Graphics
 			}
 
 
+			
+
+
 			if (loadItemsPositions == true)
 			{
 				glm::vec2 startPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x,
@@ -1422,12 +1425,13 @@ namespace Graphics
 					if (i->IsFolderRep() == true)
 					{
 						auto playlistSeparator = Interface::Separator::GetSeparatorByID(i->GetID());
+						assert(playlistSeparator != nullptr);
 						if (playlistSeparator == nullptr)
 							break;
-						assert(playlistSeparator != nullptr);
 
 						playlistSeparator->SetButtonPos(glm::vec2(startPos.x - Data::_PLAYLIST_SEPARATOR_POS_OFFSET.x,
 							startPos.y));
+						playlistSeparator->GetPlaylistItemPos();
 						startPos.y += playlistSeparator->GetButtonSize().y;
 					}
 
@@ -1452,13 +1456,16 @@ namespace Graphics
 				loadItemsTextures = true;
 			}
 
+
 			if (State::CheckState(State::FilesDroppedNotLoaded) == true &&
 				audioVecToRenderTemp.empty() == true)
 			{
+				State::SetState(State::OldAudioObjectsSaved);
 				md_log("new files incoming!");
+				audioVecToRenderTemp.resize(GetPlaylistObject()->GetIndexesToRender()->back() + 1);
 				for (auto i : *GetPlaylistObject()->GetIndexesToRender())
 				{
-					audioVecToRenderTemp.push_back(audioCon->at(i));
+					audioVecToRenderTemp[i] = audioCon->at(i);
 				}
 				useAudioVecTemp = true;
 			}
@@ -1467,7 +1474,6 @@ namespace Graphics
 				useAudioVecTemp = false;
 				audioVecToRenderTemp.clear();
 			}
-
 
 			if (loadItemsTextures == true)
 			{
@@ -1513,6 +1519,12 @@ namespace Graphics
 				reloadAfterFilesLoaded = false;
 			}
 
+			if (State::CheckState(State::FilesDroppedNotLoaded) == true)
+			{
+				for (auto & i : *GetPlaylistObject()->GetIndexesToRender())
+					std::cout << i << ", ";
+				std::cout << std::endl;
+			}
 			// ACTUAL RENDERING
 
 			Shader::shaderDefault->use();
@@ -1531,11 +1543,15 @@ namespace Graphics
 			}
 
 			// Render VISIBLE playlist items
+			u32 audioVecSize = audioVecToRenderTemp.size();
+			auto vsvsvs = *GetPlaylistObject()->GetIndexesToRender();
 			for (auto i : *GetPlaylistObject()->GetIndexesToRender())
 			{
 				auto item = audioCon->at(i);
 				if (useAudioVecTemp == true)
+				{
 					item = audioVecToRenderTemp[i];
+				}
 
 				if (item == NULL)
 					break;

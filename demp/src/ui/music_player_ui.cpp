@@ -673,8 +673,11 @@ namespace MP
 	{
 		for (auto & i : *Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
 		{
-			if (Audio::Object::GetAudioObject(i) == NULL)
+			if (Audio::Object::GetAudioObject(i) == NULL ||
+				State::CheckState(State::FilesDroppedNotLoaded) == true)
+			{
 				return;
+			}
 
 			std::vector<s32*>::iterator it;
 			s32 *currentPlaylistItemID = &Audio::Object::GetAudioObject(i)->GetID();

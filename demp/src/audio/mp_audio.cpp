@@ -4,6 +4,7 @@
 #include <mutex>
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <future>
 
 #include "../app/realtime_system_application.h"
 #include "../interface/md_interface.h"
@@ -42,6 +43,9 @@ namespace Audio
 
 	static std::mutex mutex;
 
+	static u8 threadsFinishedCount;
+	static u8 workingThreadsCount;
+
 	u32 AudioContainerSizeBeforeDeletion = 0;
 
 	Time::Timer lastFunctionCallTimer;
@@ -68,6 +72,7 @@ namespace Audio
 
 	void SetFoldersRep();
 	void CalculateDroppedPosInPlaylist();
+	b8 CheckIfThreadsFinsishedWork();
 
 	void LoadFilesInfoWrap(std::vector<std::shared_ptr<Audio::AudioObject>*>* tempVec);
 
@@ -88,7 +93,8 @@ void Audio::InitializeConfig()
 
 void Audio::StartAudio()
 {
-	
+	State::SetState(State::FilesLoaded);
+	State::SetState(State::FilesInfoLoaded);
 }
 
 void Audio::FilesAddedByFileBrowser(b8 val)
@@ -98,7 +104,6 @@ void Audio::FilesAddedByFileBrowser(b8 val)
 
 void Audio::CalculateDroppedPosInPlaylist()
 {
-	
 	/*
 		I have an exact position of item on which file was dropped. Now when file was dropped
 		resize container to its size + dropped items count, and move all item that were beneath
@@ -108,8 +113,6 @@ void Audio::CalculateDroppedPosInPlaylist()
 	
 	*/
 
-	if (State::CheckState(State::FilesDroppedNotLoaded) == true)
-	{
 		auto indexesToRender = Graphics::MP::GetPlaylistObject()->GetIndexesToRender();
 
 		s32 mouseX, mouseY;
@@ -117,11 +120,11 @@ void Audio::CalculateDroppedPosInPlaylist()
 		App::Input::GetMousePosition(&mouseX, &mouseY);
 		if (mouseY < MP::Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
 		{
+			State::ResetState(State::FilesDroppedNotLoaded);
 			MP::UI::DeleteAllFiles();
 			indexOfDroppedOnItem = 0;
 			firstFilesLoaded = false;
 			droppedOnTop = false;
-			md_log("File dropped on main player");
 			return;
 		}
 
@@ -158,7 +161,6 @@ void Audio::CalculateDroppedPosInPlaylist()
 			//insertFiles = false;
 		droppedOnTop = false;
 		//md_log("File not dropped on playlist items");
-	}
 	
 }
 
@@ -178,16 +180,21 @@ b8 Audio::PushToPlaylist(std::wstring& const path)
 {
 	lastFunctionCallTimer.Start();
 	Audio::CalculateDroppedPosInPlaylist();
+	Info::Update();
 
 	if (fs::exists(path))
 	{
-		if (Info::IsPathLoaded(path) == true)
+
+		if (m_AudioObjectContainer.empty() == false)
 		{
-			md_log("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
-			State::ResetState(State::FilesDroppedNotLoaded);
-			return false;
+			if (Info::IsPathLoaded(path) == true)
+			{
+				md_log("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
+				State::ResetState(State::FilesDroppedNotLoaded);
+				return false;
+			}
 		}
-	
+		
 
 		if (fs::is_directory(path))
 		{
@@ -196,22 +203,30 @@ b8 Audio::PushToPlaylist(std::wstring& const path)
 			for (auto & i : fs::directory_iterator(path))
 			{
 				auto str = new std::wstring(i.path().wstring());
-				if (Info::IsPathLoaded(*str) == true)
+				if (Info::CheckIfAudio(*str) == true)
 				{
-					md_log("Audio item at path \"" + i.path().string() + "\" already loaded!\n");
-					State::ResetState(State::FilesDroppedNotLoaded);
-					delete str;
-				}
-				else
-				{
-					if (Info::CheckIfAudio(*str))
+					//CalculateDroppedPosInPlaylist();
+					if (m_AudioObjectContainer.empty() == true)
 					{
-						//CalculateDroppedPosInPlaylist();
 						m_AddedFilesPathContainer.push_back(str);
+						State::SetState(State::TerminateWorkingThreads);
+
 					}
-					else if (fs::is_directory(*str))
-						tempFolderPathsVec.push_back(*str);
+					else if (Info::IsPathLoaded(*str) == false)
+					{
+						m_AddedFilesPathContainer.push_back(str);
+						State::SetState(State::TerminateWorkingThreads);
+					}
+					else
+					{
+						md_log("Audio item at path \"" + i.path().string() + "\" already loaded!\n");
+						State::ResetState(State::FilesDroppedNotLoaded);
+						delete str;
+					}
 				}
+				else if (fs::is_directory(*str))
+					tempFolderPathsVec.push_back(*str);
+
 			}
 
 			for(auto & i : tempFolderPathsVec)
@@ -233,8 +248,16 @@ b8 Audio::PushToPlaylist(std::wstring& const path)
 				auto str = new std::wstring(path);
 
 				m_AddedFilesPathContainer.push_back(str);
+				State::SetState(State::TerminateWorkingThreads);
+			}
+			else
+			{
+				State::ResetStateOnUnsupportedFormat();
+				lastFunctionCallTimer.Stop();
+				lastFunctionCallTimer.Reset();
 			}
 		}
+
 	}
 	else
 	{
@@ -262,23 +285,29 @@ void Audio::UpdateAudioLogic()
 	}
 
 
-	static f32 start = 0;
-	if (startLoadingProperties == true)
+	if (startLoadingProperties == true && 
+		m_AddedFilesPathContainer.empty() == false)
 	{
-		startLoadingProperties = false;
-
 		s32 toProcessCount = m_AddedFilesPathContainer.size();
 		filesAddedCount = toProcessCount;
 
-		// Don't run all threads if work load is pretty low
-		s8 threadsToUse = 0;
-		if (toProcessCount > 500)
-			threadsToUse = WORK_THREADS;
+		// All used vectors must be resized before any operations are performed on them
+		/*	Wait till copy of current state is created, so container resize won't affect visual
+			display of playlist items.
+		*/
+		if (m_AudioObjectContainer.empty() == true ||
+			State::CheckState(State::OldAudioObjectsSaved) == true)
+		{
+			ResizeAllContainers(toProcessCount);
+			State::ResetState(State::OldAudioObjectsSaved);
+		}
 		else
-			threadsToUse = 1;
+		{
+			return;
+		}
 
-		// split the work between work threads
-		s32 div = toProcessCount / threadsToUse;
+		startLoadingProperties = false;
+
 
 		std::vector<std::wstring*> tempVec;
 		if (insertFiles == true)
@@ -286,22 +315,27 @@ void Audio::UpdateAudioLogic()
 		else
 			tempVec = std::vector<std::wstring*>(currentContainersSize);
 
-		// All used vectors must be resized before any operations are performed on them
-		ResizeAllContainers(toProcessCount);
-
 		for (s32 i = 0; i < toProcessCount; i++)
 			tempVec.push_back(m_AddedFilesPathContainer[i]);
 
+		// Don't run all threads if work load is pretty low, shouldn't be hardcored tbh
+		if (toProcessCount > 500)
+			workingThreadsCount = WORK_THREADS;
+		else
+			workingThreadsCount = 1;
 
+		
 
-		std::thread* tt = new std::thread[threadsToUse];
+		// split the work between work threads
+		s32 div = toProcessCount / workingThreadsCount;
 
+		std::thread* tt = new std::thread[workingThreadsCount];
 		// In some cases division will leave a remainder
-		s8 rest = toProcessCount % threadsToUse;
+		s8 rest = toProcessCount % workingThreadsCount;
 
-		for (s8 i = 0; i < threadsToUse; i++)
+		for (s8 i = 0; i < workingThreadsCount; i++)
 		{
-			if (i == threadsToUse - 1)
+			if (i == workingThreadsCount - 1)
 			{
 				if (insertFiles == false)
 				{
@@ -330,7 +364,7 @@ void Audio::UpdateAudioLogic()
 			}
 		}
 
-		for (s8 i = 0; i < threadsToUse; i++)
+		for (s8 i = 0; i < workingThreadsCount; i++)
 		{
 			assert(tt[i].joinable());
 			if(filesLoadedFromFile == true)
@@ -352,6 +386,12 @@ void Audio::UpdateAudioLogic()
 		delete[] tt;
 	}
 
+	if (m_AddedFilesPathContainer.empty() == false &&
+		m_AudioObjectContainer.empty() == true)
+	{
+		State::ResetState(State::FilesLoaded);
+	}
+
 	if (m_AudioObjectContainer.empty() == false && 
 		State::CheckState(State::FileDropped) == false)
 	{
@@ -370,7 +410,10 @@ void Audio::UpdateAudioLogic()
 			firstFilesLoaded = true;
 		}
 		else
+		{
 			State::ResetState(State::FilesLoaded);
+		}
+
 
 		// If added files info is extraced, set appropriate flag
 		if (currentContainersSize == Info::LoadedItemsInfoCount)
@@ -381,7 +424,15 @@ void Audio::UpdateAudioLogic()
 			State::SetState(State::FilesInfoLoaded);
 		}
 		else
+		{
 			State::ResetState(State::FilesInfoLoaded);
+		}
+	}
+
+	if (m_AudioObjectContainer.empty() == true && 
+		m_AddedFilesPathContainer.empty() == true)
+	{
+		State::SetState(State::PlaylistEmpty);
 	}
 }
 
@@ -485,9 +536,11 @@ void Audio::PerformDeletion(s32 index, b8 smallDeletion)
 	if (m_AudioObjectContainer.empty() == true)
 	{
 		State::SetState(State::UpdatePlaylistInfoStrings);
+		State::ResetState(State::FilesDroppedNotLoaded);
+		State::ResetState(State::FilesAddedInfoNotLoaded);
 		State::SetState(State::PlaylistEmpty);
 		firstFilesLoaded = false;
-		indexOfDroppedOnItem = -1;
+		indexOfDroppedOnItem = 0;
 		currentContainersSize = 0;
 		currentlyLoadedItemsCount = 0;
 		Info::LoadedItemsInfoCount = 0;
@@ -587,6 +640,9 @@ void Audio::SetFoldersRep()
 		State::SetState(State::AudioAdded);
 		State::SetState(State::ShuffleAfterLoad);
 		State::ResetState(State::CurrentlyPlayingDeleted);
+		State::ResetState(State::PathContainerSorted);
+		State::ResetState(State::TerminateWorkingThreads);
+		Info::GetLoadedPathsContainer()->clear();
 
 		auto sepCon = Interface::Separator::GetContainer();
 		sepCon->clear();
@@ -597,6 +653,7 @@ void Audio::SetFoldersRep()
 		s32 counter = 0;
 		for (auto & i : m_AudioObjectContainer)
 		{
+			i->SetID(counter);
 			if (i->GetFolderPath().compare(previousFolderPath) != 0)
 			{
 				ps = new Interface::PlaylistSeparator(i->GetPath());
@@ -631,7 +688,10 @@ void Audio::SetFoldersRep()
 		sepCon = Interface::Separator::GetContainer();
 		State::SetState(State::UpdatePlaylistInfoStrings);
 		
-		if(filesLoadedFromFile == false)
+		/*	If files are newly added or files are loaded from file but were not fully scanned,
+			retrieve audio info
+		*/
+		if(filesLoadedFromFile == false || filesInfoScanned == false)
 			LoadFilesInfo();
 
 		filesLoadedFromFile = false;
@@ -672,13 +732,10 @@ void Audio::ResizeAllContainers(int size)
 				tempPlaylistButtonsVec[i] = playlistButtonsCon->at(t);
 
 				// Every ID of items beneath must be incremented the same amount of times as the amount of file added
-				for(s32 j = 0; j < size; j++)
-					m_AudioObjectContainer[t]->IncrementID();
 			}
 
 			m_AudioObjectContainer.resize(size + currentContainersSize);
 			playlistButtonsCon->resize(size + currentContainersSize);
-
 
 			for (s32 i = 0; i < playlistButtonsCon->size(); i++)
 			{
@@ -720,6 +777,18 @@ void Audio::ResetStateFlags()
 	State::ResetState(State::InitialLoadFromFile);
 }
 
+b8 Audio::CheckIfThreadsFinsishedWork()
+{
+	if (threadsFinishedCount == workingThreadsCount)
+	{
+		State::ResetState(State::SafeExitPossible);
+		threadsFinishedCount = 0;
+		return true;
+	}
+
+	return false;
+}
+
 void Audio::LoadFilesInfoWrap(std::vector<std::shared_ptr<AudioObject>*>* tempVec)
 {
 	u32 size = tempVec->size();
@@ -727,8 +796,11 @@ void Audio::LoadFilesInfoWrap(std::vector<std::shared_ptr<AudioObject>*>* tempVe
 	{
 		// If deletion or addition occurs, exit thread that is currently working on retreiving info
 		if (m_AudioObjectContainer.size() <= AudioContainerSizeBeforeDeletion ||
-			State::CheckState(State::FileDropped) == true)
+			State::CheckState(State::TerminateWorkingThreads) == true ||
+			State::CheckState(State::Window::Exit) == true)
+		{
 			break;
+		}
 
 		if (State::CheckState(State::AudioDeleted) == false)
 		{
@@ -746,6 +818,9 @@ void Audio::LoadFilesInfoWrap(std::vector<std::shared_ptr<AudioObject>*>* tempVe
 		}
 	}
 	
+	threadsFinishedCount++;
+	CheckIfThreadsFinsishedWork();
+
 	delete tempVec;
 }
 
