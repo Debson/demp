@@ -4,9 +4,9 @@
 #include <vector>
 #include <iostream>
 #include <string>
+
 #include "md_types.h"
-
-
+#include "../settings/music_player_settings.h"
 
 namespace mdEngine
 {
@@ -24,7 +24,7 @@ namespace mdEngine
 		std::string GetString(const std::string& fileName, const std::string& valName);
 		s32 GetInt(const std::string& fileName, const std::string& valName);
 		f32 GetFloat(const std::string& fileName, const std::string& valName);
-		std::wstring GetStringUTF8(const std::string& fileName, const std::string& valName);
+		std::string GetStringUTF8(const std::string& fileName, const std::string& valName);
 
 	}
 }

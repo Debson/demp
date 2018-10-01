@@ -162,25 +162,25 @@ namespace mdEngine
 			return m_ItemsDurationStr;
 		}
 
-		std::wstring MP::PlaylistObject::GetMusicInfoScrollString() const
+		std::string MP::PlaylistObject::GetMusicInfoScrollString() const
 		{
-			std::wstring str;
+			std::string str;
 			s32 id = GetPlayingID();
 			auto audioItem = Audio::Object::GetAudioObject(GetPlayingID());
 			assert(audioItem != NULL);
-			str += L".:: ";
-			str += utf8_to_utf16(Converter::SecToProperTimeFormatShort(audioItem->GetLength()));
-			str += L" :: ";
+			str += ".:: ";
+			str += Converter::SecToProperTimeFormatShort(audioItem->GetLength());
+			str += " :: ";
 			str += audioItem->GetTitle();
-			str += L" :: ";
+			str += " :: ";
 			str += audioItem->GetFormat();
-			str += L" :: ";
+			str += " :: ";
 			str += Converter::FrequencyToProperFormat(audioItem->GetFrequency());
-			str += L" :: ";
-			str += std::to_wstring((s32)audioItem->GetBitrate()) + L" kbps";
-			str += L" :: ";
-			str += utf8_to_utf16(Converter::BytesToProperSizeFormat(audioItem->GetObjectSize()));
-			str += L" ::.";
+			str += " :: ";
+			str += std::to_string((s32)audioItem->GetBitrate()) + " kbps";
+			str += " :: ";
+			str += Converter::BytesToProperSizeFormat(audioItem->GetObjectSize());
+			str += " ::.";
 
 			return str;
 		}

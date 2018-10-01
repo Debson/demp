@@ -35,6 +35,9 @@ namespace MP
 
 		const s32 _PLAYLIST_CHOOSE_ITEM_DELAY = 300;
 
+		const s32 _PLAYLIST_ARROWS_SCROLL_DELAY = 500;
+		const s32 _PLAYLIST_ARROWS_SCROLL_INTERVAL = 15;
+
 		extern TTF_Font* _MUSIC_PLAYER_FONT;
 		extern TTF_Font* _MUSIC_PLAYER_NUMBER_FONT;
 
@@ -46,7 +49,7 @@ namespace MP
 		const glm::vec2 _DEFAULT_WINDOW_POS = glm::vec2(0.f, 0.f);;
 		const glm::vec2 _DEFAULT_WINDOW_SIZE = glm::vec2(mdDefaultWidth, 700.f);
 
-		const glm::vec2 _OPTIONS_WINDOW_SIZE = glm::vec2(400, 300);
+		const glm::vec2 _OPTIONS_WINDOW_SIZE = glm::vec2(400, 350);
 
 		const glm::vec2 _MAIN_BACKGROUND_POS = glm::vec2(0.f, 0.f);;
 		extern glm::vec2 _MAIN_BACKGROUND_SIZE;
@@ -222,28 +225,12 @@ namespace MP
 
 		}
 
-#ifdef _WIN32_
-		const std::vector<std::wstring> SupportedFormatsW =
-		{
-			L".mp3",
-			L".wav",
-			L".wma"
-		};
-
 		const std::vector<std::string> SupportedFormats =
 		{
 			".mp3",
 			".wav",
 			".wma"
 		};
-#else
-		const std::vector<const char*> SupportedFormats =
-		{
-			".mp3",
-			".wav"
-		};
-#endif
-
 
 		void InitializeData();
 
@@ -254,6 +241,12 @@ namespace MP
 		void CloseData();
 	}
 
+	namespace Settings
+	{
+		extern b8 IsPathExistenceCheckingEnabled;
+
+
+	}
 
 
 }

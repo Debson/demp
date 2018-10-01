@@ -320,7 +320,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
 				State::SetState(State::FilesAddedInfoNotLoaded);
 #ifdef _WIN32_
-				std::wstring p(utf8_to_utf16(event.drop.file));
+				std::string p(event.drop.file);
 				Audio::PushToPlaylist(p);
 #else
 				MP::PushToPlaylist(event.drop.file);

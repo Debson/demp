@@ -7,6 +7,7 @@
 
 #include "../utility/md_shader.h"
 #include "../ui/music_player_ui_input.h"
+#include "../settings/music_player_settings.h"
 #include "../utility/md_text.h"
 #include "../utility/md_time.h"
 
@@ -103,7 +104,7 @@ namespace mdEngine
 			b8			 IsPlaylistItemHidden() const;
 			u8			 GetClickCount() const;
 			glm::vec3	 GetItemColor() const;
-			std::wstring GetShortenTextString();
+			std::string GetShortenTextString();
 
 		protected:
 			b8			 m_Visible;
@@ -115,30 +116,30 @@ namespace mdEngine
 			glm::vec2	 m_StartPos;
 			glm::vec2	 m_PlaylistItemPos;
 			std::string  m_TitleC;
-			std::wstring m_Path;
+			std::string m_Path;
 			static f32*	 m_PlaylistOffsetY;
 		};
 
-		typedef std::vector<std::pair<s32*, std::wstring*>> SeparatorSubContainer;
+		typedef std::vector<std::pair<s32*, std::string*>> SeparatorSubContainer;
 		class PlaylistSeparator : public PlaylistItem
 		{
 		public:
 			PlaylistSeparator();
 			~PlaylistSeparator();
-			PlaylistSeparator(std::wstring& name);
+			PlaylistSeparator(std::string& name);
 
 			virtual void InitItem();
 			virtual void DrawItem(GLuint texture);
 
-			void			SetSeperatorPath(std::wstring& path);
-			void			SeparatorSubFilePushBack(s32* fileIndex, std::wstring& const path);
+			void			SetSeperatorPath(std::string& path);
+			void			SeparatorSubFilePushBack(s32* fileIndex, std::string& const path);
 			b8				IsSeparatorHidden() const;
 			b8				IsSelected()		const;
 			//void			Visible(b8 val);
 			void			HideSeparator(b8 val);
 			void			Select(b8 val);
-			std::wstring	GetSeparatorPath() const;;
-			std::wstring	GetSeparatorName() const;
+			std::string	GetSeparatorPath() const;;
+			std::string	GetSeparatorName() const;
 			SeparatorSubContainer* GetSubFilesContainer();
 
 			f64 SepItemDuration;
@@ -147,7 +148,7 @@ namespace mdEngine
 			b8 m_SeparatorHidden;
 			b8 m_Visible;
 			s32 m_SepItemCount;
-			std::wstring m_Path;
+			std::string m_Path;
 			SeparatorSubContainer m_SubFilesPaths;
 
 		};
@@ -156,7 +157,7 @@ namespace mdEngine
 		{
 			friend class TextBox;
 			public:
-			TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos, 
+			TextBoxItem(const std::string name, glm::vec2 itemSize, glm::vec2 itemPos, 
 												 glm::vec2 textSize, glm::vec2 textPos,
 						GLuint textTexture, GLuint iconTexture = 0);
 
@@ -184,10 +185,10 @@ namespace mdEngine
 			void SetColor(glm::vec3 color);
 			void SetItemScale(f32 scale);
 			void SetItemSize(glm::vec2 itemSize);
-			void AddItem(const std::wstring itemName, GLuint iconTexture = 0);
+			void AddItem(const std::string itemName, GLuint iconTexture = 0);
 
-			b8			hasItemFocus(const std::wstring name) const;
-			b8			isItemPressed(const std::wstring name) const;
+			b8			hasItemFocus(const std::string name) const;
+			b8			isItemPressed(const std::string name) const;
 			glm::vec2	GetPos() const;
 			glm::vec2	GetSize() const;
 
@@ -212,8 +213,8 @@ namespace mdEngine
 		public:
 
 			ButtonSlider();
-			ButtonSlider(std::wstring labelName, glm::ivec2 pos, f32* value, f32 step, f32 min = 0, f32 max = 100, glm::vec2 size = glm::vec2(100, 20));
-			ButtonSlider(std::wstring labelName, glm::ivec2 pos, s32* value, s32 step, s32 min = 0, s32 max = 100, glm::vec2 size = glm::vec2(100, 20));
+			ButtonSlider(std::string labelName, glm::ivec2 pos, f32* value, f32 step, f32 min = 0, f32 max = 100, glm::vec2 size = glm::vec2(100, 20));
+			ButtonSlider(std::string labelName, glm::ivec2 pos, s32* value, s32 step, s32 min = 0, s32 max = 100, glm::vec2 size = glm::vec2(100, 20));
 
 			void Init(SDL_Renderer* renderer);
 			void Update();
@@ -261,7 +262,7 @@ namespace mdEngine
 			glm::ivec2 m_SliderPos;
 			glm::vec2 m_WindowSize;
 			glm::ivec2 m_SliderSize;
-			std::wstring m_LabelText;
+			std::string m_LabelText;
 
 		};
 
@@ -269,7 +270,7 @@ namespace mdEngine
 		{
 		public:
 			CheckBox();
-			CheckBox(std::wstring labelName, glm::vec2 pos, b8* val);
+			CheckBox(std::string labelName, glm::vec2 pos, b8* val);
 
 			void Init(SDL_Renderer* renderer);
 			void Update();
@@ -285,9 +286,9 @@ namespace mdEngine
 		};
 
 
-		typedef std::vector<std::pair<std::wstring*, std::shared_ptr<PlaylistSeparator>>>	PlaylistSeparatorContainer;
+		typedef std::vector<std::pair<std::string*, std::shared_ptr<PlaylistSeparator>>>	PlaylistSeparatorContainer;
 		typedef std::vector<std::pair<s32*, Interface::Button*>>			PlaylistButtonContainer;
-		typedef std::vector<std::pair<const std::wstring, Button*>>			InterfaceButtonContainer;
+		typedef std::vector<std::pair<const std::string, Button*>>			InterfaceButtonContainer;
 		
 
 		// TODO: It should not be an extern var...
@@ -297,7 +298,7 @@ namespace mdEngine
 		namespace Separator
 		{
 			PlaylistSeparatorContainer* GetContainer();
-			std::shared_ptr<PlaylistSeparator> GetSeparator(std::wstring text);
+			std::shared_ptr<PlaylistSeparator> GetSeparator(std::string text);
 			std::shared_ptr<PlaylistSeparator> GetSeparatorByID(s32 id);
 			s32 GetSize();
 

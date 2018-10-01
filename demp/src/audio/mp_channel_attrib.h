@@ -5,6 +5,7 @@
 #include <bass.h>
 
 #include "../utility/md_types.h"
+#include "../settings/music_player_settings.h"
 
 using namespace mdEngine;
 
@@ -19,17 +20,17 @@ namespace Audio
 			ID3() 
 			{ 
 				loaded		= false;
-				id			= L"";
-				title		= L"";
-				artist		= L"";
-				composer	= L"";
-				encoded_by	= L"";
-				track_num	= L"";
-				album		= L"";
-				year		= L"";
-				comment		= L"";
-				genre		= L"";
-				format		= L"";
+				id			= "";
+				title		= "";
+				artist		= "";
+				composer	= "";
+				encoded_by	= "";
+				track_num	= "";
+				album		= "";
+				year		= "";
+				comment		= "";
+				genre		= "";
+				format		= "";
 				bitrate		= 0;
 				channels	= 0;
 				freq		= 0;
@@ -37,17 +38,17 @@ namespace Audio
 				length		= 0;
 			}
 
-			std::wstring id;
-			std::wstring title;
-			std::wstring artist;
-			std::wstring composer;
-			std::wstring encoded_by;
-			std::wstring track_num;
-			std::wstring album;
-			std::wstring year;
-			std::wstring comment;
-			std::wstring genre;
-			std::wstring format;
+			std::string id;
+			std::string title;
+			std::string artist;
+			std::string composer;
+			std::string encoded_by;
+			std::string track_num;
+			std::string album;
+			std::string year;
+			std::string comment;
+			std::string genre;
+			std::string format;
 
 			f32 bitrate;
 			f32 channels;
@@ -63,31 +64,31 @@ namespace Audio
 
 		void Update();
 
-		std::vector<std::wstring>* GetLoadedPathsContainer();
+		std::vector<std::string>* GetLoadedPathsContainer();
 
-		b8 CheckIfAudio(std::wstring& path);
+		b8 CheckIfAudio(std::string& path);
 
 		b8 CheckIfHasItems(std::wstring& path);
 		
-		b8 IsPathLoaded(std::wstring& path);
+		b8 IsPathLoaded(std::string& path);
 
 		// Returns a full path of a file folder(path without a filename)
-		std::wstring GetFolderPath(std::wstring& path);
+		std::string GetFolderPath(std::string& path);
 
 		// Returns only a name of a file's folder
-		std::wstring GetFolder(std::wstring& path);
+		std::string GetFolder(std::string& path);
 
-		std::wstring GetCompleteTitle(std::wstring& path);
+		std::string GetCompleteTitle(std::string& path);
 
-		std::wstring GetArtist(std::wstring& path);
+		std::string GetArtist(std::string& path);
 
-		std::wstring GetExt(std::wstring& path);
+		std::string GetExt(std::string& path);
 
 		void GetInfo(std::shared_ptr<AudioObject> audioObj);
 
-		void GetID3Info(Info::ID3* info, std::wstring& path);
+		void GetID3Info(Info::ID3* info, std::string& path);
 
-		std::wstring GetProcessedItemsCountStr();
+		std::string GetProcessedItemsCountStr();
 
 		s32 GetProcessedItemsCount();
 	}

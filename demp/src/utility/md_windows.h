@@ -14,7 +14,7 @@ namespace WindowsPlatform
 
 		void OpenFolderBrowser(std::string savedPath);
 
-		std::wstring GetFileNames();
+		std::string GetFileNames();
 	}
 
 }

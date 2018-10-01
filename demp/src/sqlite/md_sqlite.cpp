@@ -23,8 +23,8 @@ namespace mdEngine
 		b8 Disconnect();
 		b8 CreateTable(Audio::AudioProperties* audioItem);
 		b8 Insert(Audio::AudioProperties* audioItem);
-		b8 Select(std::wstring table);
-		void Delete(std::wstring item);
+		b8 Select(std::string table);
+		void Delete(std::string item);
 
 	}
 
@@ -106,7 +106,7 @@ namespace mdEngine
 
 		// ID(key), path UNIQUE, folder, name, ext, freq, bitrate, size, length
 		sql = "CREATE TABLE [";
-		sql += utf16_to_utf8(item->folder);
+		sql += item->folder;
 		sql += "](";
 		sql += "ID INTEGER PRIMARY KEY NOT NULL UNIQUE,";
 		sql += "PATH TEXT NOT NULL UNIQUE,";
@@ -172,13 +172,13 @@ namespace mdEngine
 
 	}
 
-	b8 Database::Select(std::wstring table)
+	b8 Database::Select(std::string table)
 	{
 		char *errMsg = 0;
 		std::string sql;
 
 		sql = "SELECT * from [";
-		sql += utf16_to_utf8(table);
+		sql += table;
 		sql += "]";
 
 		rc = sqlite3_exec(db, sql.c_str(), callback, 0, &errMsg);
@@ -198,7 +198,7 @@ namespace mdEngine
 		return true;
 	}
 
-	void Database::Delete(std::wstring item)
+	void Database::Delete(std::string item)
 	{
 
 	}

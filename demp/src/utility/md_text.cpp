@@ -21,7 +21,7 @@ namespace mdEngine
 
 	Text::TextObject::TextObject()
 	{
-		m_TextString = L"";
+		m_TextString = "";
 		m_Font = NULL;
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
@@ -38,15 +38,15 @@ namespace mdEngine
 
 		m_Font = font;
 		SetTextColor(col);
-		m_TextString = L"";
+		m_TextString = "";
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
 		m_TextTextureSDL = NULL;
-		TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
+		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
-	Text::TextObject::TextObject(TTF_Font* font, glm::vec3 col, std::wstring text)
+	Text::TextObject::TextObject(TTF_Font* font, glm::vec3 col, std::string text)
 	{
 		SDL_Color color = { static_cast<Uint8>(255 * col.x),
 							static_cast<Uint8>(255 * col.y),
@@ -60,7 +60,7 @@ namespace mdEngine
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
 		m_TextTextureSDL = NULL;
-		TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
+		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
 	Text::TextObject::~TextObject() 
@@ -74,7 +74,7 @@ namespace mdEngine
 	{
 		if (m_TextTexture == 0)
 		{
-			TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
+			TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 			m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
 		}
 	}
@@ -83,7 +83,7 @@ namespace mdEngine
 	{
 		DeleteTexture();
 
-		TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
+		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
 	}
 
@@ -92,7 +92,7 @@ namespace mdEngine
 		m_TextRenderer = renderer;
 		if (m_TextTextureSDL == NULL)
 		{
-			TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
+			TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 			m_TextTextureSDL = LoadTextSDL(m_TextRenderer, m_Font, m_TextString, m_TextColorSDL);
 		}
 	}
@@ -103,7 +103,7 @@ namespace mdEngine
 
 		assert(m_TextRenderer != NULL);
 
-		TTF_SizeUTF8(m_Font, utf16_to_utf8(m_TextString).c_str(), &m_TextSize.x, &m_TextSize.y);
+		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 		m_TextTextureSDL = LoadTextSDL(m_TextRenderer, m_Font, m_TextString, m_TextColorSDL);
 	}
 
@@ -181,7 +181,7 @@ namespace mdEngine
 		m_TextColorVec = col;
 	}
 
-	void Text::TextObject::SetTextString(std::wstring str)
+	void Text::TextObject::SetTextString(std::string str)
 	{
 		m_TextString = str;
 	}
@@ -247,7 +247,7 @@ namespace mdEngine
 		
 	}
 
-	GLuint Text::LoadText(TTF_Font* font, std::wstring string, SDL_Color color)
+	GLuint Text::LoadText(TTF_Font* font, std::string string, SDL_Color color)
 	{
 		const Uint16* text = NULL;
 
@@ -260,9 +260,9 @@ namespace mdEngine
 		GLenum format;
 
 
-		textSurface = TTF_RenderUTF8_Blended(font, utf16_to_utf8(string).c_str(), color);
+		textSurface = TTF_RenderUTF8_Blended(font, string.c_str(), color);
 		if(textSurface == NULL)
-			std::cout << "Font address: " << font << "     String name: " << utf16_to_utf8(string).c_str() << "     Color: " << std::to_string(color.r) << "  " << std::to_string(color.g) << "  " << std::to_string(color.b) << std::endl;
+			std::cout << "Font address: " << font << "     String name: " << string.c_str() << "     Color: " << std::to_string(color.r) << "  " << std::to_string(color.g) << "  " << std::to_string(color.b) << std::endl;
 		assert(textSurface != NULL);
 
 		colors = textSurface->format->BytesPerPixel;
@@ -298,9 +298,9 @@ namespace mdEngine
 	}
 
 
-	SDL_Texture* Text::LoadTextSDL(SDL_Renderer* renderer, TTF_Font* font, std::wstring string, SDL_Color color)
+	SDL_Texture* Text::LoadTextSDL(SDL_Renderer* renderer, TTF_Font* font, std::string string, SDL_Color color)
 	{
-		SDL_Surface* textSurface = TTF_RenderUTF8_Blended(font, utf16_to_utf8(string).c_str(), color);
+		SDL_Surface* textSurface = TTF_RenderUTF8_Blended(font, string.c_str(), color);
 
 		SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, textSurface);
 

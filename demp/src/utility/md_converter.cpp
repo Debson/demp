@@ -138,12 +138,12 @@ namespace mdEngine
 		return size;
 	}
 
-	std::wstring Converter::FrequencyToProperFormat(f32 freq)
+	std::string Converter::FrequencyToProperFormat(f32 freq)
 	{
-		std::wstring str;
+		std::string str;
 
-		str = std::to_wstring((s32)freq / 1000);
-		str += L" kHz";
+		str = std::to_string((s32)freq / 1000);
+		str += " kHz";
 
 		return str;
 	}

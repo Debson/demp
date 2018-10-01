@@ -11,7 +11,7 @@ namespace Audio
 	// Stores pointers to created audio objects
 	typedef std::vector<std::shared_ptr<AudioObject>> AudioObjectContainer;
 	// Stores all unique valid paths of supported file formats just from one event(drag and drop, file expl. folder expl.)
-	typedef std::vector<std::wstring*> AddedFilesPathContainer;
+	typedef std::vector<std::string*> AddedFilesPathContainer;
 
 	extern u32 AudioContainerSizeBeforeDeletion;
 
@@ -33,9 +33,9 @@ namespace Audio
 
 	void FilesAddedByFileBrowser(b8 val);
 
-	b8 LoadPathsFromFile(std::wstring& const path, Info::ID3* const id3);
+	b8 LoadPathsFromFile(std::string& path, Info::ID3* id3);
 
-	b8 PushToPlaylist(std::wstring& const path);
+	b8 PushToPlaylist(std::string& path);
 
 	void DeallocateAudioItems();
 

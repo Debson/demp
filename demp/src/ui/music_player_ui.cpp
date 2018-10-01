@@ -61,7 +61,11 @@ namespace MP
 		b8 music_repeat = false;
 		b8 music_shuffle = false;
 		s32 music_position = 0;
+
 		Time::Timer clickDelayTimer;
+		Time::Timer arrowsDelayTimer;
+		Time::Timer arrowsDelayIntervalTimer;
+
 
 		f32 mdDefaultWidth;
 		f32 mdDefaultHeight;
@@ -105,6 +109,9 @@ namespace MP
 
 		void OpenFolderBrowserWrap();
 
+		void PlaylistItemsArrowsScrollUp();
+
+		void PlaylistItemArrowsScrollDown();
 	}
 
 	void UI::Start()
@@ -178,7 +185,9 @@ namespace MP
 		// temporary
 		//new Interface::Button(Input::ButtonType::PlaylistAddFolder, Data::_PLAYLIST_ADD_BUTTON_SIZE, Data::_PLAYLIST_ADD_BUTTON_POS);
 
-		clickDelayTimer = Time::Timer(Data::_PLAYLIST_CHOOSE_ITEM_DELAY);
+		clickDelayTimer				= Time::Timer(Data::_PLAYLIST_CHOOSE_ITEM_DELAY);
+		arrowsDelayTimer			= Time::Timer(Data::_PLAYLIST_ARROWS_SCROLL_DELAY);
+		arrowsDelayIntervalTimer	= Time::Timer(Data::_PLAYLIST_ARROWS_SCROLL_INTERVAL);
 
 		DebugStart();
 	}
@@ -438,17 +447,17 @@ namespace MP
 
 			if (ImGui::Button("Print visible items info") == true)
 			{
-				Graphics::MP::PrintVisibleItemsInfo();
+				Graphics::PrintVisibleItemsInfo();
 			}
 
 			if (ImGui::Button("Print audio object info") == true)
 			{
-				Graphics::MP::PrintAudioObjectInfo();
+				Graphics::PrintAudioObjectInfo();
 			}
 
 			if (ImGui::Button("Print indexes to render") == true)
 			{
-				Graphics::MP::PrintIndexesToRender();
+				Graphics::PrintIndexesToRender();
 			}
 			
 
@@ -669,8 +678,101 @@ namespace MP
 		SDL_SetCursor(mdCursor);
 	}
 
+	void UI::PlaylistItemsArrowsScrollUp()
+	{
+		if (Graphics::MP::GetPlaylistObject()->multipleSelect.empty() == true)
+		{
+			for (auto & i : *Audio::Object::GetAudioObjectContainer())
+			{
+				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&i->GetID());
+			}
+		}
+		else
+		{
+			if (*Graphics::MP::GetPlaylistObject()->multipleSelect.front() > 0)
+			{
+				u32 temp = *Graphics::MP::GetPlaylistObject()->multipleSelect.front();
+				Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
+				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(
+					&Audio::Object::GetAudioObject(temp - 1)->GetID()
+				);
+			}
+			else if (Graphics::MP::GetPlaylistObject()->multipleSelect.size() == 1)
+			{
+				Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
+				for (auto & i : *Audio::Object::GetAudioObjectContainer())
+				{
+					Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&i->GetID());
+				}
+			}
+		}
+
+		Graphics::UpdatePlaylistCursorOffset();
+	}
+
+	void UI::PlaylistItemArrowsScrollDown()
+	{
+		if (Graphics::MP::GetPlaylistObject()->multipleSelect.empty() == true)
+		{
+			for (auto & i : *Audio::Object::GetAudioObjectContainer())
+			{
+				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&i->GetID());
+			}
+		}
+		else
+		{
+			if (Graphics::MP::GetPlaylistObject()->multipleSelect.size() > 1)
+			{
+				Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
+				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&Audio::Object::GetAudioObject(0)->GetID());
+			}
+			else if (*Graphics::MP::GetPlaylistObject()->multipleSelect.front() < Audio::Object::GetSize() - 1)
+			{
+				u32 temp = *Graphics::MP::GetPlaylistObject()->multipleSelect.front();
+				Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
+				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(
+					&Audio::Object::GetAudioObject(temp + 1)->GetID()
+				);
+			}
+		}
+
+		Graphics::UpdatePlaylistCursorOffset();
+	}
+
 	void UI::HandlePlaylistInput()
 	{
+		if (App::Input::IsKeyDown(App::KeyCode::Up) == true)
+		{
+			if (App::Input::IsKeyPressed(App::KeyCode::Up) == true)
+			{
+				arrowsDelayTimer.Start();
+				arrowsDelayIntervalTimer.Start();
+				PlaylistItemsArrowsScrollUp();
+			}
+			else if (arrowsDelayTimer.IsFinished() == true &&
+					 arrowsDelayIntervalTimer.IsFinished() == true)
+			{
+				arrowsDelayIntervalTimer.Start();
+				PlaylistItemsArrowsScrollUp();
+			};
+		}
+
+		if (App::Input::IsKeyDown(App::KeyCode::Down) == true)
+		{
+			if (App::Input::IsKeyPressed(App::KeyCode::Down) == true)
+			{
+				arrowsDelayTimer.Start();
+				arrowsDelayIntervalTimer.Start();
+				PlaylistItemArrowsScrollDown();
+			}
+			else if (arrowsDelayTimer.IsFinished() == true &&
+					 arrowsDelayIntervalTimer.IsFinished() == true)
+			{
+				arrowsDelayIntervalTimer.Start();
+				PlaylistItemArrowsScrollDown();
+			}
+		}
+
 		for (auto & i : *Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
 		{
 			if (Audio::Object::GetAudioObject(i) == NULL ||
@@ -866,14 +968,14 @@ namespace MP
 
 	void UI::PlaylistFileExplorer()
 	{
-		if (Graphics::MP::m_AddFileTextBox.isItemPressed(Strings::_PLAYLIST_ADD_FILE))
+		if (Graphics::m_AddFileTextBox.isItemPressed(Strings::_PLAYLIST_ADD_FILE))
 		{
 			fileBrowserActive = true;
 			std::thread t(OpenFileBrowserWrap);
 			t.detach();
 		}
 
-		if (Graphics::MP::m_AddFileTextBox.isItemPressed(Strings::_PLAYLIST_ADD_FOLDER))
+		if (Graphics::m_AddFileTextBox.isItemPressed(Strings::_PLAYLIST_ADD_FOLDER))
 		{
 			fileBrowserActive = true;
 			std::thread t(OpenFolderBrowserWrap);
@@ -884,10 +986,10 @@ namespace MP
 		if (fileBrowserFinished)
 		{
 			fileBrowserActive = false;
-			std::wstring fileNames = mdWindowsFile::GetFileNames();
+			std::string fileNames = mdWindowsFile::GetFileNames();
 
-			std::wstring title;
-			std::wstring dir;
+			std::string title;
+			std::string dir;
 			size_t dirPos = fileNames.find_first_of('\n');
 			dir = fileNames.substr(0, dirPos);
 			fileNames = fileNames.substr(dirPos + 1, fileNames.length());
@@ -911,8 +1013,8 @@ namespace MP
 				while(fileNames.find_first_of('\n') != std::string::npos)
 				{
 					s32 titlePos = fileNames.find_first_of('\n');
-					title = std::wstring();
-					title += dir + L"\\";
+					title = std::string();
+					title += dir + "\\";
 					title += fileNames.substr(0, titlePos);
 					fileNames = fileNames.substr(titlePos + 1, fileNames.length());;
 					Audio::PushToPlaylist(title);

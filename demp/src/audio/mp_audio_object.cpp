@@ -10,7 +10,7 @@ Audio::AudioObject::AudioObject() { }
 
 Audio::AudioObject::~AudioObject()
 {
-	folder = L"";
+	folder = "";
 	delete path;
 	delete info;
 	info = NULL;
@@ -42,30 +42,30 @@ void Audio::AudioObject::IncrementID()
 	m_ItemID++;
 }
 
-std::wstring& Audio::AudioObject::GetPath() const
+std::string& Audio::AudioObject::GetPath() const
 {
 	return *path;
 }
 
-const std::wstring Audio::AudioObject::GetFolderPath() const
+const std::string Audio::AudioObject::GetFolderPath() const
 {
 	return Info::GetFolderPath(*path);
 }
 
-const std::wstring& Audio::AudioObject::GetArtist() const
+const std::string& Audio::AudioObject::GetArtist() const
 {
 	return info->artist;
 }
 
-const std::wstring Audio::AudioObject::GetTitle()
+const std::string Audio::AudioObject::GetTitle()
 {
-	if (info->title.compare(L"") == 0)
+	if (info->title.compare("") == 0)
 		return Info::GetCompleteTitle(*path);
 		
 	return info->title;
 }
 
-const std::wstring& Audio::AudioObject::GetTrackNum() const
+const std::string& Audio::AudioObject::GetTrackNum() const
 {
 	/*if (info->track_num.compare(L"0") == 0)
 		return L"";*/
@@ -73,12 +73,12 @@ const std::wstring& Audio::AudioObject::GetTrackNum() const
 	return info->track_num;
 }
 
-const std::wstring& Audio::AudioObject::GetAlbum() const
+const std::string& Audio::AudioObject::GetAlbum() const
 {
 	return info->album;
 }
 
-const std::wstring& Audio::AudioObject::GetYear() const
+const std::string& Audio::AudioObject::GetYear() const
 {
 	/*if (info->year.compare(L"0") == 0)
 		return L"";*/
@@ -86,7 +86,7 @@ const std::wstring& Audio::AudioObject::GetYear() const
 	return info->year;
 }
 
-const std::wstring& Audio::AudioObject::GetComment() const
+const std::string& Audio::AudioObject::GetComment() const
 {
 	/*if (info->comment.compare(L"0") == 0)
 		return L"";*/
@@ -94,12 +94,12 @@ const std::wstring& Audio::AudioObject::GetComment() const
 	return info->comment;
 }
 
-const std::wstring& Audio::AudioObject::GetGenre() const
+const std::string& Audio::AudioObject::GetGenre() const
 {
 	return info->genre;
 }
 
-const std::wstring& Audio::AudioObject::GetFormat() const
+const std::string& Audio::AudioObject::GetFormat() const
 {
 	return info->format;
 }
@@ -109,12 +109,12 @@ void Audio::AudioObject::SetID(s32 id)
 	this->m_ItemID = id;
 }
 
-void Audio::AudioObject::SetPath(std::wstring& path)
+void Audio::AudioObject::SetPath(std::string& path)
 {
 	this->path = &path;
 }
 
-void Audio::AudioObject::SetFolderPath(std::wstring& path)
+void Audio::AudioObject::SetFolderPath(std::string& path)
 {
 	this->folder = path;
 }

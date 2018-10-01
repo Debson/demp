@@ -16,9 +16,8 @@
 #include "../utility/md_parser.h"
 #include "../utility/utf8_to_utf16.h"
 
+// TODO: change it
 #ifdef _WIN32_
-#define OUTPUT std::wcout
-#else
 #define OUTPUT std::cout
 #endif
 
@@ -137,7 +136,7 @@ namespace MP
 		b8 SongObject::load(std::shared_ptr<Audio::AudioObject> audioObject)
 		{
 			FILE* file = NULL;
-			if (_wfopen_s(&file, audioObject->GetPath().c_str(), L"rb+") != 0)
+			if (_wfopen_s(&file, utf8_to_utf16(audioObject->GetPath()).c_str(), L"rb+") != 0)
 			{
 				OUTPUT << "ERROR: could not open file at path \"" << audioObject->GetPath() << "\"\n";
 				std::cout << stderr;
@@ -696,7 +695,7 @@ namespace MP
 			
 		}
 
-		void ReloadMusic(std::wstring path)
+		void ReloadMusic(std::string path)
 		{
 			PauseMusic();
 
@@ -922,26 +921,27 @@ namespace MP
 		}
 
 
-		std::wstring GetTitle(s32 id)
+		std::string GetTitle(s32 id)
 		{
-			std::wstring path;
+			std::string path;
 
-			if (Audio::Object::GetSize() > 0 && id >= 0)
+			/*if (Audio::Object::GetSize() > 0 && id >= 0)
 			{
 #ifdef _WIN32_
-				path = std::wstring(Audio::Object::GetAudioObject(id)->GetPath());
+				path = std::string(Audio::Object::GetAudioObject(id)->GetPath());
 #else
 				path = mdPathContainer[id];
 #endif
 				const wchar_t slash = '\\';
 				const wchar_t *title = NULL;
 
+
 				title = wcsrchr(path.c_str(), slash);
 
-				path = std::wstring(title, 1, wcslen(title));
+				path = std::string(title, 1, wcslen(title));
 				std::size_t extPos = path.find_last_of(L".");
 				path = path.substr(0, extPos);
-			}
+			}*/
 
 			return path;
 		}
@@ -1119,7 +1119,7 @@ namespace MP
 		void PrintLoadedPaths()
 		{
 			for (u32 i = 0; i < Audio::Object::GetSize(); i++)
-				std::cout << utf16_to_utf8(Audio::Object::GetAudioObject(i)->GetPath()) << std::endl;
+				std::cout << Audio::Object::GetAudioObject(i)->GetPath() << std::endl;
 		}
 #endif
 	}

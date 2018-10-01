@@ -82,6 +82,21 @@ namespace mdEngine
 			}
 		}
 
+		b8 Timer::IsFinished()
+		{
+				if (SDL_GetTicks() - startTime > targetTime &&
+					currentTime - targetTime > deltaTime)
+				{
+					finished = true;
+					started = false;
+
+					return true;
+				}
+				currentTime = SDL_GetTicks() - startTime;
+
+			return false;
+		}
+
 		f32 Timer::GetTicks()
 		{
 			return SDL_GetTicks() - startTime;

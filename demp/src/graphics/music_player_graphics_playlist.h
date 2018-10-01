@@ -57,7 +57,7 @@ namespace mdEngine
 
 				std::string  GetItemsSizeString()		;
 				std::string  GetItemsDurationString()	;
-				std::wstring GetMusicInfoScrollString() const;
+				std::string GetMusicInfoScrollString() const;
 
 				glm::vec2 GetPos()  const;
 				glm::vec2 GetSize() const;

@@ -23,7 +23,7 @@ namespace mdEngine
 			Strings::InitializeStrings();
 
 			App::InitializeConfig();
-			Graphics::MP::InitializeConfig();
+			Graphics::InitializeConfig();
 			Playlist::InitializeConfig();
 			Audio::InitializeConfig();
 			Parser::ReadPathsFromFile(Strings::_PLAYLIST_FILE);

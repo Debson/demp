@@ -12,8 +12,8 @@ namespace Audio
 	struct AudioProperties
 	{
 		virtual ~AudioProperties() { };
-		std::wstring* path;
-		std::wstring folder;
+		std::string* path;
+		std::string folder;
 
 		Info::ID3* info;
 	};
@@ -30,19 +30,19 @@ namespace Audio
 		s32* GetIDP();
 		void DecrementID();
 		void IncrementID();
-		std::wstring& GetPath()		const;
-		const std::wstring GetFolderPath()	const;
-		const std::wstring& GetArtist()		const;
-		const std::wstring GetTitle();
-		const std::wstring& GetTrackNum()	const;
-		const std::wstring& GetAlbum()		const;
-		const std::wstring& GetYear()		const;
-		const std::wstring& GetComment()	const;
-		const std::wstring& GetGenre()		const;
-		const std::wstring& GetFormat()		const;
+		std::string& GetPath()		const;
+		const std::string GetFolderPath()	const;
+		const std::string& GetArtist()		const;
+		const std::string GetTitle();
+		const std::string& GetTrackNum()	const;
+		const std::string& GetAlbum()		const;
+		const std::string& GetYear()		const;
+		const std::string& GetComment()	const;
+		const std::string& GetGenre()		const;
+		const std::string& GetFormat()		const;
 		void SetID(s32 id);
-		void SetPath(std::wstring& path);
-		void SetFolderPath(std::wstring& path);
+		void SetPath(std::string& path);
+		void SetFolderPath(std::string& path);
 		f32 GetFrequency()				const;
 		f32 GetBitrate()				const;
 		s32 GetObjectSize()				const;

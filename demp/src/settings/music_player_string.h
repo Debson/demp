@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include "../utility/md_types.h"
 
 namespace mdEngine
 {
@@ -34,15 +35,16 @@ namespace mdEngine
 		const std::string _CONTENT_LOADED		= "content_loaded";
 		const std::string _PLAYBACK_CURSOR		= "playback_cursor";
 
-		const std::string  _OPTIONS_WINDOW_NAME				= "Options";
-		const std::wstring _VOLUME_SCROL_STEP_TEXT			= L"Volume Scroll Step:";
-		const std::wstring _PLAYLIST_SCROLL_STEP_TEXT		= L"Playlist Scroll Step:";
-		const std::wstring _PAUSE_FADE_TEXT					= L"Volume Fade on Pause/Play Length:";
-		const std::wstring _MAX_RAM_LOADED_SIZE_TEXT		= L"Maximum Ram Loaded Size:";
-		const std::wstring _ON_EXIT_MINMIZE_TO_TRAY_TEXT	= L"On Exit Minimize To Tray:";
+		const std::string  _OPTIONS_WINDOW_NAME			= "Options";
+		const std::string _VOLUME_SCROL_STEP_TEXT		= "Volume Scroll Step:";
+		const std::string _PLAYLIST_SCROLL_STEP_TEXT	= "Playlist Scroll Step:";
+		const std::string _PAUSE_FADE_TEXT				= "Volume Fade on Pause/Play Length:";
+		const std::string _MAX_RAM_LOADED_SIZE_TEXT		= "Maximum Ram Loaded Size:";
+		const std::string _ON_EXIT_MINMIZE_TO_TRAY_TEXT	= "On Exit Minimize To Tray:";
+		const std::string _ON_LOAD_CHECK_PATH_EXISTENCE = "Check whether audio file is already loaded:";
 
-		const std::wstring _PLAYLIST_ADD_FILE	= L"Files";
-		const std::wstring _PLAYLIST_ADD_FOLDER = L"Folder";
+		const std::string _PLAYLIST_ADD_FILE	= "Files";
+		const std::string _PLAYLIST_ADD_FOLDER = "Folder";
 
 		void InitializeStrings();
 	}

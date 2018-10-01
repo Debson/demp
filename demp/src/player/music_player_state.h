@@ -100,7 +100,7 @@ namespace mdEngine
 			m_currentState &= ~state;
 		}
 
-		void ResetStateOnUnsupportedFormat();
+		void ResetStateOnLoadError();
 
 		// Reset all flags associated with Music player state, and set 
 		void ResetMusicPlayerState();

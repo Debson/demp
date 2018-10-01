@@ -11,10 +11,10 @@ namespace mdEngine
 {
 namespace Graphics
 {
-	namespace MP
-	{
 		// TODO: It cant be an extern variable...
 		extern Interface::TextBox m_AddFileTextBox;
+
+		void UpdatePlaylistCursorOffset();
 
 		void InitializeConfig();
 
@@ -26,6 +26,7 @@ namespace Graphics
 
 		void CloseMainWindow();
 
+
 #ifdef _DEBUG_
 		void PrintVisibleItemsInfo();
 		
@@ -34,7 +35,6 @@ namespace Graphics
 		void PrintIndexesToRender();
 #endif
 
-	}
 }
 }
 

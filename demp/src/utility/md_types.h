@@ -2,6 +2,8 @@
 #ifndef MD_TYPES_H
 #define MD_TYPES_H
 
+#include <iostream>
+#include <string>
 #include <vector>
 #include <stdint.h>
 #include <glm.hpp>
@@ -37,12 +39,7 @@ namespace mdEngine
 		f32 delta;
 	};
 
-
-#ifdef _WIN32_
-	typedef std::vector<std::wstring*> PathContainer;
-#else
-	typedef std::vector<const char*> PathContainer;
-#endif
+	typedef std::vector<std::string*> PathContainer;
 
 	namespace Color
 	{

@@ -28,7 +28,7 @@ namespace Audio
 		b8 ItemBeingProcessed;
 		std::mutex mutex;
 
-		std::vector<std::wstring> m_LoadedPaths;
+		std::vector<std::string> m_LoadedPaths;
 	}
 
 	void Info::Update()
@@ -48,12 +48,12 @@ namespace Audio
 		}
 	}
 
-	std::vector<std::wstring>* Info::GetLoadedPathsContainer()
+	std::vector<std::string>* Info::GetLoadedPathsContainer()
 	{
 		return &m_LoadedPaths;
 	}
 
-	b8 Info::CheckIfAudio(std::wstring& path)
+	b8 Info::CheckIfAudio(std::string& path)
 	{
 		std::string ext = fs::extension(path);
 		boost::algorithm::to_lower(ext);
@@ -80,40 +80,22 @@ namespace Audio
 	}
 
 	
-	b8 Info::IsPathLoaded(std::wstring& path)
+	b8 Info::IsPathLoaded(std::string& path)
 	{
-
 		if (std::binary_search(m_LoadedPaths.begin(), m_LoadedPaths.end(), path) == true)
 			return true;
-
-		
-		/*auto audioCon = Audio::Object::GetAudioObjectContainer();
-		auto it = std::find_if(audioCon->begin(), audioCon->end(),
-			[&](std::shared_ptr<AudioObject> const & ref) {  return ref->GetPath().compare(path) == 0; });
-
-
-		if (it != audioCon->end())
-			return true;*/
-
-		/*for (auto & i : *Audio::Object::GetAudioObjectContainer())
-		{
-			if (path.compare(i->GetPath()) == 0)
-			{
-				return true;
-			}
-		}*/
 
 		return false;
 	}
 
-	std::wstring Info::GetFolderPath(std::wstring& path)
+	std::string Info::GetFolderPath(std::string& path)
 	{
 		fs::path p(path);
 
-		return p.remove_filename().wstring();
+		return p.remove_filename().string();
 	}
 
-	std::wstring Info::GetFolder(std::wstring& path)
+	std::string Info::GetFolder(std::string& path)
 	{
 		// Shouldn't be hardcoded!!! change it
 		s16 pos = path.find_last_of('\\');
@@ -122,21 +104,21 @@ namespace Audio
 	}
 
 	// make it faster
-	std::wstring Info::GetCompleteTitle(std::wstring& path)
+	std::string Info::GetCompleteTitle(std::string& path)
 	{
 		s16 pos = path.find_last_of(L'\\');
-		std::wstring title = path.substr(pos + 1, path.length());
+		std::string title = path.substr(pos + 1, path.length());
 		pos = title.find_last_of(L'.');
 		title = title.substr(0, pos);
 
 		return title;
 	}
 
-	std::wstring Info::GetArtist(std::wstring& path)
+	std::string Info::GetArtist(std::string& path)
 	{
 		fs::path p(path);
 
-		std::wstring artist(p.filename().wstring());
+		std::string artist(p.filename().string());
 		wchar_t minus = '-';
 		s32 pos = artist.find(artist, minus);
 		artist = artist.substr(0, pos - 1);
@@ -144,7 +126,7 @@ namespace Audio
 		return artist;
 	}
 
-	std::wstring Info::GetExt(std::wstring& path)
+	std::string Info::GetExt(std::string& path)
 	{
 		fs::path p(path);
 
@@ -154,7 +136,7 @@ namespace Audio
 		boost::to_upper(up);
 		p = up;
 
-		return p.wstring();
+		return p.string();
 	}
 
 	void Info::GetInfo(std::shared_ptr<Audio::AudioObject> audioObj)
@@ -167,10 +149,10 @@ namespace Audio
 
 		auto info = audioObj->GetID3Struct();
 
-		HSTREAM stream;;
-		stream = BASS_StreamCreateFile(FALSE, audioObj->GetPath().c_str(), 0, 0, BASS_STREAM_DECODE);
+		HSTREAM stream;
+		stream = BASS_StreamCreateFile(FALSE, utf8_to_utf16(audioObj->GetPath()).c_str(), 0, 0, BASS_STREAM_DECODE);
 
-		boost::intmax_t fileSize = boost::filesystem::file_size(audioObj->GetPath());
+		boost::intmax_t fileSize = boost::filesystem::file_size(utf8_to_utf16(audioObj->GetPath()));
 
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_FREQ, &info->freq);
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_BITRATE, &info->bitrate);
@@ -188,35 +170,35 @@ namespace Audio
 		ItemBeingProcessed = false;
 	}
 
-	void Info::GetID3Info(Info::ID3* info, std::wstring& path)
+	void Info::GetID3Info(Info::ID3* info, std::string& path)
 	{
 		TagLib::FileRef file(path.c_str());
 		TagLib::String buff = file.tag()->title();
 		s32 buffInt = 0;
 		if (buff != TagLib::String::null)
-			info->title = buff.toWString();
+			info->title = buff.toCString();
 		buff = file.tag()->artist();
 		if (buff != TagLib::String::null)
-			info->artist = buff.toWString();
+			info->artist = buff.toCString();
 
-		info->track_num = std::to_wstring(file.tag()->track());
+		info->track_num = file.tag()->track();
 		buff = file.tag()->album();
 		if (buff != TagLib::String::null)
-			info->album = buff.toWString();
+			info->album = buff.toCString();
 
-		info->year = std::to_wstring(file.tag()->year());
-		info->comment = file.tag()->comment().toWString();
-		info->genre = file.tag()->genre().toWString();
+		info->year = file.tag()->year();
+		info->comment = file.tag()->comment().toCString();
+		info->genre = file.tag()->genre().toCString();
 	}
 
-	std::wstring Info::GetProcessedItemsCountStr()
+	std::string Info::GetProcessedItemsCountStr()
 	{
-		std::wstring str = L" ";
+		std::string str = " ";
 		if (Audio::Object::GetSize() > 0 && LoadedItemsInfoCount > 0)
 		{
 			f32 perc = (f32)LoadedItemsInfoCount / (f32)Audio::Object::GetSize();
-			str = std::to_wstring(s32(perc * 100));
-			str += L"%";
+			str = s32(perc * 100);
+			str += "%";
 		}
 
 		return str;

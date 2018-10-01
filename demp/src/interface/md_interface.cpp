@@ -47,11 +47,11 @@ namespace mdEngine
 	{
 		for (auto & i : m_PlaylistSeparatorContainer)
 		{
-			std::cout << utf16_to_utf8(i.second->GetSeparatorName()) << std::endl;
+			std::cout << i.second->GetSeparatorName() << std::endl;
 			for (auto & k : *i.second->GetSubFilesContainer())
 			{
 				std::cout << "  ";
-				std::cout << "ID: " << *k.first  << "   Path: " << utf16_to_utf8(*k.second) << std::endl;
+				std::cout << "ID: " << *k.first  << "   Path: " << *k.second << std::endl;
 			}
 		}
 	}
@@ -158,7 +158,7 @@ namespace mdEngine
 
 		assert(Audio::Object::GetAudioObject(m_ItemID) != nullptr);
 
-		m_TitleC = utf16_to_utf8(m_TextString);
+		m_TitleC = m_TextString;
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 		m_TextString = GetShortenTextString();
 
@@ -323,9 +323,9 @@ namespace mdEngine
 		return m_ItemColor;
 	}
 
-	std::wstring Interface::PlaylistItem::GetShortenTextString()
+	std::string Interface::PlaylistItem::GetShortenTextString()
 	{
-		s16 len = wcslen(m_TextString.c_str());
+		u16 len = m_TextString.length();
 		f32 textSize = m_TextSize.x * m_TextScale;
 
 		if (textSize > this->m_ButtonSize.x)
@@ -337,11 +337,11 @@ namespace mdEngine
 				i++;
 
 			m_TextString = m_TextString.substr(0, i - 4);
-			m_TextString += L"...";
+			m_TextString += "...";
 
 			len = m_TextString.length();
 			m_TitleC.resize(len + 1);
-			m_TitleC = utf16_to_utf8(m_TextString);
+			m_TitleC = m_TextString;
 			TTF_SizeText(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);;
 		}
 
@@ -360,10 +360,10 @@ namespace mdEngine
 		m_SubFilesPaths.clear();
 	}
 
-	Interface::PlaylistSeparator::PlaylistSeparator(std::wstring& name)
+	Interface::PlaylistSeparator::PlaylistSeparator(std::string& name)
 	{ 
 		u16 pos = name.find_last_of(L'\\');
-		m_Path = std::wstring(name.substr(0, pos));
+		m_Path = std::string(name.substr(0, pos));
 
 		m_TextString = Audio::Info::GetFolder(m_Path);
 		m_Visible = false;
@@ -387,7 +387,7 @@ namespace mdEngine
 
 		u16 len = m_TextString.length();
 		m_TitleC.resize(len + 1);
-		m_TitleC = utf16_to_utf8(m_TextString);
+		m_TitleC = m_TextString;
 
 		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 
@@ -415,12 +415,12 @@ namespace mdEngine
 		DrawString();
 	}
 
-	void Interface::PlaylistSeparator::SetSeperatorPath(std::wstring& path)
+	void Interface::PlaylistSeparator::SetSeperatorPath(std::string& path)
 	{
 		m_Path = path;
 	}
 
-	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(s32* fileIndex, std::wstring& const path)
+	void Interface::PlaylistSeparator::SeparatorSubFilePushBack(s32* fileIndex, std::string& const path)
 	{
 		m_SubFilesPaths.push_back(std::make_pair(fileIndex, &path));
 		m_SepItemCount++;
@@ -476,12 +476,12 @@ namespace mdEngine
 		m_SeparatorSelected = val;
 	}
 
-	std::wstring Interface::PlaylistSeparator::GetSeparatorPath() const
+	std::string Interface::PlaylistSeparator::GetSeparatorPath() const
 	{
 		return m_Path;
 	}
 
-	std::wstring Interface::PlaylistSeparator::GetSeparatorName() const
+	std::string Interface::PlaylistSeparator::GetSeparatorName() const
 	{
 		return m_TextString;
 	}
@@ -493,7 +493,7 @@ namespace mdEngine
 	}
 
 	/* *************************************************** */
-	Interface::TextBoxItem::TextBoxItem(const std::wstring name, glm::vec2 itemSize, glm::vec2 itemPos,
+	Interface::TextBoxItem::TextBoxItem(const std::string name, glm::vec2 itemSize, glm::vec2 itemPos,
 																 glm::vec2 textSize, glm::vec2 textPos,
 										GLuint textTexture, GLuint iconTexture)
 	{
@@ -649,12 +649,12 @@ namespace mdEngine
 		m_ItemSize = itemSize;
 	}
 
-	void Interface::TextBox::AddItem(const std::wstring itemName, GLuint iconTexture)
+	void Interface::TextBox::AddItem(const std::string itemName, GLuint iconTexture)
 	{
 		GLuint tex = Text::LoadText(Data::_MUSIC_PLAYER_FONT, itemName, m_TextColorSDL);
 
 		glm::ivec2 textSize;
-		std::string name = utf16_to_utf8(itemName);
+		std::string name = itemName;
 		TTF_SizeText(Data::_MUSIC_PLAYER_FONT, name.c_str(), &textSize.x, &textSize.y);
 
 		auto item = std::make_shared<TextBoxItem>(itemName, glm::vec2(m_Size.x, Data::_TEXT_BOX_ITEM_HEIGHT), glm::vec2(m_Pos.x, m_Pos.y + m_ItemsCount * Data::_TEXT_BOX_ITEM_HEIGHT),
@@ -675,18 +675,18 @@ namespace mdEngine
 		return m_Size;
 	}
 
-	b8 Interface::TextBox::hasItemFocus(const std::wstring name) const
+	b8 Interface::TextBox::hasItemFocus(const std::string name) const
 	{
 		auto item = std::find_if(m_InterfaceButtonContainer.begin(), m_InterfaceButtonContainer.end(),
-			[&](std::pair<const std::wstring, Button*> const & ref) { return ref.first.compare(name) == 0; });
+			[&](std::pair<const std::string, Button*> const & ref) { return ref.first.compare(name) == 0; });
 
 		return item == m_InterfaceButtonContainer.end() ? false : item->second->hasFocus;
 	}
 
-	b8 Interface::TextBox::isItemPressed(const std::wstring name) const
+	b8 Interface::TextBox::isItemPressed(const std::string name) const
 	{
 		auto item = std::find_if(m_InterfaceButtonContainer.begin(), m_InterfaceButtonContainer.end(),
-			[&](std::pair<const std::wstring, Button*> const & ref) { return ref.first.compare(name) == 0; });
+			[&](std::pair<const std::string, Button*> const & ref) { return ref.first.compare(name) == 0; });
 
 		return item == m_InterfaceButtonContainer.end() ? false : item->second->isPressed;
 	}
@@ -694,7 +694,7 @@ namespace mdEngine
 	
 	Interface::ButtonSlider::ButtonSlider() { }
 
-	Interface::ButtonSlider::ButtonSlider(std::wstring labelName, glm::ivec2 pos, f32* value, f32 step, f32 min, f32 max, glm::vec2 size) :	m_SliderSize(size),
+	Interface::ButtonSlider::ButtonSlider(std::string labelName, glm::ivec2 pos, f32* value, f32 step, f32 min, f32 max, glm::vec2 size) :	m_SliderSize(size),
 																																			m_ValueF(value),
 																																			m_Step(step),
 																																			m_MinValue(min),
@@ -709,7 +709,7 @@ namespace mdEngine
 
 	}
 
-	Interface::ButtonSlider::ButtonSlider(std::wstring labelName, glm::ivec2 pos, s32* value, s32 step, s32 min, s32 max, glm::vec2 size) :	m_SliderSize(size),
+	Interface::ButtonSlider::ButtonSlider(std::string labelName, glm::ivec2 pos, s32* value, s32 step, s32 min, s32 max, glm::vec2 size) :	m_SliderSize(size),
 																																			m_Value(value),
 																																			m_Step(step),
 																																			m_MinValue(min),
@@ -752,15 +752,15 @@ namespace mdEngine
 		m_ValueTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
 		if (m_Value == NULL)
 		{
-			std::wstringstream ss;
-			std::wstring val;
+			std::stringstream ss;
+			std::string val;
 			ss << std::setprecision(3) << *m_ValueF;
 			ss >> val;
 			m_ValueTextObject.SetTextString(val);
 		}
 		else
 		{
-			m_ValueTextObject.SetTextString(std::to_wstring(*m_Value));
+			m_ValueTextObject.SetTextString(std::to_string(*m_Value));
 		}
 
 
@@ -827,7 +827,7 @@ namespace mdEngine
 
 		m_DefaultTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
 
-		m_DefaultTextObject.SetTextString(L"Default");
+		m_DefaultTextObject.SetTextString("Default");
 		// Init sdl text
 		m_DefaultTextObject.InitTextTextureSDL(m_Renderer);
 
@@ -1043,15 +1043,15 @@ namespace mdEngine
 	{
 		if (m_Value == NULL)
 		{
-			std::wstringstream ss;
-			std::wstring val;
+			std::stringstream ss;
+			std::string val;
 			ss << std::setprecision(3) << *m_ValueF;
 			ss >> val;
 			m_ValueTextObject.SetTextString(val);
 		}
 		else
 		{
-			m_ValueTextObject.SetTextString(std::to_wstring(*m_Value));
+			m_ValueTextObject.SetTextString(std::to_string(*m_Value));
 		}
 		s32 textSizeBefore = m_ValueTextObject.GetTextSize().x;
 		m_ValueTextObject.ReloadTextTextureSDL();
@@ -1071,7 +1071,7 @@ namespace mdEngine
 
 	Interface::CheckBox::CheckBox() { }
 
-	Interface::CheckBox::CheckBox(std::wstring labelName, glm::vec2 pos, b8* val) : m_Value(val)
+	Interface::CheckBox::CheckBox(std::string labelName, glm::vec2 pos, b8* val) : m_Value(val)
 	{
 		s32 textOffsetX = 5;
 		m_TextString = labelName;
@@ -1135,13 +1135,13 @@ namespace mdEngine
 		return &m_PlaylistSeparatorContainer;
 	}
 
-	std::shared_ptr<Interface::PlaylistSeparator> Interface::Separator::GetSeparator(std::wstring text)
+	std::shared_ptr<Interface::PlaylistSeparator> Interface::Separator::GetSeparator(std::string text)
 	{
 		if (m_PlaylistSeparatorContainer.empty() == true)
 			return nullptr;
 
 		auto it = find_if(m_PlaylistSeparatorContainer.begin(), m_PlaylistSeparatorContainer.end(),
-			[&](std::pair<std::wstring*, std::shared_ptr<Interface::PlaylistSeparator>> const & ref) { return ref.first->compare(text) == 0; });
+			[&](std::pair<std::string*, std::shared_ptr<Interface::PlaylistSeparator>> const & ref) { return ref.first->compare(text) == 0; });
 
 		if (it == m_PlaylistSeparatorContainer.end())
 			return nullptr;
@@ -1179,8 +1179,8 @@ namespace mdEngine
 		for (auto i : m_PlaylistSeparatorContainer)
 		{
 			std::cout << "Name: ";
-			std::cout << utf16_to_utf8(i.second->GetSeparatorName());
-			for(s32 k = utf16_to_utf8(i.second->GetSeparatorName()).length(); k < maxNameLen; k++)
+			std::cout << i.second->GetSeparatorName();
+			for(s32 k = i.second->GetSeparatorName().length(); k < maxNameLen; k++)
 				std::cout << " ";
 			std::cout << " || ";
 			std::cout << "Visible: ";

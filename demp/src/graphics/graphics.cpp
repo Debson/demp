@@ -11,7 +11,6 @@
 
 using namespace mdEngine::MP::UI;
 
-
 namespace mdEngine
 {
 	namespace Graphics
@@ -112,22 +111,23 @@ namespace mdEngine
 	{
 		Text::InitializeText();
 		Shader::InitShader();
-		MP::StartMainWindow();
+		StartMainWindow();
 	}
 
 	void Graphics::UpdateGraphics()
 	{
-		MP::UpdateMainWindow();
+		UpdateMainWindow();
 	}
 
 	void Graphics::RenderGraphics()
 	{
-		MP::RenderMainWindow();
+		RenderMainWindow();
 	}
+
 	void Graphics::CloseGraphics()
 	{
 		Shader::Free();
-		MP::CloseMainWindow();
+		CloseMainWindow();
 	}
 
 }

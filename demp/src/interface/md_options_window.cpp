@@ -49,7 +49,7 @@ namespace mdEngine
 		}
 
 
-		s32 xPos = 110;
+		s32 xPos = 40;
 		m_VolumeStepSlider = Interface::ButtonSlider(Strings::_VOLUME_SCROL_STEP_TEXT, glm::vec2(xPos, 20), &MP::Data::VolumeScrollStep, 1, 0, MP::Data::VolumeScrollStepMAX);
 		m_VolumeStepSlider.Init(m_Renderer);
 
@@ -65,6 +65,9 @@ namespace mdEngine
 		m_ToTrayOnExitState = State::CheckState(State::OnExitMinimizeToTray);
 		m_ToTrayOnExit = Interface::CheckBox(Strings::_ON_EXIT_MINMIZE_TO_TRAY_TEXT, glm::vec2(xPos, 220), &m_ToTrayOnExitState);
 		m_ToTrayOnExit.Init(m_Renderer);
+
+		m_OnLoadCheckExistence = Interface::CheckBox(Strings::_ON_LOAD_CHECK_PATH_EXISTENCE, glm::vec2(xPos, 270), &MP::Settings::IsPathExistenceCheckingEnabled);
+		m_OnLoadCheckExistence.Init(m_Renderer);
 
 	}
 
@@ -109,6 +112,7 @@ namespace mdEngine
 			m_RamLoadedSizeSlider.ProcessInput();
 
 			m_ToTrayOnExit.ProcessInput();
+			m_OnLoadCheckExistence.ProcessInput();
 		}
 		else
 		{
@@ -118,6 +122,7 @@ namespace mdEngine
 			m_RamLoadedSizeSlider.ResetButtons();
 
 			m_ToTrayOnExit.ResetState();
+			m_OnLoadCheckExistence.ResetState();
 		}
 
 		m_ToTrayOnExitState == true ? State::SetState(State::OnExitMinimizeToTray) : State::ResetState(State::OnExitMinimizeToTray);
@@ -128,6 +133,7 @@ namespace mdEngine
 		m_RamLoadedSizeSlider.Update();
 		
 		m_ToTrayOnExit.Update();
+		m_OnLoadCheckExistence.Update();
 	}
 
 	void Window::OptionsWindow::Render()
@@ -144,6 +150,7 @@ namespace mdEngine
 		m_RamLoadedSizeSlider.Render();
 
 		m_ToTrayOnExit.Render();
+		m_OnLoadCheckExistence.Render();
 
 		SDL_RenderPresent(m_Renderer);
 	}
@@ -168,8 +175,6 @@ namespace mdEngine
 				break;
 			}
 		}
-
-
 	}
 
 	b8 Window::OptionsWindow::IsActive()
@@ -192,6 +197,7 @@ namespace mdEngine
 		m_RamLoadedSizeSlider.Free();
 
 		m_ToTrayOnExit.Free();
+		m_OnLoadCheckExistence.Free();
 
 		IMG_Quit();
 		m_Renderer = NULL;

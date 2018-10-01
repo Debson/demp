@@ -28,6 +28,7 @@ namespace Time
 		void Stop();
 		void Reset();
 		void Update();
+		b8 IsFinished();
 		f32 GetProgress();
 		f32 GetProgressLog();
 		f32 GetTicks();

@@ -17,16 +17,8 @@
 #define OUTPUT std::cout
 #endif
 
-
-namespace fs = std::experimental::filesystem::v1;
-
 namespace mdEngine
 {
-	namespace App
-	{
-		std::string get_ext(char* path);
-	}
-
 namespace MP
 {
 
@@ -81,8 +73,7 @@ namespace MP
 		}
 
 		
-		/* Volume */
-		if (App::Input::IsKeyDown(App::KeyCode::Up))
+		/*if (App::Input::IsKeyDown(App::KeyCode::Up))
 		{
 			Playlist::IncreaseVolume(App::InputEvent::kPressedEvent);
 		}
@@ -92,7 +83,6 @@ namespace MP
 			Playlist::LowerVolume(App::InputEvent::kPressedEvent);
 		}
 
-		/* Volume */
 		if (App::Input::IsKeyDown(App::KeyCode::Up))
 		{
 			Playlist::IncreaseVolume(App::InputEvent::kPressedEvent);
@@ -101,7 +91,7 @@ namespace MP
 		if (App::Input::IsKeyDown(App::KeyCode::Down))
 		{
 			Playlist::LowerVolume(App::InputEvent::kPressedEvent);
-		}
+		}*/
 
 		/* REWIND */
 		if (App::Input::IsKeyPressed(App::KeyCode::Left))

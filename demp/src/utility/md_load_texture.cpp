@@ -1,5 +1,7 @@
 #include "md_load_texture.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+
 GLuint mdLoadTexture(std::string path)
 {
 	//stbi_set_flip_vertically_on_load(true);

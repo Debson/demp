@@ -47,6 +47,11 @@ namespace MP
 		f32 mdCurrentHeight;
 	}
 
+	namespace Settings
+	{
+		b8 IsPathExistenceCheckingEnabled(true);
+	}
+
 	void Data::InitializeData()
 	{
 		_MUSIC_PLAYER_FONT = TTF_OpenFont("assets/font/Times New Roman.ttf", 14);

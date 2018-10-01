@@ -38,6 +38,7 @@ namespace mdEngine
 			Interface::ButtonSlider m_PauseFadeTimeSlider;
 			Interface::ButtonSlider m_RamLoadedSizeSlider;
 			Interface::CheckBox		m_ToTrayOnExit;
+			Interface::CheckBox		m_OnLoadCheckExistence;
 
 
 		};

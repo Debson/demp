@@ -38,7 +38,7 @@ namespace MP
 
 #ifdef _WIN32_
 			b8 load(std::shared_ptr<Audio::AudioObject> audioObject);
-			std::wstring m_Path;
+			std::string m_Path;
 #else
 			b8 init(const char* songPath);
 			b8 load(const char* songPath, u32 id, SongState state);
@@ -77,7 +77,7 @@ namespace MP
 
 		void UpdateMusic();
 
-		void ReloadMusic(std::wstring path);
+		void ReloadMusic(std::string path);
 
 		void DeleteMusic(const std::vector<s32>* indexes);
 
@@ -95,7 +95,7 @@ namespace MP
 
 		b8 IsRepeatEnabled();
 
-		std::wstring GetTitle(s32 id);
+		std::string GetTitle(s32 id);
 
 		s32 GetPreviousID();
 

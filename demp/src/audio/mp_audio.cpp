@@ -66,8 +66,8 @@ namespace Audio
 
 	s32 indexOfDroppedOnItem = -1;
 
-	b8 AddAudioItem(std::wstring& path, s32 id);
-	void AddAudioItemWrap(std::vector<std::wstring*> vec, const s32 start, const s32 end);
+	b8 AddAudioItem(std::string& path, s32 id);
+	void AddAudioItemWrap(std::vector<std::string*> vec, const s32 start, const s32 end);
 	void ResizeAllContainers(int size);
 
 	void SetFoldersRep();
@@ -164,7 +164,7 @@ void Audio::CalculateDroppedPosInPlaylist()
 	
 }
 
-b8 Audio::LoadPathsFromFile(std::wstring& const path, Info::ID3* const id3)
+b8 Audio::LoadPathsFromFile(std::string& path, Info::ID3* id3)
 {
 	//if (fs::is_regular_file(path) == true)
 	{
@@ -176,59 +176,87 @@ b8 Audio::LoadPathsFromFile(std::wstring& const path, Info::ID3* const id3)
 	return true;
 }
 
-b8 Audio::PushToPlaylist(std::wstring& const path)
+b8 Audio::PushToPlaylist(std::string& path)
 {
+	/*	Timer that counts the time between every function call. If it will reach its
+		target time, all the paths that were gathered by this function will be further processed
+	*/
 	lastFunctionCallTimer.Start();
-	Audio::CalculateDroppedPosInPlaylist();
+
+	// Updates the vector with currently loaded paths, so it's up to date for IsPathLoaded function
 	Info::Update();
 
-	if (fs::exists(path))
-	{
+	// Create wide string path, so filesystem will be able read paths properly
+#ifdef _WIN32_
+	std::wstring pathW = utf8_to_utf16(path);
+#else
+#define pathW path
+#endif
 
+	// Check if loaded path still exists
+	if (fs::exists(pathW) == true)
+	{
 		if (m_AudioObjectContainer.empty() == false)
 		{
-			if (Info::IsPathLoaded(path) == true)
+			if (Info::IsPathLoaded(path) == true &&
+				MP::Settings::IsPathExistenceCheckingEnabled == true)
 			{
-				md_log("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
-				State::ResetState(State::FilesDroppedNotLoaded);
+				md_log("Audio item at path \"" + path + "\" already loaded!\n");
+				lastFunctionCallTimer.Stop();
+				lastFunctionCallTimer.Reset();
+				State::ResetStateOnLoadError();
 				return false;
 			}
 		}
 		
-
-		if (fs::is_directory(path))
+		if (fs::is_directory(pathW))
 		{
-			// Iterate throught all items in folder, if another folder found, resursively process it
-			std::vector<std::wstring> tempFolderPathsVec;
-			for (auto & i : fs::directory_iterator(path))
+			std::vector<std::string> tempFolderPathsVec;
+			// Iterate throught all items in folder
+			for (auto & i : fs::directory_iterator(pathW))
 			{
-				auto str = new std::wstring(i.path().wstring());
+				// Since every audio object will have only one copy of this path in RAM, create in now
+#ifdef _WIN32_
+				auto str = new std::string(utf16_to_utf8(i.path().wstring()));
+#else
+
+#endif
 				if (Info::CheckIfAudio(*str) == true)
 				{
 					//CalculateDroppedPosInPlaylist();
 					if (m_AudioObjectContainer.empty() == true)
 					{
+						// If playlist is empty, IsPathLoaded check dno't have to be run
 						m_AddedFilesPathContainer.push_back(str);
 						State::SetState(State::TerminateWorkingThreads);
-
+						Audio::CalculateDroppedPosInPlaylist();
 					}
-					else if (Info::IsPathLoaded(*str) == false)
+					else if (Info::IsPathLoaded(*str) == true &&
+							 MP::Settings::IsPathExistenceCheckingEnabled == true)
 					{
-						m_AddedFilesPathContainer.push_back(str);
-						State::SetState(State::TerminateWorkingThreads);
+						md_log("Audio item at path \"" + i.path().string() + "\" already loaded!\n");
+						lastFunctionCallTimer.Stop();
+						lastFunctionCallTimer.Reset();
+						State::ResetStateOnLoadError();
+						delete str;;
 					}
 					else
 					{
-						md_log("Audio item at path \"" + i.path().string() + "\" already loaded!\n");
-						State::ResetState(State::FilesDroppedNotLoaded);
-						delete str;
+						// Check if thath path is already loaded
+						m_AddedFilesPathContainer.push_back(str);
+						State::SetState(State::TerminateWorkingThreads);
+						Audio::CalculateDroppedPosInPlaylist();
 					}
 				}
-				else if (fs::is_directory(*str))
+				else if (fs::is_directory(utf8_to_utf16(*str)))
+				{
+					// Iterated path is a folder, save it to process it later
 					tempFolderPathsVec.push_back(*str);
+				}
 
 			}
 
+			// Iterate throught all the folders that were found in origin path
 			for(auto & i : tempFolderPathsVec)
 				PushToPlaylist(i);
 
@@ -236,33 +264,47 @@ b8 Audio::PushToPlaylist(std::wstring& const path)
 		}
 		else
 		{
-			if (Info::IsPathLoaded(path) == true)
+			if (Info::IsPathLoaded(path) == true &&
+				MP::Settings::IsPathExistenceCheckingEnabled == true)
 			{
-				md_log("Audio item at path \"" + utf16_to_utf8(path) + "\" already loaded!\n");
-				State::ResetState(State::FilesDroppedNotLoaded);
+				md_log("Audio item at path \"" + path + "\" already loaded!\n");
+				lastFunctionCallTimer.Stop();
+				lastFunctionCallTimer.Reset();
+				State::ResetStateOnLoadError();
 			}
-			else if (Info::CheckIfAudio(path) )
+			else if (Info::CheckIfAudio(path))
 			{
-				//CalculateDroppedPosInPlaylist();
+#ifdef _WIN32_
+				auto str = new std::string(utf16_to_utf8(pathW));
+#else
 
-				auto str = new std::wstring(path);
-
+#endif
 				m_AddedFilesPathContainer.push_back(str);
 				State::SetState(State::TerminateWorkingThreads);
+				Audio::CalculateDroppedPosInPlaylist();
 			}
 			else
 			{
-				State::ResetStateOnUnsupportedFormat();
 				lastFunctionCallTimer.Stop();
 				lastFunctionCallTimer.Reset();
+				//State::ResetStateOnLoadError();
 			}
 		}
-
 	}
 	else
 	{
-		md_log("File at path \"" + utf16_to_utf8(path) + "\" does not exist!");
+		md_log("File at path \"" + path + "\" does not exist!");
+		lastFunctionCallTimer.Stop();
+		lastFunctionCallTimer.Reset();
+		State::ResetStateOnLoadError();
 		State::ResetState(State::FilesDroppedNotLoaded);
+	}
+
+	if (m_AddedFilesPathContainer.empty() == true)
+	{
+		lastFunctionCallTimer.Stop();
+		lastFunctionCallTimer.Reset();
+		State::ResetStateOnLoadError();
 	}
 
 	return true;
@@ -309,11 +351,11 @@ void Audio::UpdateAudioLogic()
 		startLoadingProperties = false;
 
 
-		std::vector<std::wstring*> tempVec;
+		std::vector<std::string*> tempVec;
 		if (insertFiles == true)
-			tempVec = std::vector<std::wstring*>(indexOfDroppedOnItem);
+			tempVec = std::vector<std::string*>(indexOfDroppedOnItem);
 		else
-			tempVec = std::vector<std::wstring*>(currentContainersSize);
+			tempVec = std::vector<std::string*>(currentContainersSize);
 
 		for (s32 i = 0; i < toProcessCount; i++)
 			tempVec.push_back(m_AddedFilesPathContainer[i]);
@@ -547,7 +589,7 @@ void Audio::PerformDeletion(s32 index, b8 smallDeletion)
 	}
 }
 
-void Audio::AddAudioItemWrap(std::vector<std::wstring*> vec, const s32 beg, const s32 end)
+void Audio::AddAudioItemWrap(std::vector<std::string*> vec, const s32 beg, const s32 end)
 {
 	u32 start = SDL_GetTicks();
 	s32 i = beg;
@@ -574,7 +616,7 @@ void Audio::AddAudioItemWrap(std::vector<std::wstring*> vec, const s32 beg, cons
 	}*/
 }
 
-b8 Audio::AddAudioItem(std::wstring& path, s32 id)
+b8 Audio::AddAudioItem(std::string& path, s32 id)
 {
 	// Lock the mutex
 	std::lock_guard<std::mutex> lockGuard(mutex);
@@ -590,7 +632,7 @@ b8 Audio::AddAudioItem(std::wstring& path, s32 id)
 	else
 	{
 		audioObject->SetID3Struct(new Info::ID3());
-		//auto str = new std::wstring(path);
+		//auto str = new std::string(path);
 	}
 
 	audioObject->SetID(id);
@@ -648,7 +690,7 @@ void Audio::SetFoldersRep()
 		sepCon->clear();
 
 		//u32 start = SDL_GetTicks();
-		std::wstring previousFolderPath = L"";
+		std::string previousFolderPath = "";
 		Interface::PlaylistSeparator* ps = nullptr;
 		s32 counter = 0;
 		for (auto & i : m_AudioObjectContainer)
@@ -716,7 +758,7 @@ void Audio::ResizeAllContainers(int size)
 			
 
 			s32 newSize = currentContainersSize + size;
-			std::vector<std::wstring*> tempLoadedPathsVec(newSize);
+			std::vector<std::string*> tempLoadedPathsVec(newSize);
 			std::vector<std::shared_ptr<AudioObject>> tempAudioObjectVec(newSize);
 			std::vector<std::pair<s32*, Interface::Button*>> tempPlaylistButtonsVec(newSize);
 
@@ -914,16 +956,16 @@ void Audio::GetItemsInfo()
 	{
 		std::cout << std::endl;
 		std::cout << "ID: " << m_AudioObjectContainer[i]->GetID() << std::endl;
-		std::cout << "Path: "<< utf16_to_utf8(m_AudioObjectContainer[i]->GetPath()) << std::endl;
-		std::cout << "Fodler path: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetFolderPath()) << std::endl;
-		std::cout << "Artist: "<< utf16_to_utf8(m_AudioObjectContainer[i]->GetArtist()) << std::endl;
-		std::cout << "Title: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetTitle()) << std::endl;
-		std::cout << "Track nr: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetTrackNum()) << std::endl;
-		std::cout << "Album: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetAlbum()) << std::endl;
-		std::cout << "Year: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetYear()) << std::endl;
-		std::cout << "Comment: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetComment()) << std::endl;
-		std::cout << "Genre: " << utf16_to_utf8(m_AudioObjectContainer[i]->GetGenre()) << std::endl;
-		std::wcout << "Ext: " << m_AudioObjectContainer[i]->GetFormat() << std::endl;
+		std::cout << "Path: "<< m_AudioObjectContainer[i]->GetPath() << std::endl;
+		std::cout << "Fodler path: " << m_AudioObjectContainer[i]->GetFolderPath() << std::endl;
+		std::cout << "Artist: "<< m_AudioObjectContainer[i]->GetArtist() << std::endl;
+		std::cout << "Title: " << m_AudioObjectContainer[i]->GetTitle() << std::endl;
+		std::cout << "Track nr: " << m_AudioObjectContainer[i]->GetTrackNum() << std::endl;
+		std::cout << "Album: " << m_AudioObjectContainer[i]->GetAlbum() << std::endl;
+		std::cout << "Year: " << m_AudioObjectContainer[i]->GetYear() << std::endl;
+		std::cout << "Comment: " << m_AudioObjectContainer[i]->GetComment() << std::endl;
+		std::cout << "Genre: " << m_AudioObjectContainer[i]->GetGenre() << std::endl;
+		std::cout << "Ext: " << m_AudioObjectContainer[i]->GetFormat() << std::endl;
 		std::cout << "Freq: " << m_AudioObjectContainer[i]->GetFrequency() << std::endl;
 		std::cout << "Bitrate: " << m_AudioObjectContainer[i]->GetBitrate() << std::endl;
 		std::cout << "Size: " << m_AudioObjectContainer[i]->GetObjectSize() << std::endl;

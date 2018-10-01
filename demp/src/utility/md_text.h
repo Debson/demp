@@ -7,6 +7,7 @@
 #include <glm.hpp>
 #include <string>
 
+#include "../settings/music_player_settings.h"
 #include "../utility/md_types.h"
 #include "md_shader.h"
 
@@ -19,7 +20,7 @@ namespace mdEngine
 		public:
 			TextObject();
 			TextObject(TTF_Font* font, glm::vec3 col);
-			TextObject(TTF_Font* font, glm::vec3 col, std::wstring text);
+			TextObject(TTF_Font* font, glm::vec3 col, std::string text);
 			virtual ~TextObject();
 
 
@@ -38,7 +39,7 @@ namespace mdEngine
 
 			virtual void SetTextScale(f32 scale);
 			virtual void SetTextColor(glm::vec3 col);
-			virtual void SetTextString(std::wstring str);
+			virtual void SetTextString(std::string str);
 			virtual void SetTextPos(glm::vec2 pos);
 			virtual void SetTextSize(glm::vec2 size);
 			virtual void SetTextOffset(glm::vec2 offset);
@@ -63,15 +64,15 @@ namespace mdEngine
 			glm::vec2	  m_TextPos;
 			glm::vec3	  m_TextColorVec;
 			glm::ivec2	  m_TextSize;
-			std::wstring  m_TextString;
+			std::string  m_TextString;
 
 		private:
 		};
 
 		void InitializeText();
 
-		GLuint			LoadText(TTF_Font* font, std::wstring string, SDL_Color color);
-		SDL_Texture*	LoadTextSDL(SDL_Renderer* renderer, TTF_Font* font, std::wstring string, SDL_Color color);
+		GLuint			LoadText(TTF_Font* font, std::string string, SDL_Color color);
+		SDL_Texture*	LoadTextSDL(SDL_Renderer* renderer, TTF_Font* font, std::string string, SDL_Color color);
 		
 		void CloseText();
 	}
