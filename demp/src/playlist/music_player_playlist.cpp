@@ -282,7 +282,9 @@ namespace MP
 
 			Parser::GetInt(file, Strings::_ON_EXIT_MINIMIZE_TO_TRAY) == 1 ? State::SetState(State::OnExitMinimizeToTray) : (void)0;
 
-			Parser::GetInt(file, Strings::_CURRENT_SONG_ID) >= 0 ? State::SetState(State::InitMusicLoad) : (void)0;
+			Parser::GetInt(file, Strings::_SONG_POSITION) > 0 ? State::SetState(State::LoadMusicOnFileLoad) : (void)0;
+			b8 testb = State::CheckState(State::LoadMusicOnFileLoad);
+			s32 test = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
 		}
 
 		void Playlist::Start()
@@ -713,7 +715,9 @@ namespace MP
 				NextMusic();
 			}
 
+			/* Playlist is empty and  */
 			if (Audio::Object::GetSize() == 0 && 
+				State::CheckState(State::InitialLoadFromFile) == false &&
 				IsPlaying() == false)
 			{
 				mdStartNewOnEnd = false;
@@ -748,20 +752,21 @@ namespace MP
 				mdShuffleMusicPosContainer.clear();
 			}
 
-			if (State::CheckState(State::FilesLoaded) == true &&
-				State::CheckState(State::InitMusicLoad) == true)
+			/* Load, basing on file output, last song that was played before exiting application */
+			if (Audio::Object::GetSize() > 0 &&
+				State::CheckState(State::LoadMusicOnFileLoad) == true)
 			{
 				std::string file = Strings::_SETTINGS_FILE;
 				s32 songID = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
 				if (songID < Audio::Object::GetSize())
 				{
-				/*	md_log(songID);
+					md_log(songID);
 					RamLoadedMusic.load(Audio::Object::GetAudioObject(songID));
 					Playlist::SetPosition((s32)Parser::GetFloat(file, Strings::_SONG_POSITION));
-					Graphics::MP::GetPlaylistObject()->SetPlayingID(songID);*/
+					Graphics::MP::GetPlaylistObject()->SetPlayingID(songID);
 					State::SetState(State::InitialLoadFromFile);
 				}
-				State::ResetState(State::InitMusicLoad);
+				State::ResetState(State::LoadMusicOnFileLoad);
 			}
 
 		}

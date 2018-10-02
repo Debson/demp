@@ -56,6 +56,7 @@ namespace mdEngine
 		b8 AddToFile(std::fstream* file, std::string name, T param);
 
 		void GetFloatAtPos(char* str, f32* info, s32 pos);
+		void GetIntAtPos(char* str, s32* info, s32 pos);
 
 		void GetStringAtPos(char* str, std::string& info, s32 pos);
 
@@ -126,6 +127,7 @@ namespace mdEngine
 				file << *k.second;
 				file << SEPARATOR;
 				file << Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->title;
+				std::string title = Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->title;;
 				file << SEPARATOR;
 				file << Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->artist;
 				file << SEPARATOR;
@@ -176,11 +178,6 @@ namespace mdEngine
 			MD_ERROR("file_open");
 		}
 
-		// Refactor that to strings
-		fseek(f, 0L, SEEK_END);
-		size_t filesize = ftell(f);
-		fseek(f, 0L, SEEK_SET);
-
 		size_t linesz = 512;
 		char line[512];
 		line[511] = '\0';
@@ -209,8 +206,6 @@ namespace mdEngine
 			}
 
 			Audio::Info::ID3* info = new Audio::Info::ID3();
-
-
 			auto path = new std::string();
 			path->resize(i);
 			strncat(&path->at(0), line, i);
@@ -218,18 +213,19 @@ namespace mdEngine
 			memcpy(otherHalf, line + i, (len - i));
 			memset(line, 0, sizeof(line));
 
-			GetStringAtPos(otherHalf, info->title, POSITION_TITLE);
-			GetStringAtPos(otherHalf, info->artist, POSITION_ARTIST);
-			GetStringAtPos(otherHalf, info->album, POSITION_ALBUM);
-			GetStringAtPos(otherHalf, info->genre, POSITION_GENRE);
-			GetStringAtPos(otherHalf, info->year, POSITION_YEAR);
-			GetStringAtPos(otherHalf, info->track_num, POSITION_TRACK_NUM);
-			GetStringAtPos(otherHalf, info->composer, POSITION_COMPOSER);
-			GetFloatAtPos(otherHalf, &info->bitrate, POSITION_BITRATE);
-			GetFloatAtPos(otherHalf, &info->channels, POSITION_CHANNELS);
-			GetFloatAtPos(otherHalf, &info->freq, POSITION_FREQUENCY);
-			GetFloatAtPos(otherHalf, &info->size, POSITION_SIZE);
-			GetFloatAtPos(otherHalf, &info->length, POSITION_LENGTH);
+			// title, artist, album, genre, year, track num, composer, bitrate, channels, freq, size, length,  
+			GetStringAtPos(otherHalf, info->title,		POSITION_TITLE);
+			GetStringAtPos(otherHalf, info->artist,		POSITION_ARTIST);
+			GetStringAtPos(otherHalf, info->album,		POSITION_ALBUM);
+			GetStringAtPos(otherHalf, info->genre,		POSITION_GENRE);
+			GetIntAtPos(otherHalf, &info->year,			POSITION_YEAR);
+			GetIntAtPos(otherHalf, &info->track_num,	POSITION_TRACK_NUM);
+			GetStringAtPos(otherHalf, info->composer,	POSITION_COMPOSER);
+			GetFloatAtPos(otherHalf, &info->bitrate,	POSITION_BITRATE);
+			GetFloatAtPos(otherHalf, &info->channels,	POSITION_CHANNELS);
+			GetFloatAtPos(otherHalf, &info->freq,		POSITION_FREQUENCY);
+			GetFloatAtPos(otherHalf, &info->size,		POSITION_SIZE);
+			GetFloatAtPos(otherHalf, &info->length,		POSITION_LENGTH);
 
 			Audio::LoadPathsFromFile(*path, info);
 		}
@@ -346,7 +342,7 @@ namespace mdEngine
 
 			try
 			{
-				val = std::stoi(t);
+				val = std::stoi(t, nullptr, 10);
 			}
 			catch (std::invalid_argument) { }
 		}
@@ -448,9 +444,9 @@ namespace mdEngine
 		s32 start_pos = -1;
 		s32 end_pos = -1;
 
-		while (str[i] != L'\0')
+		while (str[i] != '\0')
 		{
-			if (str[i] == SEPARATOR_W)
+			if (str[i] == SEPARATOR)
 				count++;
 			if (count == pos && start_pos == -1)
 				start_pos = i;
@@ -459,7 +455,7 @@ namespace mdEngine
 				end_pos = i - 1;
 				break;
 			}
-			else if (str[i + 1] == L'\0')
+			else if (str[i + 1] == '\0')
 			{
 				end_pos = i;
 				break;
@@ -467,12 +463,10 @@ namespace mdEngine
 			i++;
 		}
 
-		info.resize(end_pos - start_pos + 1);
+		info.resize(end_pos - start_pos);
 		memcpy(&info[0], str + start_pos + 1, end_pos - start_pos);
 
-		if (end_pos - start_pos > 1)
-			info[end_pos - start_pos] = L'\0';
-		else
+		if (end_pos - start_pos <= 1)
 			info = "";
 	}
 
@@ -485,7 +479,7 @@ namespace mdEngine
 
 		while (str[i] != L'\0')
 		{
-			if (str[i] == SEPARATOR_W)
+			if (str[i] == SEPARATOR)
 				count++;
 			if (count == pos && start_pos == -1)
 				start_pos = i;
@@ -494,7 +488,7 @@ namespace mdEngine
 				end_pos = i - 1;
 				break;
 			}
-			else if (str[i + 1] == L'\0')
+			else if (str[i + 1] == '\0')
 			{
 				end_pos = i;
 				break;
@@ -502,12 +496,47 @@ namespace mdEngine
 			i++;
 		}
 
-		wchar_t strInfo[30];
+		char strInfo[30];
 
 		memcpy(strInfo, str + start_pos + 1, end_pos - start_pos);
-		strInfo[end_pos - start_pos] = L'\0';
+		strInfo[end_pos - start_pos] = '\0';
 
-		*info = _wtof(strInfo);
+		*info = atof(strInfo);
+	}
+
+	void Parser::GetIntAtPos(char* str, s32* info, s32 pos)
+	{
+		s32 count = 0;
+		s32 i = 0;
+		s32 start_pos = -1;
+		s32 end_pos = -1;
+
+		while (str[i] != L'\0')
+		{
+			if (str[i] == SEPARATOR)
+				count++;
+			if (count == pos && start_pos == -1)
+				start_pos = i;
+			else if (count == pos + 1)
+			{
+				end_pos = i - 1;
+				break;
+			}
+			else if (str[i + 1] == '\0')
+			{
+				end_pos = i;
+				break;
+			}
+			i++;
+		}
+
+		char strInfo[30];
+
+		memcpy(strInfo, str + start_pos + 1, end_pos - start_pos);
+		strInfo[end_pos - start_pos] = '\0';
+		std::stringstream ss;
+		ss << strInfo;
+		ss >> *info;
 	}
 }
 

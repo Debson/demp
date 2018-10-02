@@ -165,6 +165,10 @@ namespace Audio
 		Graphics::MP::GetPlaylistObject()->AddToItemsDuration(info->length);
 		Graphics::MP::GetPlaylistObject()->AddToItemsSize(info->size);
 
+#ifdef _EXTRACT_ID3_TAGS_
+		Info::GetID3Info(info, audioObj->GetPath());
+#endif
+
 		info->loaded = true;
 		LoadedItemsInfoCount++;
 		ItemBeingProcessed = false;
@@ -172,24 +176,43 @@ namespace Audio
 
 	void Info::GetID3Info(Info::ID3* info, std::string& path)
 	{
-		TagLib::FileRef file(path.c_str());
-		TagLib::String buff = file.tag()->title();
-		s32 buffInt = 0;
-		if (buff != TagLib::String::null)
-			info->title = buff.toCString();
-		buff = file.tag()->artist();
-		if (buff != TagLib::String::null)
-			info->artist = buff.toCString();
+		TagLib::FileRef file(utf8_to_utf16(path).c_str());
 
-		info->track_num = file.tag()->track();
-		buff = file.tag()->album();
-		if (buff != TagLib::String::null)
-			info->album = buff.toCString();
+		if (file.tag()->isEmpty() == false)
+		{
+			TagLib::String buff;
+			s32 buffInt = 0;
 
-		info->year = file.tag()->year();
-		info->comment = file.tag()->comment().toCString();
-		info->genre = file.tag()->genre().toCString();
+			buff = file.tag()->title();
+			if (buff != TagLib::String::null)
+				info->title = utf16_to_utf8(buff.toWString());
+
+			buff = file.tag()->artist();
+			if (buff != TagLib::String::null)
+				info->artist = utf16_to_utf8(buff.toWString());
+
+			buffInt = file.tag()->track();
+			if (buffInt != 0)
+				info->track_num = buffInt;
+
+			buff = file.tag()->album();
+			if (buff != TagLib::String::null)
+				info->album = utf16_to_utf8(buff.toWString());
+
+			buffInt = file.tag()->year();
+			if (buffInt != 0)
+				info->year = buffInt;
+
+			buff = file.tag()->comment().toCString();;
+			if (buff != TagLib::String::null)
+				info->comment = buff.toCString();
+
+			buff = file.tag()->genre().toCString();;
+			if (buff != TagLib::String::null)
+				info->genre = buff.toCString();
+		}
 	}
+
 
 	std::string Info::GetProcessedItemsCountStr()
 	{

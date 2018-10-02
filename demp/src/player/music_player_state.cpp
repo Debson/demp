@@ -9,7 +9,7 @@ namespace mdEngine
 
 	void State::ResetStateFlags()
 	{
-		State::ResetState(State::InitialLoadFromFile);
+		//State::ResetState(State::InitialLoadFromFile);
 	}
 
 	void State::ResetStateOnLoadError()

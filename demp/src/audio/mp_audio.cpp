@@ -641,25 +641,9 @@ b8 Audio::AddAudioItem(std::string& path, s32 id)
 	audioObject->GetID3Struct()->format = Info::GetExt(path);
 	m_AudioObjectContainer[id] = audioObject;
 
-
 	audioObject->Init();
-
-
-#ifdef _EXTRACT_ID3_TAGS_
-	// TODO: not finished, should be run by different thread after advanced file informations are retrieved
-	if (Object::GetAudioObject(id)->GetAudioProperty()->info.format.compare(L"MP3") == 0)
-	{
-		Info::GetID3Info(&Object::GetAudioObject(id)->GetAudioProperty()->info, Object::GetAudioObject(id)->GetPath());
-	}
-	else
-	{
-		item->info.title = Info::GetCompleteTitle(Object::GetAudioObject(id)->GetPath());
-	}
-#endif	
-
+	
 	currentlyLoadedItemsCount++;
-
-
 
 	return true;
 }
@@ -816,7 +800,7 @@ s32 Audio::GetDroppedOnIndex()
 
 void Audio::ResetStateFlags()
 {
-	State::ResetState(State::InitialLoadFromFile);
+	//State::ResetState(State::InitialLoadFromFile);
 }
 
 b8 Audio::CheckIfThreadsFinsishedWork()

@@ -20,14 +20,13 @@ namespace Audio
 			ID3() 
 			{ 
 				loaded		= false;
-				id			= "";
 				title		= "";
 				artist		= "";
 				composer	= "";
 				encoded_by	= "";
-				track_num	= "";
+				track_num	= 0;
 				album		= "";
-				year		= "";
+				year		= 0;
 				comment		= "";
 				genre		= "";
 				format		= "";
@@ -38,14 +37,13 @@ namespace Audio
 				length		= 0;
 			}
 
-			std::string id;
 			std::string title;
 			std::string artist;
 			std::string composer;
 			std::string encoded_by;
-			std::string track_num;
+			s32 track_num;
 			std::string album;
-			std::string year;
+			s32 year;
 			std::string comment;
 			std::string genre;
 			std::string format;

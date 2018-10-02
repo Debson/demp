@@ -65,7 +65,7 @@ const std::string Audio::AudioObject::GetTitle()
 	return info->title;
 }
 
-const std::string& Audio::AudioObject::GetTrackNum() const
+const s32& Audio::AudioObject::GetTrackNum() const
 {
 	/*if (info->track_num.compare(L"0") == 0)
 		return L"";*/
@@ -78,7 +78,7 @@ const std::string& Audio::AudioObject::GetAlbum() const
 	return info->album;
 }
 
-const std::string& Audio::AudioObject::GetYear() const
+const s32& Audio::AudioObject::GetYear() const
 {
 	/*if (info->year.compare(L"0") == 0)
 		return L"";*/
@@ -144,7 +144,7 @@ Audio::Info::ID3* Audio::AudioObject::GetID3Struct()
 	return info;
 }
 
-void Audio::AudioObject::SetID3Struct(Info::ID3* const id3)
+void Audio::AudioObject::SetID3Struct(Info::ID3* id3)
 {
 	info = id3;
 }

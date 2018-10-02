@@ -79,8 +79,6 @@ namespace mdEngine
 
 		b8 playlistToggled(false);
 
-		b8 playlistFirstEnter(true);
-
 		b8 playlistFirstLoad(true);
 
 		b8 playlistOpened(false);
@@ -294,11 +292,12 @@ namespace mdEngine
 		shuffleActive = Parser::GetInt(file, Strings::_SHUFFLE_STATE);
 		repeatActive = Parser::GetInt(file, Strings::_REPEAT_STATE);
 		Parser::GetInt(file, Strings::_PLAYLIST_STATE) == 1 ? (MP::GetPlaylistObject()->Toggle(), MP::GetPlaylistObject()->Enable()) : MP::GetPlaylistObject()->UnToggle();
+		s32 test = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
+		MP::GetPlaylistObject()->SetPlayingID(Parser::GetInt(file, Strings::_SONG_POSITION));
 
 		file = Strings::_PLAYLIST_FILE;
 		MP::GetPlaylistObject()->SetItemsDuration(Parser::GetFloat(file, Strings::_CONTENT_DURATION));
 		MP::GetPlaylistObject()->SetItemsSize(Parser::GetFloat(file, Strings::_CONTENT_SIZE));
-
 
 		State::SetState(State::AudioAdded);
 	}
@@ -1280,9 +1279,12 @@ namespace mdEngine
 				}
 			}
 		
+			/*	On audio change update playlist position offset.
+				On initial load from file(last audio file played before app exit is loaded) update playlist position offset.
+				Playing ID must be a valid ID(if audio file is not loaded = -1, so must be ">" 0)
+			*/
 			if ((State::CheckState(State::AudioChanged) == true ||
 				State::CheckState(State::InitialLoadFromFile) == true) &&
-				State::CheckState(State::FilesDroppedNotLoaded) == false &&
 				MP::GetPlaylistObject()->GetPlayingID() >= 0 )
 			{
 				s32 playingID = MP::GetPlaylistObject()->GetPlayingID();
@@ -1320,11 +1322,10 @@ namespace mdEngine
 				State::ResetState(State::InitialLoadFromFile);
 
 
-			if (playlistPositionOffset < 0)
-			{
-				playlistPositionOffset = 0;
-			}
-
+		
+			/*	On every playlist movement(position offset change) find the minPosToRender
+				
+			*/
 			if (abs(playlistPositionOffsetPrevious - playlistPositionOffset) > 0 &&
 				State::CheckState(State::FilesDroppedNotLoaded) == false)
 			{
@@ -1361,17 +1362,19 @@ namespace mdEngine
 				playlistPositionOffset += playlistPositionOffsetPrevious - playlistPositionOffset;
 			}
 
-			// Render and update logic of playlist scroll bar
+			//Render and update logic of playlist scroll bar
 			RenderScrollBar(&playlistPositionOffset, displayedItems, Audio::Object::GetAudioObjectContainer()->size());
 
 
-
+			/* Make sure playlist position offset is not less than 0 after all the changes */
 			if (playlistPositionOffset < 0)
 			{
 				playlistPositionOffset = 0;
 			}
 
-			if (State::CheckState(State::ContainersResized) == false && Audio::Object::GetAudioObjectContainer()->back() != NULL)
+			/* Make sure playlist posiiton offset does not go any lower than bottom of the playlist */
+			if (State::CheckState(State::ContainersResized) == false && 
+				Audio::Object::GetAudioObjectContainer()->back() != NULL)
 			{
 				if (Audio::Object::GetAudioObjectContainer()->back()->GetPlaylistItemPos().y + itemH < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y &&
 					playlistPositionOffset > 0)
@@ -1382,7 +1385,7 @@ namespace mdEngine
 
 			/*  Sometimes method that is used to obtain playlist position is not accurate, when playlist scroll bar
 				is moved really quick. Make sure that playlist position is accurate.
-				TRY TO FIX THAT IN MORE EFFICIENT WAY
+				TRY TO IMPROVE THAT?
 			*/
 
 			if (minPosToRender > Audio::Object::GetAudioObjectContainer()->size() - 1)
@@ -1427,22 +1430,17 @@ namespace mdEngine
 				maxPosToRender = Audio::Object::GetAudioObjectContainer()->size();
 
 
-			b8 loadTextureFirstEnter(false);
+			// On every file addition, deletion or window resize update playlist item and separators positions
 			if (State::CheckState(State::AudioAdded) == true ||
 				State::CheckState(State::AudioDeleted) == true ||
 				State::CheckState(State::Window::Resized) == true ||
 				playlistOpened == false)
 			{
 				loadItemsPositions = true;
-				playlistFirstEnter = false;
-				loadTextureFirstEnter = true;
 				playlistOpened = true;
 			}
 
-
-			
-
-
+			// Update playlist items and separators positions
 			if (loadItemsPositions == true)
 			{
 				glm::vec2 startPos = glm::vec2(Data::_PLAYLIST_ITEMS_SURFACE_POS.x,
@@ -1497,6 +1495,7 @@ namespace mdEngine
 			}
 
 
+			/* Prevent from visual bug that appears when large portion of files are added between already existed files */
 			if (State::CheckState(State::FilesDroppedNotLoaded) == true &&
 				audioVecToRenderTeGraphics.empty() == true)
 			{
@@ -1515,6 +1514,8 @@ namespace mdEngine
 				audioVecToRenderTeGraphics.clear();
 			}
 
+
+			// Load playlist items and separator textures
 			if (loadItemsTextures == true)
 			{
 				std::vector<s32> indexes;
@@ -1559,14 +1560,15 @@ namespace mdEngine
 				reloadAfterFilesLoaded = false;
 			}
 
+			// debug stuff
 			if (State::CheckState(State::FilesDroppedNotLoaded) == true)
 			{
 				for (auto & i : *MP::GetPlaylistObject()->GetIndexesToRender())
 					std::cout << i << ", ";
 				std::cout << std::endl;
 			}
-			// ACTUAL RENDERING
 
+			// ACTUAL RENDERING
 			Shader::shaderDefault->use();
 			Shader::shaderDefault->setBool("playlistCutY", true);
 			Shader::shaderDefault->setVec2("playlistBoundsY", Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
@@ -1625,7 +1627,6 @@ namespace mdEngine
 		{
 			playlistPositionOffset = 0;
 
-			playlistFirstEnter = true;
 			playlistOpened = false;
 		}
 	}
