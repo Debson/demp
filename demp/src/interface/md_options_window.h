@@ -35,6 +35,7 @@ namespace mdEngine
 			mdShader* m_Shader;
 			SDL_Event m_Event;
 			Text::TextObject m_TestText;
+			glm::mat4 m_Projection;
 
 			Interface::ButtonSlider m_VolumeStepSlider;
 			Interface::ButtonSlider m_PlaylistScrollStepSlider;
@@ -42,8 +43,6 @@ namespace mdEngine
 			Interface::ButtonSlider m_RamLoadedSizeSlider;
 			Interface::CheckBox		m_ToTrayOnExit;
 			Interface::CheckBox		m_OnLoadCheckExistence;
-
-
 		};
 	}
 }

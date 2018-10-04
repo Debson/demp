@@ -49,7 +49,7 @@ namespace Audio
 			std::string format;
 
 			f32 bitrate;
-			f32 channels;
+			s32 channels;
 			f32 freq;
 			f32 size;	// in bytes
 			f32 length;	// in sec

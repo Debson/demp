@@ -38,9 +38,6 @@ namespace mdEngine
 			m_Height,
 			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
-
-		m_Context = SDL_GL_CreateContext(m_Window);
-
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -61,14 +58,10 @@ namespace mdEngine
 			MD_SDL_ERROR("SDL_Image");
 		}
 
-
-		SDL_GL_MakeCurrent(m_Window, m_Context);
-
-		glm::mat4 projection = glm::ortho(0.f, static_cast<float>(m_Width), static_cast<float>(m_Height), 0.f);
-		Shader::ReloadOnNewContext();
+		m_Projection = glm::ortho(0.f, static_cast<float>(m_Width), static_cast<float>(m_Height), 0.f);
 		m_Shader = Shader::shaderDefault;
 		m_Shader->use();
-		m_Shader->setMat4("projection", projection);
+		m_Shader->setMat4("projection", m_Projection);
 
 		glViewport(0, 0, static_cast<GLint>(m_Width), static_cast<GLint>(m_Height));
 
@@ -163,10 +156,11 @@ namespace mdEngine
 		if (m_Window == NULL)
 			return;
 
-		glDisable(GL_DEPTH_TEST);
-		SDL_GL_MakeCurrent(m_Window, m_Context);
+		SDL_GL_MakeCurrent(m_Window, *Window::GetMainWindowContext());
 		glClearColor(Color::Azure.r, Color::Azure.g, Color::Azure.b, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		m_Shader->setMat4("projection", m_Projection);
+		glViewport(0, 0, static_cast<GLint>(m_Width), static_cast<GLint>(m_Height));
 
 
 		m_VolumeStepSlider.Render();
@@ -178,7 +172,6 @@ namespace mdEngine
 		m_OnLoadCheckExistence.Render();
 
 		SDL_GL_SwapWindow(m_Window);
-		glEnable(GL_DEPTH_TEST);
 	}
 
 	void Window::OptionsWindow::ProcessEvents(SDL_Event* const e)

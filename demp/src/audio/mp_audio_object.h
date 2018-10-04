@@ -31,10 +31,16 @@ namespace Audio
 		void DecrementID();
 		void IncrementID();
 		std::string& GetPath()				const;
+#ifdef _WIN32_
+		std::wstring GetPathUTF8()				const;
+#else
+
+#endif
 		const std::string GetFolderPath()	const;
 		const std::string& GetArtist()		const;
 		const std::string GetTitle();
-		const std::string GetCompleteTitle() const;
+		const std::string GetNameToPlaylist() const;
+		const std::string GetCompleteName() const;
 		const s32& GetTrackNum()			const;
 		const std::string& GetAlbum()		const;
 		const s32& GetYear()				const;
@@ -44,16 +50,19 @@ namespace Audio
 		void SetID(s32 id);
 		void SetPath(std::string& path);
 		void SetFolderPath(std::string& path);
+		void ReloadTextTexture();
 		f32 GetFrequency()					const;
 		f32 GetBitrate()					const;
 		s32 GetObjectSize()					const;
 		f64 GetLength()						const;
 		Info::ID3* GetID3Struct();
+		void LoadAlbumImage();
+		void DeleteAlbumImageTexture();
+		GLuint GetAlbumPictureTexture();
 		void SetID3Struct(Info::ID3* id3);
 
 	private:
-
-
+		GLuint m_AlbumImageTex;
 	};
 
 }

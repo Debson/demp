@@ -11,12 +11,19 @@
 #include <taglib/tag.h>
 #include <taglib/fileref.h>
 
+#ifdef _WIN32_
+
+#else
+
+#endif
+
 #include "mp_audio.h"
 #include "../settings/music_player_settings.h"
 #include "../player/music_player_state.h"
 #include "../graphics/music_player_graphics_playlist.h"
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_util.h"
+#include "../utility/md_load_texture.h"
 
 namespace fs = boost::filesystem;
 
@@ -78,7 +85,6 @@ namespace Audio
 
 		return false;
 	}
-
 	
 	b8 Info::IsPathLoaded(std::string& path)
 	{
@@ -151,15 +157,12 @@ namespace Audio
 
 		HSTREAM stream;
 		stream = BASS_StreamCreateFile(FALSE, utf8_to_utf16(audioObj->GetPath()).c_str(), 0, 0, BASS_STREAM_DECODE);
-
-		boost::intmax_t fileSize = boost::filesystem::file_size(utf8_to_utf16(audioObj->GetPath()));
-
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_FREQ, &info->freq);
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_BITRATE, &info->bitrate);
-		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_MUSIC_ACTIVE, &info->channels);
+		//BASS_ChannelGetAttribute(stream, BASS_ATTRIB_MUSIC_ACTIVE, &(float)info->channels);
 		f32 size = BASS_ChannelGetLength(stream, BASS_POS_BYTE);
 		info->length = BASS_ChannelBytes2Seconds(stream, size);
-		info->size = fileSize;
+		info->size = boost::filesystem::file_size(utf8_to_utf16(audioObj->GetPath()));
 		BASS_StreamFree(stream);
 
 		Graphics::MP::GetPlaylistObject()->AddToItemsDuration(info->length);
@@ -177,6 +180,8 @@ namespace Audio
 	void Info::GetID3Info(Info::ID3* info, std::string& path)
 	{
 		TagLib::FileRef file(utf8_to_utf16(path).c_str());
+
+		info->channels = file.audioProperties()->channels();
 
 		if (file.tag()->isEmpty() == false)
 		{
@@ -203,9 +208,9 @@ namespace Audio
 			if (buffInt != 0)
 				info->year = buffInt;
 
-			buff = file.tag()->comment().toCString();;
+			/*buff = file.tag()->comment().toCString();;
 			if (buff != TagLib::String::null)
-				info->comment = buff.toCString();
+				info->comment = buff.toCString();*/
 
 			buff = file.tag()->genre().toCString();;
 			if (buff != TagLib::String::null)
@@ -213,14 +218,13 @@ namespace Audio
 		}
 	}
 
-
 	std::string Info::GetProcessedItemsCountStr()
 	{
 		std::string str = " ";
 		if (Audio::Object::GetSize() > 0 && LoadedItemsInfoCount > 0)
 		{
 			f32 perc = (f32)LoadedItemsInfoCount / (f32)Audio::Object::GetSize();
-			str = s32(perc * 100);
+			str = std::to_string(s32(perc * 100));
 			str += "%";
 		}
 

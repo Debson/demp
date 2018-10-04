@@ -205,6 +205,8 @@ namespace mdEngine
 		void RenderPlaylistInfo();
 
 		void RenderMusicScrollInfo();
+
+		void RenderAlbumCoverImage();
 	}
 
 	void Graphics::UpdatePlaylistCursorOffset()
@@ -907,7 +909,7 @@ namespace mdEngine
 		{
 			musicInfoScrollText[0].SetTextString(MP::GetPlaylistObject()->GetMusicInfoScrollString());
 			musicInfoScrollText[0].SetTextScale(1.f);
-			musicInfoScrollText[0].ReloadTextTexture(true);
+			musicInfoScrollText[0].ReloadTextTexture();
 			s32 offsetX = (Data::_MAIN_FOREGROUND_SIZE.x - musicInfoScrollText[0].GetTextSize().x) / 2;
 			musicInfoScrollText[0].SetTextPos(glm::vec2(Data::_MAIN_FOREGROUND_POS.x - musicInfoScrollText[0].GetTextSize().x,
 													    musicInfoScrollText[0].GetTextPos().y));
@@ -1058,6 +1060,24 @@ namespace mdEngine
 
 		// update timer
 		musicInfoScrollTextTimer.Update();
+	}
+
+	void Graphics::RenderAlbumCoverImage()
+	{
+		if (MP::GetPlaylistObject()->GetPlayingID() >= 0 &&
+			MP::GetPlaylistObject()->GetPlayingID() < Audio::Object::GetSize())
+		{
+			if (Audio::Object::GetAudioObject(MP::GetPlaylistObject()->GetPlayingID())->GetAlbumPictureTexture() == 0)
+				return;
+			glm::mat4 model;
+			model = glm::translate(model, glm::vec3(Data::_ALBUM_COVER_IMAGE_POS, 1.f));
+			model = glm::scale(model, glm::vec3(Data::_ALBUM_COVER_IMAGE_SIZE, 1.f));
+			Shader::shaderDefault->setVec3("color", Color::White);
+			Shader::shaderDefault->setMat4("model", model);
+			glBindTexture(GL_TEXTURE_2D, Audio::Object::GetAudioObject(MP::GetPlaylistObject()->GetPlayingID())->GetAlbumPictureTexture());
+			Shader::Draw(Shader::shaderDefault);
+		}
+
 	}
 
 	void Graphics::RenderScrollBar(f32* playlistOffset, f32 displayedItems, f32 maxItems)
@@ -1246,7 +1266,6 @@ namespace mdEngine
 			auto audioCon = Audio::Object::GetAudioObjectContainer();
 			//auto Interface::Separator::GetContainer() = Interface::Separator::GetContainer();
 			b8 loadItemsPositions(false);
-			b8 loadItemsTextures(false);
 
 			f32 itemH = Data::_PLAYLIST_ITEM_SIZE.y;
 			f32 separatorH = Data::_PLAYLIST_SEPARATOR_SIZE.y;
@@ -1915,14 +1934,12 @@ namespace mdEngine
 	{
 		// If items info is loaded, reload strings ONCE
 		if (State::CheckState(State::FilesInfoLoaded) == true &&
-			State::CheckState(State::PlaylistEmpty) == true &&
 			updatePlaylistInfo == false)
 		{
-			//State::SetState(State::UpdatePlaylistInfoStrings);
+			State::SetState(State::UpdatePlaylistInfoStrings);
 			updatePlaylistInfo = true;
 		}
-		else if (State::CheckState(State::FilesInfoLoaded) == false ||
-				 Audio::Object::GetSize() == 0)
+		else if (State::CheckState(State::FilesInfoLoaded) == false)
 		{
 			updatePlaylistInfo = false;
 		}
@@ -1954,6 +1971,8 @@ namespace mdEngine
 				MP::GetPlaylistObject()->SetItemsDuration(0.f);
 				MP::GetPlaylistObject()->SetItemsSize(0.f);
 			}
+
+			loadItemsTextures = true;
 
 			durationText.SetTextString(MP::GetPlaylistObject()->GetItemsDurationString());
 			itemsSizeText.SetTextString(MP::GetPlaylistObject()->GetItemsSizeString());
@@ -1987,15 +2006,11 @@ namespace mdEngine
 
 		RenderPlaylistInfo();
 
+		RenderAlbumCoverImage();
+
 		RenderMusicScrollInfo();
 
-
-		u32 start = SDL_GetTicks();
-
 		RenderPlaylistItems();
-
-		if (App::Input::IsKeyDown(App::KeyCode::F6) == true)
-			md_log(SDL_GetTicks() - start);
 
 		RenderWindowControlButtons();
 

@@ -815,6 +815,8 @@ namespace MP
 				if (Audio::Object::GetAudioObject(i)->GetClickCount() > 1)
 				{
 					State::SetState(State::AudioChosen);
+					if(Playlist::RamLoadedMusic.m_ID < Audio::Object::GetSize())
+						Audio::Object::GetAudioObject(Playlist::RamLoadedMusic.m_ID)->DeleteAlbumImageTexture();
 					Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(i));
 					Playlist::PlayMusic();
 				}
@@ -1031,7 +1033,7 @@ namespace MP
 		mdPlaylistMovableLeft->m_Size = glm::vec2(mdPlaylistMovableLeft->m_Size.x, Window::windowProperties.mApplicationHeight);
 		mdPlaylistMovableRight->m_Size = glm::vec2(mdPlaylistMovableRight->m_Size.x, Window::windowProperties.mApplicationHeight);
 		mdPlaylistMovableBottom->m_Pos = glm::vec2(mdPlaylistMovableBottom->m_Pos.x, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
-		mdPlaylistMovableBottom->m_Size = glm::vec2(mdPlaylistMovableBottom->m_Size.x, Window::windowProperties.mApplicationHeight - Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
+		mdPlaylistMovableBottom->m_Size = glm::vec2(mdPlaylistMovableBottom->m_Size.x, Window::windowProperties.mApplicationHeight - Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - mdResizableBottom.m_Size.y);
 
 		mdAddFilesButton->SetButtonPos(Data::_PLAYLIST_ADD_BUTTON_POS);
 		mdAddFilesButton->SetButtonSize(Data::_PLAYLIST_ADD_BUTTON_SIZE);

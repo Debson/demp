@@ -15,6 +15,7 @@
 
 
 GLuint mdLoadTexture(std::string path);
+GLuint mdLoadTexture(void* data, size_t size);
 SDL_Texture* mdLoadTextureSDL(SDL_Renderer* renderer, std::string path);
 
 #endif // !MDLOAD_TEXUTRE_H

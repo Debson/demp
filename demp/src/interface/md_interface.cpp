@@ -154,7 +154,7 @@ namespace mdEngine
 		m_TextScale = 1.f;
 		SetTextColor(Color::White);
 
-		m_TextString = Audio::Object::GetAudioObject(m_ItemID)->GetCompleteTitle();
+		m_TextString = Audio::Object::GetAudioObject(m_ItemID)->GetNameToPlaylist();
 
 		assert(Audio::Object::GetAudioObject(m_ItemID) != nullptr);
 
@@ -182,7 +182,7 @@ namespace mdEngine
 		glBindTexture(GL_TEXTURE_2D, 0);
 		Shader::DrawDot();
 	}
-
+	
 	void Interface::PlaylistItem::DrawItem(GLuint texture)
 	{
 		glm::mat4 model;
@@ -746,8 +746,8 @@ namespace mdEngine
 		
 
 		s32 outlineSizeOffsetX = 4;
-		m_SliderOutline = { m_SliderPos.x - outlineSizeOffsetX, m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2,
-							m_SliderSize.x + 2 * outlineSizeOffsetX , m_SliderSize.y };
+		m_SliderOutline = glm::vec4(m_SliderPos.x - outlineSizeOffsetX, m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2,
+									m_SliderSize.x + 2 * outlineSizeOffsetX - 1.f, m_SliderSize.y);
 
 		m_ValueTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
 		if (m_Value == NULL)
@@ -777,13 +777,13 @@ namespace mdEngine
 		s32 texW = 10;
 		s32 texH = 10;
 
-		m_LeftSrc	= { 0, 0, texW, texH };
-		m_LeftDest	= { m_SliderPos.x + 10, m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY,
-						buttonTexSize.x, buttonTexSize.y };
-		m_RightSrc	= { 0, 0, texW, texH };
-		m_RightDest	= { m_SliderPos.x + buttonTexSize.x + (s32)m_ValueTextObject.GetTextSize().x + 2 * offsetX,
-						m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY, 
-						buttonTexSize.x, buttonTexSize.y};
+		m_LeftSrc	= glm::vec4( 0, 0, texW, texH);
+		m_LeftDest	= glm::vec4(m_SliderPos.x + 10, m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY,
+								buttonTexSize.x, buttonTexSize.y);
+		m_RightSrc	= glm::vec4(0, 0, texW, texH);
+		m_RightDest	= glm::vec4(m_SliderPos.x + buttonTexSize.x + m_ValueTextObject.GetTextSize().x + 2 * offsetX,
+								m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY, 
+								buttonTexSize.x, buttonTexSize.y);
 
 
 		m_ButtonSize = glm::vec2(m_SliderSize.y, m_SliderSize.y);
@@ -791,19 +791,17 @@ namespace mdEngine
 		m_LeftButton	= new Button();
 		m_RightButton = new Button();
 		m_LeftButton->SetButtonPos(glm::vec2(m_SliderPos.x - outlineSizeOffsetX,
-									   m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2));
+											 m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2));
 		m_LeftButton->SetButtonSize(m_ButtonSize);
 		m_RightButton->SetButtonPos(glm::vec2(m_SliderPos.x + m_ButtonSize.x + m_ValueTextObject.GetTextSize().x + 2 * offsetX + outlineSizeOffsetX,
-										m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2));
+											  m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2));
 		m_RightButton->SetButtonSize(m_ButtonSize);
 		m_ClickTimer = Time::Timer(650);
 
-		m_RightBackground = { (s32)m_RightButton->GetButtonPos().x,  (s32)m_RightButton->GetButtonPos().y,
-							  (s32)m_RightButton->GetButtonSize().x, (s32)m_RightButton->GetButtonSize().y };
+		m_RightBackground = glm::vec4(m_RightButton->GetButtonPos(), m_RightButton->GetButtonSize());
 
 
-		m_LeftBackground = { (s32)m_LeftButton->GetButtonPos().x,  (s32)m_LeftButton->GetButtonPos().y,
-							  (s32)m_LeftButton->GetButtonSize().x, (s32)m_LeftButton->GetButtonSize().y };
+		m_LeftBackground = glm::vec4(m_LeftButton->GetButtonPos(), m_LeftButton->GetButtonSize());
 
 		m_RightBackgroundAlpha	= 0;
 		m_LeftBackgroundAlpha	= 0;
@@ -819,12 +817,12 @@ namespace mdEngine
 
 
 
-		m_DefaultRect = { (s32)m_SliderPos.x + (s32)m_SliderSize.x + 10, m_SliderOutline.y,
-						  70, (s32)m_SliderSize.y };
+		m_DefaultRect = glm::vec4(m_SliderPos.x + m_SliderSize.x + 10, m_SliderOutline.y,
+								  70, m_SliderSize.y);
 
 		m_DefaultButton = new Button();
 		m_DefaultButton->SetButtonPos(glm::vec2(m_DefaultRect.x, m_DefaultRect.y));
-		m_DefaultButton->SetButtonSize(glm::vec2(m_DefaultRect.w, m_DefaultRect.h));
+		m_DefaultButton->SetButtonSize(glm::vec2(m_DefaultRect.z, m_DefaultRect.w));
 
 		m_DefaultTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
 
@@ -832,8 +830,8 @@ namespace mdEngine
 		m_DefaultTextObject.InitTextTexture();
 		// Init sdl text
 
-		offsetX = (m_DefaultRect.w - m_DefaultTextObject.GetTextSize().x) / 2;
-		offsetY = (m_DefaultRect.h - m_DefaultTextObject.GetTextSize().y) / 2;
+		offsetX = (m_DefaultRect.z - m_DefaultTextObject.GetTextSize().x) / 2;
+		offsetY = (m_DefaultRect.w - m_DefaultTextObject.GetTextSize().y) / 2;
 		m_DefaultTextObject.SetTextPos(glm::vec2(m_DefaultRect.x + offsetX,
 												 m_SliderOutline.y + offsetY));
 
@@ -1005,26 +1003,28 @@ namespace mdEngine
 
 		m_Shader->setBool("plain", true);
 		model = glm::translate(model, glm::vec3(m_SliderBackground.x, m_SliderBackground.y, 0.5));
-		model = glm::scale(model, glm::vec3(m_SliderBackground.w, m_SliderBackground.h, 1.0));
+		model = glm::scale(model, glm::vec3(m_SliderBackground.z, m_SliderBackground.w, 1.0));
 		m_Shader->setMat4("model", model);
 		m_Shader->setVec3("color", Color::Grey);
 		Shader::Draw(m_Shader);
 		m_Shader->setVec3("color", Color::White);
 		m_Shader->setBool("plain", false);
 
+		Shader::DrawOutline(m_SliderBackground, 1.1f);
+
 
 		m_Shader->setBool("plainRGBA", true);
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(m_RightBackground.x, m_RightBackground.y, 0.5));
-		model = glm::scale(model, glm::vec3(m_RightBackground.w, m_RightBackground.h, 1.0));
+		model = glm::translate(model, glm::vec3(m_RightBackground.x, m_RightBackground.y, 0.8));
+		model = glm::scale(model, glm::vec3(m_RightBackground.z, m_RightBackground.w, 1.0));
 		m_Shader->setMat4("model", model);
 		m_Shader->setVec4("colorRGBA", m_ButtonsBackgroundColor.r, m_ButtonsBackgroundColor.g, m_ButtonsBackgroundColor.b, m_RightBackgroundAlpha);
 		Shader::Draw(m_Shader);
 
 
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(m_LeftBackground.x, m_LeftBackground.y, 0.5));
-		model = glm::scale(model, glm::vec3(m_LeftBackground.w, m_LeftBackground.h, 1.0));
+		model = glm::translate(model, glm::vec3(m_LeftBackground.x, m_LeftBackground.y, 0.8));
+		model = glm::scale(model, glm::vec3(m_LeftBackground.z, m_LeftBackground.w, 1.0));
 		m_Shader->setMat4("model", model);
 		m_Shader->setVec4("colorRGBA", m_ButtonsBackgroundColor.r, m_ButtonsBackgroundColor.g, m_ButtonsBackgroundColor.b, m_LeftBackgroundAlpha);
 		Shader::Draw(m_Shader);
@@ -1035,12 +1035,14 @@ namespace mdEngine
 		m_Shader->setBool("plain", true);
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(m_DefaultRect.x, m_DefaultRect.y, 0.5));
-		model = glm::scale(model, glm::vec3(m_DefaultRect.w, m_DefaultRect.h, 1.0));
+		model = glm::scale(model, glm::vec3(m_DefaultRect.z, m_DefaultRect.w, 1.0));
 		m_Shader->setMat4("model", model);
 		m_Shader->setVec3("color", m_DefaultButtonColor);
 		Shader::Draw(m_Shader);
 		m_Shader->setVec3("color", Color::White);
 		m_Shader->setBool("plain", false);
+
+		Shader::DrawOutline(m_DefaultRect, 1.1f);
 
 		m_DefaultTextObject.DrawString(m_Shader);
 
@@ -1048,16 +1050,17 @@ namespace mdEngine
 		m_LabelTextObject.DrawString(m_Shader);
 		
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(m_LeftDest.x, m_LeftDest.y, 0.6));
-		model = glm::scale(model, glm::vec3(m_LeftDest.w, m_LeftDest.h, 1.0));
+		model = glm::translate(model, glm::vec3(m_LeftDest.x, m_LeftDest.y, 0.9));
+		model = glm::scale(model, glm::vec3(m_LeftDest.z, m_LeftDest.w, 1.0));
 		model = glm::rotate(model, glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
 		m_Shader->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, m_RightTexture);
 		Shader::Draw(m_Shader);
 
+
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(m_RightDest.x, m_RightDest.y, 0.6));
-		model = glm::scale(model, glm::vec3(m_RightDest.w, m_RightDest.h, 1.0));
+		model = glm::translate(model, glm::vec3(m_RightDest.x, m_RightDest.y, 0.9));
+		model = glm::scale(model, glm::vec3(m_RightDest.z, m_RightDest.w, 1.0));
 		m_Shader->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, m_RightTexture);
 		Shader::Draw(m_Shader);
@@ -1129,8 +1132,8 @@ namespace mdEngine
 		m_ButtonPos = glm::vec2(m_TextPos.x, m_TextPos.y + m_TextSize.y + offsetY);
 		m_ButtonSize = glm::vec2(15, 15);
 
-		m_CheckBoxOutline = { (s32)m_ButtonPos.x, (s32)m_ButtonPos.y,
-							  (s32)m_ButtonSize.x, (s32)m_ButtonSize.y };
+		m_CheckBoxOutline = glm::vec4((s32)m_ButtonPos.x, (s32)m_ButtonPos.y,
+									  (s32)m_ButtonSize.x, (s32)m_ButtonSize.y);
 
 		m_CheckBoxColor = Color::Orange;
 
@@ -1160,13 +1163,13 @@ namespace mdEngine
 		m_Shader->use();
 		m_Shader->setBool("plain", true);
 		model = glm::translate(model, glm::vec3(m_CheckBoxOutline.x, m_CheckBoxOutline.y, 0.6f));
-		model = glm::scale(model, glm::vec3(m_CheckBoxOutline.w, m_CheckBoxOutline.h, 1.f));
+		model = glm::scale(model, glm::vec3(m_CheckBoxOutline.z, m_CheckBoxOutline.w, 1.f));
 		m_Shader->setMat4("model", model);
 		m_Shader->setVec3("color", color);
 		Shader::Draw(m_Shader);
 		m_Shader->setBool("plain", false);
-		/*SDL_SetRenderDrawColor(m_Renderer, SDLColor::Black.r, SDLColor::Black.g, SDLColor::Black.b, 0xFF);
-		SDL_RenderDrawRect(m_Renderer, &m_CheckBoxOutline);*/
+
+		Shader::DrawOutline(m_CheckBoxOutline, 1.1f);
 	}
 
 	void Interface::CheckBox::Free()

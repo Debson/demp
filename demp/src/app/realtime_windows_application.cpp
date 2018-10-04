@@ -189,6 +189,11 @@ void mdEngine::SetupGlew()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
+	glDepthFunc(GL_LESS);
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
 #ifdef _DEBUG_
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -464,11 +469,14 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			SDL_GL_MakeCurrent(mdWindow, gl_context);
 			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 
 			if (State::CheckState(State::Window::Minimized) == false ||
 				State::CheckState(State::Window::InTray) == false ||
 				State::CheckState(State::AudioChangedInTray) == true)
 			{
+				Graphics::Shader::shaderDefault->use();
+				Graphics::Shader::shaderDefault->setMat4("projection", *Graphics::GetProjectionMatrix());
 
 				Graphics::RenderGraphics();
 				mdApplicationHandler->OnRealtimeRender();
@@ -635,6 +643,11 @@ SDL_Window* mdEngine::Window::GetSDLWindow()
 HWND mdEngine::Window::GetHWNDWindow()
 {
 	return hwnd;
+}
+
+SDL_GLContext* mdEngine::Window::GetMainWindowContext()
+{
+	return &gl_context;
 }
 
 void mdEngine::Window::SetWindowTitle(const b8& windowTitle)

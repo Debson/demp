@@ -243,15 +243,15 @@ namespace mdEngine
 			GLuint m_LeftTexture;
 			GLuint m_RightTexture;
 			mdShader* m_Shader;
-			SDL_Rect m_LeftSrc;
-			SDL_Rect m_LeftDest;
-			SDL_Rect m_RightSrc;
-			SDL_Rect m_RightDest;
-			SDL_Rect m_SliderOutline;
-			SDL_Rect m_LeftBackground;
-			SDL_Rect m_RightBackground;
-			SDL_Rect m_SliderBackground;
-			SDL_Rect m_DefaultRect;
+			glm::vec4 m_LeftSrc;
+			glm::vec4 m_LeftDest;
+			glm::vec4 m_RightSrc;
+			glm::vec4 m_RightDest;
+			glm::vec4 m_SliderOutline;
+			glm::vec4 m_LeftBackground;
+			glm::vec4 m_RightBackground;
+			glm::vec4 m_SliderBackground;
+			glm::vec4 m_DefaultRect;
 			glm::vec3 m_ButtonsBackgroundColor;
 			glm::vec3 m_SliderBackgroundColor;
 			glm::vec3 m_DefaultButtonColor;
@@ -280,7 +280,7 @@ namespace mdEngine
 
 		private:
 			b8* m_Value;
-			SDL_Rect m_CheckBoxOutline;
+			glm::vec4 m_CheckBoxOutline;
 			glm::vec3 m_CheckBoxColor;
 			mdShader* m_Shader;
 		};

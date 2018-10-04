@@ -82,12 +82,12 @@ namespace mdEngine
 		}
 	}
 
-	void Text::TextObject::ReloadTextTexture(b8 bgra)
+	void Text::TextObject::ReloadTextTexture()
 	{
 		DeleteTexture();
 
 		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
-		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL, bgra);
+		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
 	}
 
 	void Text::TextObject::InitTextTextureSDL(SDL_Renderer* renderer)
@@ -271,7 +271,7 @@ namespace mdEngine
 		
 	}
 
-	GLuint Text::LoadText(TTF_Font* font, std::string string, SDL_Color color, b8 bgra)
+	GLuint Text::LoadText(TTF_Font* font, std::string string, SDL_Color color)
 	{
 		GLuint colors;
 		GLuint textTexture;

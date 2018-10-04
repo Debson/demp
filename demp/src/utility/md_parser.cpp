@@ -176,13 +176,14 @@ namespace mdEngine
 		if (f == NULL)
 		{
 			MD_ERROR("file_open");
+			return false;
 		}
 
-		size_t linesz = 512;
-		char line[512];
-		line[511] = '\0';
-		char otherHalf[512];
-		otherHalf[511] = '\0';
+		size_t linesz = 2056;
+		char line[2056];
+		line[2055] = '\0';
+		char otherHalf[2056];
+		otherHalf[2055] = '\0';
 
 		size_t len;
 		u32 i = 0;
@@ -222,7 +223,7 @@ namespace mdEngine
 			GetIntAtPos(otherHalf, &info->track_num,	POSITION_TRACK_NUM);
 			GetStringAtPos(otherHalf, info->composer,	POSITION_COMPOSER);
 			GetFloatAtPos(otherHalf, &info->bitrate,	POSITION_BITRATE);
-			GetFloatAtPos(otherHalf, &info->channels,	POSITION_CHANNELS);
+			GetIntAtPos(otherHalf, &info->channels,		POSITION_CHANNELS);
 			GetFloatAtPos(otherHalf, &info->freq,		POSITION_FREQUENCY);
 			GetFloatAtPos(otherHalf, &info->size,		POSITION_SIZE);
 			GetFloatAtPos(otherHalf, &info->length,		POSITION_LENGTH);
@@ -511,7 +512,7 @@ namespace mdEngine
 		s32 start_pos = -1;
 		s32 end_pos = -1;
 
-		while (str[i] != L'\0')
+		while (str[i] != '\0')
 		{
 			if (str[i] == SEPARATOR)
 				count++;

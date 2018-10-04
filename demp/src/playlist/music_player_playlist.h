@@ -45,6 +45,7 @@ namespace MP
 			const char* mPath;
 #endif
 
+			void OnFileDeletion();
 			void Free();
 
 			HMUSIC& get();

@@ -2,6 +2,7 @@
 #define GRAPHICS_H
 
 #include "../utility/md_shader.h"
+#include "../utility/md_types.h"
 
 namespace mdEngine
 {
@@ -16,6 +17,7 @@ namespace mdEngine
 			void InitShader();
 			void Draw(mdShader* shader);
 			void DrawDot();
+			void DrawOutline(glm::vec4 dim, f32 scale, glm::vec3 color = glm::vec3(0.f));
 			void ReloadOnNewContext();
 			void Free();
 		}
@@ -27,6 +29,8 @@ namespace mdEngine
 		void RenderGraphics();
 
 		void CloseGraphics();
+
+		glm::mat4* GetProjectionMatrix();
 
 	}
 }

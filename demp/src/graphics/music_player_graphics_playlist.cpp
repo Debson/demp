@@ -14,7 +14,6 @@ namespace mdEngine
 			PlaylistObject		m_Playlist;
 			MainPlayerObject	m_MainPlayer;
 			SeparatorsToRender	playlistSeparatorToRenderVec;
-
 		}
 
 
@@ -171,7 +170,7 @@ namespace mdEngine
 			str += ".:: ";
 			str += Converter::SecToProperTimeFormatShort(audioItem->GetLength());
 			str += " :: ";
-			str += audioItem->GetTitle();
+			str += audioItem->GetCompleteName();
 			str += " :: ";
 			str += audioItem->GetFormat();
 			str += " :: ";

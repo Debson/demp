@@ -15,6 +15,8 @@ namespace mdEngine
 {
 	namespace Graphics
 	{
+		glm::mat4 mdProjection;
+
 		namespace Shader
 		{
 			mdShader* shaderDefault	= NULL;
@@ -42,14 +44,6 @@ namespace mdEngine
 				return;
 			}
 
-			/*shaderWindow = new mdShader("shaders/window.vert", "shaders/window.frag", nullptr);
-
-			if (shaderWindow == NULL)
-			{
-				std::cout << "ERRROR: Could not initialize shader\n";
-				return;
-			}*/
-
 			quad = mdShape::QUAD();
 
 			if (quad == NULL)
@@ -66,25 +60,14 @@ namespace mdEngine
 				return;
 			}
 
-
-			glm::mat4 projection = glm::ortho(0.f, static_cast<float>(Window::windowProperties.mWindowWidth), 
-												   static_cast<float>(Window::windowProperties.mWindowHeight), 0.f);
+			mdProjection = glm::ortho(0.f, static_cast<float>(Window::windowProperties.mWindowWidth), 
+										 static_cast<float>(Window::windowProperties.mWindowHeight), 0.f);
 			shaderDefault->use();
 			shaderDefault->setInt("image", 0);
-			shaderDefault->setMat4("projection", projection);
+			shaderDefault->setMat4("projection", mdProjection);
 
 			shaderBorder->use();
-			shaderBorder->setMat4("projection", projection);
-
-			/*projection = glm::mat4();
-			projection = glm::ortho(0.f, mdEngine::MP::Data::_OPTIONS_WINDOW_SIZE.x, 
-										 mdEngine::MP::Data::_OPTIONS_WINDOW_SIZE.y, 
-									0.f);
-
-			shaderWindow->use();
-			shaderWindow->setInt("image", 0);
-			shaderWindow->setMat4("projection", projection);*/
-
+			shaderBorder->setMat4("projection", mdProjection);
 		}
 
 		void Shader::Draw(mdShader* shader)
@@ -96,6 +79,31 @@ namespace mdEngine
 		void Shader::DrawDot()
 		{
 			dot->Draw(shaderBorder);
+		}
+
+		void Shader::DrawOutline(glm::vec4 dim, f32 scale, glm::vec3 color)
+		{
+			shaderDefault->use();
+			glm::mat4 model;
+			f32 scaleX, scaleY;
+			if (dim.z > dim.w)
+			{
+				scaleX = 1.f + (scale - 1.f) * dim.w / dim.z;
+				scaleY = scale;
+			}
+			else
+			{
+				scaleX = scale;
+				scaleY = 1.f + (scale - 1.f) * dim.w / dim.z;
+			}
+
+			model = glm::translate(model, glm::vec3(dim.x - (dim.z * scaleX - dim.z) / 2.f, dim.y - (dim.w * scaleY - dim.w) / 2.f, 0.01f));
+			model = glm::scale(model, glm::vec3(dim.z * scaleX, dim.w * scaleY, 1.0));
+			shaderDefault->setBool("plain", true);
+			shaderDefault->setMat4("model", model);
+			shaderDefault->setVec3("color", color);
+			Draw(shaderDefault);
+			shaderDefault->setBool("plain", false);
 		}
 
 
@@ -152,6 +160,11 @@ namespace mdEngine
 	{
 		Shader::Free();
 		CloseMainWindow();
+	}
+
+	glm::mat4* Graphics::GetProjectionMatrix()
+	{
+		return &mdProjection;
 	}
 
 }

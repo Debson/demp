@@ -25,7 +25,7 @@ namespace mdEngine
 
 
 			virtual void InitTextTexture();
-			virtual void ReloadTextTexture(b8 bgra = false);
+			virtual void ReloadTextTexture();
 			// Awlays call it to initialize rendere
 			void InitTextTextureSDL(SDL_Renderer* renderer);
 			void ReloadTextTextureSDL();
@@ -72,7 +72,7 @@ namespace mdEngine
 
 		void InitializeText();
 
-		GLuint			LoadText(TTF_Font* font, std::string string, SDL_Color color, b8 bgra = false);
+		GLuint			LoadText(TTF_Font* font, std::string string, SDL_Color color);
 		SDL_Texture*	LoadTextSDL(SDL_Renderer* renderer, TTF_Font* font, std::string string, SDL_Color color);
 		
 		void CloseText();

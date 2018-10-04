@@ -16,6 +16,8 @@ uniform bool plain;
 uniform bool plainRGBA;
 uniform bool roundEdges;
 uniform bool roundEdgesBackground;
+uniform bool outlineEnabled;
+
 
 uniform float aspectXY;
 uniform float border_width;
@@ -102,6 +104,7 @@ void main()
 	{
 		FragColor = colorRGBA;
 	}
+
 
 	if(roundEdgesBackground == true)
 	{

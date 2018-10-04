@@ -128,6 +128,7 @@ namespace MP
 		SongObject::~SongObject()
 		{
 			BASS_StreamFree(m_MusicStream);
+			m_ID = 0;
 			m_MusicStream = NULL;
 			m_Data = NULL;
 		}
@@ -220,6 +221,12 @@ namespace MP
 			return true;
 		}
 
+		void SongObject::OnFileDeletion()
+		{
+			m_Path = std::string();
+			m_ID = -1;
+		}
+
 		void SongObject::Free()
 		{
 			if (m_Data != NULL)
@@ -302,6 +309,9 @@ namespace MP
 
 			if (mdNextRequest)
 			{
+				//if(RamLoadedMusic.m_ID - 1 >= 0)
+				//Audio::Object::GetAudioObject(RamLoadedMusic.m_ID - 1);
+
 				PauseMusic();
 
 				PlayMusic();
@@ -311,6 +321,9 @@ namespace MP
 
 			if (mdPreviousRequest)
 			{
+				//if(RamLoadedMusic.m_ID + 1 < Audio::Object::GetSize())
+				//Audio::Object::GetAudioObject(RamLoadedMusic.m_ID + 1);
+
 				PauseMusic();
 
 				PlayMusic();
@@ -427,6 +440,8 @@ namespace MP
 			playFadeTimer.Start();
 			mdVolume = 0;
 			SetPosition(pos);
+
+			Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)->LoadAlbumImage();
 		}
 
 		void StopMusic()
@@ -787,6 +802,7 @@ namespace MP
 				return;
 			}
 
+			RamLoadedMusic.OnFileDeletion();
 			//State::SetState(State::AudioDeleted);
 
 			auto sepCont = Interface::Separator::GetContainer();

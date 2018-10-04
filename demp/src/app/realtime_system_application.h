@@ -42,6 +42,7 @@ namespace mdEngine
 		void MaximizeWindow();
 		SDL_Window* GetSDLWindow();
 		HWND GetHWNDWindow();
+		SDL_GLContext* GetMainWindowContext();
 		void SetWindowTitle(const b8& windowName);
 		void SetWindowPos(s32 x, s32 y);
 		void SetWindowSize(s32 w, s32 h);
