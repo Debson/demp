@@ -16,6 +16,7 @@ namespace mdEngine
 			void InitShader();
 			void Draw(mdShader* shader);
 			void DrawDot();
+			void ReloadOnNewContext();
 			void Free();
 		}
 

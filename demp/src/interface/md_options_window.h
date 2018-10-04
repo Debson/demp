@@ -4,6 +4,7 @@
 #include "SDL.h"
 #include "../utility/md_types.h"
 #include "md_interface.h"
+#include "../utility/md_shape.h"
 
 namespace mdEngine
 {
@@ -30,8 +31,10 @@ namespace mdEngine
 			s32 m_Height, m_Width;
 			s32 m_WindowID;
 			SDL_Window* m_Window;
-			SDL_Renderer* m_Renderer;
+			SDL_GLContext m_Context;
+			mdShader* m_Shader;
 			SDL_Event m_Event;
+			Text::TextObject m_TestText;
 
 			Interface::ButtonSlider m_VolumeStepSlider;
 			Interface::ButtonSlider m_PlaylistScrollStepSlider;

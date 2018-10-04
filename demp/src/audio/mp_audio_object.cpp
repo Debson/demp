@@ -65,6 +65,15 @@ const std::string Audio::AudioObject::GetTitle()
 	return info->title;
 }
 
+
+const std::string Audio::AudioObject::GetCompleteTitle() const
+{
+	if (info->title.compare("") == 0)
+		return Info::GetCompleteTitle(*path);
+
+	return info->artist + " - " + info->title;
+}
+
 const s32& Audio::AudioObject::GetTrackNum() const
 {
 	/*if (info->track_num.compare(L"0") == 0)

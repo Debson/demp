@@ -1,4 +1,4 @@
-#version 420 core
+#version 150 core
 
 in vec2 TexCoords;
 in vec4 pos;
@@ -7,11 +7,13 @@ vec4 FragColor;
 
 uniform sampler2D image;
 uniform vec3 color;
+uniform vec4 colorRGBA;
 uniform bool cut;
 uniform bool border;
 uniform bool playlistCutY;
 uniform bool playlistCutX;
 uniform bool plain;
+uniform bool plainRGBA;
 uniform bool roundEdges;
 uniform bool roundEdgesBackground;
 
@@ -45,8 +47,8 @@ void main()
 	}
 	else
 	{
-		/*if(texColor.a < 0.1)
-			discard;*/
+		if(texColor.a < 0.1)
+			discard;
 	}
 
 
@@ -94,6 +96,11 @@ void main()
 	if(plain)
 	{
 		FragColor = vec4(color, 1.0);
+	}
+
+	if(plainRGBA)
+	{
+		FragColor = colorRGBA;
 	}
 
 	if(roundEdgesBackground == true)

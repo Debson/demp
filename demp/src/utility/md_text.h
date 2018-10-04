@@ -25,7 +25,7 @@ namespace mdEngine
 
 
 			virtual void InitTextTexture();
-			virtual void ReloadTextTexture();
+			virtual void ReloadTextTexture(b8 bgra = false);
 			// Awlays call it to initialize rendere
 			void InitTextTextureSDL(SDL_Renderer* renderer);
 			void ReloadTextTextureSDL();
@@ -34,6 +34,7 @@ namespace mdEngine
 
 			// Draw text string with specific texture 
 			virtual void DrawString(GLuint tex) const;
+			virtual void DrawString(mdShader* shader) const;
 			virtual void DrawStringSDL(SDL_Renderer* renderer) const;
 
 
@@ -71,7 +72,7 @@ namespace mdEngine
 
 		void InitializeText();
 
-		GLuint			LoadText(TTF_Font* font, std::string string, SDL_Color color);
+		GLuint			LoadText(TTF_Font* font, std::string string, SDL_Color color, b8 bgra = false);
 		SDL_Texture*	LoadTextSDL(SDL_Renderer* renderer, TTF_Font* font, std::string string, SDL_Color color);
 		
 		void CloseText();

@@ -20,7 +20,7 @@ public:
 	static mdShape* QUAD();
 	static mdShape* DOT();
 
-	virtual void Draw(mdShader shader);
+	virtual void Draw(mdShader* shader);
 
 private:
 	GLuint vbo = 0;

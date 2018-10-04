@@ -34,6 +34,7 @@ namespace Audio
 		const std::string GetFolderPath()	const;
 		const std::string& GetArtist()		const;
 		const std::string GetTitle();
+		const std::string GetCompleteTitle() const;
 		const s32& GetTrackNum()			const;
 		const std::string& GetAlbum()		const;
 		const s32& GetYear()				const;

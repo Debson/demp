@@ -27,6 +27,7 @@ namespace mdEngine
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
 		m_TextTextureSDL = NULL;
+		m_TextRenderer = NULL;
 	}
 
 	Text::TextObject::TextObject(TTF_Font* font, glm::vec3 col)
@@ -43,6 +44,7 @@ namespace mdEngine
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
 		m_TextTextureSDL = NULL;
+		m_TextRenderer = NULL;
 		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
@@ -60,6 +62,7 @@ namespace mdEngine
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
 		m_TextTextureSDL = NULL;
+		m_TextRenderer = NULL;
 		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
@@ -79,12 +82,12 @@ namespace mdEngine
 		}
 	}
 
-	void Text::TextObject::ReloadTextTexture()
+	void Text::TextObject::ReloadTextTexture(b8 bgra)
 	{
 		DeleteTexture();
 
 		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
-		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
+		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL, bgra);
 	}
 
 	void Text::TextObject::InitTextTextureSDL(SDL_Renderer* renderer)
@@ -127,7 +130,7 @@ namespace mdEngine
 		Graphics::Shader::shaderDefault->use();
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(glm::vec2(m_TextPos.x + m_TextOffset.x,
-														  m_TextPos.y + m_TextOffset.y), 0.9));
+														  m_TextPos.y + m_TextOffset.y), 1.0));
 		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.0));
 		Graphics::Shader::shaderDefault->setMat4("model", model);
 		Graphics::Shader::shaderDefault->setVec3("color", m_TextColorVec);
@@ -135,6 +138,7 @@ namespace mdEngine
 		glBindTexture(GL_TEXTURE_2D, m_TextTexture);
 		Graphics::Shader::Draw(Graphics::Shader::shaderDefault);
 		Graphics::Shader::shaderDefault->setVec3("color", Color::White);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void Text::TextObject::DrawString(GLuint tex) const
@@ -144,7 +148,7 @@ namespace mdEngine
 		model = glm::translate(model, 
 							   glm::vec3(glm::vec2(m_TextPos.x + m_TextOffset.x, 
 													m_TextPos.y + m_TextOffset.y), 
-								         0.9)
+								         1.0)
 							  );
 		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.0));
 		Graphics::Shader::shaderDefault->setMat4("model", model);
@@ -153,6 +157,26 @@ namespace mdEngine
 		glBindTexture(GL_TEXTURE_2D, tex);
 		Graphics::Shader::Draw(Graphics::Shader::shaderDefault);
 		Graphics::Shader::shaderDefault->setVec3("color", Color::White);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	void Text::TextObject::DrawString(mdShader* shader) const
+	{
+		shader->use();
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+
+		glm::mat4 model;
+		model = glm::translate(model, glm::vec3(glm::vec2(m_TextPos.x + m_TextOffset.x,
+			m_TextPos.y + m_TextOffset.y), 1.0));
+		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.0));
+		shader->setMat4("model", model);
+		shader->setVec3("color", m_TextColorVec);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_TextTexture);
+		Graphics::Shader::Draw(shader);
+		shader->setVec3("color", Color::White);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void Text::TextObject::DrawStringSDL(SDL_Renderer* renderer) const
@@ -247,13 +271,8 @@ namespace mdEngine
 		
 	}
 
-	GLuint Text::LoadText(TTF_Font* font, std::string string, SDL_Color color)
+	GLuint Text::LoadText(TTF_Font* font, std::string string, SDL_Color color, b8 bgra)
 	{
-		const Uint16* text = NULL;
-
-		//assert(sizeof(Uint16) == sizeof(wchar_t));
-		//text = reinterpret_cast<const Uint16*>(string.c_str());
-
 		GLuint colors;
 		GLuint textTexture;
 		SDL_Surface* textSurface;
@@ -261,35 +280,33 @@ namespace mdEngine
 
 
 		textSurface = TTF_RenderUTF8_Blended(font, string.c_str(), color);
-		if(textSurface == NULL)
+		if (textSurface == NULL)
+		{
 			std::cout << "Font address: " << font << "     String name: " << string.c_str() << "     Color: " << std::to_string(color.r) << "  " << std::to_string(color.g) << "  " << std::to_string(color.b) << std::endl;
+			return 0;
+		}
 		assert(textSurface != NULL);
 
 		colors = textSurface->format->BytesPerPixel;
 
+		format = GL_RGB;
+
 		if (colors == 4)
-		{
-			if (textSurface->format->Rmask == 0x000000FF)
-				format = GL_RGBA;
-			else
-				format = GL_BGRA;
-		}
-		else
-		{
-			if (textSurface->format->Rmask == 0x000000FF)
-				format = GL_RGB;
-			else
-				format = GL_BGR;
-		}
+			format = GL_RGBA;
+		
+		/*if (bgra == true)
+			format = GL_BGRA;*/
 
 		glGenTextures(1, &textTexture);
 		glBindTexture(GL_TEXTURE_2D, textTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, colors, textSurface->w, textSurface->h, 0, format, GL_UNSIGNED_BYTE, textSurface->pixels);
+
+		
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textSurface->w, textSurface->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, textSurface->pixels);
 
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		SDL_FreeSurface(textSurface);

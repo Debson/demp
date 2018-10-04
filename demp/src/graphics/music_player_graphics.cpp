@@ -907,11 +907,11 @@ namespace mdEngine
 		{
 			musicInfoScrollText[0].SetTextString(MP::GetPlaylistObject()->GetMusicInfoScrollString());
 			musicInfoScrollText[0].SetTextScale(1.f);
-			musicInfoScrollText[0].ReloadTextTexture();
+			musicInfoScrollText[0].ReloadTextTexture(true);
 			s32 offsetX = (Data::_MAIN_FOREGROUND_SIZE.x - musicInfoScrollText[0].GetTextSize().x) / 2;
 			musicInfoScrollText[0].SetTextPos(glm::vec2(Data::_MAIN_FOREGROUND_POS.x - musicInfoScrollText[0].GetTextSize().x,
 													    musicInfoScrollText[0].GetTextPos().y));
-			musicInfoScrollText[0].SetTextColor(Color::Orange);
+			musicInfoScrollText[0].SetTextColor(Color::Red);
 
 			musicInfoScrollText[1] = musicInfoScrollText[0];
 			musicInfoScrollText[1].SetTextPos(glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x, musicInfoScrollText[0].GetTextPos().y));
@@ -1043,6 +1043,7 @@ namespace mdEngine
 
 		// Cut text that is out of bounds of main player foreground
 		Shader::shaderDefault->use();
+		Shader::shaderDefault->setBool("plainRGBA", false);
 		Shader::shaderDefault->setBool("playlistCutX", true);
 		Shader::shaderDefault->setVec2("playlistBoundsX", Data::_MAIN_FOREGROUND_POS.x,
 														  Data::_DEFAULT_PLAYER_SIZE.x - Data::_MAIN_FOREGROUND_POS.x);
@@ -1831,6 +1832,7 @@ namespace mdEngine
 		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, minimize_icon);
 		Shader::Draw(Shader::shaderDefault);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void Graphics::StartMainWindow()
@@ -1983,7 +1985,7 @@ namespace mdEngine
 
 		RenderMusicUI();
 
-		//RenderPlaylistInfo();
+		RenderPlaylistInfo();
 
 		RenderMusicScrollInfo();
 

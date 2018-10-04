@@ -57,9 +57,9 @@ mdShape::~mdShape()
 	delete this;
 }
 
-void mdShape::Draw(mdShader shader)
+void mdShape::Draw(mdShader* shader)
 {
-	shader.use();
+	shader->use();
 
 	switch (currentShape)
 	{

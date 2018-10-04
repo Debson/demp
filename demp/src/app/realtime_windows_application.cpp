@@ -1,9 +1,5 @@
 ﻿#include "realtime_system_application.h"
 
-#include <assert.h>
-#include <fstream>
-#include <sstream>
-#include <iostream>
 #include <string>
 #include <Windows.h>
 #include <shellapi.h>
@@ -46,9 +42,6 @@
 #include <windows.h>
 #include <shellapi.h>
 // C RunTime Header Files
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
 #include <tchar.h>
 
 namespace mdEngine
@@ -91,7 +84,7 @@ namespace mdEngine
 
 	void SetupOpenGL();
 
-	void SetupImGui();
+	void SetupGlew();
 
 	void UpdateWindowSize();
 
@@ -184,7 +177,7 @@ void mdEngine::SetupOpenGL()
 	
 }
 
-void mdEngine::SetupImGui()
+void mdEngine::SetupGlew()
 {
 
 	SDL_GL_SetSwapInterval(0); // Enable vsync
@@ -246,7 +239,8 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 	SetupOpenGL();
 
-	SetupImGui();
+
+	SetupGlew();
 
 	MP::Config::LoadConfig();
 	mdApplicationHandler->OnWindowOpen();
@@ -259,7 +253,6 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
-
 	mdIsRunning = true;
 	mdAppClosing = false;
 
@@ -466,8 +459,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				MP::UI::GetOptionsWindow()->Update();
 			}
 
-			SDL_GL_MakeCurrent(mdWindow, gl_context);
+
 #ifdef _DEBUG_
+			SDL_GL_MakeCurrent(mdWindow, gl_context);
 			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -480,16 +474,12 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				mdApplicationHandler->OnRealtimeRender();
 			}
 
-			if (MP::UI::GetOptionsWindow()->IsActive() == true)
-			{
-				MP::UI::GetOptionsWindow()->Render();
-			}
 
 			glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 #else
-			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, Color::TransparentClearColor.w);
+			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			if (State::CheckState(State::Window::Minimized) == false ||
 				State::CheckState(State::Window::InTray) == false)
@@ -505,6 +495,11 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 #endif
 			SDL_GL_SwapWindow(mdWindow);
 
+			// Render options window
+			if (MP::UI::GetOptionsWindow()->IsActive() == true)
+			{
+				MP::UI::GetOptionsWindow()->Render();
+			}
 			
 			if (State::IsBackgroundModeActive() == true)
 			{

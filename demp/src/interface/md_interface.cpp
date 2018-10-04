@@ -154,7 +154,7 @@ namespace mdEngine
 		m_TextScale = 1.f;
 		SetTextColor(Color::White);
 
-		m_TextString = Audio::Object::GetAudioObject(m_ItemID)->GetTitle();
+		m_TextString = Audio::Object::GetAudioObject(m_ItemID)->GetCompleteTitle();
 
 		assert(Audio::Object::GetAudioObject(m_ItemID) != nullptr);
 
@@ -723,15 +723,15 @@ namespace mdEngine
 
 	}
 
-	void Interface::ButtonSlider::Init(SDL_Renderer* renderer)
+	void Interface::ButtonSlider::Init(mdShader* shader)
 	{
-		m_Renderer = renderer;
-		m_LeftTexture = mdLoadTextureSDL(m_Renderer, "E:\\SDL Projects\\demp\\demp\\assets\\switch.png");
+		m_Shader = shader;
+		m_LeftTexture = mdLoadTexture("E:\\SDL Projects\\demp\\demp\\assets\\switch.png");
 		m_RightTexture = m_LeftTexture;
 
 		if (m_LeftTexture == NULL)
 		{
-			MD_SDL_ERROR("SDL Texture");
+			MD_ERROR("Texture options window");
 		}
 
 		glm::ivec2 buttonTexSize(12, 12);
@@ -742,7 +742,7 @@ namespace mdEngine
 		m_LabelTextObject.SetTextString(m_LabelText);
 		m_LabelTextObject.SetTextPos(glm::vec2(m_SliderPos.x - labelTextXOffset, m_SliderPos.y));
 		// Init sdl text
-		m_LabelTextObject.InitTextTextureSDL(m_Renderer);
+		m_LabelTextObject.InitTextTexture();
 		
 
 		s32 outlineSizeOffsetX = 4;
@@ -764,7 +764,7 @@ namespace mdEngine
 		}
 
 
-		m_ValueTextObject.InitTextTextureSDL(m_Renderer);
+		m_ValueTextObject.InitTextTexture();
 
 
 		s32 offsetX = (m_SliderSize.x - 2 * buttonTexSize.x - m_ValueTextObject.GetTextSize().x) / 2;
@@ -772,12 +772,13 @@ namespace mdEngine
 		m_ValueTextObject.SetTextPos(glm::vec2(m_SliderPos.x + buttonTexSize.x + offsetX,
 											   m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - m_ValueTextObject.GetTextSize().y) / 2));
 
-		s32 texW, texH;
-		SDL_QueryTexture(m_LeftTexture, NULL, NULL, &texW, &texH);	
+		//SDL_QueryTexture(m_LeftTexture, NULL, NULL, &texW, &texH);	
 
+		s32 texW = 10;
+		s32 texH = 10;
 
 		m_LeftSrc	= { 0, 0, texW, texH };
-		m_LeftDest	= { m_SliderPos.x, m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY,
+		m_LeftDest	= { m_SliderPos.x + 10, m_SliderPos.y + (s32)m_LabelTextObject.GetTextSize().y + offsetY,
 						buttonTexSize.x, buttonTexSize.y };
 		m_RightSrc	= { 0, 0, texW, texH };
 		m_RightDest	= { m_SliderPos.x + buttonTexSize.x + (s32)m_ValueTextObject.GetTextSize().x + 2 * offsetX,
@@ -807,14 +808,14 @@ namespace mdEngine
 		m_RightBackgroundAlpha	= 0;
 		m_LeftBackgroundAlpha	= 0;
 
-		m_ButtonsBackgroundColor = SDLColor::Orange;
+		m_ButtonsBackgroundColor = Color::Orange;
 
 		s32 fadeTimeValue	= 200;
 		m_FadeTimerRight	= Time::Timer(fadeTimeValue);
 		m_FadeTimerLeft		= Time::Timer(fadeTimeValue);
 
 		m_SliderBackground = m_SliderOutline;
-		m_SliderBackgroundColor = SDLColor::Grey;
+		m_SliderBackgroundColor = Color::Grey;
 
 
 
@@ -828,8 +829,8 @@ namespace mdEngine
 		m_DefaultTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
 
 		m_DefaultTextObject.SetTextString("Default");
+		m_DefaultTextObject.InitTextTexture();
 		// Init sdl text
-		m_DefaultTextObject.InitTextTextureSDL(m_Renderer);
 
 		offsetX = (m_DefaultRect.w - m_DefaultTextObject.GetTextSize().x) / 2;
 		offsetY = (m_DefaultRect.h - m_DefaultTextObject.GetTextSize().y) / 2;
@@ -841,7 +842,7 @@ namespace mdEngine
 
 	void Interface::ButtonSlider::Update()
 	{
-		u8 startAlpha = 100;
+		f32 startAlpha = 1.f;
 		if (m_RightButton->hasFocus == true)
 		{
 			m_FadeTimerRight.Start();
@@ -962,11 +963,11 @@ namespace mdEngine
 
 		if (m_DefaultButton->hasFocus == true)
 		{
-			m_DefaultButtonColor = SDLColor::Silver;
+			m_DefaultButtonColor = Color::Silver;
 		}
 		else
 		{
-			m_DefaultButtonColor = SDLColor::DarkGrey;
+			m_DefaultButtonColor = Color::DarkGrey;
 		}
 
 		
@@ -996,40 +997,79 @@ namespace mdEngine
 
 	void Interface::ButtonSlider::Render()
 	{
-		SDL_SetRenderDrawColor(m_Renderer, m_SliderBackgroundColor.r, m_SliderBackgroundColor.g, m_SliderBackgroundColor.b, 0xFF);
-		SDL_RenderFillRect(m_Renderer, &m_SliderBackground);
+		m_Shader->use();
+		glActiveTexture(GL_TEXTURE0);
+		glm::mat4 model;
 
-		SDL_SetRenderDrawBlendMode(m_Renderer, SDL_BLENDMODE_BLEND);
-		SDL_SetRenderDrawColor(m_Renderer, m_ButtonsBackgroundColor.r, m_ButtonsBackgroundColor.g, m_ButtonsBackgroundColor.b, m_RightBackgroundAlpha);
-		SDL_RenderFillRect(m_Renderer, &m_RightBackground);
+		glBindTexture(GL_TEXTURE_2D, 0);
 
-		SDL_SetRenderDrawColor(m_Renderer, m_ButtonsBackgroundColor.r, m_ButtonsBackgroundColor.g, m_ButtonsBackgroundColor.b, m_LeftBackgroundAlpha);
-		SDL_RenderFillRect(m_Renderer, &m_LeftBackground);
-		SDL_SetRenderDrawBlendMode(m_Renderer, SDL_BLENDMODE_NONE);
-
-
-		SDL_SetRenderDrawColor(m_Renderer, m_DefaultButtonColor.r, m_DefaultButtonColor.g, m_DefaultButtonColor.b, 0xFF);
-		SDL_RenderFillRect(m_Renderer, &m_DefaultRect);
-		m_DefaultTextObject.DrawStringSDL(m_Renderer);
+		m_Shader->setBool("plain", true);
+		model = glm::translate(model, glm::vec3(m_SliderBackground.x, m_SliderBackground.y, 0.5));
+		model = glm::scale(model, glm::vec3(m_SliderBackground.w, m_SliderBackground.h, 1.0));
+		m_Shader->setMat4("model", model);
+		m_Shader->setVec3("color", Color::Grey);
+		Shader::Draw(m_Shader);
+		m_Shader->setVec3("color", Color::White);
+		m_Shader->setBool("plain", false);
 
 
-		SDL_SetRenderDrawColor(m_Renderer, 0x00, 0x00, 0x00, 0xFF);
-		SDL_RenderDrawRect(m_Renderer, &m_SliderOutline);
+		m_Shader->setBool("plainRGBA", true);
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(m_RightBackground.x, m_RightBackground.y, 0.5));
+		model = glm::scale(model, glm::vec3(m_RightBackground.w, m_RightBackground.h, 1.0));
+		m_Shader->setMat4("model", model);
+		m_Shader->setVec4("colorRGBA", m_ButtonsBackgroundColor.r, m_ButtonsBackgroundColor.g, m_ButtonsBackgroundColor.b, m_RightBackgroundAlpha);
+		Shader::Draw(m_Shader);
 
-		m_LabelTextObject.DrawStringSDL(m_Renderer);
 
-		SDL_RenderCopyEx(m_Renderer, m_LeftTexture, NULL, &m_LeftDest, 0, NULL, SDL_FLIP_HORIZONTAL);
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(m_LeftBackground.x, m_LeftBackground.y, 0.5));
+		model = glm::scale(model, glm::vec3(m_LeftBackground.w, m_LeftBackground.h, 1.0));
+		m_Shader->setMat4("model", model);
+		m_Shader->setVec4("colorRGBA", m_ButtonsBackgroundColor.r, m_ButtonsBackgroundColor.g, m_ButtonsBackgroundColor.b, m_LeftBackgroundAlpha);
+		Shader::Draw(m_Shader);
+		m_Shader->setBool("plainRGBA", false);
+	
+		m_Shader->setVec4("colorRGBA", 1.f, 1.f, 1.f, 1.f);
 
-		m_ValueTextObject.DrawStringSDL(m_Renderer);
+		m_Shader->setBool("plain", true);
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(m_DefaultRect.x, m_DefaultRect.y, 0.5));
+		model = glm::scale(model, glm::vec3(m_DefaultRect.w, m_DefaultRect.h, 1.0));
+		m_Shader->setMat4("model", model);
+		m_Shader->setVec3("color", m_DefaultButtonColor);
+		Shader::Draw(m_Shader);
+		m_Shader->setVec3("color", Color::White);
+		m_Shader->setBool("plain", false);
 
-		SDL_RenderCopy(m_Renderer, m_RightTexture, &m_RightSrc, &m_RightDest);
+		m_DefaultTextObject.DrawString(m_Shader);
+
+
+		m_LabelTextObject.DrawString(m_Shader);
+		
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(m_LeftDest.x, m_LeftDest.y, 0.6));
+		model = glm::scale(model, glm::vec3(m_LeftDest.w, m_LeftDest.h, 1.0));
+		model = glm::rotate(model, glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f));
+		m_Shader->setMat4("model", model);
+		glBindTexture(GL_TEXTURE_2D, m_RightTexture);
+		Shader::Draw(m_Shader);
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(m_RightDest.x, m_RightDest.y, 0.6));
+		model = glm::scale(model, glm::vec3(m_RightDest.w, m_RightDest.h, 1.0));
+		m_Shader->setMat4("model", model);
+		glBindTexture(GL_TEXTURE_2D, m_RightTexture);
+		Shader::Draw(m_Shader);
+
+		m_ValueTextObject.DrawString(m_Shader);
 
 	}
 
 	void Interface::ButtonSlider::Free()
 	{
-		SDL_DestroyTexture(m_LeftTexture);
-		SDL_DestroyTexture(m_RightTexture);
+		glDeleteTextures(1, &m_LeftTexture);
+		glDeleteTextures(1, &m_RightTexture);
 		m_LeftTexture	= NULL;
 		m_RightTexture	= NULL;
 
@@ -1054,7 +1094,7 @@ namespace mdEngine
 			m_ValueTextObject.SetTextString(std::to_string(*m_Value));
 		}
 		s32 textSizeBefore = m_ValueTextObject.GetTextSize().x;
-		m_ValueTextObject.ReloadTextTextureSDL();
+		m_ValueTextObject.ReloadTextTexture();
 		s32 textSizeAfter = m_ValueTextObject.GetTextSize().x;;
 		s32 diff = (textSizeAfter - textSizeBefore) / 2.f;
 
@@ -1080,10 +1120,10 @@ namespace mdEngine
 		m_TextColorSDL = SDLColor::Black;
 	}
 
-	void Interface::CheckBox::Init(SDL_Renderer* renderer)
+	void Interface::CheckBox::Init(mdShader* shader)
 	{
-		m_Renderer = renderer;
-		InitTextTextureSDL(m_Renderer);
+		m_Shader = shader;
+		InitTextTexture();
 
 		s32 offsetY = 5;
 		m_ButtonPos = glm::vec2(m_TextPos.x, m_TextPos.y + m_TextSize.y + offsetY);
@@ -1092,7 +1132,7 @@ namespace mdEngine
 		m_CheckBoxOutline = { (s32)m_ButtonPos.x, (s32)m_ButtonPos.y,
 							  (s32)m_ButtonSize.x, (s32)m_ButtonSize.y };
 
-		m_CheckBoxColor = SDLColor::Orange;
+		m_CheckBoxColor = Color::Orange;
 
 	}
 
@@ -1111,21 +1151,27 @@ namespace mdEngine
 
 	void Interface::CheckBox::Render()
 	{
-		DrawStringSDL(m_Renderer);
+		DrawString(m_Shader);
 
-		*m_Value == true ? SDL_SetRenderDrawColor(m_Renderer, SDLColor::Orange.r, SDLColor::Orange.g, SDLColor::Orange.b, 0xFF) :
-						   SDL_SetRenderDrawColor(m_Renderer, SDLColor::Azure.r, SDLColor::Azure.g, SDLColor::Azure.b, 0xFF);
+		glm::vec3 color;
+		*m_Value == true ? color = Color::Orange : color = Color::Azure;
 
-		SDL_RenderFillRect(m_Renderer, &m_CheckBoxOutline);
-
-
-		SDL_SetRenderDrawColor(m_Renderer, SDLColor::Black.r, SDLColor::Black.g, SDLColor::Black.b, 0xFF);
-		SDL_RenderDrawRect(m_Renderer, &m_CheckBoxOutline);
+		glm::mat4 model;
+		m_Shader->use();
+		m_Shader->setBool("plain", true);
+		model = glm::translate(model, glm::vec3(m_CheckBoxOutline.x, m_CheckBoxOutline.y, 0.6f));
+		model = glm::scale(model, glm::vec3(m_CheckBoxOutline.w, m_CheckBoxOutline.h, 1.f));
+		m_Shader->setMat4("model", model);
+		m_Shader->setVec3("color", color);
+		Shader::Draw(m_Shader);
+		m_Shader->setBool("plain", false);
+		/*SDL_SetRenderDrawColor(m_Renderer, SDLColor::Black.r, SDLColor::Black.g, SDLColor::Black.b, 0xFF);
+		SDL_RenderDrawRect(m_Renderer, &m_CheckBoxOutline);*/
 	}
 
 	void Interface::CheckBox::Free()
 	{
-		m_Renderer = NULL;
+		m_Shader = NULL;
 		m_Value = NULL;
 	}
 

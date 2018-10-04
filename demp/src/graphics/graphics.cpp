@@ -42,13 +42,13 @@ namespace mdEngine
 				return;
 			}
 
-			shaderWindow = new mdShader("shaders/window.vert", "shaders/window.frag", nullptr);
+			/*shaderWindow = new mdShader("shaders/window.vert", "shaders/window.frag", nullptr);
 
 			if (shaderWindow == NULL)
 			{
 				std::cout << "ERRROR: Could not initialize shader\n";
 				return;
-			}
+			}*/
 
 			quad = mdShape::QUAD();
 
@@ -76,25 +76,49 @@ namespace mdEngine
 			shaderBorder->use();
 			shaderBorder->setMat4("projection", projection);
 
-			projection = glm::mat4();
+			/*projection = glm::mat4();
 			projection = glm::ortho(0.f, mdEngine::MP::Data::_OPTIONS_WINDOW_SIZE.x, 
 										 mdEngine::MP::Data::_OPTIONS_WINDOW_SIZE.y, 
 									0.f);
 
 			shaderWindow->use();
 			shaderWindow->setInt("image", 0);
-			shaderWindow->setMat4("projection", projection);
+			shaderWindow->setMat4("projection", projection);*/
 
 		}
 
 		void Shader::Draw(mdShader* shader)
 		{
-			quad->Draw(*shader);
+			quad->Draw(shader);
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 
 		void Shader::DrawDot()
 		{
-			dot->Draw(*shaderBorder);
+			dot->Draw(shaderBorder);
+		}
+
+
+		void Shader::ReloadOnNewContext()
+		{
+			shaderDefault = new mdShader("shaders/default.vert", "shaders/default.frag", nullptr);
+
+			if (shaderDefault == NULL)
+			{
+				std::cout << "ERRROR: Could not initialize shader\n";
+				return;
+			}
+
+			quad = mdShape::QUAD();
+
+			if (quad == NULL)
+			{
+				std::cout << "ERROR: Could not initialize shape \"QUAD\"\n";
+				return;
+			}
+
+			shaderDefault->use();
+			shaderDefault->setInt("image", 0);
 		}
 
 		void Shader::Free()

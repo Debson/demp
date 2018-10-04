@@ -6,11 +6,12 @@
 
 #include "../utility/md_util.h"
 #include "../settings/music_player_settings.h"
+#include "../graphics/graphics.h"
 #include "../settings/music_player_string.h"
 #include "../app/realtime_system_application.h"
 #include "../player/music_player_state.h"
 
-
+using namespace mdEngine::Graphics;
 
 namespace mdEngine
 {
@@ -21,7 +22,6 @@ namespace mdEngine
 
 	Window::OptionsWindow::~OptionsWindow()
 	{
-		SDL_DestroyRenderer(m_Renderer);
 		SDL_DestroyWindow(m_Window);
 		m_Window = NULL;
 	}
@@ -36,11 +36,24 @@ namespace mdEngine
 			SDL_WINDOWPOS_CENTERED,
 			m_Width, 
 			m_Height,
-			SDL_WINDOW_SHOWN);
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
-		m_Renderer = SDL_CreateRenderer(m_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-		SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 0);
+
+		m_Context = SDL_GL_CreateContext(m_Window);
+
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 		m_WindowID = SDL_GetWindowID(m_Window);
+
 
 		s32 imgFlags = IMG_INIT_PNG;
 		if ((IMG_Init(imgFlags) & imgFlags) == false)
@@ -49,26 +62,35 @@ namespace mdEngine
 		}
 
 
+		SDL_GL_MakeCurrent(m_Window, m_Context);
+
+		glm::mat4 projection = glm::ortho(0.f, static_cast<float>(m_Width), static_cast<float>(m_Height), 0.f);
+		Shader::ReloadOnNewContext();
+		m_Shader = Shader::shaderDefault;
+		m_Shader->use();
+		m_Shader->setMat4("projection", projection);
+
+		glViewport(0, 0, static_cast<GLint>(m_Width), static_cast<GLint>(m_Height));
+
 		s32 xPos = 40;
 		m_VolumeStepSlider = Interface::ButtonSlider(Strings::_VOLUME_SCROL_STEP_TEXT, glm::vec2(xPos, 20), &MP::Data::VolumeScrollStep, 1, 0, MP::Data::VolumeScrollStepMAX);
-		m_VolumeStepSlider.Init(m_Renderer);
+		m_VolumeStepSlider.Init(m_Shader);
 
 		m_PlaylistScrollStepSlider = Interface::ButtonSlider(Strings::_PLAYLIST_SCROLL_STEP_TEXT, glm::vec2(xPos, 70), &MP::Data::PlaylistScrollStep, 5.f, 0.f, MP::Data::PlaylistScrollStepMAX);
-		m_PlaylistScrollStepSlider.Init(m_Renderer);
+		m_PlaylistScrollStepSlider.Init(m_Shader);
 
 		m_PauseFadeTimeSlider = Interface::ButtonSlider(Strings::_PAUSE_FADE_TEXT, glm::vec2(xPos, 120), &MP::Data::PauseFadeTime, 50, 0, MP::Data::PauseFadeTimeMAX);
-		m_PauseFadeTimeSlider.Init(m_Renderer);
+		m_PauseFadeTimeSlider.Init(m_Shader);
 
 		m_RamLoadedSizeSlider = Interface::ButtonSlider(Strings::_MAX_RAM_LOADED_SIZE_TEXT, glm::vec2(xPos, 170), &MP::Data::_MAX_SIZE_RAM_LOADED, 1, 0, MP::Data::_MAX_SIZE_RAM_LOADED_MAX);
-		m_RamLoadedSizeSlider.Init(m_Renderer);
+		m_RamLoadedSizeSlider.Init(m_Shader);
 
 		m_ToTrayOnExitState = State::CheckState(State::OnExitMinimizeToTray);
 		m_ToTrayOnExit = Interface::CheckBox(Strings::_ON_EXIT_MINMIZE_TO_TRAY_TEXT, glm::vec2(xPos, 220), &m_ToTrayOnExitState);
-		m_ToTrayOnExit.Init(m_Renderer);
+		m_ToTrayOnExit.Init(m_Shader);
 
 		m_OnLoadCheckExistence = Interface::CheckBox(Strings::_ON_LOAD_CHECK_PATH_EXISTENCE, glm::vec2(xPos, 270), &MP::Settings::IsPathExistenceCheckingEnabled);
-		m_OnLoadCheckExistence.Init(m_Renderer);
-
+		m_OnLoadCheckExistence.Init(m_Shader);
 	}
 
 	void Window::OptionsWindow::Update()
@@ -141,8 +163,11 @@ namespace mdEngine
 		if (m_Window == NULL)
 			return;
 
-		SDL_SetRenderDrawColor(m_Renderer, SDLColor::Azure.r, SDLColor::Azure.g, SDLColor::Azure.b, 0xFF);
-		SDL_RenderClear(m_Renderer);
+		glDisable(GL_DEPTH_TEST);
+		SDL_GL_MakeCurrent(m_Window, m_Context);
+		glClearColor(Color::Azure.r, Color::Azure.g, Color::Azure.b, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
 		m_VolumeStepSlider.Render();
 		m_PlaylistScrollStepSlider.Render();
@@ -152,7 +177,8 @@ namespace mdEngine
 		m_ToTrayOnExit.Render();
 		m_OnLoadCheckExistence.Render();
 
-		SDL_RenderPresent(m_Renderer);
+		SDL_GL_SwapWindow(m_Window);
+		glEnable(GL_DEPTH_TEST);
 	}
 
 	void Window::OptionsWindow::ProcessEvents(SDL_Event* const e)
@@ -189,7 +215,7 @@ namespace mdEngine
 
 	void Window::OptionsWindow::Free()
 	{
-		SDL_DestroyRenderer(m_Renderer);
+		SDL_GL_DeleteContext(m_Context);
 		SDL_DestroyWindow(m_Window);
 		m_VolumeStepSlider.Free();
 		m_PlaylistScrollStepSlider.Free();
@@ -200,7 +226,7 @@ namespace mdEngine
 		m_OnLoadCheckExistence.Free();
 
 		IMG_Quit();
-		m_Renderer = NULL;
+		m_Shader = NULL;
 		m_Window = NULL;
 	}
 }

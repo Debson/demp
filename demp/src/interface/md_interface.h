@@ -132,7 +132,7 @@ namespace mdEngine
 			virtual void DrawItem(GLuint texture);
 
 			void			SetSeperatorPath(std::string& path);
-			void			SeparatorSubFilePushBack(s32* fileIndex, std::string& const path);
+			void			SeparatorSubFilePushBack(s32* fileIndex, std::string& path);
 			b8				IsSeparatorHidden() const;
 			b8				IsSelected()		const;
 			//void			Visible(b8 val);
@@ -216,7 +216,7 @@ namespace mdEngine
 			ButtonSlider(std::string labelName, glm::ivec2 pos, f32* value, f32 step, f32 min = 0, f32 max = 100, glm::vec2 size = glm::vec2(100, 20));
 			ButtonSlider(std::string labelName, glm::ivec2 pos, s32* value, s32 step, s32 min = 0, s32 max = 100, glm::vec2 size = glm::vec2(100, 20));
 
-			void Init(SDL_Renderer* renderer);
+			void Init(mdShader* shader);
 			void Update();
 			void ProcessInput();
 			b8 IsDefaultPressed();
@@ -227,8 +227,8 @@ namespace mdEngine
 
 		private:
 
-			s32 m_RightBackgroundAlpha;
-			u8 m_LeftBackgroundAlpha;
+			f32 m_RightBackgroundAlpha;
+			f32 m_LeftBackgroundAlpha;
 			f32* m_ValueF;
 			s32* m_Value;
 			f32 m_Step;
@@ -240,9 +240,9 @@ namespace mdEngine
 			TextObject m_ValueTextObject;
 			TextObject m_LabelTextObject;
 			TextObject m_DefaultTextObject;
-			SDL_Texture* m_LeftTexture;
-			SDL_Texture* m_RightTexture;
-			SDL_Renderer* m_Renderer;
+			GLuint m_LeftTexture;
+			GLuint m_RightTexture;
+			mdShader* m_Shader;
 			SDL_Rect m_LeftSrc;
 			SDL_Rect m_LeftDest;
 			SDL_Rect m_RightSrc;
@@ -252,9 +252,9 @@ namespace mdEngine
 			SDL_Rect m_RightBackground;
 			SDL_Rect m_SliderBackground;
 			SDL_Rect m_DefaultRect;
-			SDL_Color m_ButtonsBackgroundColor;
-			SDL_Color m_SliderBackgroundColor;
-			SDL_Color m_DefaultButtonColor;
+			glm::vec3 m_ButtonsBackgroundColor;
+			glm::vec3 m_SliderBackgroundColor;
+			glm::vec3 m_DefaultButtonColor;
 			glm::ivec2 m_ButtonSize;
 			Time::Timer m_ClickTimer;
 			Time::Timer m_FadeTimerRight;
@@ -272,7 +272,7 @@ namespace mdEngine
 			CheckBox();
 			CheckBox(std::string labelName, glm::vec2 pos, b8* val);
 
-			void Init(SDL_Renderer* renderer);
+			void Init(mdShader* renderer);
 			void Update();
 			void ProcessInput();
 			void Render();
@@ -281,8 +281,8 @@ namespace mdEngine
 		private:
 			b8* m_Value;
 			SDL_Rect m_CheckBoxOutline;
-			SDL_Color m_CheckBoxColor;
-			SDL_Renderer* m_Renderer;
+			glm::vec3 m_CheckBoxColor;
+			mdShader* m_Shader;
 		};
 
 
