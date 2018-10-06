@@ -8,8 +8,10 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <bass.h>
+//#include <bassenc_mp3.h>
 #include <taglib/tag.h>
 #include <taglib/fileref.h>
+
 
 #ifdef _WIN32_
 
@@ -24,6 +26,7 @@
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_util.h"
 #include "../utility/md_load_texture.h"
+
 
 namespace fs = boost::filesystem;
 
@@ -65,10 +68,21 @@ namespace Audio
 		std::string ext = fs::extension(path);
 		boost::algorithm::to_lower(ext);
 
-		u32 size = mdEngine::MP::Data::SupportedFormats.size();
+		u32 size = mdEngine::MP::Data::SupportedAudioFormats.size();
 		for (u8 i = 0; i < size; i++)
 		{
-			if(ext.compare(mdEngine::MP::Data::SupportedFormats[i]) == 0)
+			if(ext.compare(mdEngine::MP::Data::SupportedAudioFormats[i]) == 0)
+				return true;
+		}
+
+		return false;
+	}
+
+	b8 Info::CheckIfImage(const std::string& path)
+	{
+		for (auto & i : MP::Data::SupportedImageFormats)
+		{
+			if (fs::extension(path).compare(i) == 0)
 				return true;
 		}
 
@@ -157,6 +171,14 @@ namespace Audio
 
 		HSTREAM stream;
 		stream = BASS_StreamCreateFile(FALSE, utf8_to_utf16(audioObj->GetPath()).c_str(), 0, 0, BASS_STREAM_DECODE);
+		char *buffer;
+
+		//u32 start = SDL_GetTicks();
+		BASS_CHANNELINFO chinf;
+		BASS_ChannelGetInfo(stream, &chinf);
+		info->ctype = chinf.ctype;
+
+
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_FREQ, &info->freq);
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_BITRATE, &info->bitrate);
 		//BASS_ChannelGetAttribute(stream, BASS_ATTRIB_MUSIC_ACTIVE, &(float)info->channels);
@@ -181,10 +203,10 @@ namespace Audio
 	{
 		TagLib::FileRef file(utf8_to_utf16(path).c_str());
 
-		info->channels = file.audioProperties()->channels();
 
 		if (file.tag()->isEmpty() == false)
 		{
+			info->channels = file.audioProperties()->channels();
 			TagLib::String buff;
 			s32 buffInt = 0;
 

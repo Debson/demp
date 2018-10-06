@@ -68,10 +68,10 @@ namespace MP
 
 		_MAX_SIZE_RAM_LOADED	= 50;
 
-		VolumeLevel				= 50;
+		VolumeLevel				= 0.5f;
 		VolumeKeyMultiplier		= 0.8f;
 		VolumeScrollStep		= 2.f;
-		PauseFadeTime			= 500;
+		PauseFadeTime			= 300;
 		PlaylistRollMultiplier	= 500;
 
 		PlaylistScrollStep		= 30.f;

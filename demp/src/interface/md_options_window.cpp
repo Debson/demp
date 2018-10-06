@@ -1,6 +1,5 @@
 #include "md_options_window.h"
 
-#include <SDL_image.h>
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 
@@ -38,25 +37,8 @@ namespace mdEngine
 			m_Height,
 			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
-		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		m_WindowID = SDL_GetWindowID(m_Window);
-
-
-		s32 imgFlags = IMG_INIT_PNG;
-		if ((IMG_Init(imgFlags) & imgFlags) == false)
-		{
-			MD_SDL_ERROR("SDL_Image");
-		}
 
 		m_Projection = glm::ortho(0.f, static_cast<float>(m_Width), static_cast<float>(m_Height), 0.f);
 		m_Shader = Shader::shaderDefault;
@@ -208,17 +190,16 @@ namespace mdEngine
 
 	void Window::OptionsWindow::Free()
 	{
-		SDL_GL_DeleteContext(m_Context);
 		SDL_DestroyWindow(m_Window);
+
 		m_VolumeStepSlider.Free();
-		m_PlaylistScrollStepSlider.Free();
+		m_PlaylistScrollStepSlider.Free();;
 		m_PauseFadeTimeSlider.Free();
 		m_RamLoadedSizeSlider.Free();
 
 		m_ToTrayOnExit.Free();
 		m_OnLoadCheckExistence.Free();
 
-		IMG_Quit();
 		m_Shader = NULL;
 		m_Window = NULL;
 	}

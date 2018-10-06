@@ -31,7 +31,6 @@ namespace mdEngine
 			s32 m_Height, m_Width;
 			s32 m_WindowID;
 			SDL_Window* m_Window;
-			SDL_GLContext m_Context;
 			mdShader* m_Shader;
 			SDL_Event m_Event;
 			Text::TextObject m_TestText;

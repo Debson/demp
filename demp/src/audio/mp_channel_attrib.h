@@ -35,6 +35,7 @@ namespace Audio
 				freq		= 0;
 				size		= 0;
 				length		= 0;
+				ctype = 0;
 			}
 
 			std::string title;
@@ -54,6 +55,7 @@ namespace Audio
 			f32 size;	// in bytes
 			f32 length;	// in sec
 
+			DWORD ctype;
 			b8 loaded;
 		};
 
@@ -66,9 +68,12 @@ namespace Audio
 
 		b8 CheckIfAudio(std::string& path);
 
+		b8 CheckIfImage(const std::string& path);
+
 		b8 CheckIfHasItems(std::wstring& path);
 		
 		b8 IsPathLoaded(std::string& path);
+
 
 		// Returns a full path of a file folder(path without a filename)
 		std::string GetFolderPath(std::string& path);

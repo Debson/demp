@@ -215,6 +215,8 @@ namespace mdEngine
 			ButtonSlider();
 			ButtonSlider(std::string labelName, glm::ivec2 pos, f32* value, f32 step, f32 min = 0, f32 max = 100, glm::vec2 size = glm::vec2(100, 20));
 			ButtonSlider(std::string labelName, glm::ivec2 pos, s32* value, s32 step, s32 min = 0, s32 max = 100, glm::vec2 size = glm::vec2(100, 20));
+			~ButtonSlider();
+
 
 			void Init(mdShader* shader);
 			void Update();
@@ -243,9 +245,7 @@ namespace mdEngine
 			GLuint m_LeftTexture;
 			GLuint m_RightTexture;
 			mdShader* m_Shader;
-			glm::vec4 m_LeftSrc;
 			glm::vec4 m_LeftDest;
-			glm::vec4 m_RightSrc;
 			glm::vec4 m_RightDest;
 			glm::vec4 m_SliderOutline;
 			glm::vec4 m_LeftBackground;
@@ -271,6 +271,7 @@ namespace mdEngine
 		public:
 			CheckBox();
 			CheckBox(std::string labelName, glm::vec2 pos, b8* val);
+			~CheckBox();
 
 			void Init(mdShader* renderer);
 			void Update();

@@ -56,14 +56,33 @@ namespace Audio
 		s32 GetObjectSize()					const;
 		f64 GetLength()						const;
 		Info::ID3* GetID3Struct();
+
+		void LoadAlbumImageThreadFun();
+
 		void LoadAlbumImage();
+
+		void LoadAlbumImageLargeSize();
 		void DeleteAlbumImageTexture();
 		GLuint GetAlbumPictureTexture();
 		void SetID3Struct(Info::ID3* id3);
 
 	private:
+
+		b8 LoadAlbumImageFromFolder();
+
+
+		b8 m_LoadAlbumTexture;
+		void* m_AlbumImageData;
+		u32 m_AlbumImageDataSize;
 		GLuint m_AlbumImageTex;
+
+
 	};
+
+
+	typedef std::vector<s32*> ProcessAlbumImageQueue;
+
+	ProcessAlbumImageQueue* GetProcessAlbumImageQueue();
 
 }
 

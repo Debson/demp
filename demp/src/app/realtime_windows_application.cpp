@@ -546,7 +546,7 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 
 	MP::Config::SaveToConfig();
 	mdApplicationHandler->OnWindowClose();
-	MP::UI::GetOptionsWindow()->Free();
+	//MP::UI::GetOptionsWindow()->Free();
 	Graphics::CloseGraphics();
 
 #ifdef _DEBUG_

@@ -476,6 +476,18 @@ void Audio::UpdateAudioLogic()
 	{
 		State::SetState(State::PlaylistEmpty);
 	}
+
+	// Listen if queue has any items, if has then process it
+	if (Audio::GetProcessAlbumImageQueue()->empty() == false)
+	{
+		auto queue = Audio::GetProcessAlbumImageQueue();
+		if (queue->front() != NULL)
+		{
+			m_AudioObjectContainer[*queue->front()]->LoadAlbumImageLargeSize();
+		}
+		
+		Audio::GetProcessAlbumImageQueue()->clear();
+	}
 }
 
 void Audio::PerformDeletion(s32 index, b8 smallDeletion)

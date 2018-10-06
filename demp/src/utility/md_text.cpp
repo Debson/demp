@@ -26,8 +26,6 @@ namespace mdEngine
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
-		m_TextTextureSDL = NULL;
-		m_TextRenderer = NULL;
 	}
 
 	Text::TextObject::TextObject(TTF_Font* font, glm::vec3 col)
@@ -43,8 +41,6 @@ namespace mdEngine
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
-		m_TextTextureSDL = NULL;
-		m_TextRenderer = NULL;
 		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
@@ -61,8 +57,6 @@ namespace mdEngine
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
-		m_TextTextureSDL = NULL;
-		m_TextRenderer = NULL;
 		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
@@ -70,7 +64,6 @@ namespace mdEngine
 	{ 
 		DeleteTexture();
 		m_Font = NULL;
-		m_TextRenderer = NULL;
 	}
 
 	void Text::TextObject::InitTextTexture()
@@ -90,38 +83,12 @@ namespace mdEngine
 		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
 	}
 
-	void Text::TextObject::InitTextTextureSDL(SDL_Renderer* renderer)
-	{
-		m_TextRenderer = renderer;
-		if (m_TextTextureSDL == NULL)
-		{
-			TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
-			m_TextTextureSDL = LoadTextSDL(m_TextRenderer, m_Font, m_TextString, m_TextColorSDL);
-		}
-	}
-
-	void Text::TextObject::ReloadTextTextureSDL()
-	{
-		DeleteTexture();
-
-		assert(m_TextRenderer != NULL);
-
-		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
-		m_TextTextureSDL = LoadTextSDL(m_TextRenderer, m_Font, m_TextString, m_TextColorSDL);
-	}
-
 	void Text::TextObject::DeleteTexture()
 	{
 		if (m_TextTexture > 0)
 		{
 			glDeleteTextures(1, &m_TextTexture);
 			m_TextTexture = 0;
-		}
-
-		if (m_TextTextureSDL != NULL)
-		{
-			SDL_DestroyTexture(m_TextTextureSDL);
-			m_TextTextureSDL = NULL;
 		}
 	}
 
@@ -177,16 +144,6 @@ namespace mdEngine
 		Graphics::Shader::Draw(shader);
 		shader->setVec3("color", Color::White);
 		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-
-	void Text::TextObject::DrawStringSDL(SDL_Renderer* renderer) const
-	{
-		SDL_Rect renderQuad = { m_TextPos.x + m_TextOffset.x, 
-								m_TextPos.y + m_TextOffset.y, 
-								m_TextSize.x * m_TextScale, 
-								m_TextSize.y * m_TextScale };
-
-		SDL_RenderCopy(renderer, m_TextTextureSDL, NULL, &renderQuad);
 	}
 
 	void Text::TextObject::SetTextScale(f32 scale)

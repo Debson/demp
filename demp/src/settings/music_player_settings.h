@@ -15,6 +15,7 @@
 #define MAX_FILEPATH_BUFFER_SIZE 65536
 #define MAX_FOLDERPATH_BUFFER_SIZE 512
 
+#define MAX_ALBUM_IMAGE_SIZE 800000
 
 #define WAIT_TIME_BEFORE_NEXT_CALL 50
 #define MAX_PATH_WAIT_TIME 50
@@ -220,7 +221,7 @@ namespace MP
 			const s32 _MAX_SIZE_RAM_LOADED		= 50;
 			const f32 VolumeKeyMultiplier		= 0.8f;
 			const s32 VolumeScrollStep			= 2;
-			const s32 PauseFadeTime				= 500;
+			const s32 PauseFadeTime				= 300;
 			const s32 VolumeFadeTime			= 500;
 			const s32 PlaylistRollMultiplier	= 500;
 			const f32 PlaylistScrollStep		= 30.f;
@@ -228,11 +229,18 @@ namespace MP
 
 		}
 
-		const std::vector<std::string> SupportedFormats =
+		const std::vector<std::string> SupportedAudioFormats =
 		{
 			".mp3",
 			".wav",
 			".wma"
+		};
+
+		const std::vector<std::string> SupportedImageFormats =
+		{
+			".jpeg",
+			".jpg",
+			".png"
 		};
 
 		void InitializeData();

@@ -2,7 +2,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
-GLuint mdLoadTexture(std::string path)
+GLuint mdLoadTexture(std::string path, mdEngine::b8 clamp)
 {
 	//stbi_set_flip_vertically_on_load(true);
 	GLuint textureID = 0;
@@ -26,8 +26,8 @@ GLuint mdLoadTexture(std::string path)
 		glGenerateMipmap(GL_TEXTURE_2D); // Automatically generate all required mipmaps for currently bound texture
 
 										 // Set texture wrapping and filtering
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (format == GL_RGBA || clamp == true) ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (format == GL_RGBA || clamp == true) ? GL_CLAMP_TO_EDGE : GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -42,11 +42,11 @@ GLuint mdLoadTexture(std::string path)
 	return textureID;
 }
 
-GLuint mdLoadTexture(void* data, size_t size)
+GLuint mdLoadTexture(void* data, mdEngine::u32 size)
 {
 	GLuint textureID = 0;	
 
-	int width, height, nrComponents;
+	mdEngine::s32 width, height, nrComponents;
 
 	unsigned char* dataUC = stbi_load_from_memory((unsigned char*)data, size, &width, &height, &nrComponents, 4);
 
@@ -73,15 +73,27 @@ GLuint mdLoadTexture(void* data, size_t size)
 	return textureID;
 }
 
-SDL_Texture* mdLoadTextureSDL(SDL_Renderer* renderer, std::string path)
+GLuint mdLoadTexture(unsigned char* data, mdEngine::s32 width, mdEngine::s32 height)
 {
-	SDL_Texture* newTex = NULL;
+	GLuint textureID = 0;
 
-	SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+	if (data)
+	{
+		glGenTextures(1, &textureID);
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); // generate a texture
+		glGenerateMipmap(GL_TEXTURE_2D); // Automatically generate all required mipmaps for currently bound texture
 
-	newTex = SDL_CreateTextureFromSurface(renderer, loadedSurface);
+										 // Set texture wrapping and filtering
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+	else
+	{
+		std::cout << "Texture failed to load." << std::endl;
+	}
 
-	SDL_FreeSurface(loadedSurface);
-
-	return newTex;
+	return textureID;
 }

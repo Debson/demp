@@ -32,6 +32,7 @@ namespace MP
 
 		Time::Timer lastDeletionTimer;
 		Time::Timer playFadeTimer;
+		Time::Timer pauseFadeTimer;
 
 		b8 mdNextRequest(false);
 		b8 mdPreviousRequest(false);
@@ -255,6 +256,7 @@ namespace MP
 			if (Data::VolumeLevel > 1.f)
 				Data::VolumeLevel = 1.f;
 			mdVolume = Data::VolumeLevel;
+			State::SetState(State::VolumeChanged);
 			
 			/*s32 songID = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
 			RamLoadedMusic.load(Audio::Object::GetAudioObject(songID));*/
@@ -290,13 +292,12 @@ namespace MP
 			Parser::GetInt(file, Strings::_ON_EXIT_MINIMIZE_TO_TRAY) == 1 ? State::SetState(State::OnExitMinimizeToTray) : (void)0;
 
 			Parser::GetInt(file, Strings::_SONG_POSITION) > 0 ? State::SetState(State::LoadMusicOnFileLoad) : (void)0;
-			b8 testb = State::CheckState(State::LoadMusicOnFileLoad);
-			s32 test = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
 		}
 
 		void Playlist::Start()
 		{
 			playFadeTimer = Time::Timer(Data::StartMusicFadeTime);
+			pauseFadeTimer = Time::Timer(Data::PauseFadeTime);
 		}
 
 		void Playlist::UpdatePlaylist()
@@ -331,6 +332,17 @@ namespace MP
 				mdPreviousRequest = false;
 			}
 
+			// Music fade out on pause, after fade out finished, stop channel
+			if (pauseFadeTimer.finished == true)
+			{
+				if (mdMusicPaused == true)
+				{
+					BASS_ChannelPause(RamLoadedMusic.get());
+				}
+
+				pauseFadeTimer.finished = false;
+			}
+		
 
 			if (State::CheckState(State::DeletionInProgress) == true)
 			{
@@ -341,54 +353,33 @@ namespace MP
 
 		void UpdateMusic()
 		{
-			float vol = 0;
-
-			if (mdVolumeFadeOut)
-			{
-				BASS_ChannelGetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, &vol);
-				if (vol <= 0)
-				{
-					BASS_ChannelPause(RamLoadedMusic.get());
-				}
-			}
-			else if (mdVolumeFadeIn)
-			{
-				BASS_ChannelGetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, &vol);
-				if (vol >= mdVolume)
-				{
-					mdVolumeFadeIn = false;
-				}
-			}
-			else
+			// If mdVolume was changed, update channel volume with mdVolume and update global VolumeLevel(visual volume)
+			if(State::CheckState(State::VolumeChanged) == true && 
+			   playFadeTimer.finished == true)
 			{
 				SetActualVolume();
-			}
-
-
-			if (State::CheckState(State::VolumeChanged) == true)
-			{
-				mdVolumeTemp = mdVolume;
 				Data::VolumeLevel = mdVolume;
 				State::ResetState(State::VolumeChanged);
 			}
-
-			if (playFadeTimer.started == true)
-			{
-				//md_log(mdVolume);
-				mdVolume = playFadeTimer.GetProgressLog() * mdVolumeTemp;
-				State::SetState(State::AudioPlayStarted);
-			}
-			else
-			{
+			else if (State::CheckState(State::VolumeChanged) == true)
+			{// Channel fading in, update global volume anyway(visual volume)
 				Data::VolumeLevel = mdVolume;
-				State::ResetState(State::AudioPlayStarted);
-				mdVolumeTemp = 0;
 			}
 
+			/*	Example: Song started, so the channel is fading in to mdVolume, but during that time mdVolume 
+						 was changed and is lower than channel volume, imediately stop fade.
+			*/
+			if ((playFadeTimer.started == true && playFadeTimer.finished == false) ||
+				(pauseFadeTimer.started == true && pauseFadeTimer.finished == false))
+			{
+				f32 vol;
+				BASS_ChannelGetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, &vol);
+
+				if (vol > mdVolume)
+					BASS_ChannelSlideAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL | BASS_SLIDE_LOG, mdVolume, 1);
+			}
 
 			CheckMPState();
-
-			CheckVolumeBounds();
 
 			RepeatMusicProcedure();
 
@@ -397,6 +388,7 @@ namespace MP
 			AudioChangeInTray();
 
 			playFadeTimer.Update();
+			pauseFadeTimer.Update();
 		}
 
 		void PlayMusic()
@@ -407,8 +399,6 @@ namespace MP
 			auto audioCon = Audio::Object::GetAudioObjectContainer();
 
 			/* Reset booleans that control music state */
-			mdVolumeFadeIn = false;
-			mdVolumeFadeOut = false;
 			mdMusicPaused = false;
 			mdStartNewOnEnd = true;
 
@@ -433,15 +423,14 @@ namespace MP
 			Graphics::MP::GetPlaylistObject()->SetPlayingID(RamLoadedMusic.m_ID);
 			Graphics::MP::GetPlaylistObject()->SetSelectedID(RamLoadedMusic.m_ID);
 
+			Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)->LoadAlbumImage();
 
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
-			if(playFadeTimer.started == false)
-				mdVolumeTemp = mdVolume;
 			playFadeTimer.Start();
-			mdVolume = 0;
 			SetPosition(pos);
 
-			Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)->LoadAlbumImage();
+			BASS_ChannelSetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, 0.f);
+			BASS_ChannelSlideAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL | BASS_SLIDE_LOG, mdVolume, Data::StartMusicFadeTime);
 		}
 
 		void StopMusic()
@@ -456,25 +445,21 @@ namespace MP
 
 		void PauseMusic()
 		{
-
 			if (BASS_ChannelIsActive(RamLoadedMusic.get()) != BASS_ACTIVE_STOPPED && RamLoadedMusic.get() != NULL)
 			{
-				mdMusicPaused == false ? (mdMusicPaused = true) : (mdMusicPaused = false);
+				mdMusicPaused = !mdMusicPaused;
+				pauseFadeTimer.Start();
 
-				if (mdMusicPaused)
+				if (mdMusicPaused == true)
 				{
 					BASS_ChannelSlideAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, 0, Data::PauseFadeTime);
-					mdVolumeFadeOut = true;
 				}
 				else
 				{
-					mdVolumeFadeOut = false;
 					BASS_ChannelPlay(RamLoadedMusic.get(), false);
 					BASS_ChannelSlideAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, mdVolume, Data::PauseFadeTime);
-					mdVolumeFadeIn = true;
 				}
 			}
-
 		}
 
 		void NextMusic()
@@ -610,6 +595,8 @@ namespace MP
 
 		void IncreaseVolume(App::InputEvent event)
 		{
+			State::SetState(State::VolumeChanged);
+
 			switch (event)
 			{
 			case App::InputEvent::kPressedEvent:
@@ -628,6 +615,8 @@ namespace MP
 
 		void LowerVolume(App::InputEvent event)
 		{
+			State::SetState(State::VolumeChanged);
+
 			switch (event)
 			{
 			case App::InputEvent::kPressedEvent:
@@ -784,15 +773,6 @@ namespace MP
 				State::ResetState(State::LoadMusicOnFileLoad);
 			}
 
-		}
-
-		void CheckVolumeBounds()
-		{
-			if (mdVolume > 1.0)
-				mdVolume = 1.0;
-
-			if (mdVolume < 0.0)
-				mdVolume = 0.0;
 		}
 
 		void DeleteMusic(const std::vector<s32>* indexes)
@@ -1053,7 +1033,10 @@ namespace MP
 			if(mdVolumeMuted == false)
 				BASS_ChannelSetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, mdVolume);
 			else
+			{
 				BASS_ChannelSetAttribute(RamLoadedMusic.get(), BASS_ATTRIB_VOL, 0.f);
+				Data::VolumeLevel = 0.f;
+			}
 		}
 
 		void SetVolume(f32 vol)

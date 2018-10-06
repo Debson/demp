@@ -1,18 +1,36 @@
 #include "mp_audio_object.h"
 
+#include <thread>
+
+#include <boost/range/iterator_range.hpp>
+#include <boost/filesystem.hpp>
+
 #include <taglib/toolkit/tbytevector.h>
+#include <taglib/fileref.h>
 #include <taglib/mpeg/mpegfile.h>
 #include <taglib/mpeg/id3v2/id3v2tag.h>
 #include <taglib/mpeg/id3v2/id3v2frame.h>
 #include <taglib/mpeg/id3v2/frames/attachedpictureframe.h>
 
+
 #include "../utility/md_load_texture.h"
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_util.h"
 
+namespace fs = boost::filesystem;
+
 namespace Audio
 {
 
+	static ProcessAlbumImageQueue m_ProcessAlbumImageQueue;
+
+	struct AlbumTexInfo
+	{
+		unsigned char* data = NULL;
+		s32 width;
+		s32 height;
+		s32 nrComponents;
+	} m_AlbumTexInfo;
 }
 
 Audio::AudioObject::AudioObject() 
@@ -196,18 +214,53 @@ void Audio::AudioObject::SetID3Struct(Info::ID3* id3)
 	info = id3;
 }
 
+void Audio::AudioObject::LoadAlbumImageThreadFun()
+{
+	// Load image data to AlbumTexInfo struct and then push this item id to queue
+	m_AlbumTexInfo.data = stbi_load_from_memory((unsigned char*)m_AlbumImageData,
+												m_AlbumImageDataSize,
+												&m_AlbumTexInfo.width,
+												&m_AlbumTexInfo.height,
+												&m_AlbumTexInfo.nrComponents,
+												4);
+
+	if (m_AlbumTexInfo.data)
+	{
+		m_ProcessAlbumImageQueue.push_back(&m_ItemID);
+	}
+}
+
 void Audio::AudioObject::LoadAlbumImage()
 {
+	if (this->m_AlbumImageTex != 0)
+	{
+		md_log("Album cover already loaded");
+		return;
+	}
+	// Currently can load album images only of mpeg mp3 files
+	
+	if (this->info->ctype != BASS_CTYPE_STREAM_MP3)
+	{
+		if (LoadAlbumImageFromFolder() == true)
+		{
+			if (m_AlbumImageTex > 0)
+				md_log("Album cover image loaded from folder succesfully");
+		}
+		else
+			MD_ERROR("Could not find an album image in the folder!");
+
+		return;
+	}
+
 	static const char *IdPicture = "APIC";
-	TagLib::MPEG::File mpegFile(GetPathUTF8().c_str());
+	TagLib::MPEG::File mpegFile(GetPathUTF8().c_str(), false);
+
 	TagLib::ID3v2::Tag *id3v2tag = mpegFile.ID3v2Tag();
 	TagLib::ID3v2::FrameList Frame;
 	TagLib::ID3v2::AttachedPictureFrame *PicFrame;
 
-	u32 size;
-
-	void* data = NULL;
-	if (id3v2tag)
+	m_AlbumImageData = NULL;
+	if (id3v2tag != NULL)
 	{
 		Frame = id3v2tag->frameListMap()[IdPicture];
 		if (!Frame.isEmpty())
@@ -216,9 +269,9 @@ void Audio::AudioObject::LoadAlbumImage()
 			{
 				PicFrame = (TagLib::ID3v2::AttachedPictureFrame *)(*it);
 
-				size = PicFrame->picture().size();
-				data = malloc(size);
-				memcpy(data, PicFrame->picture().data(), size);
+				m_AlbumImageDataSize = PicFrame->picture().size();
+				m_AlbumImageData = malloc(m_AlbumImageDataSize);
+				memcpy(m_AlbumImageData, PicFrame->picture().data(), m_AlbumImageDataSize);
 			}
 		}
 	}
@@ -227,22 +280,62 @@ void Audio::AudioObject::LoadAlbumImage()
 		MD_ERROR("Could not find an album image!");
 	}
 
-	if (data != NULL)
+	if (m_AlbumImageData != NULL)
 	{
-		m_AlbumImageTex = mdLoadTexture(data, size);
-		free(data);
-		data = NULL;
+		// Size of image is too large, process it on different thread
+		if (m_AlbumImageDataSize > MAX_ALBUM_IMAGE_SIZE)
+		{
+			md_log("Large album image size... Opening it on different thread!");
+			std::thread tt(&AudioObject::LoadAlbumImageThreadFun, this);
+			tt.detach();
+			
+			return; // Skip other part of the function
+		}
+		
+		m_AlbumImageTex = mdLoadTexture(m_AlbumImageData, m_AlbumImageDataSize);
+		free(m_AlbumImageData);
+		m_AlbumImageData = NULL;
+	}
+	else if(LoadAlbumImageFromFolder() == true)
+	{
+		if (m_AlbumImageTex > 0)
+			md_log("Album cover image loaded from folder succesfully");
+		return;
+	}
+	else
+	{
+		MD_ERROR("Could not find an album image in the folder!");
+		return;
 	}
 
 	// data is freed in mdLoadTexture function
-
 	if (m_AlbumImageTex > 0)
 		md_log("Album cover image loaded succesfully");
+
+}
+
+void Audio::AudioObject::LoadAlbumImageLargeSize()
+{
+	// Load actual texture to opengl on main thread
+	if (m_AlbumTexInfo.data)
+	{
+		m_AlbumImageTex = mdLoadTexture(m_AlbumTexInfo.data, m_AlbumTexInfo.width, m_AlbumTexInfo.height);
+		stbi_image_free(m_AlbumTexInfo.data);
+		m_AlbumTexInfo.data = NULL;
+
+		free(m_AlbumImageData);
+		m_AlbumImageData = NULL;
+	}
+
+	if (m_AlbumImageTex > 0)
+		md_log("Large album cover image loaded succesfully");
 }
 
 void Audio::AudioObject::DeleteAlbumImageTexture()
 {
-	if (m_AlbumImageTex > 0)
+	// Delete only album image textures with small size(they are fast to load)
+	if (m_AlbumImageTex > 0 && 
+		m_AlbumImageDataSize < MAX_ALBUM_IMAGE_SIZE)
 	{
 		glDeleteTextures(1, &m_AlbumImageTex);
 		m_AlbumImageTex = 0;
@@ -256,3 +349,24 @@ GLuint Audio::AudioObject::GetAlbumPictureTexture()
 	return m_AlbumImageTex;
 }
 
+
+b8 Audio::AudioObject::LoadAlbumImageFromFolder()
+{
+	// Iterate through all the items in audio file folder and search for the first image, if found, load it
+	for (auto & i : fs::directory_iterator(utf8_to_utf16(this->GetFolderPath())))
+	{
+		if (fs::is_regular_file(i.path()) == true && 
+			Info::CheckIfImage(i.path().string()) == true)
+		{
+			m_AlbumImageTex = mdLoadTexture(i.path().string());
+			return true;
+		}
+	}
+
+	return false;
+}
+
+Audio::ProcessAlbumImageQueue* Audio::GetProcessAlbumImageQueue()
+{
+	return &m_ProcessAlbumImageQueue;
+}

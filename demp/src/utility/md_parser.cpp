@@ -41,6 +41,7 @@
 #define POSITION_FREQUENCY	10
 #define POSITION_SIZE		11
 #define POSITION_LENGTH		12
+#define POSITION_CTYPE		13
 
 
 namespace fs = boost::filesystem;
@@ -150,8 +151,9 @@ namespace mdEngine
 				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->size);
 				file << SEPARATOR;
 				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->length);
+				file << SEPARATOR;
+				file << std::to_string(Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->ctype);
 				file << "\n";
-
 			}
 		}
 
@@ -227,6 +229,9 @@ namespace mdEngine
 			GetFloatAtPos(otherHalf, &info->freq,		POSITION_FREQUENCY);
 			GetFloatAtPos(otherHalf, &info->size,		POSITION_SIZE);
 			GetFloatAtPos(otherHalf, &info->length,		POSITION_LENGTH);
+			s32 ctype = 0;
+			GetIntAtPos(otherHalf, &ctype,		POSITION_CTYPE);
+			info->ctype = ctype;
 
 			Audio::LoadPathsFromFile(*path, info);
 		}

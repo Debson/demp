@@ -620,6 +620,7 @@ namespace MP
 			Playlist::RepeatMusic();
 		}
 
+
 		if (App::Input::IsScrollForwardActive() && Graphics::MP::GetMainPlayerObject()->hasFocus())
 		{
 			Playlist::IncreaseVolume(App::InputEvent::kScrollEvent);
@@ -628,6 +629,11 @@ namespace MP
 		if (App::Input::IsScrollBackwardActive() && Graphics::MP::GetMainPlayerObject()->hasFocus())
 		{
 			Playlist::LowerVolume(App::InputEvent::kScrollEvent);
+		}
+
+		if (App::Input::IsKeyPressed(App::KeyCode::Space) == true)
+		{
+			Playlist::PauseMusic();
 		}
 
 
@@ -861,6 +867,24 @@ namespace MP
 			else if (Audio::Object::GetAudioObject(temp) != NULL)
 			{
 				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&Audio::Object::GetAudioObject(temp)->GetID());
+			}
+		}
+
+
+
+		if (App::Input::IsKeyPressed(App::KeyCode::Return))
+		{
+			if (Graphics::MP::GetPlaylistObject()->multipleSelect.empty() == false)
+			{
+				s32 index = *Graphics::MP::GetPlaylistObject()->multipleSelect.front();
+				State::SetState(State::AudioChosen);
+				if (Playlist::RamLoadedMusic.m_ID < Audio::Object::GetSize())
+					Audio::Object::GetAudioObject(Playlist::RamLoadedMusic.m_ID)->DeleteAlbumImageTexture();
+				Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(index));
+
+				Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
+				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(Audio::Object::GetAudioObject(index)->GetIDP());
+				Playlist::PlayMusic();
 			}
 		}
 	}

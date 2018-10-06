@@ -723,6 +723,11 @@ namespace mdEngine
 
 	}
 
+	Interface::ButtonSlider::~ButtonSlider()
+	{
+		Free();
+	}
+
 	void Interface::ButtonSlider::Init(mdShader* shader)
 	{
 		m_Shader = shader;
@@ -777,10 +782,8 @@ namespace mdEngine
 		s32 texW = 10;
 		s32 texH = 10;
 
-		m_LeftSrc	= glm::vec4( 0, 0, texW, texH);
 		m_LeftDest	= glm::vec4(m_SliderPos.x + 10, m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY,
 								buttonTexSize.x, buttonTexSize.y);
-		m_RightSrc	= glm::vec4(0, 0, texW, texH);
 		m_RightDest	= glm::vec4(m_SliderPos.x + buttonTexSize.x + m_ValueTextObject.GetTextSize().x + 2 * offsetX,
 								m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY, 
 								buttonTexSize.x, buttonTexSize.y);
@@ -1073,6 +1076,10 @@ namespace mdEngine
 	{
 		glDeleteTextures(1, &m_LeftTexture);
 		glDeleteTextures(1, &m_RightTexture);
+		m_ValueTextObject.DeleteTexture();
+		m_LabelTextObject.DeleteTexture();
+		m_DefaultTextObject.DeleteTexture();
+
 		m_LeftTexture	= NULL;
 		m_RightTexture	= NULL;
 
@@ -1121,6 +1128,11 @@ namespace mdEngine
 		m_TextPos = glm::vec2(pos.x - textOffsetX, pos.y);
 		m_Font = Data::_MUSIC_PLAYER_FONT;
 		m_TextColorSDL = SDLColor::Black;
+	}
+
+	Interface::CheckBox::~CheckBox()
+	{
+		Free();
 	}
 
 	void Interface::CheckBox::Init(mdShader* shader)
@@ -1176,6 +1188,7 @@ namespace mdEngine
 	{
 		m_Shader = NULL;
 		m_Value = NULL;
+		DeleteTexture();
 	}
 
 	

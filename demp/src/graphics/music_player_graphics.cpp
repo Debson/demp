@@ -443,10 +443,13 @@ namespace mdEngine
 			//		 Add speaker level of volume (1 line, 2 lines etc.)
 
 			// Calculate current slider pos basing on current volume in range (0 - volume_bar_width)
-			deltaVolumePos = (s32)(Data::VolumeLevel * (float)Data::_VOLUME_BAR_SIZE.x);
+			deltaVolumePos = (s32)(Data::VolumeLevel * Data::_VOLUME_BAR_SIZE.x);
 
 			if (Input::isButtonPressed(Input::ButtonType::Volume))
+			{
 				volumeMuted = !volumeMuted;
+				State::SetState(State::VolumeChanged);
+			}
 
 			if (Input::hasFocus(Input::ButtonType::SliderVolume) &&
 				App::Input::IsKeyDown(App::KeyCode::MouseLeft) &&
@@ -500,7 +503,7 @@ namespace mdEngine
 				glBindTexture(GL_TEXTURE_2D, volume_speaker_muted);
 				Shader::Draw(Shader::shaderDefault);
 			}
-			else if (volumeMuted || deltaVolumePos <= 0)
+			else if (volumeMuted == true || deltaVolumePos <= 0)
 			{
 				Shader::shaderDefault->setVec3("color", Color::Grey);
 				Playlist::MuteVolume(true);
@@ -568,14 +571,17 @@ namespace mdEngine
 				glBindTexture(GL_TEXTURE_2D, dot_icon);
 				Shader::Draw(Shader::shaderDefault);
 
-				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(Data::_VOLUME_BAR_POS, 0.35f));
-				model = glm::scale(model, glm::vec3(deltaVolumePos, Data::_VOLUME_BAR_SIZE.y, 1.f));
-				Shader::shaderDefault->setMat4("model", model);
-				Shader::shaderDefault->setVec3("color", Color::Green);
-				glBindTexture(GL_TEXTURE_2D, volume_bar);
-				Shader::Draw(Shader::shaderDefault);
-				Shader::shaderDefault->setVec3("color", Color::White);
+				if (volumeMuted == false)
+				{
+					model = glm::mat4();
+					model = glm::translate(model, glm::vec3(Data::_VOLUME_BAR_POS, 0.35f));
+					model = glm::scale(model, glm::vec3(deltaVolumePos, Data::_VOLUME_BAR_SIZE.y, 1.f));
+					Shader::shaderDefault->setMat4("model", model);
+					Shader::shaderDefault->setVec3("color", Color::Green);
+					glBindTexture(GL_TEXTURE_2D, volume_bar);
+					Shader::Draw(Shader::shaderDefault);
+					Shader::shaderDefault->setVec3("color", Color::White);
+				}
 			}
 			else if (volumeMuted == false)
 			{
@@ -907,6 +913,7 @@ namespace mdEngine
 			State::CheckState(State::AudioChanged) ||
 			State::CheckState(State::AudioChosen))
 		{
+			musicInfoScrollTextTimer.Reset();
 			musicInfoScrollText[0].SetTextString(MP::GetPlaylistObject()->GetMusicInfoScrollString());
 			musicInfoScrollText[0].SetTextScale(1.f);
 			musicInfoScrollText[0].ReloadTextTexture();
