@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <mutex>
 #include <string>
+#include <vector>
 
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
@@ -22,6 +23,7 @@
 #include "mp_audio.h"
 #include "../settings/music_player_settings.h"
 #include "../player/music_player_state.h"
+#include "../playlist/music_player_playlist.h"
 #include "../graphics/music_player_graphics_playlist.h"
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_util.h"
@@ -39,6 +41,8 @@ namespace Audio
 		std::mutex mutex;
 
 		std::vector<std::string> m_LoadedPaths;
+
+		void DeleteSpecialCharacters(std::string& str);
 	}
 
 	void Info::Update()
@@ -71,7 +75,7 @@ namespace Audio
 		u32 size = mdEngine::MP::Data::SupportedAudioFormats.size();
 		for (u8 i = 0; i < size; i++)
 		{
-			if(ext.compare(mdEngine::MP::Data::SupportedAudioFormats[i]) == 0)
+			if (ext.compare(mdEngine::MP::Data::SupportedAudioFormats[i]) == 0)
 				return true;
 		}
 
@@ -99,7 +103,7 @@ namespace Audio
 
 		return false;
 	}
-	
+
 	b8 Info::IsPathLoaded(std::string& path)
 	{
 		if (std::binary_search(m_LoadedPaths.begin(), m_LoadedPaths.end(), path) == true)
@@ -162,9 +166,10 @@ namespace Audio
 	void Info::GetInfo(std::shared_ptr<Audio::AudioObject> audioObj)
 	{
 		ItemBeingProcessed = true;
+
 		std::lock_guard<std::mutex> lockGuard(mutex);
 
-		if(audioObj == nullptr)
+		if (audioObj == nullptr)
 			return;
 
 		auto info = audioObj->GetID3Struct();
@@ -184,7 +189,7 @@ namespace Audio
 		//BASS_ChannelGetAttribute(stream, BASS_ATTRIB_MUSIC_ACTIVE, &(float)info->channels);
 		f32 size = BASS_ChannelGetLength(stream, BASS_POS_BYTE);
 		info->length = BASS_ChannelBytes2Seconds(stream, size);
-		info->size = boost::filesystem::file_size(utf8_to_utf16(audioObj->GetPath()));
+		info->size = fs::file_size(utf8_to_utf16(audioObj->GetPath()));
 		BASS_StreamFree(stream);
 
 		Graphics::MP::GetPlaylistObject()->AddToItemsDuration(info->length);
@@ -203,7 +208,7 @@ namespace Audio
 	{
 		TagLib::FileRef file(utf8_to_utf16(path).c_str());
 
-
+		info = new ID3();
 		if (file.tag()->isEmpty() == false)
 		{
 			info->channels = file.audioProperties()->channels();
@@ -213,10 +218,12 @@ namespace Audio
 			buff = file.tag()->title();
 			if (buff != TagLib::String::null)
 				info->title = utf16_to_utf8(buff.toWString());
+			DeleteSpecialCharacters(info->title);
 
 			buff = file.tag()->artist();
 			if (buff != TagLib::String::null)
 				info->artist = utf16_to_utf8(buff.toWString());
+			DeleteSpecialCharacters(info->artist);
 
 			buffInt = file.tag()->track();
 			if (buffInt != 0)
@@ -225,6 +232,8 @@ namespace Audio
 			buff = file.tag()->album();
 			if (buff != TagLib::String::null)
 				info->album = utf16_to_utf8(buff.toWString());
+			DeleteSpecialCharacters(info->album);
+
 
 			buffInt = file.tag()->year();
 			if (buffInt != 0)
@@ -232,7 +241,8 @@ namespace Audio
 
 			/*buff = file.tag()->comment().toCString();;
 			if (buff != TagLib::String::null)
-				info->comment = buff.toCString();*/
+				info->comment = buff.toCString();
+			DeleteSpecialCharacters(info->comment);*/
 
 			buff = file.tag()->genre().toCString();;
 			if (buff != TagLib::String::null)
@@ -256,5 +266,14 @@ namespace Audio
 	s32 Info::GetProcessedItemsCount()
 	{
 		return LoadedItemsInfoCount;
+	}
+
+	void Info::DeleteSpecialCharacters(std::string& str)
+	{
+		for (auto & i : str)
+		{
+			if (i == '\r' || i == '\n')
+				i = ' ';
+		}
 	}
 }

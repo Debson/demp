@@ -82,7 +82,6 @@ namespace MP
 
 		void DeleteMusic(const std::vector<s32>* indexes);
 
-
 		b8 IsLoaded();
 
 		b8 IsPaused();

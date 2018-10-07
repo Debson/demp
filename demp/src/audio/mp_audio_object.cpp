@@ -26,11 +26,20 @@ namespace Audio
 
 	struct AlbumTexInfo
 	{
+		AlbumTexInfo()
+		{
+			width = 0;
+			height = 0;
+			nrComponents = 0;
+			isLoading = false;
+		}
+
 		unsigned char* data = NULL;
 		s32 width;
 		s32 height;
 		s32 nrComponents;
-	} m_AlbumTexInfo;
+		b8 isLoading;
+	} mdAlbumTexInfo;
 }
 
 Audio::AudioObject::AudioObject() 
@@ -217,14 +226,16 @@ void Audio::AudioObject::SetID3Struct(Info::ID3* id3)
 void Audio::AudioObject::LoadAlbumImageThreadFun()
 {
 	// Load image data to AlbumTexInfo struct and then push this item id to queue
-	m_AlbumTexInfo.data = stbi_load_from_memory((unsigned char*)m_AlbumImageData,
+	mdAlbumTexInfo.isLoading = true;
+	mdAlbumTexInfo.data = stbi_load_from_memory((unsigned char*)m_AlbumImageData,
 												m_AlbumImageDataSize,
-												&m_AlbumTexInfo.width,
-												&m_AlbumTexInfo.height,
-												&m_AlbumTexInfo.nrComponents,
+												&mdAlbumTexInfo.width,
+												&mdAlbumTexInfo.height,
+												&mdAlbumTexInfo.nrComponents,
 												4);
 
-	if (m_AlbumTexInfo.data)
+	mdAlbumTexInfo.isLoading = false;
+	if (mdAlbumTexInfo.data)
 	{
 		m_ProcessAlbumImageQueue.push_back(&m_ItemID);
 	}
@@ -283,7 +294,8 @@ void Audio::AudioObject::LoadAlbumImage()
 	if (m_AlbumImageData != NULL)
 	{
 		// Size of image is too large, process it on different thread
-		if (m_AlbumImageDataSize > MAX_ALBUM_IMAGE_SIZE)
+		if (m_AlbumImageDataSize > MAX_ALBUM_IMAGE_SIZE && 
+			mdAlbumTexInfo.isLoading == false)
 		{
 			md_log("Large album image size... Opening it on different thread!");
 			std::thread tt(&AudioObject::LoadAlbumImageThreadFun, this);
@@ -317,11 +329,11 @@ void Audio::AudioObject::LoadAlbumImage()
 void Audio::AudioObject::LoadAlbumImageLargeSize()
 {
 	// Load actual texture to opengl on main thread
-	if (m_AlbumTexInfo.data)
+	if (mdAlbumTexInfo.data)
 	{
-		m_AlbumImageTex = mdLoadTexture(m_AlbumTexInfo.data, m_AlbumTexInfo.width, m_AlbumTexInfo.height);
-		stbi_image_free(m_AlbumTexInfo.data);
-		m_AlbumTexInfo.data = NULL;
+		m_AlbumImageTex = mdLoadTexture(mdAlbumTexInfo.data, mdAlbumTexInfo.width, mdAlbumTexInfo.height);
+		stbi_image_free(mdAlbumTexInfo.data);
+		mdAlbumTexInfo.data = NULL;
 
 		free(m_AlbumImageData);
 		m_AlbumImageData = NULL;
@@ -349,9 +361,17 @@ GLuint Audio::AudioObject::GetAlbumPictureTexture()
 	return m_AlbumImageTex;
 }
 
-
 b8 Audio::AudioObject::LoadAlbumImageFromFolder()
 {
+	auto sepItem = Interface::Separator::GetSeparatorByID(m_ItemID);
+	assert(sepItem != nullptr);
+	// Max treshold of amount of files in the folder on which searching will be performed
+	// Change hardcode
+	if (sepItem->GetSubFilesContainer()->size() > 500)
+	{
+		md_log("Folder has too many files to perform searching!");
+		return false;
+	}
 	// Iterate through all the items in audio file folder and search for the first image, if found, load it
 	for (auto & i : fs::directory_iterator(utf8_to_utf16(this->GetFolderPath())))
 	{

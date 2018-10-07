@@ -9,7 +9,7 @@
 #include "../../external/imgui/imgui.h"
 
 #include "../interface/md_interface.h"
-#include "../interface/md_options_window.h"
+#include "../interface/md_helper_windows.h"
 #include "music_player_ui_input.h"
 
 namespace mdEngine

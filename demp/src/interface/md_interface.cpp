@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <random>
 #include <iomanip>
+#include <mutex>
 
 #include "../app/application_window.h"
 #include "../settings/music_player_settings.h"
@@ -29,6 +30,7 @@ namespace mdEngine
 		static PlaylistButtonContainer		m_PlaylistButtonsContainer;
 		InterfaceButtonContainer		m_InterfaceButtonContainer;
 
+		static std::mutex mutex;
 	}
 
 	void Interface::CloseInterface()
@@ -159,8 +161,8 @@ namespace mdEngine
 		assert(Audio::Object::GetAudioObject(m_ItemID) != nullptr);
 
 		m_TitleC = m_TextString;
-		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
-		m_TextString = GetShortenTextString();
+		//TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
+		//m_TextString = GetShortenTextString();
 
 		m_PlaylistButtonsContainer[m_ItemID] = std::make_pair(&m_ItemID, this);
 	}
@@ -251,7 +253,6 @@ namespace mdEngine
 		m_PlaylistItemPos = glm::vec2(m_ButtonPos.x, m_ButtonPos.y - *m_PlaylistOffsetY);
 		return m_PlaylistItemPos;
 	}
-
 
 	void Interface::PlaylistItem::Click()
 	{

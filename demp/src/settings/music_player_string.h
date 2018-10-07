@@ -10,6 +10,7 @@ namespace mdEngine
 	namespace Strings
 	{
 
+		// Settings files texts
 		extern std::string _SETTINGS_FILE;
 		extern std::string _PLAYLIST_FILE;
 		const std::string _DATABASE_FILE			= "E:\\SDL Projects\\demp\\demp\\data.db";
@@ -35,6 +36,7 @@ namespace mdEngine
 		const std::string _CONTENT_LOADED		= "content_loaded";
 		const std::string _PLAYBACK_CURSOR		= "playback_cursor";
 
+		// Options window rendering texts
 		const std::string  _OPTIONS_WINDOW_NAME			= "Options";
 		const std::string _VOLUME_SCROL_STEP_TEXT		= "Volume Scroll Step:";
 		const std::string _PLAYLIST_SCROLL_STEP_TEXT	= "Playlist Scroll Step:";

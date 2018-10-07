@@ -298,8 +298,24 @@ namespace mdEngine
 		MP::GetPlaylistObject()->SetPlayingID(Parser::GetInt(file, Strings::_SONG_POSITION));
 
 		file = Strings::_PLAYLIST_FILE;
-		MP::GetPlaylistObject()->SetItemsDuration(Parser::GetFloat(file, Strings::_CONTENT_DURATION));
-		MP::GetPlaylistObject()->SetItemsSize(Parser::GetFloat(file, Strings::_CONTENT_SIZE));
+
+		s32 filesCount = Parser::GetInt(file, Strings::_CONTENT_FILES);
+		f64 contentDurtation = Parser::GetFloat(file, Strings::_CONTENT_DURATION);
+		f64 contentSize = Parser::GetFloat(file, Strings::_CONTENT_SIZE);
+		if (filesCount <= 0)
+		{
+			MP::GetPlaylistObject()->SetItemsDuration(0.f);
+			MP::GetPlaylistObject()->SetItemsSize(0.f);
+		}
+		else if (contentDurtation >= 0 && contentSize >= 0)
+		{
+			MP::GetPlaylistObject()->SetItemsDuration(contentDurtation);
+			MP::GetPlaylistObject()->SetItemsSize(contentSize);
+		}
+		else
+		{
+			State::SetState(State::ReloadFilesInfo);
+		}
 
 		State::SetState(State::AudioAdded);
 	}
@@ -909,6 +925,12 @@ namespace mdEngine
 
 	void Graphics::RenderMusicScrollInfo()
 	{
+		if (Audio::Object::GetSize() == 0 &&
+			Playlist::RamLoadedMusic.get() == NULL)
+		{
+			return;
+		}
+
 		if (MP::GetPlaylistObject()->GetPlayingID() >= 0 &&
 			State::CheckState(State::AudioChanged) ||
 			State::CheckState(State::AudioChosen))

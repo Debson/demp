@@ -246,8 +246,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 
 	SetupGlew();
-
-	MP::Config::LoadConfig();
+	
 	mdApplicationHandler->OnWindowOpen();
 	Graphics::StartGraphics();
 
@@ -508,6 +507,11 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			{
 				MP::UI::GetOptionsWindow()->Render();
 			}
+
+			if (Audio::GetLoadInfoWindow()->IsActive() == true)
+			{
+				Audio::GetLoadInfoWindow()->Render();
+			}
 			
 			if (State::IsBackgroundModeActive() == true)
 			{
@@ -660,6 +664,14 @@ void mdEngine::Window::SetWindowPos(s32 x, s32 y)
 	SDL_SetWindowPosition(mdWindow, x, y);
 }
 
+glm::vec2 mdEngine::Window::GetWindowPos()
+{
+	s32 x, y;
+	SDL_GetWindowPosition(mdWindow, &x, &y);;
+
+	return glm::vec2(x, y);
+}
+
 void mdEngine::Window::SetWindowSize(s32 w, s32 h)
 {
 	SDL_SetWindowSize(mdWindow, w, h);
@@ -668,6 +680,13 @@ void mdEngine::Window::SetWindowSize(s32 w, s32 h)
 void mdEngine::Window::GetWindowSize(s32* w, s32* h)
 {
 	SDL_GetWindowSize(mdWindow, w, h);
+}
+
+glm::vec2 mdEngine::Window::GetWindowSize()
+{
+	s32 w, h;
+	SDL_GetWindowSize(mdWindow, &w, &h);
+	return glm::vec2(w, h);
 }
 
 void mdEngine::Window::GetWindowScale(f32* scaleX, f32* scaleY)

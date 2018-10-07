@@ -2,6 +2,7 @@
 
 #include "music_player_system.h"
 #include "music_player_state.h"
+#include "music_player_config.h"
 
 namespace mdEngine
 {
@@ -18,6 +19,7 @@ namespace mdEngine
 	void MP::MusicPlayer::Start()
 	{
 		Data::InitializeData();
+		MP::Config::LoadConfig();
 		OpenMusicPlayer();
 	}
 

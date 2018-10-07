@@ -45,12 +45,13 @@ namespace mdEngine
 			CrossfadeEnabled			= (1llu << 22),
 			PlaylistRolling				= (1llu << 23),
 			OnExitMinimizeToTray		= (1llu << 24),
-			LoadMusicOnFileLoad				= (1llu << 25),
+			LoadMusicOnFileLoad			= (1llu << 25),
 			UpdatePlaylistInfoStrings	= (1llu << 26),
 			SafeExitPossible			= (1llu << 46),
 			SortPathsOnNewFileLoad		= (1llu << 47),
 			PathContainerSorted			= (1llu << 48),
-			TerminateWorkingThreads		= (1llu << 49)
+			TerminateWorkingThreads		= (1llu << 49),
+			ReloadFilesInfo				= (1llu << 50)
 		};
 
 		namespace Window

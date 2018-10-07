@@ -1,6 +1,8 @@
 #include "md_text.h"
 
 #include <sstream>
+#include <mutex>
+
 
 #include <gtc/matrix_transform.hpp>
 
@@ -16,7 +18,7 @@ namespace mdEngine
 {
 	namespace Text
 	{
-
+		static std::mutex mutex;
 	}
 
 	Text::TextObject::TextObject()
@@ -80,6 +82,7 @@ namespace mdEngine
 		DeleteTexture();
 
 		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
+
 		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
 	}
 
@@ -234,7 +237,6 @@ namespace mdEngine
 		GLuint textTexture;
 		SDL_Surface* textSurface;
 		GLenum format;
-
 
 		textSurface = TTF_RenderUTF8_Blended(font, string.c_str(), color);
 		if (textSurface == NULL)

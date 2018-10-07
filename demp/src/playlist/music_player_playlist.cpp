@@ -5,6 +5,8 @@
 #include <filesystem>
 #include <Windows.h>
 
+#include <boost/filesystem.hpp>
+
 #include "../ui/music_player_ui.h"
 #include "../graphics/music_player_graphics_playlist.h"
 #include "../audio/mp_audio.h"
@@ -20,6 +22,8 @@
 #ifdef _WIN32_
 #define OUTPUT std::cout
 #endif
+
+namespace fs = boost::filesystem;
 
 
 namespace mdEngine
@@ -137,11 +141,17 @@ namespace MP
 #ifdef _WIN32_
 		b8 SongObject::load(std::shared_ptr<Audio::AudioObject> audioObject)
 		{
+			BASS_StreamFree(m_MusicStream);
 			FILE* file = NULL;
-			if (_wfopen_s(&file, utf8_to_utf16(audioObject->GetPath()).c_str(), L"rb+") != 0)
+			if (_wfopen_s(&file, audioObject->GetPathUTF8().c_str(), L"rb+") != 0)
 			{
 				OUTPUT << "ERROR: could not open file at path \"" << audioObject->GetPath() << "\"\n";
 				std::cout << stderr;
+
+				if(fs::exists(audioObject->GetPathUTF8()) == false)
+					DeleteMusic(&std::vector<s32>(1, audioObject->GetID()));
+
+
 				return false;
 			}
 #else
@@ -169,7 +179,6 @@ namespace MP
 
 				if(m_Data != NULL)
 					delete[] m_Data;
-				BASS_StreamFree(m_MusicStream);
 				m_Data = NULL;
 				m_MusicStream = NULL;
 
@@ -185,9 +194,7 @@ namespace MP
 						m_MusicStream = BASS_StreamCreateFile(TRUE, m_Data, 0, size, BASS_STREAM_AUTOFREE);
 						if (check_file() == false)
 						{
-							//delete mdPathContainer[mID];
-							//mdPathContainer.erase(mdPathContainer.begin() + mID);
-
+							DeleteMusic(&std::vector<s32>(1, audioObject->GetID()));
 							return load(Audio::Object::GetAudioObject(m_ID + 1));
 						}
 					}
@@ -201,19 +208,20 @@ namespace MP
 				}
 				else
 				{
+					fclose(file);
 					delete[] m_Data;
 					m_Data = NULL;
 #ifdef _WIN32_
-					m_MusicStream = BASS_StreamCreateFile(FALSE, m_Path.c_str(), 0, 0, 0);
+					std::wstring test = audioObject->GetPathUTF8();
+					m_MusicStream = BASS_StreamCreateFile(FALSE, audioObject->GetPathUTF8().c_str(), 0, 0, 0);
 #else
 					mMusic = BASS_StreamCreateFile(FALSE, mPath, 0, 0, 0);
 #endif
 
-					if (check_file() == false)
+					if (check_file() == false && 
+						m_ID + 1 < Audio::Object::GetSize())
 					{
-						//delete mdPathContainer[mID];
-						//mdPathContainer.erase(mdPathContainer.begin() + mID);
-
+						DeleteMusic(&std::vector<s32>(1, audioObject->GetID()));
 						return load(Audio::Object::GetAudioObject(m_ID + 1));;
 					}
 				}
@@ -291,6 +299,7 @@ namespace MP
 
 			Parser::GetInt(file, Strings::_ON_EXIT_MINIMIZE_TO_TRAY) == 1 ? State::SetState(State::OnExitMinimizeToTray) : (void)0;
 
+			// App was closed durning some audio file playback, go back exactly to that audio file and it's position
 			Parser::GetInt(file, Strings::_SONG_POSITION) > 0 ? State::SetState(State::LoadMusicOnFileLoad) : (void)0;
 		}
 
@@ -399,9 +408,6 @@ namespace MP
 			auto audioCon = Audio::Object::GetAudioObjectContainer();
 
 			/* Reset booleans that control music state */
-			mdMusicPaused = false;
-			mdStartNewOnEnd = true;
-
 			PauseMusic();
 
 
@@ -416,10 +422,20 @@ namespace MP
 
 			if (RamLoadedMusic.get() != NULL)
 			{
-				if(IsPlaying() == false)
-					RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID));
-				mdMPStarted = true;
+				if (IsPlaying() == false && RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)))
+				{
+					mdMPStarted = true;
+				}
+				else
+				{
+					mdMPStarted = false;
+					return;
+				}
 			}
+
+			mdMusicPaused = false;
+			mdStartNewOnEnd = true;
+
 			Graphics::MP::GetPlaylistObject()->SetPlayingID(RamLoadedMusic.m_ID);
 			Graphics::MP::GetPlaylistObject()->SetSelectedID(RamLoadedMusic.m_ID);
 
@@ -470,7 +486,6 @@ namespace MP
 				f32 pos = GetPosition();
 				BASS_ChannelStop(RamLoadedMusic.get());
 
-				State::SetState(State::AudioChanged);
 				if (State::CheckState(State::CurrentlyPlayingDeleted) == true)
 				{
 					RamLoadedMusic.m_ID--;
@@ -500,15 +515,26 @@ namespace MP
 						{
 							index++;
 						}
-						//assert(RamLoadedSong.load(mdPathContainer[RamLoadedSong.mID + index], RamLoadedSong.mID + index));
+
 						if(pos != 0)
 							mdNextRequest = true;
 					}
 					else
 					{
-						RamLoadedMusic.load(Audio::Object::GetAudioObject(0));
-						if (pos != 0)
-							mdNextRequest = true;
+						/*	Example: Audio file is already playing and the same audio file was opened in different player, so
+									 so it doesn't have access to load that file
+						*/
+						if (RamLoadedMusic.load(Audio::Object::GetAudioObject(0)) == true)
+						{
+							if (pos != 0)
+								mdNextRequest = true;
+						}
+						else
+						{
+							mdNextRequest = false;
+							return;
+						}
+
 					}
 				}
 				else
@@ -527,6 +553,10 @@ namespace MP
 					
 				}
 			}
+
+			State::SetState(State::AudioChanged);
+
+
 		}
 
 		void PreviousMusic()
@@ -570,9 +600,16 @@ namespace MP
 					}
 					else
 					{
-						RamLoadedMusic.load(Audio::Object::GetAudioObject(Audio::Object::GetSize() - 1));
-						if (pos != 0)
-							mdPreviousRequest = true;
+						if (RamLoadedMusic.load(Audio::Object::GetAudioObject(Audio::Object::GetSize() - 1)) == true)
+						{
+							if (pos != 0)
+								mdPreviousRequest = true;
+						}
+						else
+						{
+							mdPreviousRequest = false;
+							return;
+						}
 					}
 				}
 				else
@@ -762,7 +799,7 @@ namespace MP
 			{
 				std::string file = Strings::_SETTINGS_FILE;
 				s32 songID = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
-				if (songID < Audio::Object::GetSize())
+				if (songID < Audio::Object::GetSize() && songID >= 0)
 				{
 					md_log(songID);
 					RamLoadedMusic.load(Audio::Object::GetAudioObject(songID));

@@ -35,7 +35,8 @@ namespace Audio
 				freq		= 0;
 				size		= 0;
 				length		= 0;
-				ctype = 0;
+				ctype		= 0;
+				infoCorrupted = false;
 			}
 
 			std::string title;
@@ -54,7 +55,8 @@ namespace Audio
 			f32 freq;
 			f32 size;	// in bytes
 			f32 length;	// in sec
-
+				
+			b8 infoCorrupted;
 			DWORD ctype;
 			b8 loaded;
 		};

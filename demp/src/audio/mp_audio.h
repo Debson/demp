@@ -5,6 +5,7 @@
 
 #include "mp_channel_attrib.h"
 #include "mp_audio_object.h"
+#include "../interface/md_helper_windows.h"
 
 namespace Audio
 {
@@ -57,6 +58,10 @@ namespace Audio
 	u32 GetProccessedFileCount();
 
 	u32 GetProcessedID3Tags();
+
+	u32 GetIndexOfLoadingObject();
+
+	Window::LoadInfoWindow* GetLoadInfoWindow();
 
 #ifdef _DEBUG_
 	void GetItemsInfo();

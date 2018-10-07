@@ -29,19 +29,20 @@
 #define SEPARATOR_SUMMARY "#-----SUMMARY-----#" 
 #define SEPARATOR_CONTENT "#-----CONTENT-----#"
 
-#define POSITION_TITLE		1
-#define POSITION_ARTIST		2
-#define POSITION_ALBUM		3
-#define POSITION_GENRE		4
-#define POSITION_YEAR		5
-#define POSITION_TRACK_NUM	6
-#define POSITION_COMPOSER	7
-#define POSITION_BITRATE	8
-#define POSITION_CHANNELS	9
-#define POSITION_FREQUENCY	10
-#define POSITION_SIZE		11
-#define POSITION_LENGTH		12
-#define POSITION_CTYPE		13
+#define POSITION_LOADED		1
+#define POSITION_TITLE		2
+#define POSITION_ARTIST		3
+#define POSITION_ALBUM		4
+#define POSITION_GENRE		5
+#define POSITION_YEAR		6
+#define POSITION_TRACK_NUM	7
+#define POSITION_COMPOSER	8
+#define POSITION_BITRATE	9
+#define POSITION_CHANNELS	10
+#define POSITION_FREQUENCY	11
+#define POSITION_SIZE		12
+#define POSITION_LENGTH		13
+#define POSITION_CTYPE		14
 
 
 namespace fs = boost::filesystem;
@@ -90,10 +91,19 @@ namespace mdEngine
 
 			return buffer;
 		}
+
+		b8 fileInfoCorrupted(false);
 	}
 
 	b8 Parser::SavePathsToFile(const std::string& fileName)
 	{
+		// Playlist empty, delete playlist settings file
+		if (Audio::Object::GetSize() == 0)
+		{
+			boost::filesystem::remove(fileName);
+			return true;
+		}
+
 		std::fstream file;
 		file.open(fileName, std::ios::out | std::ios::binary);
 		if (file.is_open() == false)
@@ -109,7 +119,7 @@ namespace mdEngine
 		AddToFile(&file, Strings::_CONTENT_DURATION, std::to_string(Graphics::MP::GetPlaylistObject()->GetItemsDuration()));
 		AddToFile(&file, Strings::_CONTENT_FILES, Audio::Object::GetSize());
 		AddToFile(&file, Strings::_CONTENT_SIZE, std::to_string(Graphics::MP::GetPlaylistObject()->GetItemsSize()));
-		AddToFile(&file, Strings::_CONTENT_LOADED, Audio::Info::GetProcessedItemsCount() == Audio::Object::GetSize());
+		AddToFile(&file, Strings::_CONTENT_LOADED, State::CheckState(State::FilesInfoLoaded) && Audio::Object::GetSize() > 0);
 		AddToFile(&file, Strings::_PLAYBACK_CURSOR, MP::Playlist::RamLoadedMusic.m_ID);
 
 		file << "\n\n";
@@ -127,8 +137,9 @@ namespace mdEngine
 				// title, artist, album, genre, year, track num, composer, bitrate, channels, freq, size, length,  
 				file << *k.second;
 				file << SEPARATOR;
+				file << Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->loaded;
+				file << SEPARATOR;
 				file << Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->title;
-				std::string title = Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->title;;
 				file << SEPARATOR;
 				file << Audio::Object::GetAudioObject(*k.first)->GetID3Struct()->artist;
 				file << SEPARATOR;
@@ -194,7 +205,7 @@ namespace mdEngine
 
 		while (fgets(line, linesz, f) != NULL)
 		{
-			if (line[0] == '-')
+			if (line[0] == '-' || line[1] != ':')
 				continue;
 
 			State::SetState(State::InitialLoadFromFile);
@@ -213,10 +224,18 @@ namespace mdEngine
 			path->resize(i);
 			strncat(&path->at(0), line, i);
 
+			// Loaded path could've be corrupted, so check if it is valid before doing any text operations
+			if (fs::exists(*path) == false)
+				continue;
+
 			memcpy(otherHalf, line + i, (len - i));
 			memset(line, 0, sizeof(line));
 
+			fileInfoCorrupted = false;
 			// title, artist, album, genre, year, track num, composer, bitrate, channels, freq, size, length,  
+			s32 loaded = 0;
+			GetIntAtPos(otherHalf, &loaded,				POSITION_LOADED);
+			info->loaded = loaded;
 			GetStringAtPos(otherHalf, info->title,		POSITION_TITLE);
 			GetStringAtPos(otherHalf, info->artist,		POSITION_ARTIST);
 			GetStringAtPos(otherHalf, info->album,		POSITION_ALBUM);
@@ -232,6 +251,9 @@ namespace mdEngine
 			s32 ctype = 0;
 			GetIntAtPos(otherHalf, &ctype,		POSITION_CTYPE);
 			info->ctype = ctype;
+
+			if (fileInfoCorrupted == true)
+				info->infoCorrupted = true;
 
 			Audio::LoadPathsFromFile(*path, info);
 		}
@@ -450,6 +472,7 @@ namespace mdEngine
 		s32 start_pos = -1;
 		s32 end_pos = -1;
 
+		info = "";
 		while (str[i] != '\0')
 		{
 			if (str[i] == SEPARATOR)
@@ -469,11 +492,14 @@ namespace mdEngine
 			i++;
 		}
 
+		if (start_pos == -1 || end_pos == -1)
+			return;
+
 		info.resize(end_pos - start_pos);
 		memcpy(&info[0], str + start_pos + 1, end_pos - start_pos);
 
 		if (end_pos - start_pos <= 1)
-			info = "";
+		info = "";
 	}
 
 	void Parser::GetFloatAtPos(char* str, f32* info, s32 pos)
@@ -500,6 +526,12 @@ namespace mdEngine
 				break;
 			}
 			i++;
+		}
+
+		if (start_pos == -1 || end_pos == -1 || end_pos - start_pos > 30)
+		{
+			fileInfoCorrupted = true;
+			return;
 		}
 
 		char strInfo[30];
@@ -534,6 +566,15 @@ namespace mdEngine
 				break;
 			}
 			i++;
+		}
+
+		if (start_pos == -1 || end_pos == -1 || end_pos - start_pos > 30)
+			return;
+
+		if (end_pos - start_pos > 30)
+		{
+			fileInfoCorrupted = true;
+			return;
 		}
 
 		char strInfo[30];

@@ -820,11 +820,14 @@ namespace MP
 
 				if (Audio::Object::GetAudioObject(i)->GetClickCount() > 1)
 				{
-					State::SetState(State::AudioChosen);
-					if(Playlist::RamLoadedMusic.m_ID < Audio::Object::GetSize())
-						Audio::Object::GetAudioObject(Playlist::RamLoadedMusic.m_ID)->DeleteAlbumImageTexture();
-					Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(i));
-					Playlist::PlayMusic();
+					// Make sure audio file is available
+					if (Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(i)) == true)
+					{
+						if(Playlist::RamLoadedMusic.m_ID < Audio::Object::GetSize())
+							Audio::Object::GetAudioObject(Playlist::RamLoadedMusic.m_ID)->DeleteAlbumImageTexture();
+						Playlist::PlayMusic();
+						State::SetState(State::AudioChosen);
+					}
 				}
 
 			}

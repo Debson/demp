@@ -31,6 +31,7 @@ namespace mdEngine
 
 		void Config::SaveToConfig()
 		{
+			md_log(Audio::Object::GetSize());
 			Parser::SavePathsToFile(Strings::_PLAYLIST_FILE);
 			Parser::SaveSettingsToFile(Strings::_SETTINGS_FILE);
 		}

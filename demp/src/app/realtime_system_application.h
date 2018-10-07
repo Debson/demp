@@ -47,8 +47,10 @@ namespace mdEngine
 		void SetWindowPos(s32 x, s32 y);
 		void SetWindowSize(s32 w, s32 h);
 		void GetWindowSize(s32* w, s32* h);
+		glm::vec2 GetWindowSize();
 		void GetWindowScale(f32* scaleX, f32* scaleY);
 		void GetWindowPos(s32* x, s32* y);
+		glm::vec2 GetWindowPos();
 		void UpdateViewport(s32 w, s32 h);
 	}
 }

@@ -35,11 +35,14 @@ namespace Audio
 
 	static std::vector<Audio::Info::ID3*> m_ID3Container;
 
+	Window::LoadInfoWindow mdLoadInfoWindow;
+
 	static s32 currentContainersSize = 0;
 	static s32 previousContainerSize = 0;
 	static s32 currentlyLoadedItemsCount = 0;
 
-	static s32 filesAddedCount = 0;
+	static s32 filesAddedCount;
+	static u32 indexOfLoadingObject;
 
 	static std::mutex mutex;
 
@@ -63,6 +66,7 @@ namespace Audio
 
 	// Flag that says if music files loaded from text are scanned for detailed info
 	b8 filesInfoScanned(false);
+	b8 anyFileCorrupted(false);
 
 	s32 indexOfDroppedOnItem = -1;
 
@@ -76,6 +80,7 @@ namespace Audio
 
 	void LoadFilesInfoWrap(std::vector<std::shared_ptr<Audio::AudioObject>*>* tempVec);
 
+	void ActiveLoadInfoWindow();
 
 
 	void ResetStateFlags();
@@ -83,18 +88,23 @@ namespace Audio
 
 void Audio::InitializeConfig()
 {
-	filesInfoScanned = Parser::GetInt(Strings::_PLAYLIST_FILE, Strings::_CONTENT_LOADED);
+	/*filesInfoScanned = Parser::GetInt(Strings::_PLAYLIST_FILE, Strings::_CONTENT_LOADED);
+	filesInfoScanned ? State::SetState(State::FilesInfoLoaded) : State::ResetState(State::FilesInfoLoaded);
 	s32 filesDuration = Parser::GetInt(Strings::_PLAYLIST_FILE, Strings::_CONTENT_DURATION);
 	if (filesDuration <= 0 && filesInfoScanned > 0)
 	{
 		filesInfoScanned = 0;
-	}
+	}*/
 }
 
 void Audio::StartAudio()
 {
 	State::SetState(State::FilesLoaded);
 	State::SetState(State::FilesInfoLoaded);
+
+	// dimensions hardcoded for now
+	mdLoadInfoWindow = Window::LoadInfoWindow(600, 100);
+
 }
 
 void Audio::FilesAddedByFileBrowser(b8 val)
@@ -312,6 +322,9 @@ b8 Audio::PushToPlaylist(std::string& path)
 
 void Audio::UpdateAudioLogic()
 {
+	if (State::CheckState(State::Window::Exit) == true)
+		return;
+
 	if (lastFunctionCallTimer.GetTicksStart() > WAIT_TIME_BEFORE_NEXT_CALL)
 	{
 		startLoadingProperties = true;
@@ -326,9 +339,9 @@ void Audio::UpdateAudioLogic()
 		filesLoadedFromFile = true;
 	}
 
-
-	if (startLoadingProperties == true && 
-		m_AddedFilesPathContainer.empty() == false)
+	// Files added, load them. If there were some errors durning loading config file, state ReloadFilesInfo is set.
+	if ((startLoadingProperties == true && m_AddedFilesPathContainer.empty() == false) || 
+		 State::CheckState(State::ReloadFilesInfo) == true)
 	{
 		s32 toProcessCount = m_AddedFilesPathContainer.size();
 		filesAddedCount = toProcessCount;
@@ -432,6 +445,7 @@ void Audio::UpdateAudioLogic()
 		m_AudioObjectContainer.empty() == true)
 	{
 		State::ResetState(State::FilesLoaded);
+		Info::LoadedItemsInfoCount = 0;
 	}
 
 	if (m_AudioObjectContainer.empty() == false && 
@@ -488,6 +502,9 @@ void Audio::UpdateAudioLogic()
 		
 		Audio::GetProcessAlbumImageQueue()->clear();
 	}
+	
+
+	ActiveLoadInfoWindow();
 }
 
 void Audio::PerformDeletion(s32 index, b8 smallDeletion)
@@ -646,6 +663,7 @@ b8 Audio::AddAudioItem(std::string& path, s32 id)
 		audioObject->SetID3Struct(new Info::ID3());
 		//auto str = new std::string(path);
 	}
+	
 
 	audioObject->SetID(id);
 	audioObject->SetPath(path);
@@ -655,6 +673,7 @@ b8 Audio::AddAudioItem(std::string& path, s32 id)
 
 	audioObject->Init();
 	
+	indexOfLoadingObject = id;
 	currentlyLoadedItemsCount++;
 
 	return true;
@@ -688,6 +707,8 @@ void Audio::SetFoldersRep()
 		//u32 start = SDL_GetTicks();
 		std::string previousFolderPath = "";
 		Interface::PlaylistSeparator* ps = nullptr;
+		anyFileCorrupted = false;
+		filesInfoScanned = true;
 		s32 counter = 0;
 		for (auto & i : m_AudioObjectContainer)
 		{
@@ -708,8 +729,17 @@ void Audio::SetFoldersRep()
 			ps->SeparatorSubFilePushBack(&i->GetID(), i->GetPath());
 
 			counter++;
-			/*if(filesLoadedFromFile == true)
-				Info::LoadedItemsInfoCount++;*/
+			if (i->GetID3Struct()->loaded == false)
+				filesInfoScanned = false;
+
+			if (filesLoadedFromFile == true &&
+				i->GetID3Struct()->infoCorrupted == false &&
+				i->GetID3Struct()->loaded == true)
+			{
+				Info::LoadedItemsInfoCount++;
+			}
+			else if (i->GetID3Struct()->infoCorrupted == true)
+				anyFileCorrupted = true;
 
 		}
 		if (Graphics::MP::GetPlaylistObject()->GetPlayingID() >= 0)
@@ -729,7 +759,7 @@ void Audio::SetFoldersRep()
 		/*	If files are newly added or files are loaded from file but were not fully scanned,
 			retrieve audio info
 		*/
-		if(filesLoadedFromFile == false || filesInfoScanned == false)
+		if(filesLoadedFromFile == false || filesInfoScanned == false || anyFileCorrupted == true)
 			LoadFilesInfo();
 
 		filesLoadedFromFile = false;
@@ -870,6 +900,24 @@ void Audio::LoadFilesInfo()
 	else
 		threadsToUse = 1;
 
+	u32 corruptedFilesCount = 0;
+	if (anyFileCorrupted == true)
+	{
+		for (auto & i : m_AudioObjectContainer)
+		{
+			if (i->GetID3Struct()->infoCorrupted == true)
+				corruptedFilesCount++;
+		}
+
+		if (corruptedFilesCount > 500)
+			threadsToUse = WORK_THREADS;
+		else
+			threadsToUse = 1;
+	}
+
+
+
+
 	std::thread* tt = new std::thread[threadsToUse];;
 
 	s32 div = m_AudioObjectContainer.size() / threadsToUse;
@@ -883,20 +931,26 @@ void Audio::LoadFilesInfo()
 			tempVec->resize(div + rest);
 			for (s32 k = div * i, j = 0; k < (i + 1) * div + rest; k++, j++)
 			{
-				if(m_AudioObjectContainer[k]->GetID3Struct()->loaded == false)
+				if (m_AudioObjectContainer[k]->GetID3Struct()->loaded == false ||
+					m_AudioObjectContainer[k]->GetID3Struct()->infoCorrupted == true)
+				{
 					tempVec->at(j) = &m_AudioObjectContainer[k];
+				}
 			}
-			//md_log_compare(div * i, (i + 1) * div + rest);
+			md_log_compare(div * i, (i + 1) * div + rest);
 		}
 		else
 		{
 			tempVec->resize(div);
 			for (s32 k = div * i, j = 0; k < (i + 1) * div; k++, j++)
 			{
-				if (m_AudioObjectContainer[k]->GetID3Struct()->loaded == false)
+				if (m_AudioObjectContainer[k]->GetID3Struct()->loaded == false ||
+					m_AudioObjectContainer[k]->GetID3Struct()->infoCorrupted == true)
+				{
 					tempVec->at(j) = &m_AudioObjectContainer[k];
+				}
 			}
-			//md_log_compare(div * i, (i + 1) * div);
+			md_log_compare(div * i, (i + 1) * div);
 		}
 
 		tt[i] = std::thread(LoadFilesInfoWrap, tempVec);
@@ -911,6 +965,27 @@ void Audio::LoadFilesInfo()
 
 
 	delete[] tt;
+}
+
+void Audio::ActiveLoadInfoWindow()
+{
+	if (State::CheckState(State::FilesLoaded) == false && m_AddedFilesPathContainer.size() > 500)
+	{
+		//md_log("load info window opened");
+		mdLoadInfoWindow.Init(glm::vec4(Window::GetWindowPos(), Window::windowProperties.mWindowWidth,
+										Window::windowProperties.mApplicationHeight));
+		mdLoadInfoWindow.Update();
+		md_log(filesAddedCount);
+	}
+	else
+	{
+		mdLoadInfoWindow.Free();
+	}
+}
+
+u32 Audio::GetIndexOfLoadingObject()
+{
+	return indexOfLoadingObject;
 }
 
 // Containers functions
@@ -943,6 +1018,11 @@ u32 Audio::Object::GetProcessedSize()
 {
 	//TODO
 	return 0;
+}
+
+Window::LoadInfoWindow* Audio::GetLoadInfoWindow()
+{
+	return &mdLoadInfoWindow;
 }
 
 #ifdef _DEBUG_
