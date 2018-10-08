@@ -467,6 +467,7 @@ void Audio::UpdateAudioLogic()
 		}
 		else
 		{
+			mdLoadInfoWindow.CancelWasPressed = false;
 			State::ResetState(State::FilesLoaded);
 		}
 
@@ -502,9 +503,9 @@ void Audio::UpdateAudioLogic()
 		
 		Audio::GetProcessAlbumImageQueue()->clear();
 	}
-	
 
 	ActiveLoadInfoWindow();
+
 }
 
 void Audio::PerformDeletion(s32 index, b8 smallDeletion)
@@ -624,25 +625,11 @@ void Audio::AddAudioItemWrap(std::vector<std::string*> vec, const s32 beg, const
 	s32 i = beg;
 	for (; i < end; i++)
 	{
+		if (mdLoadInfoWindow.CancelWasPressed == true)
+			break;
+
 		AddAudioItem(*vec[i], i);
 	}
-	//md_log(SDL_GetTicks() - start);
-
-	/* Start loading files info after audio objects are created.
-	   It will display items much faster on the screen.
-	*/
-	/*if (filesLoadedFromFile == false || filesInfoScanned == false)
-	{
-		i = beg;
-		for (; i < end; i++)
-		{
-			if (mdEngine::IsAppClosing() == false)
-			{
-				Info::SingleItemInfoLoaded = false;
-				Info::GetInfo(i, *vec[i]);
-			}
-		}
-	}*/
 }
 
 b8 Audio::AddAudioItem(std::string& path, s32 id)
@@ -915,9 +902,6 @@ void Audio::LoadFilesInfo()
 			threadsToUse = 1;
 	}
 
-
-
-
 	std::thread* tt = new std::thread[threadsToUse];;
 
 	s32 div = m_AudioObjectContainer.size() / threadsToUse;
@@ -969,39 +953,93 @@ void Audio::LoadFilesInfo()
 
 void Audio::ActiveLoadInfoWindow()
 {
-#if 0
-
-
-	if (State::CheckState(State::FilesLoaded) == false && m_AddedFilesPathContainer.size() > 500)
+#if 1
+	if (State::CheckState(State::FilesLoaded) == false && m_AddedFilesPathContainer.size() > 500 &&
+		mdLoadInfoWindow.CancelWasPressed == false)
 	{
 		//md_log("load info window opened");
 		mdLoadInfoWindow.Init(glm::vec4(Window::GetWindowPos(), Window::windowProperties.mWindowWidth,
 										Window::windowProperties.mApplicationHeight));
 		mdLoadInfoWindow.Update();
-		md_log(filesAddedCount);
 	}
 	else
 	{
 		mdLoadInfoWindow.Free();
 	}
+
+	if(mdLoadInfoWindow.CancelWasPressed == true)
+	{
+		auto test = &m_AudioObjectContainer;
+		auto playlistButtonsCon = Interface::PlaylistButton::GetContainer();
+
+		u32 size = m_AudioObjectContainer.size();
+		for (s32 i = size - 1; i >= 0; i--)
+		{
+			if (i >= indexOfDroppedOnItem && i < indexOfDroppedOnItem + filesAddedCount)
+			{
+				m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + i);
+				playlistButtonsCon->erase(playlistButtonsCon->begin() + i);
+			}
+		}
+
+		playlistButtonsCon->resize(previousContainerSize);
+		m_AudioObjectContainer.resize(previousContainerSize);
+
+		State::SetState(State::AudioAdded);
+		State::SetState(State::FilesLoaded);
+		State::SetState(State::ShuffleAfterLoad);
+		State::ResetState(State::PathContainerSorted);
+		State::ResetState(State::TerminateWorkingThreads);
+		//State::SetState(State::UpdatePlaylistInfoStrings);
+		State::ResetState(State::FilesAddedInfoNotLoaded);
+		State::ResetState(State::FilesDroppedNotLoaded);
+
+		Info::GetLoadedPathsContainer()->clear();
+
+		firstFilesLoaded = false;
+		indexOfDroppedOnItem = 0;
+		currentContainersSize = previousContainerSize;
+		currentlyLoadedItemsCount = currentContainersSize;
+		Info::LoadedItemsInfoCount = currentContainersSize;
+
+		m_AddedFilesPathContainer.clear();
+		ResetStateFlags();
+
+		md_log_compare(indexOfDroppedOnItem, filesAddedCount);
+		mdLoadInfoWindow.CancelWasPressed = false;
+	}
+
+
 #endif // 0
 
-#ifdef _DEBUG_
+#if 0
 	static b8 active = false;
 
 	if (App::Input::IsKeyPressed(App::KeyCode::F6) == true)
+	{
 		active = !active;
+	}
+
+	if (mdLoadInfoWindow.CancelWasPressed == true)
+	{
+
+		//MP::Playlist::DeleteMusic();
+		active = !active;
+		mdLoadInfoWindow.CancelWasPressed = false;
+	}
 
 	if (active)
 	{
 		mdLoadInfoWindow.Init(glm::vec4(Window::GetWindowPos(), Window::windowProperties.mWindowWidth,
-			Window::windowProperties.mApplicationHeight));
+										Window::windowProperties.mApplicationHeight));
 		mdLoadInfoWindow.Update();
 	}
 	else
 	{
 		mdLoadInfoWindow.Free();
 	}
+
+
 
 #endif
 

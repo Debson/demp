@@ -194,6 +194,11 @@ namespace MP
 
 	void UI::Update()
 	{
+		// Files are loading, don't take any input from user at that time
+		if (State::CheckState(State::FilesLoaded) == false)
+			return;
+
+
 		/* Collect user input for buttons and movable */
 		for(u16 i = 0; i < mdMovableContainer.size(); i++)
 			App::ProcessMovable(mdMovableContainer[i]);
@@ -211,7 +216,8 @@ namespace MP
 		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
 		for (auto i : *Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
 		{
-			if (Audio::Object::GetAudioObject(i) == nullptr || State::CheckState(State::Window::Resized) == true)
+			if (Audio::Object::GetAudioObject(i) == nullptr ||
+				State::CheckState(State::Window::Resized) == true)
 				break;
 
 			if (Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false)
@@ -647,7 +653,6 @@ namespace MP
 				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(&i->GetID());
 			}
 		}
-
 	}
 
 	void UI::UpdateMouseCursor()

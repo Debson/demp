@@ -922,7 +922,8 @@ namespace MP
 					IsPlaying() == false &&
 					mdRepeatMusic == false &&
 					mdStartNewOnEnd == true &&
-					State::CheckState(State::AudioChosen) == false;
+					State::CheckState(State::AudioChosen) == false &&
+					State::CheckState(State::FilesLoaded) == true;
 		}
 
 		b8 IsLoaded()

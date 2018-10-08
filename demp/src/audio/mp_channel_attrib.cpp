@@ -173,6 +173,8 @@ namespace Audio
 			return;
 
 		auto info = audioObj->GetID3Struct();
+		*info = ID3();
+
 
 		HSTREAM stream;
 		stream = BASS_StreamCreateFile(FALSE, utf8_to_utf16(audioObj->GetPath()).c_str(), 0, 0, BASS_STREAM_DECODE);
@@ -208,7 +210,6 @@ namespace Audio
 	{
 		TagLib::FileRef file(utf8_to_utf16(path).c_str());
 
-		info = new ID3();
 		if (file.tag()->isEmpty() == false)
 		{
 			info->channels = file.audioProperties()->channels();

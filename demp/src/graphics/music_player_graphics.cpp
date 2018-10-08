@@ -1094,7 +1094,8 @@ namespace mdEngine
 	void Graphics::RenderAlbumCoverImage()
 	{
 		if (MP::GetPlaylistObject()->GetPlayingID() >= 0 &&
-			MP::GetPlaylistObject()->GetPlayingID() < Audio::Object::GetSize())
+			MP::GetPlaylistObject()->GetPlayingID() < Audio::Object::GetSize() &&
+			Audio::Object::GetAudioObject(MP::GetPlaylistObject()->GetPlayingID()) != nullptr)
 		{
 			if (Audio::Object::GetAudioObject(MP::GetPlaylistObject()->GetPlayingID())->GetAlbumPictureTexture() == 0)
 				return;
@@ -1574,7 +1575,7 @@ namespace mdEngine
 				{
 					i->DeleteTexture();
 				}
-
+			
 				for (auto & i : *Interface::Separator::GetContainer())
 				{
 					i.second->DeleteTexture();
@@ -1610,12 +1611,12 @@ namespace mdEngine
 			}
 
 			// debug stuff
-			if (State::CheckState(State::FilesDroppedNotLoaded) == true)
+			/*if (State::CheckState(State::FilesDroppedNotLoaded) == true)
 			{
 				for (auto & i : *MP::GetPlaylistObject()->GetIndexesToRender())
 					std::cout << i << ", ";
 				std::cout << std::endl;
-			}
+			}*/
 
 			// ACTUAL RENDERING
 			Shader::shaderDefault->use();
@@ -1657,8 +1658,11 @@ namespace mdEngine
 			
 			for (auto & i : MP::GetPlaylistObject()->multipleSelect)
 			{
-				if (*i < 0 && *i > Audio::Object::GetSize() - 1)
+				if (*i < 0 && *i > Audio::Object::GetSize() - 1 ||
+					State::CheckState(State::FilesLoaded) == false)
+				{
 					break;
+				}
 
 				// Note: indexes in multipleSelect vector are in descending order
 				if (*i >= MP::GetPlaylistObject()->GetIndexesToRender()->front() &&

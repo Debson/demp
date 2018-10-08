@@ -97,6 +97,9 @@ namespace mdEngine
 
 	void Text::TextObject::DrawString() const
 	{
+		/*if (m_TextTexture == 0)
+			return;*/
+
 		Graphics::Shader::shaderDefault->use();
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(glm::vec2(m_TextPos.x + m_TextOffset.x,
@@ -234,7 +237,7 @@ namespace mdEngine
 	GLuint Text::LoadText(TTF_Font* font, std::string string, SDL_Color color)
 	{
 		GLuint colors;
-		GLuint textTexture;
+		GLuint textTexture = 0;
 		SDL_Surface* textSurface;
 		GLenum format;
 
@@ -258,7 +261,7 @@ namespace mdEngine
 
 		glGenTextures(1, &textTexture);
 		glBindTexture(GL_TEXTURE_2D, textTexture);
-
+		GLenum error = glGetError();
 		
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textSurface->w, textSurface->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, textSurface->pixels);
 

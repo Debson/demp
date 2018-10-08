@@ -464,8 +464,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			}
 
 
-#ifdef _DEBUG_
 			SDL_GL_MakeCurrent(mdWindow, gl_context);
+#ifdef _DEBUG_
 			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
@@ -512,6 +512,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			{
 				Audio::GetLoadInfoWindow()->Render();
 			}
+			// Why do I have to set context here as well?
+			SDL_GL_MakeCurrent(mdWindow, gl_context);
 			
 			if (State::IsBackgroundModeActive() == true)
 			{

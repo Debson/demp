@@ -1,5 +1,6 @@
 #include "md_helper_windows.h"
 
+#include <SDL_syswm.h>
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 
@@ -105,7 +106,6 @@ namespace mdEngine
 		if (m_Window == NULL)
 			return;
 
-		md_log(MP::Data::VolumeScrollStep);
 		// Reset to default values
 		if (m_VolumeStepSlider.IsDefaultPressed() == true)
 		{
@@ -217,6 +217,7 @@ namespace mdEngine
 		m_Width = width;
 		m_Height = height;
 		m_Window = NULL;
+		CancelWasPressed = false;
 	}
 
 	void Window::LoadInfoWindow::Init(glm::vec4 playerWindowDim)
@@ -233,6 +234,17 @@ namespace mdEngine
 
 
 		m_WindowID = SDL_GetWindowID(m_Window);
+
+#ifdef _WIN32_
+		// Set this window to be always on top
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		SDL_GetWindowWMInfo(m_Window, &info);
+
+		SetWindowPos(info.info.win.window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+#else
+
+#endif
 
 		m_Projection = glm::ortho(0.f, static_cast<float>(m_Width), static_cast<float>(m_Height), 0.f);
 		m_Shader = Shader::shaderDefault;
@@ -255,6 +267,8 @@ namespace mdEngine
 									  m_ProgressBarPos.y + m_ProgressBarSize.y + 20.f);
 		m_CancelButton = new Interface::Button(m_CancelButtonSize, m_CancelButtonPos);
 
+		CancelWasPressed = false;
+
 	}
 
 	void Window::LoadInfoWindow::Update()
@@ -265,7 +279,11 @@ namespace mdEngine
 		App::ProcessButton(m_CancelButton);
 
 		if (m_CancelButton->isPressed == true)
+		{
 			md_log("pressed");
+			CancelWasPressed = true;
+			Free();
+		}
 
 		m_BarProgress = (float)Audio::Object::GetSize() / (float)Audio::GetFilesAddedCount();
 		std::string title = "[" + std::to_string(Audio::Object::GetSize()) + "/";
@@ -279,7 +297,9 @@ namespace mdEngine
 		if (m_Window == NULL)
 			return;
 
+		// TODO: Bug(GL_INVALID_VALUE)
 		SDL_GL_MakeCurrent(m_Window, *Window::GetMainWindowContext());
+
 		glClearColor(Color::Azure.r, Color::Azure.g, Color::Azure.b, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_Shader->use();
@@ -301,9 +321,9 @@ namespace mdEngine
 
 		u32 test = Audio::GetIndexOfLoadingObject();
 		auto audioCon = Audio::Object::GetAudioObjectContainer();
-		if (Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject()) != nullptr)
+		if (Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject() - 1) != nullptr)
 		{
-			std::string test = Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject())->GetPath();
+			std::string test = Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject() - 1)->GetPath();
 			m_LoadingPathText.SetTextString(Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject() - 1)->GetPath());
 			m_LoadingPathText.ReloadTextTexture();
 		}
@@ -322,8 +342,6 @@ namespace mdEngine
 
 		Shader::DrawOutline(glm::vec4(m_CancelButtonPos, m_CancelButtonSize), 1.1f);
 
-
-		glBindTexture(GL_TEXTURE_2D, 0);
 
 		SDL_GL_SwapWindow(m_Window);
 	}

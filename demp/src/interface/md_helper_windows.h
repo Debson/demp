@@ -71,10 +71,12 @@ namespace mdEngine
 			void Render();
 			void Free();
 			s32 GetOptionWindowID();
+			b8 CancelWasPressed;
 
 		private:
 
 			f32 m_BarProgress;
+				
 
 			Text::TextObject m_LoadingPathText;
 			Text::TextObject m_CancelText;
