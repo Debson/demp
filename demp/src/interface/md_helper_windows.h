@@ -77,9 +77,14 @@ namespace mdEngine
 			f32 m_BarProgress;
 
 			Text::TextObject m_LoadingPathText;
+			Text::TextObject m_CancelText;
 
 			glm::vec2 m_ProgressBarPos;
 			glm::vec2 m_ProgressBarSize;
+
+			Interface::Button* m_CancelButton;
+			glm::vec2 m_CancelButtonPos;
+			glm::vec2 m_CancelButtonSize;
 		};
 
 	}

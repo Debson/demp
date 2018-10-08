@@ -2,6 +2,7 @@
 
 #include "realtime_system_application.h"
 #include "../player/music_player.h"
+#include "../graphics/graphics.h"
 #include "../settings/music_player_settings.h"
 #include "../settings/music_player_string.h"
 #include "../player/music_player_state.h"
@@ -395,6 +396,9 @@ namespace mdEngine
 		{
 			// TODO: dont call it every frame?
 			Window::windowProperties.mApplicationHeight = newSizeY;
+			u32 diff = 0;
+			
+
 			if (Window::windowProperties.mApplicationHeight < MP::Data::_MIN_PLAYER_SIZE.y)
 			{
 				Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y;
@@ -402,7 +406,7 @@ namespace mdEngine
 					newWY = startYRes;
 				Window::SetWindowPos(startXRes, newWY + (winSizeBeforeResizeTop - Window::windowProperties.mApplicationHeight));
 			}
-			else
+			else if(Window::CheckWindowSize() == false)
 			{
 				Window::SetWindowPos(startXRes, newWY);
 			}
@@ -411,6 +415,7 @@ namespace mdEngine
 			barTop->m_Pos = glm::vec2(0, 0);
 			barBottom->m_Pos = glm::vec2(0, Window::windowProperties.mApplicationHeight - 5.f);
 			resizeFinished = false;
+
 		}
 		else
 		{
@@ -424,6 +429,7 @@ namespace mdEngine
 			winSizeBeforeResizeTop = Window::windowProperties.mApplicationHeight;
 			wasInsideResizableTop = false;
 			Input::GetGlobalMousePosition(&globalMouseXRes, &globalMouseYRes);
+
 			Window::GetWindowPos(&startXRes, &startYRes);
 		}
 	}
@@ -448,23 +454,52 @@ namespace mdEngine
 				wasInsideResizableBottom = true;
 			}
 
+			s32 globalMouseX, globalMouseY;
+			Input::GetMousePosition(&globalMouseX, &globalMouseY);
+			s32 winPosX, winPosY;
+			Window::GetWindowPos(&winPosX, &winPosY);
+
+			globalMouseY += winPosY;
+
+			/*	If resizing is active and mouse is lower than bottom bound of appliaction and mouse has been
+				going up, stop resizing till it reaches that bottom bound
+			*/
+			b8 stopResizing = (Window::windowProperties.mApplicationHeight + winPosY < globalMouseY) && relY < 0;
 			
 			if (wasInsideResizableBottom == true && 
-				MP::UI::Input::GetButtonExtraState() == false)
+				MP::UI::Input::GetButtonExtraState() == false &&
+				stopResizing == false)
 			{
 				if(relY != 0)
 					State::SetState(State::Window::Resized);
 				Window::windowProperties.mDeltaHeightResize = relY;
 
 				Window::windowProperties.mApplicationHeight = winSizeBeforeResizeBottom + relY;
-				winSizeBeforeResizeBottom += relY;
+				if (Window::CheckWindowSize() == false)
+				{
+					winSizeBeforeResizeBottom += relY;
 
-				barBottom->m_Pos = glm::vec2(0, winSizeBeforeResizeBottom + relY - barBottom->m_Size.y);
+					barBottom->m_Pos = glm::vec2(0, winSizeBeforeResizeBottom + relY - barBottom->m_Size.y);
 
-				if (Window::windowProperties.mApplicationHeight - barBottom->m_Size.y < MP::Data::_MIN_PLAYER_SIZE.y)
-					Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + barBottom->m_Size.y;
-				if (barBottom->m_Pos.y < MP::Data::_MIN_PLAYER_SIZE.y)
-					barBottom->m_Pos.y = MP::Data::_MIN_PLAYER_SIZE.y;
+					if (Window::windowProperties.mApplicationHeight - barBottom->m_Size.y < MP::Data::_MIN_PLAYER_SIZE.y)
+						Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + barBottom->m_Size.y;
+					if (barBottom->m_Pos.y < MP::Data::_MIN_PLAYER_SIZE.y)
+						barBottom->m_Pos.y = MP::Data::_MIN_PLAYER_SIZE.y;
+				}
+				else
+				{
+					// Make sure that window is resized to it's max possible size (1080 for 1920x1080 res)
+					f32 diff = winSizeBeforeResizeBottom + relY - Window::windowProperties.mApplicationHeight;
+
+					winSizeBeforeResizeBottom += relY - diff;
+
+					barBottom->m_Pos = glm::vec2(0, winSizeBeforeResizeBottom + relY - diff - barBottom->m_Size.y);
+
+					if (Window::windowProperties.mApplicationHeight - barBottom->m_Size.y < MP::Data::_MIN_PLAYER_SIZE.y)
+						Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + barBottom->m_Size.y;
+					if (barBottom->m_Pos.y < MP::Data::_MIN_PLAYER_SIZE.y)
+						barBottom->m_Pos.y = MP::Data::_MIN_PLAYER_SIZE.y;
+				}
 			}
 		}
 		else

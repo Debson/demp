@@ -248,12 +248,24 @@ namespace mdEngine
 		s32 loadingPathTextOffsetY = 20;
 		m_LoadingPathText = Text::TextObject(MP::Data::_MUSIC_PLAYER_FONT, Color::Black);
 		m_LoadingPathText.SetTextPos(glm::vec2(m_ProgressBarPos.x, m_ProgressBarPos.y - loadingPathTextOffsetY));
+
+
+		m_CancelButtonSize = glm::vec2(m_ProgressBarSize.x / 6.f, 20.f);
+		m_CancelButtonPos = glm::vec2(m_ProgressBarPos.x + (m_ProgressBarSize.x - m_CancelButtonSize.x) / 2.f, 
+									  m_ProgressBarPos.y + m_ProgressBarSize.y + 20.f);
+		m_CancelButton = new Interface::Button(m_CancelButtonSize, m_CancelButtonPos);
+
 	}
 
 	void Window::LoadInfoWindow::Update()
 	{
 		if (m_Window == NULL)
 			return;
+
+		App::ProcessButton(m_CancelButton);
+
+		if (m_CancelButton->isPressed == true)
+			md_log("pressed");
 
 		m_BarProgress = (float)Audio::Object::GetSize() / (float)Audio::GetFilesAddedCount();
 		std::string title = "[" + std::to_string(Audio::Object::GetSize()) + "/";
@@ -283,8 +295,8 @@ namespace mdEngine
 		Shader::Draw(m_Shader);
 		m_Shader->setVec3("color", Color::White);
 		m_Shader->setBool("plain", false);
-		glBindTexture(GL_TEXTURE_2D, 0);
 
+		Shader::DrawOutline(glm::vec4(m_ProgressBarPos, m_ProgressBarSize), 0.95f, Color::Azure);
 		Shader::DrawOutline(glm::vec4(m_ProgressBarPos, m_ProgressBarSize), 1.1f);
 
 		u32 test = Audio::GetIndexOfLoadingObject();
@@ -297,6 +309,22 @@ namespace mdEngine
 		}
 		m_LoadingPathText.DrawString();
 
+		// Cancel button
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(m_CancelButtonPos, 1.0));
+		model = glm::scale(model, glm::vec3(m_CancelButtonSize, 1.0));
+		m_Shader->setMat4("model", model);
+		m_Shader->setBool("plain", true);
+		m_Shader->setVec3("color", Color::Grey);
+		Shader::Draw(m_Shader);
+		m_Shader->setVec3("color", Color::White);
+		m_Shader->setBool("plain", false);
+
+		Shader::DrawOutline(glm::vec4(m_CancelButtonPos, m_CancelButtonSize), 1.1f);
+
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+
 		SDL_GL_SwapWindow(m_Window);
 	}
 
@@ -308,6 +336,8 @@ namespace mdEngine
 		SDL_DestroyWindow(m_Window);
 
 		m_LoadingPathText.DeleteTexture();
+		m_CancelText.DeleteTexture();
+		delete m_CancelButton;
 		//State::SetState(State::UpdatePlaylistInfoStrings);
 
 

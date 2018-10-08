@@ -969,6 +969,9 @@ void Audio::LoadFilesInfo()
 
 void Audio::ActiveLoadInfoWindow()
 {
+#if 0
+
+
 	if (State::CheckState(State::FilesLoaded) == false && m_AddedFilesPathContainer.size() > 500)
 	{
 		//md_log("load info window opened");
@@ -981,6 +984,27 @@ void Audio::ActiveLoadInfoWindow()
 	{
 		mdLoadInfoWindow.Free();
 	}
+#endif // 0
+
+#ifdef _DEBUG_
+	static b8 active = false;
+
+	if (App::Input::IsKeyPressed(App::KeyCode::F6) == true)
+		active = !active;
+
+	if (active)
+	{
+		mdLoadInfoWindow.Init(glm::vec4(Window::GetWindowPos(), Window::windowProperties.mWindowWidth,
+			Window::windowProperties.mApplicationHeight));
+		mdLoadInfoWindow.Update();
+	}
+	else
+	{
+		mdLoadInfoWindow.Free();
+	}
+
+#endif
+
 }
 
 u32 Audio::GetIndexOfLoadingObject()

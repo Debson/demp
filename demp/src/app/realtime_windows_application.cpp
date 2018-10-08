@@ -700,3 +700,13 @@ void mdEngine::Window::GetWindowPos(s32* x, s32* y)
 	SDL_GetWindowPosition(mdWindow, x, y);
 }
 
+b8 mdEngine::Window::CheckWindowSize()
+{
+	if (windowProperties.mApplicationHeight > windowProperties.mWindowHeight)
+	{
+		windowProperties.mApplicationHeight = windowProperties.mWindowHeight;
+		return true;
+	}
+
+	return false;
+}
