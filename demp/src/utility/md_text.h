@@ -71,6 +71,5 @@ namespace mdEngine
 		
 		void CloseText();
 	}
-
 }
 #endif // !MD_TEXT_H

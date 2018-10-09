@@ -307,17 +307,6 @@ namespace mdEngine
 			void PrintSeparatorInfo();
 #endif
 		}
-
-		namespace PlaylistButton
-		{
-			PlaylistButtonContainer* GetContainer();
-			Interface::Button* GetButton(s32 id);
-			s32 GetSize();
-		}
-
-
-
-
 	}
 }
 #endif // !MD_INTERFACE_H

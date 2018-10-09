@@ -633,6 +633,7 @@ namespace MP
 		void IncreaseVolume(App::InputEvent event)
 		{
 			State::SetState(State::VolumeChanged);
+			MuteVolume(false);
 
 			switch (event)
 			{
@@ -661,6 +662,7 @@ namespace MP
 				break;
 			case App::InputEvent::kScrollEvent:
 				mdVolume -= (Data::VolumeScrollStep / 100.f);
+				md_log(mdVolume);
 				break;
 			};
 
@@ -844,10 +846,6 @@ namespace MP
 				// BUG: Can't erase pos in playlist button container
 
 				Audio::PerformDeletion(i, smallDeletion);
-
-				auto playlistButtonCon = Interface::PlaylistButton::GetContainer();
-				assert(Interface::PlaylistButton::GetButton(i) != nullptr);
-				playlistButtonCon->erase(playlistButtonCon->begin() + i);
 
 				if (Graphics::MP::GetPlaylistObject()->GetPlayingID() == i)
 					State::SetState(State::CurrentlyPlayingDeleted);

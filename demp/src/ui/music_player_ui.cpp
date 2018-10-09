@@ -229,7 +229,7 @@ namespace MP
 		auto sepCon = Interface::Separator::GetContainer();
 		for (u16 i = 0; i < Interface::Separator::GetSize(); i++)
 		{
-			//App::ProcesPlaylistButton(sepCon->at(i).second);
+			App::ProcesPlaylistButton(sepCon->at(i).second);
 		}
 
 		// Proces interface buttons

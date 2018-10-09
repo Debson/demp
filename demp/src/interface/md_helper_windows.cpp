@@ -241,7 +241,11 @@ namespace mdEngine
 		SDL_VERSION(&info.version);
 		SDL_GetWindowWMInfo(m_Window, &info);
 
-		SetWindowPos(info.info.win.window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		SetWindowPos(info.info.win.window, HWND_TOPMOST, 
+			playerWindowDim.x - (m_Width - playerWindowDim.z) / 2.f, 
+			playerWindowDim.y + playerWindowDim.w / 2.f,
+			m_Width, m_Height, 
+			SWP_NOSIZE);
 #else
 
 #endif

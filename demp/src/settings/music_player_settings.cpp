@@ -34,7 +34,7 @@ namespace MP
 
 		f32 VolumeLevel;
 		f32 VolumeKeyMultiplier;
-		s32 VolumeScrollStep ;
+		s32 VolumeScrollStep;
 		s32 PauseFadeTime;
 		s32 PlaylistRollMultiplier;
 

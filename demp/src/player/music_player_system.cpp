@@ -107,13 +107,14 @@ namespace MP
 
 	void UpdateLogic(void)
 	{
+		UI::Update();
+
 		/* Update playlist state */
 		Playlist::UpdatePlaylist();
 
 		/* Update the volume */
 		Playlist::UpdateMusic();
 
-		UI::Update();
 
 		Audio::UpdateAudioLogic();
 	}

@@ -467,6 +467,7 @@ namespace mdEngine
 				State::SetState(State::VolumeChanged);
 			}
 
+
 			if (Input::hasFocus(Input::ButtonType::SliderVolume) &&
 				App::Input::IsKeyDown(App::KeyCode::MouseLeft) &&
 				musicSliderActive == false &&

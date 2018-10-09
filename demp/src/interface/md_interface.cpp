@@ -27,21 +27,14 @@ namespace mdEngine
 	namespace Interface
 	{
 		static PlaylistSeparatorContainer	m_PlaylistSeparatorContainer;
-		static PlaylistButtonContainer		m_PlaylistButtonsContainer;
-		InterfaceButtonContainer		m_InterfaceButtonContainer;
+		InterfaceButtonContainer			m_InterfaceButtonContainer;
 
 		static std::mutex mutex;
 	}
 
 	void Interface::CloseInterface()
 	{
-		/*for (s32 i = 0; i < m_PlaylistButtonsContainer.size(); i++)
-		{
-			delete m_PlaylistButtonsContainer[i].second;
-			m_PlaylistButtonsContainer[i].second = nullptr;
-		}*/
 
-		m_PlaylistButtonsContainer.clear();
 		m_PlaylistSeparatorContainer.clear();
 	}
 
@@ -163,8 +156,6 @@ namespace mdEngine
 		m_TitleC = m_TextString;
 		//TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 		//m_TextString = GetShortenTextString();
-
-		m_PlaylistButtonsContainer[m_ItemID] = std::make_pair(&m_ItemID, this);
 	}
 
 	void Interface::PlaylistItem::DrawDottedBorder()
@@ -1266,34 +1257,4 @@ namespace mdEngine
 
 	}
 #endif
-
-	Interface::PlaylistButtonContainer* Interface::PlaylistButton::GetContainer()
-	{
-		return &m_PlaylistButtonsContainer;
-	}
-
-	Interface::Button* Interface::PlaylistButton::GetButton(s32 id)
-	{
-		if (m_PlaylistButtonsContainer.empty() == true		||
-			id > m_PlaylistButtonsContainer.size() - 1		||
-			id < 0)
-			return nullptr;
-
-		if (id < m_PlaylistButtonsContainer.size() ||
-			id >= 0)
-		{
-			if (m_PlaylistButtonsContainer[id].second == NULL)
-				return nullptr;
-		}
-
-		return m_PlaylistButtonsContainer[id].second;
-	}
-
-	s32 Interface::PlaylistButton::GetSize()
-	{
-		return m_PlaylistButtonsContainer.size();
-	}
-
-
-
 }

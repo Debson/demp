@@ -32,6 +32,7 @@ namespace Audio
 {
 	static AddedFilesPathContainer		m_AddedFilesPathContainer;
 	static AudioObjectContainer			m_AudioObjectContainer;
+	AudioObjectContainer				m_AudioObjectContainerTemp;
 
 	static std::vector<Audio::Info::ID3*> m_ID3Container;
 
@@ -69,6 +70,7 @@ namespace Audio
 	b8 anyFileCorrupted(false);
 
 	s32 indexOfDroppedOnItem = -1;
+	b8 droppedOnMainPlayer(false);
 
 	b8 AddAudioItem(std::string& path, s32 id);
 	void AddAudioItemWrap(std::vector<std::string*> vec, const s32 start, const s32 end);
@@ -128,11 +130,15 @@ void Audio::CalculateDroppedPosInPlaylist()
 		s32 mouseX, mouseY;
 		s32 winX, winY;
 		App::Input::GetMousePosition(&mouseX, &mouseY);
+		droppedOnMainPlayer = false;
 		if (mouseY < MP::Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
 		{
 			State::ResetState(State::FilesDroppedNotLoaded);
+			if(m_AudioObjectContainerTemp.empty() == true)
+				m_AudioObjectContainerTemp = AudioObjectContainer(m_AudioObjectContainer);
 			MP::UI::DeleteAllFiles();
 			indexOfDroppedOnItem = 0;
+			droppedOnMainPlayer = true;
 			firstFilesLoaded = false;
 			droppedOnTop = false;
 			return;
@@ -691,6 +697,8 @@ void Audio::SetFoldersRep()
 		auto sepCon = Interface::Separator::GetContainer();
 		sepCon->clear();
 
+		m_AudioObjectContainerTemp.clear();
+
 		//u32 start = SDL_GetTicks();
 		std::string previousFolderPath = "";
 		Interface::PlaylistSeparator* ps = nullptr;
@@ -757,12 +765,9 @@ void Audio::ResizeAllContainers(int size)
 {
 	if (size + currentContainersSize >= 0)
 	{
-		auto playlistButtonsCon = Interface::PlaylistButton::GetContainer();
-
 		if (insertFiles == false)
 		{
 			m_AudioObjectContainer.resize(size + currentContainersSize);
-			playlistButtonsCon->resize(size + currentContainersSize);
 		}
 		else
 		{
@@ -778,24 +783,16 @@ void Audio::ResizeAllContainers(int size)
 			for (s32 i = 0; i < indexOfDroppedOnItem; i++)
 			{
 				tempAudioObjectVec[i] = m_AudioObjectContainer[i];
-				tempPlaylistButtonsVec[i] = playlistButtonsCon->at(i);
 			}
 
 			for (s32 i = indexOfDroppedOnItem + size, t = indexOfDroppedOnItem; t < currentContainersSize; i++, t++)
 			{
 				tempAudioObjectVec[i] = m_AudioObjectContainer[t];
-				tempPlaylistButtonsVec[i] = playlistButtonsCon->at(t);
 
 				// Every ID of items beneath must be incremented the same amount of times as the amount of file added
 			}
 
 			m_AudioObjectContainer.resize(size + currentContainersSize);
-			playlistButtonsCon->resize(size + currentContainersSize);
-
-			for (s32 i = 0; i < playlistButtonsCon->size(); i++)
-			{
-				playlistButtonsCon->at(i) = tempPlaylistButtonsVec[i];
-			}
 			m_AudioObjectContainer = tempAudioObjectVec;
 			
 			State::SetState(State::ContainersResized);
@@ -970,7 +967,6 @@ void Audio::ActiveLoadInfoWindow()
 	if(mdLoadInfoWindow.CancelWasPressed == true)
 	{
 		auto test = &m_AudioObjectContainer;
-		auto playlistButtonsCon = Interface::PlaylistButton::GetContainer();
 
 		u32 size = m_AudioObjectContainer.size();
 		for (s32 i = size - 1; i >= 0; i--)
@@ -978,12 +974,29 @@ void Audio::ActiveLoadInfoWindow()
 			if (i >= indexOfDroppedOnItem && i < indexOfDroppedOnItem + filesAddedCount)
 			{
 				m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + i);
-				playlistButtonsCon->erase(playlistButtonsCon->begin() + i);
 			}
 		}
 
-		playlistButtonsCon->resize(previousContainerSize);
-		m_AudioObjectContainer.resize(previousContainerSize);
+		if (droppedOnMainPlayer == true && m_AudioObjectContainerTemp.empty() == false)
+		{
+			m_AudioObjectContainer = AudioObjectContainer(m_AudioObjectContainerTemp);
+			m_AudioObjectContainerTemp.clear();
+			md_log("main player");
+			f64 size = 0;
+			f64 duration = 0;
+			for (auto & i : m_AudioObjectContainer)
+			{
+				size += i->GetID3Struct()->size;
+				duration += i->GetID3Struct()->length;
+			}
+			Graphics::MP::GetPlaylistObject()->SetItemsSize(size);
+			Graphics::MP::GetPlaylistObject()->SetItemsDuration(duration);
+
+		}
+		else
+		{
+			m_AudioObjectContainer.resize(previousContainerSize);
+		}
 
 		State::SetState(State::AudioAdded);
 		State::SetState(State::FilesLoaded);
@@ -998,7 +1011,14 @@ void Audio::ActiveLoadInfoWindow()
 
 		firstFilesLoaded = false;
 		indexOfDroppedOnItem = 0;
-		currentContainersSize = previousContainerSize;
+		if (droppedOnMainPlayer == true)
+		{
+			currentContainersSize = m_AudioObjectContainer.size();
+		}
+		else
+		{
+			currentContainersSize = previousContainerSize;
+		}
 		currentlyLoadedItemsCount = currentContainersSize;
 		Info::LoadedItemsInfoCount = currentContainersSize;
 
