@@ -72,7 +72,7 @@ namespace mdEngine
 	{
 		if (m_TextTexture == 0)
 		{
-			TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
+			TTF_SizeText(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 			m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
 		}
 	}
@@ -107,11 +107,9 @@ namespace mdEngine
 		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.0));
 		Graphics::Shader::shaderDefault->setMat4("model", model);
 		Graphics::Shader::shaderDefault->setVec3("color", m_TextColorVec);
-		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, m_TextTexture);
 		Graphics::Shader::Draw(Graphics::Shader::shaderDefault);
 		Graphics::Shader::shaderDefault->setVec3("color", Color::White);
-		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void Text::TextObject::DrawString(GLuint tex) const
@@ -126,17 +124,14 @@ namespace mdEngine
 		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.f));
 		Graphics::Shader::shaderDefault->setMat4("model", model);
 		Graphics::Shader::shaderDefault->setVec3("color", m_TextColorVec);
-		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex);
 		Graphics::Shader::Draw(Graphics::Shader::shaderDefault);
 		Graphics::Shader::shaderDefault->setVec3("color", Color::White);
-		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void Text::TextObject::DrawString(mdShader* shader) const
 	{
 		shader->use();
-		glBindTexture(GL_TEXTURE_2D, 0);
 
 
 		glm::mat4 model;
@@ -149,7 +144,6 @@ namespace mdEngine
 		glBindTexture(GL_TEXTURE_2D, m_TextTexture);
 		Graphics::Shader::Draw(shader);
 		shader->setVec3("color", Color::White);
-		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void Text::TextObject::SetTextScale(f32 scale)

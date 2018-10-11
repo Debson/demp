@@ -1357,15 +1357,20 @@ namespace mdEngine
 
 	void Graphics::RenderScrollBar()
 	{
-		if (newDis < Audio::Object::GetSize())
+		if (newDis < Audio::Object::GetSize() &&
+			MP::GetPlaylistObject()->IsToggled() &&
+			MP::GetPlaylistObject()->IsEnabled() &&
+			State::CheckState(State::PlaylistEmpty) == false)
 		{
 			glm::mat4 model;
 			model = glm::translate(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_POS.x, m_PlaylistBarSlider->GetButtonPos().y, 0.91f));
 			model = glm::scale(model, glm::vec3(Data::_PLAYLIST_SCROLL_BAR_SIZE.x, m_PlaylistBarSlider->GetButtonSize().y, 1.f));
-			Shader::shaderDefault->setVec3("color", Color::Black);
+			Shader::shaderDefault->setBool("plain", true);
+			Shader::shaderDefault->setVec3("color", Color::Green);
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, 0);
 			Shader::Draw(Shader::shaderDefault);
+			Shader::shaderDefault->setVec3("color", Color::White);
+			Shader::shaderDefault->setBool("plain", false);
 		}
 	}
 
@@ -1410,9 +1415,6 @@ namespace mdEngine
 				playlistPositionOffset += scrollStep;
 				State::SetState(State::PlaylistMovement);
 			}
-
-			// Render playlist scroll bar
-			//RenderScrollBar(&playlistPositionOffset, displayedItems, Audio::Object::GetAudioObjectContainer()->size());
 
 			if (State::CheckState(State::PlaylistMovement) == true)
 			{
@@ -2017,6 +2019,7 @@ namespace mdEngine
 	void Graphics::RenderWindowControlButtons()
 	{
 		glm::mat4 model;
+		glBindTexture(GL_TEXTURE_2D, 0);
 		/* UI Window buttons*/
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(Data::_UI_BUTTONS_BACKGROUND_RIGHT_POS, 0.2f));

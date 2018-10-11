@@ -747,7 +747,7 @@ namespace mdEngine
 
 	Interface::ButtonSlider::~ButtonSlider()
 	{
-		Free();
+		//Free();
 	}
 
 	void Interface::ButtonSlider::Init(mdShader* shader)
@@ -1021,10 +1021,7 @@ namespace mdEngine
 	void Interface::ButtonSlider::Render()
 	{
 		m_Shader->use();
-		glActiveTexture(GL_TEXTURE0);
 		glm::mat4 model;
-
-		glBindTexture(GL_TEXTURE_2D, 0);
 
 		m_Shader->setBool("plain", true);
 		model = glm::translate(model, glm::vec3(m_SliderBackground.x, m_SliderBackground.y, 0.5));
@@ -1154,7 +1151,7 @@ namespace mdEngine
 
 	Interface::CheckBox::~CheckBox()
 	{
-		Free();
+		//Free();
 	}
 
 	void Interface::CheckBox::Init(mdShader* shader)

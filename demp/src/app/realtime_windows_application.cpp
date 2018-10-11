@@ -107,7 +107,7 @@ void mdEngine::SetupSDL()
 		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
 
 	mdWindowID = SDL_GetWindowID(mdWindow);
-
+	
 	if (mdWindow == NULL)
 	{
 		MD_SDL_ERROR("ERROR: Failed to open SDL window");
@@ -164,9 +164,11 @@ void mdEngine::SetupOpenGL()
 {
 	gl_context = SDL_GL_CreateContext(mdWindow);
 
+	SDL_GL_MakeCurrent(mdWindow, gl_context);
+
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -179,8 +181,7 @@ void mdEngine::SetupOpenGL()
 
 void mdEngine::SetupGlew()
 {
-
-	SDL_GL_SetSwapInterval(0); // Enable vsync
+	SDL_GL_SetSwapInterval(1); // Enable vsync
 	
 	gl3wInit();
 
@@ -298,7 +299,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			ImGui_ImplSDL2_ProcessEvent(&event);
 #endif
 
-			//optionsWindow->ProcessEvents(&event);
+			optionsWindow->ProcessEvents(&event);
 
 			switch (event.type)
 			{
@@ -440,7 +441,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 					break;
 
 				}
-
 			}
 		}
 
@@ -452,29 +452,28 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 			UpdateRelativeMousePosition();
 
-			/*if (App::Input::IsKeyDown(App::KeyCode::F6) == true)
-			{
-				Graphics::UpdateGraphics();
-			}*/
 
 			if (mdIsRunning == true &&
 				State::CheckState(State::OptionWindow::HasFocus) == false)
 			{
 				UpdateWindowSize();
 				mdApplicationHandler->OnRealtimeUpdate();
-				Graphics::UpdateGraphics();
 			}
 			else if (mdIsRunning == true)
 			{
 				MP::UI::GetOptionsWindow()->Update();
 			}
 
-
 			SDL_GL_MakeCurrent(mdWindow, gl_context);
 #ifdef _DEBUG_
 			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
+			if (mdIsRunning == true &&
+				State::CheckState(State::OptionWindow::HasFocus) == false)
+			{
+				Graphics::UpdateGraphics();
+			}
 
 			if (State::CheckState(State::Window::Minimized) == false ||
 				State::CheckState(State::Window::InTray) == false ||
@@ -487,10 +486,10 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				mdApplicationHandler->OnRealtimeRender();
 			}
 
-
 			glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			SDL_GL_SwapWindow(mdWindow);
 #else
 			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -506,21 +505,17 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				MP::UI::GetOptionsWindow()->Render();
 			}
 #endif
-			SDL_GL_SwapWindow(mdWindow);
-
 			// Render options window
 			if (MP::UI::GetOptionsWindow()->IsActive() == true)
 			{
 				MP::UI::GetOptionsWindow()->Render();
 			}
-
 			if (Audio::GetLoadInfoWindow()->IsActive() == true)
 			{
 				Audio::GetLoadInfoWindow()->Render();
 			}
-			// Why do I have to set context here as well?
-			SDL_GL_MakeCurrent(mdWindow, gl_context);
 			
+
 			if (State::IsBackgroundModeActive() == true)
 			{
 				MP::Data::UpdateFPS(3.f);
@@ -529,6 +524,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			{
 				MP::Data::UpdateFPS(MP::Data::_SCREEN_FPS);
 			}
+
 
 			if (State::CheckState(State::Window::PositionChanged) == false &&
 				State::CheckState(State::Window::Resized) == false &&
