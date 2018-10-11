@@ -62,6 +62,8 @@ namespace mdEngine
 				glm::vec2 GetPos()  const;
 				glm::vec2 GetSize() const;
 
+				b8 PlaylistTextBoxActive;
+
 				/* multipleSelect vector stores pointers to the actual audio object ids, simply because
 				   after item deletion every id greater than deleted index is decremented so by having
 				   pointers to ids vector has updated ids

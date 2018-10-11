@@ -3,10 +3,13 @@
 #define INPUT_H
 
 #include <iostream>
+
+#include <glm.hpp>
 #include <SDL.h>
 
 #include "../utility/md_types.h"
 #include "../utility/md_util.h"
+
 
 namespace mdEngine
 { 
@@ -286,6 +289,8 @@ namespace Input
 	b8 IsScrollActive();
 
 	void GetMousePosition(s32* mouseX, s32* mouseY);
+
+	glm::vec2 GetMousePosition();
 	
 	void GetGlobalMousePosition(s32* mouseX, s32* mouseY);
 

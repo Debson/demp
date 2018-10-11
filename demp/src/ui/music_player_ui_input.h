@@ -31,6 +31,7 @@ namespace mdEngine
 					Playlist,
 					PlaylistAddFile,
 					PlaylistAddFileTextBox,
+					PlaylistItemTextBox,
 					PlaylistAddFolder,
 					SliderVolume,
 					SliderMusic,

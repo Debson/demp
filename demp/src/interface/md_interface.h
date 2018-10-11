@@ -62,6 +62,7 @@ namespace mdEngine
 			glm::vec2& GetInButtonMousePos();
 
 			b8 isPressed;
+			b8 isPressedRight;
 			b8 isReleased;
 			b8 isDown;
 			b8 topHasFocus;
@@ -165,7 +166,7 @@ namespace mdEngine
 		private:
 			s8			m_Index;
 			GLuint		m_IconTexture;
-			void UpdateTextBoxItemPos(glm::vec2 pos);
+			void UpdateTextBoxItemPos(glm::vec2 pos, glm::vec2 offset);
 
 		};
 
@@ -177,7 +178,8 @@ namespace mdEngine
 			TextBox(MP::UI::Input::ButtonType code, glm::vec2 size, glm::vec2 pos, mdShader* shader);
 
 			void Render();
-			void UpdateItemPos();
+			void UpdateItemsPos();
+			void UpdateItemsPos(glm::vec2 pos);
 			void SetBackgroundTexture(GLuint tex);
 			void SetSelectTexture(GLuint tex);
 			void SetPos(glm::vec2 pos);
@@ -186,6 +188,7 @@ namespace mdEngine
 			void SetItemScale(f32 scale);
 			void SetItemSize(glm::vec2 itemSize);
 			void AddItem(const std::string itemName, GLuint iconTexture = 0);
+			void SetItemsOffset(glm::vec2 offset);
 
 			b8			hasItemFocus(const std::string name) const;
 			b8			isItemPressed(const std::string name) const;
@@ -203,9 +206,22 @@ namespace mdEngine
 			glm::vec2					m_ItemSize;
 			glm::vec3					m_Color;
 			glm::vec2					m_Size;
+			glm::vec2					m_ItemsOffset;
 			MP::UI::Input::ButtonType	m_Type;
 			std::vector<std::shared_ptr<TextBoxItem>>	m_Items;
 
+		};
+
+		class PlaylistItemTextBox : public TextBox
+		{
+		public:
+			using TextBox::TextBox;
+
+			void SetSelectedItemID(u32 id);
+			u32 GetSelectedItemID();
+
+		private:
+			u32 m_SelectedID;
 		};
 
 		class ButtonSlider

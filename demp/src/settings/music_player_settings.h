@@ -30,6 +30,7 @@ namespace MP
 		static f32 mdDefaultWidth = 500.f;
 		static f32 mdDefaultHeight = 320.f;
 
+		
 
 		const s32 _SCREEN_FPS = 60;
 		extern s32 _SCREEN_TICK_PER_FRAME;
@@ -195,6 +196,8 @@ namespace MP
 		extern s32 _MAX_SIZE_RAM_LOADED;
 
 		const s32 StartMusicFadeTime = 1000;
+
+		const u32 PlaylistTextBoxTime = 100;
 
 		extern f32 VolumeLevel;
 		extern f32 VolumeKeyMultiplier;

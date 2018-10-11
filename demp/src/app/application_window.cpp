@@ -42,6 +42,7 @@ namespace mdEngine
 						mWindowWidth(500), // 400
 						mWindowHeight(700), // 300
 						mApplicationHeight(700),
+						mApplicationWidth(500),
 						mStartApplicationHeight(700),
 						mWindowPositionX(600),
 						mWindowPositionY(100),
@@ -194,6 +195,7 @@ namespace mdEngine
 		else
 			button->isPressed = false;
 
+
 		if (inside && Input::IsKeyDown(KeyCode::MouseLeft))
 		{
 			button->isDown = true;
@@ -325,6 +327,12 @@ namespace mdEngine
 			button->isPressed = true;
 		else
 			button->isPressed = false;
+
+		if (inside && Input::IsKeyPressed(KeyCode::MouseRight))
+			button->isPressedRight = true;
+		else
+			button->isPressedRight = false;
+
 
 		if (inside && Input::IsKeyDown(KeyCode::MouseLeft))
 		{

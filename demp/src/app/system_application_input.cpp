@@ -120,6 +120,11 @@ namespace mdEngine
 		*mouseY = mdCurrentMouseY;
 	}
 
+	glm::vec2 App::Input::GetMousePosition()
+	{
+		return glm::vec2(mdCurrentMouseX, mdCurrentMouseY);
+	}
+
 	void App::Input::GetGlobalMousePosition(s32* mouseX, s32* mouseY)
 	{
 		SDL_GetGlobalMouseState(mouseX, mouseY);

@@ -218,10 +218,20 @@ namespace MP
 		{
 			if (Audio::Object::GetAudioObject(i) == nullptr ||
 				State::CheckState(State::Window::Resized) == true)
+			{
 				break;
+			}
 
-			if (Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false)
+			if (Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false &&
+				Graphics::MP::GetPlaylistObject()->PlaylistTextBoxActive == false)
+			{
 				App::ProcesPlaylistButton(Audio::Object::GetAudioObject(i));
+			}
+			else if (Graphics::MP::GetPlaylistObject()->PlaylistTextBoxActive == true)
+			{
+				Audio::Object::GetAudioObject(i)->bottomHasFocus = false;
+				Audio::Object::GetAudioObject(i)->topHasFocus = false;
+			}
 
 		}
 
@@ -795,6 +805,12 @@ namespace MP
 			std::vector<s32*>::iterator it;
 			s32 *currentPlaylistItemID = &Audio::Object::GetAudioObject(i)->GetID();
 
+			if (Audio::Object::GetAudioObject(i)->isPressedRight == true)
+			{
+				Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
+				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(currentPlaylistItemID);
+			}
+
 			if (Audio::Object::GetAudioObject(i)->isPressed == true)
 			{
 				clickDelayTimer.Start();
@@ -836,6 +852,7 @@ namespace MP
 				}
 
 			}
+
 
 			//If time for second click expires, reset click count
 			if (clickDelayTimer.finished == true)

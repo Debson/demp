@@ -23,12 +23,11 @@ namespace mdEngine
 			TextObject(TTF_Font* font, glm::vec3 col, std::string text);
 			virtual ~TextObject();
 
-
 			virtual void InitTextTexture();
 			virtual void ReloadTextTexture();
 			// Awlays call it to initialize rendere
 			virtual void DeleteTexture();
-			virtual void DrawString() const;
+			virtual void DrawString(b8 drawOverAnything = false) const;
 
 			// Draw text string with specific texture 
 			virtual void DrawString(GLuint tex) const;

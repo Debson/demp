@@ -21,6 +21,7 @@ namespace App
 		s32 mWindowWidth;
 		s32 mWindowHeight;
 		s32 mApplicationHeight;
+		s32 mApplicationWidth;
 		s32 mStartApplicationHeight;
 		s32 mWindowPositionX;
 		s32 mWindowPositionY;

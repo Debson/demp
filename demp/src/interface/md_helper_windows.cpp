@@ -226,7 +226,7 @@ namespace mdEngine
 			return;
 
 		m_Window = SDL_CreateWindow(Strings::_OPTIONS_WINDOW_NAME.c_str(),
-			playerWindowDim.x - (m_Width - playerWindowDim.z) / 2.f,
+			playerWindowDim.x + (m_Width - playerWindowDim.z) / 2.f,
 			playerWindowDim.y + playerWindowDim.w / 2.f,
 			m_Width,
 			m_Height,

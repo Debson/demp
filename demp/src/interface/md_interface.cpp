@@ -498,12 +498,10 @@ namespace mdEngine
 		m_InterfaceButtonContainer.push_back(make_pair(name, this));
 	}
 
-	void Interface::TextBoxItem::UpdateTextBoxItemPos(glm::vec2 pos)
+	void Interface::TextBoxItem::UpdateTextBoxItemPos(glm::vec2 pos, glm::vec2 offset)
 	{
-		s32 itemOffsetY = 5;
-		s32 textOffsetX = 45;
-		m_ButtonPos = glm::vec2(pos.x, pos.y + m_Index * Data::_TEXT_BOX_ITEM_HEIGHT + itemOffsetY);
-		m_TextPos = glm::vec2(m_ButtonPos.x + textOffsetX, m_ButtonPos.y);
+		m_ButtonPos = glm::vec2(pos.x, pos.y + m_Index * Data::_TEXT_BOX_ITEM_HEIGHT + offset.y);
+		m_TextPos = glm::vec2(m_ButtonPos.x + offset.x, m_ButtonPos.y);
 	}
 
 	/* *************************************************** */
@@ -530,7 +528,7 @@ namespace mdEngine
 		assert(m_Shader != NULL);
 
 		glm::mat4 model;
-		model = glm::translate(model, glm::vec3(m_Pos, 0.7));
+		model = glm::translate(model, glm::vec3(m_Pos, 0.9f));
 		model = glm::scale(model, glm::vec3(m_Size, 1.0));
 		//m_Shader->setBool("plain", true);
 		m_Shader->setVec3("color", Color::White);
@@ -554,7 +552,7 @@ namespace mdEngine
 			if (item->m_IconTexture > 0)
 			{
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(Data::_PLAYLIST_ADD_ICON_POS.x, item->m_TextPos.y + (item->m_TextSize.y - Data::_PLAYLIST_ADD_ICON_SIZE.y) / 2.f, 0.8));
+				model = glm::translate(model, glm::vec3(Data::_PLAYLIST_ADD_ICON_POS.x, item->m_TextPos.y + (item->m_TextSize.y - Data::_PLAYLIST_ADD_ICON_SIZE.y) / 2.f, 1.f));
 				model = glm::scale(model, glm::vec3(Data::_PLAYLIST_ADD_ICON_SIZE, 1.0));;
 				m_Shader->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, item->m_IconTexture);
@@ -565,13 +563,13 @@ namespace mdEngine
 			else
 				item->SetTextColor(Color::Grey);
 
-			item->DrawString();
+			item->DrawString(true);
 
 			if (item->hasFocus == true)
 			{
 				s32 offsetX = 3;
 				model = glm::mat4();
-				model = glm::translate(model, glm::vec3(glm::vec2(m_Pos.x + offsetX, item->m_ButtonPos.y), 1.0));
+				model = glm::translate(model, glm::vec3(glm::vec2(m_Pos.x + offsetX, item->m_ButtonPos.y), 1.f));
 				model = glm::scale(model, glm::vec3(glm::vec2(m_Size.x - 2 * offsetX, item->m_ButtonSize.y), 1.0));;
 				m_Shader->setMat4("model", model);
 				glBindTexture(GL_TEXTURE_2D, m_TextBoxSelectTexture);
@@ -581,11 +579,20 @@ namespace mdEngine
 
 	}
 
-	void Interface::TextBox::UpdateItemPos()
+	void Interface::TextBox::UpdateItemsPos()
 	{
 		for (u16 i = 0; i < m_Items.size(); i++)
 		{
-			m_Items[i]->UpdateTextBoxItemPos(m_Pos);
+			m_Items[i]->UpdateTextBoxItemPos(m_Pos, m_ItemsOffset);
+		}
+	}
+
+	void Interface::TextBox::UpdateItemsPos(glm::vec2 pos)
+	{
+		m_Pos = pos;
+		for (u16 i = 0; i < m_Items.size(); i++)
+		{
+			m_Items[i]->UpdateTextBoxItemPos(m_Pos, m_ItemsOffset);
 		}
 	}
 
@@ -601,6 +608,14 @@ namespace mdEngine
 
 	void Interface::TextBox::SetPos(glm::vec2 pos)
 	{
+		f32 diffX = m_Pos.x - pos.x;
+		f32 diffY = m_Pos.y - pos.y;
+
+		for (auto & i : m_Items)
+		{
+			i->SetButtonPos(glm::vec2(i->GetButtonPos().x - diffX, i->GetButtonPos().y - diffY));
+			i->SetTextPos(glm::vec2(i->GetTextPos().x - diffX, i->GetTextPos().y - diffY));
+		}
 		m_Pos = pos;
 
 		auto item = std::find_if(mdButtonsContainer.begin(), mdButtonsContainer.end(),
@@ -657,6 +672,11 @@ namespace mdEngine
 		m_ItemsCount++;
 	}
 
+	void Interface::TextBox::SetItemsOffset(glm::vec2 offset)
+	{
+		m_ItemsOffset = offset;
+	}
+
 	glm::vec2 Interface::TextBox::GetPos() const
 	{
 		return m_Pos;
@@ -682,8 +702,18 @@ namespace mdEngine
 
 		return item == m_InterfaceButtonContainer.end() ? false : item->second->isPressed;
 	}
-
 	
+
+	void Interface::PlaylistItemTextBox::SetSelectedItemID(u32 id)
+	{
+		m_SelectedID = id;
+	}
+
+	u32 Interface::PlaylistItemTextBox::GetSelectedItemID()
+	{
+		return m_SelectedID;
+	}
+
 	Interface::ButtonSlider::ButtonSlider() { }
 
 	Interface::ButtonSlider::ButtonSlider(std::string labelName, glm::ivec2 pos, f32* value, f32 step, f32 min, f32 max, glm::vec2 size) :	m_SliderSize(size),

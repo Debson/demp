@@ -955,7 +955,7 @@ void Audio::ActiveLoadInfoWindow()
 		mdLoadInfoWindow.CancelWasPressed == false)
 	{
 		//md_log("load info window opened");
-		mdLoadInfoWindow.Init(glm::vec4(Window::GetWindowPos(), Window::windowProperties.mWindowWidth,
+		mdLoadInfoWindow.Init(glm::vec4(Window::GetWindowPos(), MP::Data::_DEFAULT_PLAYER_SIZE.x,
 										Window::windowProperties.mApplicationHeight));
 		mdLoadInfoWindow.Update();
 	}

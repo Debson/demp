@@ -103,7 +103,7 @@ void mdEngine::SetupSDL()
 	SDL_GetCurrentDisplayMode(0, &current);
 
 	mdWindow = SDL_CreateWindow("demp", Window::windowProperties.mWindowPositionX, Window::windowProperties.mWindowPositionY,
-		Window::windowProperties.mWindowWidth, current.h,
+		MP::Data::_DEFAULT_PLAYER_SIZE.x, current.h,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
 
 	mdWindowID = SDL_GetWindowID(mdWindow);
@@ -239,6 +239,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 	/* Get max display height and update window's size structure */
 	Window::windowProperties.mWindowHeight = current.h;
+	//Window::windowProperties.mWindowWidth = current.w;
 	mdActualWindowWidth = mdCurrentWindowWidth = Window::windowProperties.mWindowWidth;
 	mdActualWindowHeight = mdCurrentWindowHeight = Window::windowProperties.mWindowHeight;
 
@@ -297,7 +298,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			ImGui_ImplSDL2_ProcessEvent(&event);
 #endif
 
-			optionsWindow->ProcessEvents(&event);
+			//optionsWindow->ProcessEvents(&event);
 
 			switch (event.type)
 			{
@@ -450,6 +451,11 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			mdEngine::UpdateMouseState(current_mousestate);
 
 			UpdateRelativeMousePosition();
+
+			/*if (App::Input::IsKeyDown(App::KeyCode::F6) == true)
+			{
+				Graphics::UpdateGraphics();
+			}*/
 
 			if (mdIsRunning == true &&
 				State::CheckState(State::OptionWindow::HasFocus) == false)
