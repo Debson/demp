@@ -8,6 +8,7 @@
 
 #include "../app/realtime_system_application.h"
 #include "../interface/md_interface.h"
+#include "../interface/md_helper_windows.h"
 #include "../player/music_player.h"
 #include "../player/music_player_state.h"
 #include "../playlist/music_player_playlist.h"
@@ -35,8 +36,6 @@ namespace Audio
 	AudioObjectContainer				m_AudioObjectContainerTemp;
 
 	static std::vector<Audio::Info::ID3*> m_ID3Container;
-
-	Window::LoadInfoWindow mdLoadInfoWindow;
 
 	static s32 currentContainersSize = 0;
 	static s32 previousContainerSize = 0;
@@ -103,9 +102,7 @@ void Audio::StartAudio()
 {
 	State::SetState(State::FilesLoaded);
 	State::SetState(State::FilesInfoLoaded);
-
-	// dimensions hardcoded for now
-	mdLoadInfoWindow = Window::LoadInfoWindow(600, 100);
+;
 
 }
 
@@ -473,7 +470,6 @@ void Audio::UpdateAudioLogic()
 		}
 		else
 		{
-			mdLoadInfoWindow.CancelWasPressed = false;
 			State::ResetState(State::FilesLoaded);
 		}
 
@@ -613,6 +609,7 @@ void Audio::PerformDeletion(s32 index, b8 smallDeletion)
 	// If there is no audio objects, set playlist state to empty
 	if (m_AudioObjectContainer.empty() == true)
 	{
+		Graphics::MP::GetPlaylistObject()->GetIndexesToRender()->clear();
 		State::SetState(State::UpdatePlaylistInfoStrings);
 		State::ResetState(State::FilesDroppedNotLoaded);
 		State::ResetState(State::FilesAddedInfoNotLoaded);
@@ -631,8 +628,11 @@ void Audio::AddAudioItemWrap(std::vector<std::string*> vec, const s32 beg, const
 	s32 i = beg;
 	for (; i < end; i++)
 	{
-		if (mdLoadInfoWindow.CancelWasPressed == true)
-			break;
+		if (Window::mdLoadInfoWindow != NULL)
+		{
+			if (Window::mdLoadInfoWindow->CancelWasPressed == true)
+				break;
+		}
 
 		AddAudioItem(*vec[i], i);
 	}
@@ -951,82 +951,103 @@ void Audio::LoadFilesInfo()
 void Audio::ActiveLoadInfoWindow()
 {
 #if 1
-	if (State::CheckState(State::FilesLoaded) == false && m_AddedFilesPathContainer.size() > 500 &&
-		mdLoadInfoWindow.CancelWasPressed == false)
+	
+	// Files are loading and windows hasn't been created
+	if (State::CheckState(State::FilesLoaded) == false &&
+		m_AddedFilesPathContainer.size() > 500 &&
+		Window::mdLoadInfoWindow == nullptr)
+	{
+		Window::mdLoadInfoWindow = new Window::LoadInfoWindow(glm::vec2(600, 100), glm::vec4(Window::GetWindowPos(), MP::Data::_DEFAULT_PLAYER_SIZE.x,
+																					 Window::windowProperties.mApplicationHeight));
+		Window::WindowsContainer.insert(std::pair< std::string, Window::WindowObject*>("LoadInfoWindow", Window::mdLoadInfoWindow));
+	}
+
+	// Window is created, can safely update it
+	if (Window::mdLoadInfoWindow != nullptr)
 	{
 		//md_log("load info window opened");
-		mdLoadInfoWindow.Init(glm::vec4(Window::GetWindowPos(), MP::Data::_DEFAULT_PLAYER_SIZE.x,
-										Window::windowProperties.mApplicationHeight));
-		mdLoadInfoWindow.Update();
-	}
-	else
-	{
-		mdLoadInfoWindow.Free();
+		Window::mdLoadInfoWindow->Update();
 	}
 
-	if(mdLoadInfoWindow.CancelWasPressed == true)
+	// Files are loaded, delete window
+	if(State::CheckState(State::FilesLoaded) == true && Window::mdLoadInfoWindow != NULL)
 	{
-		auto test = &m_AudioObjectContainer;
+		delete Window::mdLoadInfoWindow;
 
-		u32 size = m_AudioObjectContainer.size();
-		for (s32 i = size - 1; i >= 0; i--)
+		Window::mdLoadInfoWindow = nullptr;
+	}
+
+	// Manage window only isn't null
+	if(Window::mdLoadInfoWindow != nullptr)
+	{ 
+		if(Window::mdLoadInfoWindow->CancelWasPressed == true)
 		{
-			if (i >= indexOfDroppedOnItem && i < indexOfDroppedOnItem + filesAddedCount)
+			auto test = &m_AudioObjectContainer;
+
+			u32 size = m_AudioObjectContainer.size();
+			for (s32 i = size - 1; i >= 0; i--)
 			{
-				m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + i);
+				if (i >= indexOfDroppedOnItem && i < indexOfDroppedOnItem + filesAddedCount)
+				{
+					m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + i);
+				}
 			}
-		}
 
-		if (droppedOnMainPlayer == true && m_AudioObjectContainerTemp.empty() == false)
-		{
-			m_AudioObjectContainer = AudioObjectContainer(m_AudioObjectContainerTemp);
-			m_AudioObjectContainerTemp.clear();
-			md_log("main player");
-			f64 size = 0;
-			f64 duration = 0;
-			for (auto & i : m_AudioObjectContainer)
+			if (droppedOnMainPlayer == true && m_AudioObjectContainerTemp.empty() == false)
 			{
-				size += i->GetID3Struct()->size;
-				duration += i->GetID3Struct()->length;
+				m_AudioObjectContainer = AudioObjectContainer(m_AudioObjectContainerTemp);
+				m_AudioObjectContainerTemp.clear();
+				md_log("main player");
+				f64 size = 0;
+				f64 duration = 0;
+				for (auto & i : m_AudioObjectContainer)
+				{
+					size += i->GetID3Struct()->size;
+					duration += i->GetID3Struct()->length;
+				}
+				Graphics::MP::GetPlaylistObject()->SetItemsSize(size);
+				Graphics::MP::GetPlaylistObject()->SetItemsDuration(duration);
+
 			}
-			Graphics::MP::GetPlaylistObject()->SetItemsSize(size);
-			Graphics::MP::GetPlaylistObject()->SetItemsDuration(duration);
+			else
+			{
+				m_AudioObjectContainer.resize(previousContainerSize);
+			}
 
+			State::SetState(State::AudioAdded);
+			State::SetState(State::FilesLoaded);
+			State::SetState(State::ShuffleAfterLoad);
+			State::ResetState(State::PathContainerSorted);
+			State::ResetState(State::TerminateWorkingThreads);
+			//State::SetState(State::UpdatePlaylistInfoStrings);
+			State::ResetState(State::FilesAddedInfoNotLoaded);
+			State::ResetState(State::FilesDroppedNotLoaded);
+
+			Info::GetLoadedPathsContainer()->clear();
+
+			firstFilesLoaded = false;
+			indexOfDroppedOnItem = 0;
+			if (droppedOnMainPlayer == true)
+			{
+				currentContainersSize = m_AudioObjectContainer.size();
+			}
+			else
+			{
+				currentContainersSize = previousContainerSize;
+			}
+			currentlyLoadedItemsCount = currentContainersSize;
+			Info::LoadedItemsInfoCount = currentContainersSize;
+
+			m_AddedFilesPathContainer.clear();
+			ResetStateFlags();
+
+			md_log_compare(indexOfDroppedOnItem, filesAddedCount);
+			Window::mdLoadInfoWindow->CancelWasPressed = false;
+
+			delete Window::mdLoadInfoWindow;
+			Window::mdLoadInfoWindow = nullptr;
 		}
-		else
-		{
-			m_AudioObjectContainer.resize(previousContainerSize);
-		}
 
-		State::SetState(State::AudioAdded);
-		State::SetState(State::FilesLoaded);
-		State::SetState(State::ShuffleAfterLoad);
-		State::ResetState(State::PathContainerSorted);
-		State::ResetState(State::TerminateWorkingThreads);
-		//State::SetState(State::UpdatePlaylistInfoStrings);
-		State::ResetState(State::FilesAddedInfoNotLoaded);
-		State::ResetState(State::FilesDroppedNotLoaded);
-
-		Info::GetLoadedPathsContainer()->clear();
-
-		firstFilesLoaded = false;
-		indexOfDroppedOnItem = 0;
-		if (droppedOnMainPlayer == true)
-		{
-			currentContainersSize = m_AudioObjectContainer.size();
-		}
-		else
-		{
-			currentContainersSize = previousContainerSize;
-		}
-		currentlyLoadedItemsCount = currentContainersSize;
-		Info::LoadedItemsInfoCount = currentContainersSize;
-
-		m_AddedFilesPathContainer.clear();
-		ResetStateFlags();
-
-		md_log_compare(indexOfDroppedOnItem, filesAddedCount);
-		mdLoadInfoWindow.CancelWasPressed = false;
 	}
 
 
@@ -1102,10 +1123,6 @@ u32 Audio::Object::GetProcessedSize()
 	return 0;
 }
 
-Window::LoadInfoWindow* Audio::GetLoadInfoWindow()
-{
-	return &mdLoadInfoWindow;
-}
 
 #ifdef _DEBUG_
 void Audio::GetItemsInfo()

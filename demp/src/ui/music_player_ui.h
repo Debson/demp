@@ -35,8 +35,6 @@ namespace MP
 
 		void DeleteAllFiles();
 
-		Window::OptionsWindow* GetOptionsWindow();
-
 		void Start();
 
 		void Update();

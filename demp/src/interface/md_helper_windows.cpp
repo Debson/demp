@@ -16,7 +16,55 @@ using namespace mdEngine::Graphics;
 
 namespace mdEngine
 {
-	void Window::WindowObject::Init() { }
+	namespace Window
+	{
+		OptionsWindow*		mdOptionsWindow;
+		LoadInfoWindow*		mdLoadInfoWindow;
+		MusicInfoWindow*	mdMusicInfoWindow;
+
+		std::map<std::string, WindowObject*> WindowsContainer;
+
+		void UpdateWindowContainer();
+	}
+
+
+	void Window::UpdateWindows()
+	{
+		if (Window::mdOptionsWindow != nullptr)
+		{
+			if (Window::mdOptionsWindow->IsActive() == false)
+			{
+				Window::WindowsContainer.erase("OptionsWindow");
+				delete Window::mdOptionsWindow;
+				Window::mdOptionsWindow = nullptr;
+				State::ResetState(State::OptionWindow::HasFocus);
+			}
+		}
+
+		if (Window::mdMusicInfoWindow != nullptr)
+		{
+			if (Window::mdMusicInfoWindow->IsActive() == false)
+			{
+				Window::WindowsContainer.erase("MusicInfoWindow");
+				delete Window::mdMusicInfoWindow;
+				Window::mdMusicInfoWindow = nullptr;
+			}
+		}
+	}
+
+	void Window::RenderWindows()
+	{
+
+	}
+
+	void Window::UpdateWindowContainer()
+	{
+		for (auto & i : WindowsContainer)
+		{
+			if (i.second == nullptr)
+				md_log(i.first);
+		}
+	}
 
 	void Window::WindowObject::ProcessEvents(SDL_Event* const e)
 	{
@@ -28,7 +76,7 @@ namespace mdEngine
 			switch (e->window.event)
 			{
 			case SDL_WINDOWEVENT_CLOSE:
-				Free();
+				OnDelete();
 				break;
 			case SDL_WINDOWEVENT_ENTER:
 				m_WindowHasFocus = true;
@@ -40,35 +88,45 @@ namespace mdEngine
 		}
 	}
 
+	s32 Window::WindowObject::GetWindowID() const
+	{
+		return m_WindowID;
+	}
+
 	b8 Window::WindowObject::IsActive()
 	{
-		return m_Window != NULL;
+		return m_Active;
 	}
 
 	Window::OptionsWindow::OptionsWindow()
 	{ 
 		m_Width = MP::Data::_OPTIONS_WINDOW_SIZE.x;
 		m_Height = MP::Data::_OPTIONS_WINDOW_SIZE.y;
+		
 		m_Window = NULL;
-	}
-
-	Window::OptionsWindow::~OptionsWindow()
-	{
-		SDL_DestroyWindow(m_Window);
-		m_Window = NULL;
-	}
-
-	void Window::OptionsWindow::Init()
-	{
-		if (m_Window != NULL)
-			return;
 
 		m_Window = SDL_CreateWindow(Strings::_OPTIONS_WINDOW_NAME.c_str(),
 			SDL_WINDOWPOS_CENTERED,
 			SDL_WINDOWPOS_CENTERED,
-			m_Width, 
+			m_Width,
 			m_Height,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_SKIP_TASKBAR);
+
+		assert(m_Window != NULL);
+
+#ifdef _WIN32_
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		SDL_GetWindowWMInfo(m_Window, &info);
+
+		// Disable minimize/maximize buttons
+		SetWindowLong(info.info.win.window, GWL_STYLE,
+			GetWindowLong(info.info.win.window, GWL_STYLE) & ~WS_MINIMIZEBOX);
+#else
+
+#endif
+
+		m_Active = true;
 
 
 		m_WindowID = SDL_GetWindowID(m_Window);
@@ -103,6 +161,28 @@ namespace mdEngine
 
 		m_OnLoadCheckExistence = Interface::CheckBox(Strings::_ON_LOAD_CHECK_PATH_EXISTENCE, glm::vec2(xPos, 270), &MP::Settings::IsPathExistenceCheckingEnabled);
 		m_OnLoadCheckExistence.Init(m_Shader);
+
+
+	}
+
+	Window::OptionsWindow::~OptionsWindow()
+	{
+
+		m_Active = false;
+		SDL_GL_MakeCurrent(m_Window, *Window::GetMainWindowContext());
+
+		m_VolumeStepSlider.Free();
+		m_PlaylistScrollStepSlider.Free();;
+		m_PauseFadeTimeSlider.Free();
+		m_RamLoadedSizeSlider.Free();
+
+		m_ToTrayOnExit.Free();
+		m_OnLoadCheckExistence.Free();
+
+		SDL_DestroyWindow(m_Window);
+		m_Shader = NULL;
+		m_Window = NULL;
+
 	}
 
 	void Window::OptionsWindow::Update()
@@ -193,64 +273,49 @@ namespace mdEngine
 		SDL_GL_SwapWindow(m_Window);
 	}
 
-	s32 Window::OptionsWindow::GetOptionWindowID()
+	void Window::OptionsWindow::OnDelete()
 	{
-		return m_WindowID;
-	}
-
-	void Window::OptionsWindow::Free()
-	{
-		SDL_GL_MakeCurrent(m_Window, *Window::GetMainWindowContext());
-
-		m_VolumeStepSlider.Free();
-		m_PlaylistScrollStepSlider.Free();;
-		m_PauseFadeTimeSlider.Free();
-		m_RamLoadedSizeSlider.Free();
-
-		m_ToTrayOnExit.Free();
-		m_OnLoadCheckExistence.Free();
-
-		SDL_DestroyWindow(m_Window);
-		m_Shader = NULL;
-		m_Window = NULL;
+		m_Active = false;
 	}
 
 	Window::LoadInfoWindow::LoadInfoWindow() { }
 
-	Window::LoadInfoWindow::LoadInfoWindow(f32 width, f32 height)
+	Window::LoadInfoWindow::LoadInfoWindow(glm::vec2 size, glm::vec4 playerWindowDim)
 	{
-		m_Width = width;
-		m_Height = height;
+		m_Width = size.x;
+		m_Height = size.y;
 		m_Window = NULL;
 		CancelWasPressed = false;
-	}
 
-	void Window::LoadInfoWindow::Init(glm::vec4 playerWindowDim)
-	{
-		if (m_Window != NULL)
-			return;
 
 		m_Window = SDL_CreateWindow(Strings::_OPTIONS_WINDOW_NAME.c_str(),
 			playerWindowDim.x + (m_Width - playerWindowDim.z) / 2.f,
 			playerWindowDim.y + playerWindowDim.w / 2.f,
 			m_Width,
 			m_Height,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_SKIP_TASKBAR);
 
-
+		assert(m_Window != NULL);
+		
 		m_WindowID = SDL_GetWindowID(m_Window);
 
+
+		m_Active = true;
 #ifdef _WIN32_
 		// Set this window to be always on top
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 		SDL_GetWindowWMInfo(m_Window, &info);
 
-		SetWindowPos(info.info.win.window, HWND_TOPMOST, 
-			playerWindowDim.x - (m_Width - playerWindowDim.z) / 2.f, 
+		SetWindowPos(info.info.win.window, HWND_TOPMOST,
+			playerWindowDim.x - (m_Width - playerWindowDim.z) / 2.f,
 			playerWindowDim.y + playerWindowDim.w / 2.f,
-			m_Width, m_Height, 
+			m_Width, m_Height,
 			SWP_NOSIZE);
+
+
+		SetWindowLong(info.info.win.window, GWL_STYLE,
+			GetWindowLong(info.info.win.window, GWL_STYLE) & ~WS_MINIMIZEBOX);
 #else
 
 #endif
@@ -273,8 +338,8 @@ namespace mdEngine
 
 
 		m_CancelButtonSize = glm::vec2(m_ProgressBarSize.x / 6.f, 20.f);
-		m_CancelButtonPos = glm::vec2(m_ProgressBarPos.x + (m_ProgressBarSize.x - m_CancelButtonSize.x) / 2.f, 
-									  m_ProgressBarPos.y + m_ProgressBarSize.y + 20.f);
+		m_CancelButtonPos = glm::vec2(m_ProgressBarPos.x + (m_ProgressBarSize.x - m_CancelButtonSize.x) / 2.f,
+			m_ProgressBarPos.y + m_ProgressBarSize.y + 20.f);
 		m_CancelButton = new Interface::Button(m_CancelButtonSize, m_CancelButtonPos);
 
 		m_CancelText = Text::TextObject(MP::Data::_MUSIC_PLAYER_FONT, Color::Black);
@@ -283,10 +348,33 @@ namespace mdEngine
 
 		m_CancelText.SetTextPos(glm::vec2(100, 50));
 		m_CancelText.SetTextPos(glm::vec2(m_CancelButtonPos.x + (m_CancelButtonSize.x - m_CancelText.GetTextSize().x) / 2.f,
-										  m_CancelButtonPos.y + (m_CancelButtonSize.y - m_CancelText.GetTextSize().y) / 2.f));
+			m_CancelButtonPos.y + (m_CancelButtonSize.y - m_CancelText.GetTextSize().y) / 2.f));
 
 		CancelWasPressed = false;
 
+		//Window::WindowsContainer.insert(std::pair< std::string, std::shared_ptr<Window::WindowObject>>("LoadInfoWindow", this));
+	}
+	
+	Window::LoadInfoWindow::~LoadInfoWindow()
+	{
+		m_Active = false;
+		Window::WindowsContainer.erase("LoadInfoWindow");
+
+		SDL_GL_MakeCurrent(m_Window, *Window::GetMainWindowContext());
+
+		m_LoadingPathText.DeleteTexture();
+		m_CancelText.DeleteTexture();
+		delete m_CancelButton;
+
+		m_WindowID = -1;
+
+
+		SDL_DestroyWindow(m_Window);
+		//State::SetState(State::UpdatePlaylistInfoStrings);
+
+
+		m_Shader = NULL;
+		m_Window = NULL;
 	}
 
 	void Window::LoadInfoWindow::Update()
@@ -301,7 +389,7 @@ namespace mdEngine
 		{
 			md_log("pressed");
 			CancelWasPressed = true;
-			Free();
+			m_Active = false;
 		}
 
 		u32 test = Audio::GetIndexOfLoadingObject();
@@ -367,28 +455,101 @@ namespace mdEngine
 		SDL_GL_SwapWindow(m_Window);
 	}
 
-	void Window::LoadInfoWindow::Free()
+	void Window::LoadInfoWindow::OnDelete()
+	{
+		this->CancelWasPressed = true;
+	}
+
+	Window::MusicInfoWindow::MusicInfoWindow(glm::vec2 pos)
+	{
+		m_Width = 150;
+		m_Height = 100;
+
+		m_Window = NULL;
+
+		m_Window = SDL_CreateWindow(Strings::_OPTIONS_WINDOW_NAME.c_str(),
+			pos.x,
+			pos.y,
+			m_Width,
+			m_Height,
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_SKIP_TASKBAR);
+
+		assert(m_Window != NULL);
+
+
+#ifdef _WIN32_
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		SDL_GetWindowWMInfo(m_Window, &info);
+
+		// Disable minimize/maximize buttons
+		SetWindowLong(info.info.win.window, GWL_STYLE,
+			GetWindowLong(info.info.win.window, GWL_STYLE) & ~WS_MINIMIZEBOX);
+#else
+
+#endif
+
+		m_Active = true;
+
+
+		m_WindowID = SDL_GetWindowID(m_Window);
+
+		SDL_GL_MakeCurrent(m_Window, *Window::GetMainWindowContext());
+
+		m_Projection = glm::ortho(0.f, static_cast<float>(m_Width), static_cast<float>(m_Height), 0.f);
+		m_Shader = Shader::shaderDefault;
+		m_Shader->use();
+		m_Shader->setMat4("projection", m_Projection);
+
+		glViewport(0, 0, static_cast<GLint>(m_Width), static_cast<GLint>(m_Height));
+
+
+		//Window::WindowsContainer.insert(std::pair< std::string, std::shared_ptr<Window::WindowObject>>("MusicInfoWindow", this));
+	}
+
+	Window::MusicInfoWindow::~MusicInfoWindow()
+	{
+		m_Active = false;
+		Window::WindowsContainer.erase("MusicInfoWindow");
+
+		SDL_GL_MakeCurrent(m_Window, *Window::GetMainWindowContext());
+
+		m_WindowID = -1;
+
+		SDL_DestroyWindow(m_Window);
+
+		m_Shader = NULL;
+		m_Window = NULL;
+	}
+
+	void Window::MusicInfoWindow::Update()
+	{
+		if (m_Window == NULL)
+			return;
+	}
+
+	void Window::MusicInfoWindow::Render()
 	{
 		if (m_Window == NULL)
 			return;
 
 		SDL_GL_MakeCurrent(m_Window, *Window::GetMainWindowContext());
 
-		m_LoadingPathText.DeleteTexture();
-		m_CancelText.DeleteTexture();
-		delete m_CancelButton;
+		glClearColor(Color::Azure.r, Color::Azure.g, Color::Azure.b, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		m_Shader->use();
+		m_Shader->setMat4("projection", m_Projection);
+		glViewport(0, 0, static_cast<GLint>(m_Width), static_cast<GLint>(m_Height));
 
 
-		SDL_DestroyWindow(m_Window);
-		//State::SetState(State::UpdatePlaylistInfoStrings);
 
 
-		m_Shader = NULL;
-		m_Window = NULL;
+		SDL_GL_SwapWindow(m_Window);
 	}
 
-	s32 Window::LoadInfoWindow::GetOptionWindowID()
+	void Window::MusicInfoWindow::OnDelete()
 	{
-		return m_WindowID;
+		m_Active = false;
 	}
+
 }

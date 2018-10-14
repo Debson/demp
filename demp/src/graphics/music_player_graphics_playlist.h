@@ -88,7 +88,6 @@ namespace mdEngine
 				std::string m_ItemsSizeStr;
 				std::vector<s32> m_IndexesToRender;
 
-
 			};
 
 

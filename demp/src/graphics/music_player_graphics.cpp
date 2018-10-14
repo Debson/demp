@@ -37,6 +37,7 @@ namespace mdEngine
 		Interface::TextBox m_PlaylistTextBox;		// Textbox when right mouse click on playlist
 		Time::Timer m_PlaylistTextBoxTimer;
 
+		static TextBoxContainer m_TextBoxContainer;
 
 		GLuint main_background = 0, main_foreground = 0;
 		GLuint ui_buttons_background, ui_buttons_background_left,
@@ -83,6 +84,7 @@ namespace mdEngine
 		b8 playlistAddFileButtonPressed(false);
 		b8 playlistItemTextBoxActive(false);
 		b8 playlistTextBoxActive(false);
+
 
 
 		b8 playlistToggled(false);
@@ -306,7 +308,7 @@ namespace mdEngine
 											Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE,
 											glm::vec2(Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_POS.x,
 													  Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_POS.y +
-													  Data::_PLAYLIST_ADD_BUTTON_SIZE.y),
+													  Data::_PLAYLIST_ADD_BUTTON_SIZE.y + 200),
 											Shader::shaderDefault);
 
 		m_AddFileTextBox.SetTextColor(Color::White);
@@ -345,6 +347,11 @@ namespace mdEngine
 		m_PlaylistTextBox.SetItemScale(1.f);
 		m_PlaylistTextBox.SetItemsOffset(glm::vec2(5.f, 5.f));
 		m_PlaylistTextBox.AddItem("on playlist");
+
+
+		m_TextBoxContainer.push_back(&m_AddFileTextBox);
+		m_TextBoxContainer.push_back(&m_PlaylistItemTextBox);
+		m_TextBoxContainer.push_back(&m_PlaylistTextBox);
 	}
 
 	void Graphics::InitializeConfig()
@@ -1114,6 +1121,12 @@ namespace mdEngine
 			musicInfoScrollTextIsMoved = true;
 		}
 
+		if ((musicInfoScrollTextButton[0]->isPressedRight == true || musicInfoScrollTextButton[1]->isPressedRight == true))
+		{
+			Window::mdMusicInfoWindow = new Window::MusicInfoWindow(App::Input::GetGlobalMousePosition());
+			Window::WindowsContainer.insert(std::pair<std::string, Window::WindowObject*>("MusicInfoWindow", Window::mdMusicInfoWindow));
+		}
+
 		if (musicInfoScrollTextIsMoved == true)
 		{
 			s32 relX, relY;
@@ -1818,6 +1831,22 @@ namespace mdEngine
 		b8 inside = mousePos.x > Data::_PLAYLIST_FOREGROUND_POS.x && mousePos.x < Data::_PLAYLIST_FOREGROUND_SIZE.x &&
 			mousePos.y > Data::_PLAYLIST_ITEMS_SURFACE_POS.y && mousePos.y < Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y;
 
+
+
+		if (m_PlaylistItemTextBox.isItemPressed("Play") == true && playlistItemTextBoxActive == true)
+		{
+			// Make sure audio file is available
+			if (Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(m_PlaylistItemTextBox.GetSelectedItemID())) == true)
+			{
+				if (Playlist::RamLoadedMusic.m_ID < Audio::Object::GetSize())
+					Audio::Object::GetAudioObject(Playlist::RamLoadedMusic.m_ID)->DeleteAlbumImageTexture();
+				Playlist::PlayMusic();
+				State::SetState(State::AudioChosen);
+			}
+		}
+
+
+
 		if (App::Input::IsKeyPressed(App::KeyCode::MouseRight) == true && inside &&
 			playlistItemTextBoxActive == false && playlistTextBoxActive == false)
 		{
@@ -1826,12 +1855,14 @@ namespace mdEngine
 		else if (App::Input::IsKeyPressed(App::KeyCode::MouseRight) == true && inside)
 		{
 			m_PlaylistTextBoxTimer.Start();
+
+
 			playlistItemTextBoxActive = false;
 			playlistTextBoxActive = false;
 			md_log("mouse left");
 		}
 		else if (App::Input::IsKeyPressed(App::KeyCode::MouseLeft) == true &&
-			Input::hasFocus(Input::ButtonType::PlaylistItemTextBox) == false)
+				 Input::hasFocus(Input::ButtonType::PlaylistItemTextBox) == false)
 		{
 			playlistItemTextBoxActive = false;
 			playlistTextBoxActive = false;
@@ -1841,14 +1872,17 @@ namespace mdEngine
 
 		if (m_PlaylistTextBoxTimer.finished == true)
 		{
+			glm::vec2 globalMousePos = App::Input::GetGlobalMousePosition();
+
 			b8 playlistItemHasFocus(false);
 			for (auto & i : *MP::GetPlaylistObject()->GetIndexesToRender())
 			{
 				if (Audio::Object::GetAudioObject(i)->hasFocus == true)
 				{
-					playlistItemTextBoxActive = true;
 					m_PlaylistItemTextBox.UpdateItemsPos(mousePos);
 					m_PlaylistItemTextBox.SetSelectedItemID(Audio::Object::GetAudioObject(i)->GetID());
+
+					playlistItemTextBoxActive = true;
 					playlistTextBoxActive = false;
 					playlistItemHasFocus = true;
 					break;
@@ -1860,6 +1894,8 @@ namespace mdEngine
 			{
 				playlistTextBoxActive = true;
 				playlistItemTextBoxActive = false;
+
+				// update position then create window
 				m_PlaylistTextBox.UpdateItemsPos(mousePos);
 			}
 
@@ -1877,20 +1913,13 @@ namespace mdEngine
 		}
 
 
-		if (m_PlaylistItemTextBox.isItemPressed("Play") == true)
-		{
-			// Make sure audio file is available
-			if (Playlist::RamLoadedMusic.load(Audio::Object::GetAudioObject(m_PlaylistItemTextBox.GetSelectedItemID())) == true)
-			{
-				if (Playlist::RamLoadedMusic.m_ID < Audio::Object::GetSize())
-					Audio::Object::GetAudioObject(Playlist::RamLoadedMusic.m_ID)->DeleteAlbumImageTexture();
-				Playlist::PlayMusic();
-				State::SetState(State::AudioChosen);
-			}
-		}
+
 
 		MP::GetPlaylistObject()->PlaylistTextBoxActive = playlistItemTextBoxActive || playlistTextBoxActive;
 		m_PlaylistTextBoxTimer.Update();
+
+		m_PlaylistTextBox;
+		m_PlaylistTextBox;
 	}
 
 	void Graphics::RenderPlaylistItemTextBox()
@@ -2118,6 +2147,11 @@ namespace mdEngine
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
+	Graphics::TextBoxContainer* Graphics::GetTextBoxContainer()
+	{
+		return &m_TextBoxContainer;
+	}
+
 	void Graphics::StartMainWindow()
 	{
 		main_background				= mdLoadTexture("assets/main.png");
@@ -2249,7 +2283,6 @@ namespace mdEngine
 			itemsCountText.ReloadTextTexture();
 		}
 
-
 		UpdatePlaylistWindow();
 		UpdateVolume();
 		UpdateMusicProgressBar();
@@ -2260,6 +2293,7 @@ namespace mdEngine
 		UpdatePlaylistItemTextBox();
 		UpdatePlaylistItems();
 		UpdateWindowControlButtons();
+		UpdatePlaylistAddButtons();
 		UpdateSettingsButtons();
 	}
 

@@ -180,6 +180,7 @@ namespace mdEngine
 			void Render();
 			void UpdateItemsPos();
 			void UpdateItemsPos(glm::vec2 pos);
+			void ProcessInput(const SDL_Event* e);
 			void SetBackgroundTexture(GLuint tex);
 			void SetSelectTexture(GLuint tex);
 			void SetPos(glm::vec2 pos);
@@ -190,6 +191,8 @@ namespace mdEngine
 			void AddItem(const std::string itemName, GLuint iconTexture = 0);
 			void SetItemsOffset(glm::vec2 offset);
 
+			void Free();
+
 			b8			hasItemFocus(const std::string name) const;
 			b8			isItemPressed(const std::string name) const;
 			glm::vec2	GetPos() const;
@@ -199,14 +202,17 @@ namespace mdEngine
 			b8							m_Active;
 			u16							m_ItemsCount;
 			f32							m_ItemScale;
+			s32							m_WindowID;
 			GLuint						m_TextBoxBackgroundTexture;
 			GLuint						m_TextBoxSelectTexture;
 			mdShader*					m_Shader;
+			SDL_Window*					m_Window;
 			glm::vec2					m_Pos;
 			glm::vec2					m_ItemSize;
 			glm::vec3					m_Color;
 			glm::vec2					m_Size;
 			glm::vec2					m_ItemsOffset;
+			glm::mat4					m_Projection;
 			MP::UI::Input::ButtonType	m_Type;
 			std::vector<std::shared_ptr<TextBoxItem>>	m_Items;
 

@@ -29,6 +29,7 @@
 #include "../audio/mp_audio.h"
 #include "../audio/mp_channel_attrib.h"
 #include "../graphics/graphics.h"
+#include "../graphics/music_player_graphics.h"
 #include "../sqlite/md_sqlite.h";
 #include "../utility/md_time.h"
 
@@ -103,7 +104,7 @@ void mdEngine::SetupSDL()
 	SDL_GetCurrentDisplayMode(0, &current);
 
 	mdWindow = SDL_CreateWindow("demp", Window::windowProperties.mWindowPositionX, Window::windowProperties.mWindowPositionY,
-		MP::Data::_DEFAULT_PLAYER_SIZE.x, current.h,
+		MP::Data::_DEFAULT_PLAYER_SIZE.x + 50, current.h,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
 
 	mdWindowID = SDL_GetWindowID(mdWindow);
@@ -290,7 +291,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		Time::deltaTime = currentFrame - previousFrame;
 		previousFrame = currentFrame;
 
-		auto optionsWindow = MP::UI::GetOptionsWindow();
 
 		State::ResetState(State::Window::MouseOnTrayIcon);
 		while (SDL_PollEvent(&event) != 0)
@@ -299,7 +299,16 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			ImGui_ImplSDL2_ProcessEvent(&event);
 #endif
 
-			optionsWindow->ProcessEvents(&event);
+			for (auto & i : *Graphics::GetTextBoxContainer())
+			{
+				i->ProcessInput(&event);
+			}
+
+			for (auto & i : Window::WindowsContainer)
+			{
+				i.second->ProcessEvents(&event);
+			}
+
 
 			switch (event.type)
 			{
@@ -429,17 +438,21 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				}
 			}
 
-			if (event.type == SDL_WINDOWEVENT && event.window.windowID == GetOptionsWindow()->GetOptionWindowID())
+			if (Window::mdOptionsWindow != NULL)
 			{
-				switch (event.window.event)
+				if (event.type == SDL_WINDOWEVENT && event.window.windowID == Window::mdOptionsWindow->GetWindowID())
 				{
-				case (SDL_WINDOWEVENT_FOCUS_GAINED):
-					State::SetState(State::OptionWindow::HasFocus);
-					break;
-				case (SDL_WINDOWEVENT_FOCUS_LOST):
-					State::ResetState(State::OptionWindow::HasFocus);;
-					break;
 
+					switch (event.window.event)
+					{
+					case (SDL_WINDOWEVENT_FOCUS_GAINED):
+						State::SetState(State::OptionWindow::HasFocus);
+						break;
+					case (SDL_WINDOWEVENT_FOCUS_LOST):
+						State::ResetState(State::OptionWindow::HasFocus);;
+						break;
+
+					}
 				}
 			}
 		}
@@ -453,16 +466,19 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			UpdateRelativeMousePosition();
 
 
-			if (mdIsRunning == true &&
-				State::CheckState(State::OptionWindow::HasFocus) == false)
+			if (mdIsRunning == true && State::CheckState(State::OptionWindow::HasFocus) == false)
 			{
 				UpdateWindowSize();
 				mdApplicationHandler->OnRealtimeUpdate();
 			}
 			else if (mdIsRunning == true)
 			{
-				MP::UI::GetOptionsWindow()->Update();
+
+				if(Window::mdOptionsWindow != NULL)
+					Window::mdOptionsWindow->Update();
 			}
+
+			Window::UpdateWindows();
 
 			SDL_GL_MakeCurrent(mdWindow, gl_context);
 #ifdef _DEBUG_
@@ -506,15 +522,15 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			}
 #endif
 			// Render options window
-			if (MP::UI::GetOptionsWindow()->IsActive() == true)
+
+			for (auto & i : Window::WindowsContainer)
 			{
-				MP::UI::GetOptionsWindow()->Render();
+				if (i.second->IsActive() == true)
+				{
+					i.second->Render();
+				}
 			}
-			if (Audio::GetLoadInfoWindow()->IsActive() == true)
-			{
-				Audio::GetLoadInfoWindow()->Render();
-			}
-			
+	
 
 			if (State::IsBackgroundModeActive() == true)
 			{

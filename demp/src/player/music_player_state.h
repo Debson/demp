@@ -80,8 +80,14 @@ namespace mdEngine
 			{
 				HasFocus			= (1llu << 39),
 				Minimized			= (1llu << 40),
-				Shown				= (1llu << 41)
+				Shown				= (1llu << 41),
+				Exit				= (1llu << 51)
 			};
+		}
+
+		namespace LoadInfoWindow
+		{
+			
 		}
 
 		extern u64 m_currentState;

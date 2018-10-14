@@ -28,6 +28,7 @@
 #include "../player/music_player.h"
 #include "../player/music_player_system.h"
 #include "../player/music_player_state.h"
+#include "../interface/md_helper_windows.h"
 #include "../utility/md_windows.h"
 
 
@@ -44,7 +45,6 @@ namespace MP
 		Interface::Resizable	mdResizableBottom;
 		Interface::Resizable	mdResizableTop;
 		ButtonContainer			mdButtonsContainer;
-		Window::OptionsWindow	mdOptionsWindow;
 		SDL_Cursor*				mdCursor;
 		Interface::Movable*		mdPlaylistMovableLeft;
 		Interface::Movable*		mdPlaylistMovableRight;
@@ -602,10 +602,12 @@ namespace MP
 			Window::MinimizeWindow();
 		}
 
-		if (Input::isButtonPressed(Input::ButtonType::Options))
+		if (Input::isButtonPressed(Input::ButtonType::Options) && Window::mdOptionsWindow == nullptr)
 		{
-			mdOptionsWindow.Init();
+			Window::mdOptionsWindow = new Window::OptionsWindow();
+			Window::WindowsContainer.insert(std::pair< std::string, Window::WindowObject*>("OptionsWindow", Window::mdOptionsWindow));
 		}
+		
 
 		if (Input::isButtonPressed(Input::ButtonType::Shuffle))
 		{
@@ -1086,11 +1088,6 @@ namespace MP
 
 		mdAddFilesButton->SetButtonPos(Data::_PLAYLIST_ADD_BUTTON_POS);
 		mdAddFilesButton->SetButtonSize(Data::_PLAYLIST_ADD_BUTTON_SIZE);
-	}
-
-	Window::OptionsWindow* UI::GetOptionsWindow()
-	{
-		return &mdOptionsWindow;
 	}
 }
 }

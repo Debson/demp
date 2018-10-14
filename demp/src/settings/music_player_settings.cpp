@@ -94,7 +94,7 @@ namespace MP
 
 		_PLAYLIST_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdCurrentHeight - _DEFAULT_PLAYER_SIZE.y - 50.f);
 
-		//_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, _PLAYLIST_FOREGROUND_POS.y);
+		_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(mdCurrentWidth / 2.f - 150.f, _PLAYLIST_FOREGROUND_POS.y);
 		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 100.f, mdCurrentHeight - 30.f);
 		_PLAYLIST_ADD_BUTTON_POS = glm::vec2(40.f, _PLAYLIST_ITEMS_SURFACE_SIZE.y);
 		_PLAYLIST_ADD_BUTTON_SIZE = glm::vec2(mdCurrentHeight - _PLAYLIST_ITEMS_SURFACE_SIZE.y);

@@ -7,6 +7,7 @@
 #include <mutex>
 
 #include "../app/application_window.h"
+#include "../app/realtime_system_application.h"
 #include "../settings/music_player_settings.h"
 #include "../playlist/music_player_playlist.h"
 #include "../player/music_player_state.h"
@@ -520,6 +521,8 @@ namespace mdEngine
 		m_Type = code;
 		m_ItemsCount = 0;
 		m_TextBoxBackgroundTexture = 0;
+		m_Window = NULL;
+		m_WindowID = -1;
 		new Button(code, size, pos);
 	}
 
@@ -527,8 +530,14 @@ namespace mdEngine
 	{
 		assert(m_Shader != NULL);
 
+		// This will allow
+		m_Projection = glm::ortho(0.f, static_cast<f32>(Window::windowProperties.mWindowWidth + 50.f), 
+									   static_cast<f32>(Window::windowProperties.mWindowHeight), 0.f);
+		m_Shader->setMat4("projection", m_Projection);
+		glViewport(0.f, 0.f, Window::windowProperties.mWindowWidth + 50.f, Window::windowProperties.mWindowHeight);
+
 		glm::mat4 model;
-		model = glm::translate(model, glm::vec3(m_Pos, 0.9f));
+		model = glm::translate(model, glm::vec3(m_Pos, 0.95f));
 		model = glm::scale(model, glm::vec3(m_Size, 1.0));
 		//m_Shader->setBool("plain", true);
 		m_Shader->setVec3("color", Color::White);
@@ -540,14 +549,6 @@ namespace mdEngine
 		for (s32 i = 0; i < m_Items.size(); i++)
 		{
 			auto item = m_Items[i];
-			/*//render item rect
-			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(item->m_ButtonPos, 0.6));
-			model = glm::scale(model, glm::vec3(item->m_ButtonSize, 1.0));;
-			m_Shader->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, 0);
-			Graphics::Shader::Draw(m_Shader);*/
-
 
 			if (item->m_IconTexture > 0)
 			{
@@ -577,6 +578,8 @@ namespace mdEngine
 			}
 		}
 
+		m_Shader->setMat4("projection", *Graphics::GetProjectionMatrix());
+		glViewport(0.f, 0.f, Window::windowProperties.mWindowWidth, Window::windowProperties.mWindowHeight);
 	}
 
 	void Interface::TextBox::UpdateItemsPos()
@@ -593,6 +596,26 @@ namespace mdEngine
 		for (u16 i = 0; i < m_Items.size(); i++)
 		{
 			m_Items[i]->UpdateTextBoxItemPos(m_Pos, m_ItemsOffset);
+		}
+	}
+
+	void Interface::TextBox::ProcessInput(const SDL_Event* e)
+	{
+		if (m_Window == NULL)
+			return;
+
+		if (e->type == SDL_WINDOWEVENT && e->window.windowID == m_WindowID)
+		{
+			switch (e->window.event)
+			{
+			case SDL_WINDOWEVENT_CLOSE:
+				break;
+			case SDL_WINDOWEVENT_ENTER:
+				break;
+			case SDL_WINDOWEVENT_FOCUS_LOST:
+				Free();
+				break;
+			}
 		}
 	}
 
@@ -702,7 +725,14 @@ namespace mdEngine
 
 		return item == m_InterfaceButtonContainer.end() ? false : item->second->isPressed;
 	}
-	
+
+
+	void Interface::TextBox::Free()
+	{
+		SDL_DestroyWindow(m_Window);
+		m_WindowID = -1;
+		m_Window = NULL;
+	}
 
 	void Interface::PlaylistItemTextBox::SetSelectedItemID(u32 id)
 	{

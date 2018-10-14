@@ -294,6 +294,8 @@ namespace Input
 	
 	void GetGlobalMousePosition(s32* mouseX, s32* mouseY);
 
+	glm::vec2 GetGlobalMousePosition();
+
 	void GetRelavtiveMousePosition(s32* mouseX, s32* mouseY);
 
 	b8 GetMouseMovement(s32* mouseX, s32* mouseY);

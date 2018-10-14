@@ -257,6 +257,12 @@ namespace mdEngine
 		else
 			button->isPressed = false;
 
+
+		if (inside && Input::IsKeyPressed(KeyCode::MouseRight))
+			button->isPressedRight = true;
+		else
+			button->isPressedRight = false;
+
 		if (inside && Input::IsKeyDown(KeyCode::MouseLeft))
 		{
 			button->isDown = true;

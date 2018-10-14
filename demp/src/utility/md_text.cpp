@@ -72,7 +72,7 @@ namespace mdEngine
 	{
 		if (m_TextTexture == 0)
 		{
-			TTF_SizeText(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
+			TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 			m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
 		}
 	}

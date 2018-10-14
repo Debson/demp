@@ -1,10 +1,14 @@
 #ifndef MD_OPTIONS_WINDOW
 #define MD_OPTIONS_WINDOW
 
+#include <map>
+
 #include "SDL.h"
+
 #include "../utility/md_types.h"
 #include "md_interface.h"
 #include "../utility/md_shape.h"
+
 
 namespace mdEngine
 {
@@ -16,16 +20,16 @@ namespace mdEngine
 
 			virtual ~WindowObject() { };
 
-			virtual void Init();
 			virtual void Update() = 0;
 			virtual void Render() = 0;
 			virtual void ProcessEvents(SDL_Event* const e);
-			virtual void Free() = 0;
-
+			virtual void OnDelete() = 0;
+			s32 GetWindowID() const;
 			b8 IsActive();
 
 		protected:
 
+			b8 m_Active;
 			b8 m_ToTrayOnExitState;
 			b8 m_WindowHasFocus;
 			s32 m_Height, m_Width;
@@ -43,11 +47,9 @@ namespace mdEngine
 			OptionsWindow();
 			~OptionsWindow();
 
-			void Init();
 			void Update();
 			void Render();
-			void Free();
-			s32 GetOptionWindowID();
+			void OnDelete();
 
 		private:
 
@@ -64,13 +66,12 @@ namespace mdEngine
 		{
 		public:
 			LoadInfoWindow();
-			LoadInfoWindow(f32 width, f32 height);
+			LoadInfoWindow(glm::vec2 size, glm::vec4 playerWindowDim);
+			~LoadInfoWindow();
 
-			void Init(glm::vec4 playerWindowDim);
 			void Update();
 			void Render();
-			void Free();
-			s32 GetOptionWindowID();
+			void OnDelete();
 			b8 CancelWasPressed;
 
 		private:
@@ -89,6 +90,30 @@ namespace mdEngine
 			glm::vec2 m_CancelButtonSize;
 		};
 
+		class MusicInfoWindow : public WindowObject
+		{
+		public:
+			MusicInfoWindow(glm::vec2 pos);
+			~MusicInfoWindow();
+
+
+			void Update();
+			void Render();
+			void OnDelete();
+
+		private:
+
+		};
+
+		extern OptionsWindow*	mdOptionsWindow;
+		extern LoadInfoWindow*	mdLoadInfoWindow;
+		extern MusicInfoWindow* mdMusicInfoWindow;
+
+		extern std::map<std::string, WindowObject*> WindowsContainer;
+
+
+		void UpdateWindows();
+		void RenderWindows();
 	}
 }
 

@@ -61,8 +61,6 @@ namespace Audio
 
 	u32 GetIndexOfLoadingObject();
 
-	Window::LoadInfoWindow* GetLoadInfoWindow();
-
 #ifdef _DEBUG_
 	void GetItemsInfo();
 #endif
