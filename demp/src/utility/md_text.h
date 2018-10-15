@@ -58,7 +58,7 @@ namespace mdEngine
 			glm::vec2	  m_TextPos;
 			glm::vec3	  m_TextColorVec;
 			glm::ivec2	  m_TextSize;
-			std::string  m_TextString;
+			std::string	  m_TextString;
 
 		private:
 		};

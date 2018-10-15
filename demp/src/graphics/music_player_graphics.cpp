@@ -1270,9 +1270,6 @@ namespace mdEngine
 				s32 relX, relY;
 				App::Input::GetRelavtiveMousePosition(&relX, &relY);
 
-				if (relY != 0)
-					State::SetState(State::PlaylistMovement);
-
 				f32 diff = abs(audioCon->back()->GetPlaylistItemPos().y - audioCon->front()->GetPlaylistItemPos().y) / scrollSurface;
 				*playlistOffset += ((relY * (maxItems + separatorsOffset / itemH)) / (displayedItems));
 
@@ -1315,6 +1312,8 @@ namespace mdEngine
 				Window::GetWindowPos(&winPosX, &winPosY);
 				mouseX -= winPosX - 10; // Should'nt be hardcored, recheck dimension's definitions
 				mouseY -= winPosY;
+
+				State::SetState(State::PlaylistMovement);
 
 				// If mouse is outside scroll bar movable zone, move scroll bar to the beginning
 				if (mouseX < Data::_PLAYLIST_SCROLL_BAR_POS.x - offsetX ||

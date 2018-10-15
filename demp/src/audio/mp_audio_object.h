@@ -66,16 +66,17 @@ namespace Audio
 		GLuint GetAlbumPictureTexture();
 		void SetID3Struct(Info::ID3* id3);
 
+		static TTF_Font*		AudioObjectFont;
+		static s32				AudioObjectFontSize;
 	private:
 
 		b8 LoadAlbumImageFromFolder();
 
 
-		b8 m_LoadAlbumTexture;
-		void* m_AlbumImageData;
-		u32 m_AlbumImageDataSize;
-		GLuint m_AlbumImageTex;
-
+		b8			m_LoadAlbumTexture;
+		u32			m_AlbumImageDataSize;
+		void*		m_AlbumImageData;
+		GLuint		m_AlbumImageTex;
 
 	};
 

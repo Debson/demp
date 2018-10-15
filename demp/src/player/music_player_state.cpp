@@ -49,7 +49,7 @@ namespace mdEngine
 		ResetState(AudioHidden);
 		ResetState(Window::PositionChanged);
 		ResetState(State::DeletionInProgress);
-		State::ResetState(State::PlaylistMovement);
+		//State::ResetState(State::PlaylistMovement);
 
 	}
 }

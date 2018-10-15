@@ -524,43 +524,48 @@ namespace mdEngine
 
 		glViewport(0, 0, static_cast<GLint>(m_Width), static_cast<GLint>(m_Height));
 
+		m_DeleteAlbumPic = false;
+
 		m_Movable = Interface::Movable(glm::vec2(m_Width, m_Height), glm::vec2(0.f), false);
 		f32 exitButtonSize = 15.f;
 		m_ExitButton = Interface::Button(glm::vec2(exitButtonSize), glm::vec2(m_Width - exitButtonSize, 0.f));
 		m_ButtonCont.push_back(&m_ExitButton);
 
+		m_MusicID = Graphics::MP::GetPlaylistObject()->GetPlayingID();
+
 		s32 oX = 10;
 		s32 oY = 20;
 		m_AlbumPicSize = glm::vec2(150.f, 100.f);
-		m_AlbumPicPos = glm::vec2(m_Width - m_AlbumPicSize.x - oX, oY);
+		m_AlbumPicPos = glm::vec2(m_Width - m_AlbumPicSize.x - oX, (m_Height - m_AlbumPicSize.y) / 2.f);
 		s32 textPosX = 4.f;
 
 		// title text should be in larger font
-		s32 playingID = Graphics::MP::GetPlaylistObject()->GetPlayingID();
 		m_TitleText = Text::TextObject(Color::Red, 18);
-		std::string titleStr;
-		if (Audio::Object::GetAudioObject(playingID)->GetTitle().compare("") != 0)
+		std::string str;
+		if (Audio::Object::GetAudioObject(m_MusicID)->GetTitle().compare("") != 0)
 		{
-			m_TitleText.SetTextString(Audio::Object::GetAudioObject(playingID)->GetTitle());
+			str = Audio::Object::GetAudioObject(m_MusicID)->GetTitle();
+			m_TitleText.SetTextString(Converter::GetShortenString(str, m_AlbumPicPos.x + textPosX, 18));
 		}
 		else
 		{
-			titleStr = Audio::Object::GetAudioObject(playingID)->GetCompleteName();
-			m_TitleText.SetTextString(Converter::GetShortenString(titleStr, m_AlbumPicPos.x + textPosX, 18));
+			str = Audio::Object::GetAudioObject(m_MusicID)->GetCompleteName();
+			m_TitleText.SetTextString(Converter::GetShortenString(str, m_AlbumPicPos.x + textPosX, 18));
 		}
-
 		m_TitleText.SetTextPos(glm::vec2(textPosX, 10.f));
 		m_TitleText.InitTextTexture();
 
 		s32 offsetY = 3.f;
-		m_AlbumText = Text::TextObject(Color::White);
-		m_AlbumText.SetTextString(Audio::Object::GetAudioObject(playingID)->GetAlbum());
+		m_AlbumText = Text::TextObject(Color::White, 12);
+		str = Audio::Object::GetAudioObject(m_MusicID)->GetAlbum();
+
+		m_AlbumText.SetTextString(Converter::GetShortenString(str, m_AlbumPicPos.x + textPosX));
 		m_AlbumText.InitTextTexture();
 		m_AlbumText.SetTextPos(glm::vec2(textPosX, m_TitleText.GetTextSize().y + m_TitleText.GetTextPos().y + offsetY));
 
 
-		m_ArtistText = Text::TextObject(Color::White);
-		m_ArtistText.SetTextString(Audio::Object::GetAudioObject(playingID)->GetArtist());
+		m_ArtistText = Text::TextObject(Color::White, 12);
+		m_ArtistText.SetTextString(Audio::Object::GetAudioObject(m_MusicID)->GetArtist());
 		m_ArtistText.SetTextPos(glm::vec2(textPosX, m_AlbumText.GetTextSize().y + m_AlbumText.GetTextPos().y));
 		m_ArtistText.InitTextTexture();
 
@@ -569,15 +574,15 @@ namespace mdEngine
 		// time text should be in larger font
 		offsetY = 25.f;
 		m_TimeText = Text::TextObject(Color::Red, 18);
-		m_TimeText.SetTextString(Converter::SecToProperTimeFormatShort(Audio::Object::GetAudioObject(playingID)->GetLength()));
+		m_TimeText.SetTextString(Converter::SecToProperTimeFormatShort(Audio::Object::GetAudioObject(m_MusicID)->GetLength()));
 		m_TimeText.SetTextPos(glm::vec2(textPosX, m_ArtistText.GetTextSize().y + m_ArtistText.GetTextPos().y + offsetY));
 		m_TimeText.InitTextTexture();
 
 
-		m_InfoText = Text::TextObject(Color::White);
-		std::string inf = std::to_string((s32)Audio::Object::GetAudioObject(playingID)->GetFrequency() / 1000) + " kHz, ";
-		inf + std::to_string((s32)Audio::Object::GetAudioObject(playingID)->GetBitrate()) + " kbps, ";
-		inf += Converter::BytesToProperSizeFormat(Audio::Object::GetAudioObject(playingID)->GetObjectSize());
+		m_InfoText = Text::TextObject(Color::White, 12);
+		std::string inf = std::to_string((s32)Audio::Object::GetAudioObject(m_MusicID)->GetFrequency() / 1000) + " kHz, ";
+		inf += std::to_string((s32)Audio::Object::GetAudioObject(m_MusicID)->GetBitrate()) + " kbps, ";
+		inf += Converter::BytesToProperSizeFormat(Audio::Object::GetAudioObject(m_MusicID)->GetObjectSize());
 
 
 		m_InfoText.SetTextString(inf);
@@ -585,9 +590,9 @@ namespace mdEngine
 		m_InfoText.InitTextTexture();
 
 
-		m_PathText = Text::TextObject(Color::White);
-		s32 slashPos = Audio::Object::GetAudioObject(playingID)->GetPath().find_last_of('\\');
-		inf = Audio::Object::GetAudioObject(playingID)->GetPath().substr(slashPos + 1, Audio::Object::GetAudioObject(playingID)->GetPath().length());
+		m_PathText = Text::TextObject(Color::White, 12);
+		s32 slashPos = Audio::Object::GetAudioObject(m_MusicID)->GetPath().find_last_of('\\');
+		inf = Audio::Object::GetAudioObject(m_MusicID)->GetPath().substr(slashPos + 1, Audio::Object::GetAudioObject(m_MusicID)->GetPath().length());
 		Converter::GetShortenString(inf, m_Width);
 		m_PathText.SetTextString(inf);
 		m_PathText.SetTextPos(glm::vec2(textPosX, m_InfoText.GetTextSize().y + m_InfoText.GetTextPos().y));
@@ -595,7 +600,7 @@ namespace mdEngine
 
 
 
-		m_FocusLostTimer = Time::Timer(2500);
+		m_FocusLostTimer = Time::Timer(2000);
 	}
 
 	Window::MusicInfoWindow::~MusicInfoWindow()
@@ -682,14 +687,14 @@ namespace mdEngine
 		m_InfoText.DrawString();
 		m_PathText.DrawString();
 
-		if (Audio::Object::GetAudioObject(Graphics::MP::GetPlaylistObject()->GetPlayingID()) != nullptr)
+		if (Audio::Object::GetAudioObject(m_MusicID) != nullptr)
 		{
 			model = glm::mat4();
 			model = glm::translate(model, glm::vec3(m_AlbumPicPos, 1.f));
 			model = glm::scale(model, glm::vec3(m_AlbumPicSize, 1.f));
 			m_Shader->setMat4("model", model);
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, Audio::Object::GetAudioObject(Graphics::MP::GetPlaylistObject()->GetPlayingID())->GetAlbumPictureTexture());
+			glBindTexture(GL_TEXTURE_2D, Audio::Object::GetAudioObject(m_MusicID)->GetAlbumPictureTexture());
 			Shader::Draw(m_Shader);
 		}
 
@@ -701,6 +706,21 @@ namespace mdEngine
 	void Window::MusicInfoWindow::OnDelete()
 	{
 		m_Active = false;
+		if (m_DeleteAlbumPic == true)
+		{
+			glDeleteTextures(1, &m_AlbumPicTex);
+			md_log("Album tex deleted by music info window");
+		}
+	}
+
+	void Window::MusicInfoWindow::DeleteAlbumPicOnClose()
+	{
+		m_DeleteAlbumPic = true;
+	}
+
+	s32 Window::MusicInfoWindow::GetViewedMusicInfoID()
+	{
+		return m_MusicID;
 	}
 
 }

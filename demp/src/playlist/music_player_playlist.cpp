@@ -127,6 +127,7 @@ namespace MP
 			m_MusicStream = NULL;
 			m_Data = NULL;
 			m_ID = 0;
+			m_PreviousID = 0;
 			m_MusicSize = 0;
 		}
 
@@ -174,6 +175,7 @@ namespace MP
 				fseek(file, 0L, SEEK_SET); // set cursor at the beginning
 
 				m_Path = audioObject->GetPath();
+				m_PreviousID = m_ID;
 				m_ID = audioObject->GetID();
 				m_MusicSize = size;
 
@@ -422,7 +424,7 @@ namespace MP
 
 			if (RamLoadedMusic.get() != NULL)
 			{
-				if (IsPlaying() == false && RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)))
+				if (IsPlaying() == false) //&& RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)))
 				{
 					mdMPStarted = true;
 				}
@@ -439,6 +441,8 @@ namespace MP
 			Graphics::MP::GetPlaylistObject()->SetPlayingID(RamLoadedMusic.m_ID);
 			Graphics::MP::GetPlaylistObject()->SetSelectedID(RamLoadedMusic.m_ID);
 
+			if(Audio::Object::GetAudioObject(RamLoadedMusic.m_PreviousID) != nullptr)
+				Audio::Object::GetAudioObject(RamLoadedMusic.m_PreviousID)->DeleteAlbumImageTexture();
 			Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)->LoadAlbumImage();
 
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);

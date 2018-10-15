@@ -15,6 +15,7 @@
 #include "../graphics/music_player_graphics_playlist.h"
 #include "../ui/music_player_ui.h"
 #include "../audio/mp_audio.h"
+#include "../utility/md_converter.h"
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_text.h"
 #include "../utility/md_load_texture.h"
@@ -31,6 +32,41 @@ namespace mdEngine
 		InterfaceButtonContainer			m_InterfaceButtonContainer;
 
 		static std::mutex mutex;
+	}
+
+	void Interface::UpdateFont()
+	{
+		if ((State::CheckState(State::Window::Resized) == true || State::CheckState(State::PlaylistMovement) == true) &&
+			Audio::AudioObject::AudioObjectFont == NULL)
+		{
+			Audio::AudioObject::AudioObjectFont = TTF_OpenFont(Strings::_FONT_PATH.c_str(), Audio::AudioObject::AudioObjectFontSize);
+			md_log("audio object font");
+		}
+		else if (State::CheckState(State::Window::Resized) == false &&
+			State::CheckState(State::PlaylistMovement) == false &&
+			Audio::AudioObject::AudioObjectFont != NULL)
+		{
+			TTF_CloseFont(Audio::AudioObject::AudioObjectFont);
+			Audio::AudioObject::AudioObjectFont = NULL;
+		}
+
+
+		if ((State::CheckState(State::Window::Resized) == true || State::CheckState(State::PlaylistMovement) == true) &&
+			PlaylistSeparator::SeparatorItemFont == NULL)
+		{
+			PlaylistSeparator::SeparatorItemFont = TTF_OpenFont(Strings::_FONT_PATH.c_str(), PlaylistSeparator::SeparatorItemFontSize);
+			md_log("audio object font");
+		}
+		else if (State::CheckState(State::Window::Resized) == false &&
+			State::CheckState(State::PlaylistMovement) == false &&
+			PlaylistSeparator::SeparatorItemFont != NULL)
+		{
+			TTF_CloseFont(PlaylistSeparator::SeparatorItemFont);
+			PlaylistSeparator::SeparatorItemFont = NULL;
+		}
+
+		State::ResetState(State::PlaylistMovement);
+	
 	}
 
 	void Interface::CloseInterface()
@@ -350,6 +386,11 @@ namespace mdEngine
 	f32* Interface::PlaylistItem::m_PlaylistOffsetY = NULL;
 
 	/* *************************************************** */
+
+	TTF_Font* Interface::PlaylistSeparator::SeparatorItemFont = NULL;
+
+	s32 Interface::PlaylistSeparator::SeparatorItemFontSize = 12;
+
 	Interface::PlaylistSeparator::PlaylistSeparator() { }
 
 	Interface::PlaylistSeparator::~PlaylistSeparator()
@@ -374,7 +415,9 @@ namespace mdEngine
 
 	void Interface::PlaylistSeparator::InitItem()
 	{
+		m_RenderedItemsCount = 0;
 		m_TextScale = 1.f;
+		m_FontSize = 12;
 		m_ItemColor = Color::Pink;
 		SetTextColor(Color::Grey);
 
@@ -384,13 +427,15 @@ namespace mdEngine
 		u16 len = m_TextString.length();
 		m_TitleC.resize(len + 1);
 		m_TitleC = m_TextString;
-		TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
-		TTF_SizeUTF8(font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
-		TTF_CloseFont(font);
+		//TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
+		//TTF_SizeUTF8(font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
+		//TTF_CloseFont(font);
 
 		std::shared_ptr<PlaylistSeparator> shrPtr(this);
 
 		m_PlaylistSeparatorContainer.push_back(std::make_pair(&m_Path, shrPtr));
+
+		m_SeparatorInfoText = Text::TextObject(m_TextColorVec, SeparatorItemFontSize);
 	}
 
 	void Interface::PlaylistSeparator::DrawItem(GLuint texture)
@@ -410,6 +455,62 @@ namespace mdEngine
 		s32 offsetY = (m_ButtonSize.y - m_TextSize.y) / 2;
 		SetTextOffset(glm::vec2(5.f, offsetY));
 		DrawString();
+
+	
+		if (m_SeparatorInfoText.HasTexture() == false ||
+			m_RenderedItemsCount != m_SubFilesPaths.size())
+		{
+			f64 duration = 0.f;
+			for (auto & i : m_SubFilesPaths)
+			{
+				duration += Audio::Object::GetAudioObject(*i.first)->GetLength();
+			}
+			m_RenderedItemsCount = m_SubFilesPaths.size();
+			std::string str = std::to_string(m_RenderedItemsCount) + " / " + Converter::SecToProperTimeFormatShort(duration);
+			m_SeparatorInfoText.SetTextString(str);
+			m_SeparatorInfoText.SetTextOffset(glm::vec2(5.f, offsetY));
+			m_SeparatorInfoText.InitTextTexture();
+		}
+		m_SeparatorInfoText.SetTextPos(glm::vec2(m_PlaylistItemPos.x + m_ButtonSize.x - m_SeparatorInfoText.GetTextSize().x - 8.f, m_PlaylistItemPos.y));
+
+		m_SeparatorInfoText.DrawString();
+	}
+
+	void Interface::PlaylistSeparator::InitTextTexture()
+	{
+		if (m_TextTexture == 0)
+		{
+			TTF_Font* font = NULL;
+			if (SeparatorItemFont != NULL)
+			{
+				font = SeparatorItemFont;
+				assert(font != NULL);
+			}
+			else
+				font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), SeparatorItemFontSize);
+
+			Converter::GetShortenString(m_TextString, m_ButtonSize.x - 40, font);
+			TTF_SizeUTF8(font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
+			m_TextTexture = LoadText(font, m_TextString, m_TextColorSDL);
+			if (SeparatorItemFont == NULL)
+			{
+				TTF_CloseFont(font);
+			}
+		}
+	}
+
+	void Interface::PlaylistSeparator::DeleteTexture()
+	{
+		if (m_TextTexture > 0)
+		{
+			glDeleteTextures(1, &m_TextTexture);
+			m_TextTexture = 0;
+		}
+
+		if (m_SeparatorInfoText.HasTexture() == true)
+		{
+			m_SeparatorInfoText.DeleteTexture();
+		}
 	}
 
 	void Interface::PlaylistSeparator::SetSeperatorPath(std::string& path)

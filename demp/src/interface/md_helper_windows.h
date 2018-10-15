@@ -103,7 +103,14 @@ namespace mdEngine
 			void Render();
 			void OnDelete();
 
+			void DeleteAlbumPicOnClose();
+			s32 GetViewedMusicInfoID();
+
 		private:
+
+			b8 m_DeleteAlbumPic;
+			s32 m_MusicID;
+			GLuint m_AlbumPicTex;
 
 			glm::vec2 m_AlbumPicSize;
 			glm::vec2 m_AlbumPicPos;

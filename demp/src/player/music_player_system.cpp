@@ -109,13 +109,14 @@ namespace MP
 	{
 		UI::Update();
 
+
 		/* Update playlist state */
 		Playlist::UpdatePlaylist();
 
 		/* Update the volume */
 		Playlist::UpdateMusic();
 
-
+		Interface::UpdateFont();
 		Audio::UpdateAudioLogic();
 	}
 

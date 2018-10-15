@@ -156,13 +156,14 @@ namespace MP
 		extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_POS;
 		extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 
-		const glm::vec2 _PLAYLIST_ITEM_SIZE = glm::vec2(300.f, 30.f);;
+		const glm::vec2 _PLAYLIST_ITEM_SIZE = glm::vec2(420.f, 30.f);;
 
 		const glm::vec2 _PLAYLIST_SEPARATOR_POS_OFFSET = glm::vec2(10.f, 0.f);
-		const glm::vec2 _PLAYLIST_SEPARATOR_SIZE = glm::vec2(300.f + _PLAYLIST_SEPARATOR_POS_OFFSET.x, 20.f);
+		const glm::vec2 _PLAYLIST_SEPARATOR_SIZE = glm::vec2(_PLAYLIST_ITEM_SIZE.x + _PLAYLIST_SEPARATOR_POS_OFFSET.x, 20.f);
 
-		const glm::vec2 _PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdDefaultWidth - 60.f, _PLAYLIST_FOREGROUND_POS.y);
 		const glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, 20.f);;
+		const glm::vec2 _PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdDefaultWidth - 20.f - _PLAYLIST_SCROLL_BAR_SIZE.x, 
+															 _PLAYLIST_FOREGROUND_POS.y);
 
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_POS;
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_SIZE;

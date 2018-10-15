@@ -108,17 +108,17 @@ namespace mdEngine
 			std::string GetShortenTextString();
 
 		protected:
-			b8			 m_Visible;
-			b8			 m_PlaylistItemHidden;
-			b8			 m_FolderRep;
-			u8			 m_ClickCount;
-			s32			 m_ItemID;
-			glm::vec3	 m_ItemColor;
-			glm::vec2	 m_StartPos;
-			glm::vec2	 m_PlaylistItemPos;
-			std::string  m_TitleC;
-			std::string m_Path;
-			static f32*	 m_PlaylistOffsetY;
+			b8				m_Visible;
+			b8				m_PlaylistItemHidden;
+			b8				m_FolderRep;
+			u8				m_ClickCount;
+			s32				m_ItemID;
+			glm::vec3		m_ItemColor;
+			glm::vec2		m_StartPos;
+			glm::vec2		m_PlaylistItemPos;
+			std::string		m_TitleC;
+			std::string		m_Path;
+			static f32*		m_PlaylistOffsetY;
 		};
 
 		typedef std::vector<std::pair<s32*, std::string*>> SeparatorSubContainer;
@@ -129,8 +129,10 @@ namespace mdEngine
 			~PlaylistSeparator();
 			PlaylistSeparator(std::string& name);
 
-			virtual void InitItem();
-			virtual void DrawItem(GLuint texture);
+			void InitItem();
+			void DrawItem(GLuint texture);
+			void InitTextTexture();
+			void DeleteTexture();
 
 			void			SetSeperatorPath(std::string& path);
 			void			SeparatorSubFilePushBack(s32* fileIndex, std::string& path);
@@ -144,14 +146,20 @@ namespace mdEngine
 			SeparatorSubContainer* GetSubFilesContainer();
 
 			f64 SepItemDuration;
+
+			static TTF_Font* SeparatorItemFont;
+			static s32 SeparatorItemFontSize;
+
 		private:
 			b8 m_SeparatorSelected;
 			b8 m_SeparatorHidden;
 			b8 m_Visible;
 			s32 m_SepItemCount;
+			s32 m_RenderedItemsCount;
 			std::string m_Path;
-			SeparatorSubContainer m_SubFilesPaths;
+			Text::TextObject m_SeparatorInfoText;
 
+			SeparatorSubContainer m_SubFilesPaths;
 		};
 
 		class TextBoxItem : public Button, public TextObject
@@ -316,6 +324,9 @@ namespace mdEngine
 
 		// TODO: It should not be an extern var...
 		extern InterfaceButtonContainer m_InterfaceButtonContainer;
+
+
+		void UpdateFont();
 
 
 		namespace Separator

@@ -14,6 +14,8 @@
 #include <taglib/mpeg/id3v2/frames/attachedpictureframe.h>
 
 
+#include "../interface/md_helper_windows.h"
+#include "../player/music_player_state.h"
 #include "../utility/md_converter.h"
 #include "../utility/md_load_texture.h"
 #include "../utility/utf8_to_utf16.h"
@@ -44,6 +46,10 @@ namespace Audio
 	} mdAlbumTexInfo;
 }
 
+TTF_Font* Audio::AudioObject::AudioObjectFont = NULL;
+
+s32 Audio::AudioObject::AudioObjectFontSize = 14;
+
 Audio::AudioObject::AudioObject() 
 { 
 	m_AlbumImageTex = 0;
@@ -51,8 +57,24 @@ Audio::AudioObject::AudioObject()
 
 Audio::AudioObject::~AudioObject()
 {
-	glDeleteTextures(1, &m_AlbumImageTex);
-	m_AlbumImageTex = 0;
+	if (Window::mdMusicInfoWindow != nullptr)
+	{
+		if (Window::mdMusicInfoWindow->GetViewedMusicInfoID() == m_ItemID)
+		{
+			// should be deleted after window is closed
+			Window::mdMusicInfoWindow->DeleteAlbumPicOnClose();
+		}
+		else
+		{
+			glDeleteTextures(1, &m_AlbumImageTex);
+			m_AlbumImageTex = 0;
+		}
+	}
+	else
+	{
+		glDeleteTextures(1, &m_AlbumImageTex);
+		m_AlbumImageTex = 0;
+	}
 	folder = "";
 	delete path;
 	delete info;
@@ -189,14 +211,25 @@ void Audio::AudioObject::ReloadTextTexture()
 {
 	DeleteTexture();
 
-	TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
+	TTF_Font* font = NULL;
+	if (AudioObjectFont != NULL)
+	{
+		font = AudioObjectFont;
+		assert(font != NULL);
+	}
+	else
+		font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), AudioObjectFontSize);
+
 	m_TextString = GetNameToPlaylist();
 	Converter::GetShortenString(m_TextString, m_ButtonSize.x, font);
 	TTF_SizeUTF8(font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	m_TextTexture = LoadText(font, m_TextString, m_TextColorSDL);
-	TTF_CloseFont(font);
+	if (AudioObjectFont == NULL)
+	{
+		TTF_CloseFont(font);
+	}
+	
 }
-
 
 f32 Audio::AudioObject::GetFrequency() const
 {
@@ -350,15 +383,39 @@ void Audio::AudioObject::LoadAlbumImageLargeSize()
 
 void Audio::AudioObject::DeleteAlbumImageTexture()
 {
-	// Delete only album image textures with small size(they are fast to load)
-	if (m_AlbumImageTex > 0 && 
-		m_AlbumImageDataSize < MAX_ALBUM_IMAGE_SIZE)
-	{
-		glDeleteTextures(1, &m_AlbumImageTex);
-		m_AlbumImageTex = 0;
+	if (m_AlbumImageTex == 0)
+		return;
 
-		md_log("Album cover image deleted succesfully");
+	if (Window::mdMusicInfoWindow != nullptr)
+	{
+		s32 test = Window::mdMusicInfoWindow->GetViewedMusicInfoID();
+		if (Window::mdMusicInfoWindow->GetViewedMusicInfoID() == m_ItemID)
+		{
+			Window::mdMusicInfoWindow->DeleteAlbumPicOnClose();
+		}
+		else if(m_AlbumImageTex > 0 &&
+				m_AlbumImageDataSize < MAX_ALBUM_IMAGE_SIZE)
+		{
+			glDeleteTextures(1, &m_AlbumImageTex);
+			m_AlbumImageTex = 0;
+
+			md_log("Album cover image deleted succesfully");
+		}
 	}
+	else
+	{
+		if (m_AlbumImageTex > 0 && 
+			m_AlbumImageDataSize < MAX_ALBUM_IMAGE_SIZE)
+		{
+			glDeleteTextures(1, &m_AlbumImageTex);
+			m_AlbumImageTex = 0;
+
+			md_log("Album cover image deleted succesfully");
+		}
+	}
+
+	// Delete only album image textures with small size(they are fast to load)
+	
 }
 
 GLuint Audio::AudioObject::GetAlbumPictureTexture()

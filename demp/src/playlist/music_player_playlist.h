@@ -34,6 +34,7 @@ namespace MP
 			u32 m_MusicSize;
 			HSTREAM m_MusicStream;
 			s32 m_ID;
+			s32 m_PreviousID;
 
 
 #ifdef _WIN32_
