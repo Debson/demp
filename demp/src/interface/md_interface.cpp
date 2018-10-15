@@ -430,7 +430,7 @@ namespace mdEngine
 		//TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
 		//TTF_SizeUTF8(font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 		//TTF_CloseFont(font);
-
+		
 		std::shared_ptr<PlaylistSeparator> shrPtr(this);
 
 		m_PlaylistSeparatorContainer.push_back(std::make_pair(&m_Path, shrPtr));
@@ -791,7 +791,7 @@ namespace mdEngine
 
 		glm::ivec2 textSize;
 		std::string name = itemName;
-		TTF_SizeText(font, name.c_str(), &textSize.x, &textSize.y);
+		TTF_SizeUTF8(font, name.c_str(), &textSize.x, &textSize.y);
 		TTF_CloseFont(font);
 
 		auto item = std::make_shared<TextBoxItem>(itemName, glm::vec2(m_Size.x, Data::_TEXT_BOX_ITEM_HEIGHT), glm::vec2(m_Pos.x, m_Pos.y + m_ItemsCount * Data::_TEXT_BOX_ITEM_HEIGHT),

@@ -334,6 +334,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				MP::PushToPlaylist(event.drop.file);
 #endif
 				SDL_free(SDL_GetClipboardText());
+				SDL_free(event.drop.file);
 				break;
 			}
 			case (SDL_DROPCOMPLETE):
@@ -562,7 +563,18 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 {
 	/* CLEAR AND FREE MEMORY */
 
+#ifdef _WIN32_
 	Shell_NotifyIcon(NIM_DELETE, &icon);
+
+	SetWindowLong(hwnd, GWL_EXSTYLE,
+		GetWindowLong(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+	// Ask the window and its children to repaint
+	RedrawWindow(hwnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME |
+		RDW_ALLCHILDREN);
+#else
+
+#endif
+
 
 	MP::Config::SaveToConfig();
 	mdApplicationHandler->OnWindowClose();

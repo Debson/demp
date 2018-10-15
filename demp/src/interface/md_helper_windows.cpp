@@ -1,6 +1,5 @@
 #include "md_helper_windows.h"
 
-#include <SDL_syswm.h>
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 
@@ -476,8 +475,8 @@ namespace mdEngine
 
 	Window::MusicInfoWindow::MusicInfoWindow(glm::vec2 pos)
 	{
-		m_Width = 400;
-		m_Height = 150;
+		m_Width = 370;
+		m_Height = 147;
 
 		m_Window = NULL;
 
@@ -493,19 +492,27 @@ namespace mdEngine
 
 
 #ifdef _WIN32_
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-		SDL_GetWindowWMInfo(m_Window, &info);
+		SDL_VERSION(&m_Info.version);
+		SDL_GetWindowWMInfo(m_Window, &m_Info);
 
 		// always on top
-		SetWindowPos(info.info.win.window, HWND_TOPMOST,
+		SetWindowPos(m_Info.info.win.window, HWND_TOPMOST,
 			pos.x, pos.y,
 			m_Width, m_Height,
 			SWP_NOSIZE);
 
 		// Disable minimize/maximize buttons
-		SetWindowLong(info.info.win.window, GWL_STYLE,
-			GetWindowLong(info.info.win.window, GWL_STYLE) & ~WS_MINIMIZEBOX);
+		SetWindowLong(m_Info.info.win.window, GWL_STYLE,
+			GetWindowLong(m_Info.info.win.window, GWL_STYLE) & ~WS_MINIMIZEBOX);
+
+		// transparency
+		SetWindowLong(m_Info.info.win.window, GWL_EXSTYLE,
+			GetWindowLong(m_Info.info.win.window, GWL_EXSTYLE) | WS_EX_LAYERED);
+
+
+		SetLayeredWindowAttributes(m_Info.info.win.window, 0, (255 * 90) / 100, LWA_ALPHA);
+
+		
 #else
 
 #endif
@@ -533,30 +540,33 @@ namespace mdEngine
 
 		m_MusicID = Graphics::MP::GetPlaylistObject()->GetPlayingID();
 
+		s32 fontSizeSmall = 12;
+		s32 fontSizeLarge = 18;
+
 		s32 oX = 10;
 		s32 oY = 20;
-		m_AlbumPicSize = glm::vec2(150.f, 100.f);
+		m_AlbumPicSize = glm::vec2(150.f, 90.f);
 		m_AlbumPicPos = glm::vec2(m_Width - m_AlbumPicSize.x - oX, (m_Height - m_AlbumPicSize.y) / 2.f);
 		s32 textPosX = 4.f;
 
 		// title text should be in larger font
-		m_TitleText = Text::TextObject(Color::Red, 18);
+		m_TitleText = Text::TextObject(Color::Red, fontSizeLarge);
 		std::string str;
 		if (Audio::Object::GetAudioObject(m_MusicID)->GetTitle().compare("") != 0)
 		{
 			str = Audio::Object::GetAudioObject(m_MusicID)->GetTitle();
-			m_TitleText.SetTextString(Converter::GetShortenString(str, m_AlbumPicPos.x + textPosX, 18));
+			m_TitleText.SetTextString(Converter::GetShortenString(str, m_Width - m_ExitButton.GetButtonSize().x, 18));
 		}
 		else
 		{
 			str = Audio::Object::GetAudioObject(m_MusicID)->GetCompleteName();
-			m_TitleText.SetTextString(Converter::GetShortenString(str, m_AlbumPicPos.x + textPosX, 18));
+			m_TitleText.SetTextString(Converter::GetShortenString(str, m_Width - m_ExitButton.GetButtonSize().x, 18));
 		}
-		m_TitleText.SetTextPos(glm::vec2(textPosX, 10.f));
+		m_TitleText.SetTextPos(glm::vec2(textPosX, 5.f));
 		m_TitleText.InitTextTexture();
 
 		s32 offsetY = 3.f;
-		m_AlbumText = Text::TextObject(Color::White, 12);
+		m_AlbumText = Text::TextObject(Color::White, fontSizeSmall);
 		str = Audio::Object::GetAudioObject(m_MusicID)->GetAlbum();
 
 		m_AlbumText.SetTextString(Converter::GetShortenString(str, m_AlbumPicPos.x + textPosX));
@@ -564,22 +574,28 @@ namespace mdEngine
 		m_AlbumText.SetTextPos(glm::vec2(textPosX, m_TitleText.GetTextSize().y + m_TitleText.GetTextPos().y + offsetY));
 
 
-		m_ArtistText = Text::TextObject(Color::White, 12);
+		m_ArtistText = Text::TextObject(Color::White, fontSizeSmall);
 		m_ArtistText.SetTextString(Audio::Object::GetAudioObject(m_MusicID)->GetArtist());
 		m_ArtistText.SetTextPos(glm::vec2(textPosX, m_AlbumText.GetTextSize().y + m_AlbumText.GetTextPos().y));
 		m_ArtistText.InitTextTexture();
 
+		m_YearText = Text::TextObject(Color::White, fontSizeSmall);
+		if(Audio::Object::GetAudioObject(m_MusicID)->GetYear() != 0)
+			m_YearText.SetTextString(std::to_string(Audio::Object::GetAudioObject(m_MusicID)->GetYear()));
+		m_YearText.SetTextPos(glm::vec2(textPosX, m_ArtistText.GetTextSize().y + m_ArtistText.GetTextPos().y));
+		m_YearText.InitTextTexture();
+
 		// space
 
 		// time text should be in larger font
-		offsetY = 25.f;
-		m_TimeText = Text::TextObject(Color::Red, 18);
+		offsetY = 18.f;
+		m_TimeText = Text::TextObject(Color::Red, fontSizeLarge);
 		m_TimeText.SetTextString(Converter::SecToProperTimeFormatShort(Audio::Object::GetAudioObject(m_MusicID)->GetLength()));
-		m_TimeText.SetTextPos(glm::vec2(textPosX, m_ArtistText.GetTextSize().y + m_ArtistText.GetTextPos().y + offsetY));
+		m_TimeText.SetTextPos(glm::vec2(textPosX, m_YearText.GetTextSize().y + m_YearText.GetTextPos().y + offsetY));
 		m_TimeText.InitTextTexture();
 
 
-		m_InfoText = Text::TextObject(Color::White, 12);
+		m_InfoText = Text::TextObject(Color::White, fontSizeSmall);
 		std::string inf = std::to_string((s32)Audio::Object::GetAudioObject(m_MusicID)->GetFrequency() / 1000) + " kHz, ";
 		inf += std::to_string((s32)Audio::Object::GetAudioObject(m_MusicID)->GetBitrate()) + " kbps, ";
 		inf += Converter::BytesToProperSizeFormat(Audio::Object::GetAudioObject(m_MusicID)->GetObjectSize());
@@ -590,14 +606,13 @@ namespace mdEngine
 		m_InfoText.InitTextTexture();
 
 
-		m_PathText = Text::TextObject(Color::White, 12);
+		m_PathText = Text::TextObject(Color::White, fontSizeSmall);
 		s32 slashPos = Audio::Object::GetAudioObject(m_MusicID)->GetPath().find_last_of('\\');
 		inf = Audio::Object::GetAudioObject(m_MusicID)->GetPath().substr(slashPos + 1, Audio::Object::GetAudioObject(m_MusicID)->GetPath().length());
 		Converter::GetShortenString(inf, m_Width);
 		m_PathText.SetTextString(inf);
 		m_PathText.SetTextPos(glm::vec2(textPosX, m_InfoText.GetTextSize().y + m_InfoText.GetTextPos().y));
 		m_PathText.InitTextTexture();
-
 
 
 		m_FocusLostTimer = Time::Timer(2000);
@@ -669,6 +684,8 @@ namespace mdEngine
 		m_Shader->setMat4("projection", m_Projection);
 		glViewport(0, 0, static_cast<GLint>(m_Width), static_cast<GLint>(m_Height));
 
+
+		// Draw exit button
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(m_ExitButton.GetButtonPos(), 1.f));
 		model = glm::scale(model, glm::vec3(m_ExitButton.GetButtonSize(), 1.f));
@@ -682,11 +699,13 @@ namespace mdEngine
 		m_TitleText.DrawString();
 		m_AlbumText.DrawString();
 		m_ArtistText.DrawString();
+		m_YearText.DrawString();
 
 		m_TimeText.DrawString();
 		m_InfoText.DrawString();
 		m_PathText.DrawString();
 
+		
 		if (Audio::Object::GetAudioObject(m_MusicID) != nullptr)
 		{
 			model = glm::mat4();
@@ -698,7 +717,8 @@ namespace mdEngine
 			Shader::Draw(m_Shader);
 		}
 
-
+		Shader::DrawOutline(glm::vec4(m_AlbumPicPos, m_AlbumPicSize), 1.03f);
+		Shader::DrawOutline(glm::vec4(m_AlbumPicPos, m_AlbumPicSize), 1.05f, Color::White);
 
 		SDL_GL_SwapWindow(m_Window);
 	}

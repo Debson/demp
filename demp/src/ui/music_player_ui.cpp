@@ -1048,6 +1048,14 @@ namespace MP
 			dir = fileNames.substr(0, dirPos);
 			fileNames = fileNames.substr(dirPos + 1, fileNames.length());
 
+			if (State::CheckState(State::PathContainerSorted) == false)
+				State::SetState(State::SortPathsOnNewFileLoad);
+
+			//State::SetState(State::FileDropped);
+			State::ResetState(State::InitialLoadFromFile);
+			State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
+			State::SetState(State::FilesAddedInfoNotLoaded);
+
 			s32 nlCount = 0;
 			for (s32 i = 0; i < fileNames.length(); i++)
 			{
@@ -1074,6 +1082,7 @@ namespace MP
 					Audio::PushToPlaylist(title);
 				}
 			}
+
 
 			fileBrowserFinished = false;
 		}

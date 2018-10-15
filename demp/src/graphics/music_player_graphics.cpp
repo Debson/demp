@@ -287,10 +287,10 @@ namespace mdEngine
 
 	void Graphics::InitializeText()
 	{
-		durationText			= Text::TextObject(Color::Grey);
-		itemsSizeText			= Text::TextObject(Color::Grey);
-		itemsCountText			= Text::TextObject(Color::Grey);
-		loadedItemsCountText	= Text::TextObject(Color::Grey);
+		durationText			= Text::TextObject(Color::Grey, 12);
+		itemsSizeText			= Text::TextObject(Color::Grey, 12);
+		itemsCountText			= Text::TextObject(Color::Grey, 12);
+		loadedItemsCountText	= Text::TextObject(Color::Grey, 12);
 		musicInfoScrollText[0]	= Text::TextObject(Color::Grey);
 		musicInfoScrollText[1]	= Text::TextObject(Color::Grey);
 
@@ -1121,7 +1121,8 @@ namespace mdEngine
 			musicInfoScrollTextIsMoved = true;
 		}
 
-		if ((musicInfoScrollTextButton[0]->isPressedRight == true || musicInfoScrollTextButton[1]->isPressedRight == true))
+		if ((musicInfoScrollTextButton[0]->isPressedRight == true || musicInfoScrollTextButton[1]->isPressedRight == true) &&
+			Audio::Object::GetAudioObject(MP::GetPlaylistObject()->GetPlayingID()) != nullptr)
 		{
 			Window::mdMusicInfoWindow = new Window::MusicInfoWindow(App::Input::GetGlobalMousePosition());
 			Window::WindowsContainer.insert(std::pair<std::string, Window::WindowObject*>("MusicInfoWindow", Window::mdMusicInfoWindow));
@@ -1160,27 +1161,29 @@ namespace mdEngine
 		{
 			musicInfoScrollTextIsMoved = false;
 		}
+
+		musicInfoScrollTextTimer.Update();
 	}
 
 	void Graphics::RenderMusicScrollInfo()
 	{
 		// Cut text that is out of bounds of main player foreground
-		Shader::shaderDefault->use();
-		Shader::shaderDefault->setBool("plainRGBA", false);
-		Shader::shaderDefault->setBool("playlistCutX", true);
-		Shader::shaderDefault->setVec2("playlistBoundsX", Data::_MAIN_FOREGROUND_POS.x,
-														  Data::_DEFAULT_PLAYER_SIZE.x - Data::_MAIN_FOREGROUND_POS.x);
-		musicInfoScrollText[0].DrawString();
-		musicInfoScrollText[1].DrawString();
-		Shader::shaderDefault->setBool("playlistCutX", false);
-		Shader::shaderDefault->setVec3("color", Color::White);
+		if (Playlist::IsPlaying() == true)
+		{
+			Shader::shaderDefault->use();
+			Shader::shaderDefault->setBool("plainRGBA", false);
+			Shader::shaderDefault->setBool("playlistCutX", true);
+			Shader::shaderDefault->setVec2("playlistBoundsX", Data::_MAIN_FOREGROUND_POS.x,
+				Data::_DEFAULT_PLAYER_SIZE.x - Data::_MAIN_FOREGROUND_POS.x);
+			musicInfoScrollText[0].DrawString();
+			musicInfoScrollText[1].DrawString();
+			Shader::shaderDefault->setBool("playlistCutX", false);
+			Shader::shaderDefault->setVec3("color", Color::White);
 
-		// Update texts hitboxes
-		musicInfoScrollTextButton[musicInfoScrollPingPong]->SetButtonPos(musicInfoScrollText[musicInfoScrollPingPong].GetTextPos());
-		musicInfoScrollTextButton[!musicInfoScrollPingPong]->SetButtonPos(musicInfoScrollText[!musicInfoScrollPingPong].GetTextPos());
-
-		// update timer
-		musicInfoScrollTextTimer.Update();
+			// Update texts hitboxes
+			musicInfoScrollTextButton[musicInfoScrollPingPong]->SetButtonPos(musicInfoScrollText[musicInfoScrollPingPong].GetTextPos());
+			musicInfoScrollTextButton[!musicInfoScrollPingPong]->SetButtonPos(musicInfoScrollText[!musicInfoScrollPingPong].GetTextPos());
+		}
 	}
 
 	// useless

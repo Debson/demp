@@ -156,7 +156,7 @@ namespace MP
 		extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_POS;
 		extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 
-		const glm::vec2 _PLAYLIST_ITEM_SIZE = glm::vec2(420.f, 30.f);;
+		const glm::vec2 _PLAYLIST_ITEM_SIZE = glm::vec2(430.f, 30.f);;
 
 		const glm::vec2 _PLAYLIST_SEPARATOR_POS_OFFSET = glm::vec2(10.f, 0.f);
 		const glm::vec2 _PLAYLIST_SEPARATOR_SIZE = glm::vec2(_PLAYLIST_ITEM_SIZE.x + _PLAYLIST_SEPARATOR_POS_OFFSET.x, 20.f);
@@ -180,7 +180,7 @@ namespace MP
 		const glm::vec2 _ALBUM_COVER_IMAGE_POS = glm::vec2((mdDefaultWidth - _ALBUM_COVER_IMAGE_SIZE.x) / 2.f, 70.f);
 
 
-		static f32 textOffsetY = 1.f;
+		static f32 textOffsetY = 5.f;
 		const glm::vec2 _TEXT_ITEMS_DURATION_POS = glm::vec2(20, mdDefaultHeight + textOffsetY);
 
 		const glm::vec2 _TEXT_ITEMS_SIZE_POS = glm::vec2(170, mdDefaultHeight + textOffsetY);

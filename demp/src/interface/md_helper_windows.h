@@ -4,6 +4,7 @@
 #include <map>
 
 #include "SDL.h"
+#include <SDL_syswm.h>
 
 #include "../utility/md_types.h"
 #include "md_interface.h"
@@ -119,9 +120,12 @@ namespace mdEngine
 			Interface::Movable m_Movable;
 			Interface::Button m_ExitButton;
 
+			SDL_SysWMinfo m_Info;
+
 			Text::TextObject m_TitleText;
 			Text::TextObject m_AlbumText;
 			Text::TextObject m_ArtistText;
+			Text::TextObject m_YearText;
 
 			Text::TextObject m_TimeText;
 			Text::TextObject m_InfoText;

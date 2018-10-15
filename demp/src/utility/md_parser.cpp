@@ -203,6 +203,7 @@ namespace mdEngine
 
 		while ((fgets(line, linesz, f) != NULL) && (strcmp(line, "#-----CONTENT-----#\n") != 0)) { }
 
+		s32 count = 0;
 		while (fgets(line, linesz, f) != NULL)
 		{
 			if (line[0] == '-' || line[1] != ':')
@@ -225,7 +226,7 @@ namespace mdEngine
 			strncat(&path->at(0), line, i);
 
 			// Loaded path could've be corrupted, so check if it is valid before doing any text operations
-			if (fs::exists(*path) == false)
+			if (fs::exists(utf8_to_utf16(*path)) == false)
 				continue;
 
 			memcpy(otherHalf, line + i, (len - i));
@@ -255,7 +256,11 @@ namespace mdEngine
 			if (fileInfoCorrupted == true)
 				info->infoCorrupted = true;
 
+			if (count > 220)
+				md_log("essa");
+
 			Audio::LoadPathsFromFile(*path, info);
+			count++;
 		}
 
 		fclose(f);
