@@ -30,8 +30,10 @@ namespace mdEngine
 		protected:
 
 			b8 m_Active;
+			b8 m_HasFocus;
 			b8 m_ToTrayOnExitState;
 			b8 m_WindowHasFocus;
+			b8 m_WindowMoved;
 			s32 m_Height, m_Width;
 			s32 m_WindowID;
 			mdShader* m_Shader;
@@ -102,6 +104,24 @@ namespace mdEngine
 			void OnDelete();
 
 		private:
+
+			glm::vec2 m_AlbumPicSize;
+			glm::vec2 m_AlbumPicPos;
+
+			Time::Timer m_FocusLostTimer;
+			Interface::Movable m_Movable;
+			Interface::Button m_ExitButton;
+
+			Text::TextObject m_TitleText;
+			Text::TextObject m_AlbumText;
+			Text::TextObject m_ArtistText;
+
+			Text::TextObject m_TimeText;
+			Text::TextObject m_InfoText;
+			Text::TextObject m_PathText;
+
+
+			std::vector<Interface::Button*> m_ButtonCont;
 
 		};
 

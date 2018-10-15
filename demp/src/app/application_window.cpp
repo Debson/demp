@@ -19,6 +19,9 @@ namespace mdEngine
 		s32 startX, startY;
 		s32 startXRes, startYRes;
 
+		s32 globalMouseXSimple, globalMouseYSimple;
+		s32 startXSimple, startYSimple;
+
 		s32 winSizeBeforeResizeBottom;
 		s32 winSizeBeforeResizeTop;
 		s32 winPosBeforeResize;
@@ -32,6 +35,7 @@ namespace mdEngine
 		b8 checkBounds(false);
 
 		b8 wasInsideMovable(false);
+		b8 wasInsideMovableSimple(false);
 		b8 wasInsideResizableBottom(false);
 		b8 wasInsideResizableTop(false);
 		b8 resizeFinished(false);
@@ -63,7 +67,6 @@ namespace mdEngine
 
 	void App::ProcessMovable(Interface::Movable* bar)
 	{
-		
 			if (Input::IsKeyDown(KeyCode::MouseLeft))
 			{
 				int currentMouseX = 0, currentMouseY = 0;
@@ -147,6 +150,69 @@ namespace mdEngine
 				Window::GetWindowPos(&startX, &startY);
 			}
 		
+	}
+
+	void App::ProcessMovable(Interface::Movable* bar, SDL_Window* window, std::vector<Interface::Button*>* buttonCon)
+	{
+		if (Input::IsKeyDown(KeyCode::MouseLeft))
+		{
+			int currentMouseX = 0, currentMouseY = 0;
+			Input::GetGlobalMousePosition(&currentMouseX, &currentMouseY);
+
+			int currentWinX, currentWinY;
+			Window::GetWindowPos(&currentWinX, &currentWinY);
+
+			int insideX, insideY;
+			Input::GetMousePosition(&insideX, &insideY);
+
+			int deltaX = globalMouseXSimple - currentMouseX;
+			int deltaY = globalMouseYSimple - currentMouseY;
+
+			int newWX = startXSimple - deltaX;
+			int newWY = startYSimple - deltaY;
+
+			f32 xL = bar->m_Pos.x;
+			f32 xR = bar->m_Pos.x + bar->m_Size.x;
+			f32 yU = bar->m_Pos.y;
+			f32 yD = bar->m_Pos.y + bar->m_Size.y;
+
+			bool inside = insideX > xL && insideX < xR && insideY > yU && insideY < yD;
+
+			for (auto & i : *buttonCon)
+			{
+				if (insideX > i->GetButtonPos().x &&
+					insideX < i->GetButtonPos().x + i->GetButtonSize().x &&
+					insideY > i->GetButtonPos().y &&
+					insideY < i->GetButtonPos().y + i->GetButtonSize().y)
+				{
+					inside = false;
+				}
+			}
+
+			if (inside && Input::IsKeyPressed(KeyCode::MouseLeft) == true)
+			{
+				wasInsideMovableSimple = true;
+			}
+
+			if (wasInsideMovableSimple)
+			{
+				SDL_SetWindowPosition(window, newWX, newWY);
+			}
+		}
+		else
+		{
+			s32 mouseX, mouseY;
+			Input::GetMousePosition(&mouseX, &mouseY);
+			b8 inside = mouseX > bar->m_Pos.x && mouseX < (bar->m_Pos.x + bar->m_Size.x) &&
+						mouseY > bar->m_Pos.y && mouseY < (bar->m_Pos.y + bar->m_Size.y);
+			bar->hasFocus = inside;
+
+
+			wasInsideMovableSimple = false;
+			Input::GetGlobalMousePosition(&globalMouseXSimple, &globalMouseYSimple);
+			SDL_GetWindowPosition(window, &startXSimple, &startYSimple);
+		}
+
 	}
 
 	void App::ProcessButton(std::shared_ptr<Interface::Button> button)

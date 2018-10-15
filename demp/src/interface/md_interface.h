@@ -25,7 +25,7 @@ namespace mdEngine
 		struct Movable
 		{
 			Movable();
-			Movable(glm::vec2 size, glm::vec2 pos);;
+			Movable(glm::vec2 size, glm::vec2 pos, b8 addToCont = true);;
 
 			glm::vec2 m_Size;
 			glm::vec2 m_Pos;
@@ -188,7 +188,7 @@ namespace mdEngine
 			void SetColor(glm::vec3 color);
 			void SetItemScale(f32 scale);
 			void SetItemSize(glm::vec2 itemSize);
-			void AddItem(const std::string itemName, GLuint iconTexture = 0);
+			void AddItem(std::string itemName, GLuint iconTexture = 0);
 			void SetItemsOffset(glm::vec2 offset);
 
 			void Free();

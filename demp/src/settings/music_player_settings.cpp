@@ -13,9 +13,6 @@ namespace MP
 	{
 		s32 _SCREEN_TICK_PER_FRAME = 1000 / _SCREEN_FPS;
 
-		TTF_Font* _MUSIC_PLAYER_FONT;
-		TTF_Font* _MUSIC_PLAYER_NUMBER_FONT;
-
 		glm::vec2 _MAIN_BACKGROUND_SIZE;
 
 		glm::vec2 _PLAYLIST_FOREGROUND_SIZE;
@@ -54,9 +51,6 @@ namespace MP
 
 	void Data::InitializeData()
 	{
-		_MUSIC_PLAYER_FONT = TTF_OpenFont("assets/font/Times New Roman.ttf", 14);
-		_MUSIC_PLAYER_NUMBER_FONT = TTF_OpenFont("assets/font/Times New Roman.ttf", 14);
-
 		_MAIN_BACKGROUND_SIZE = glm::vec2(mdDefaultWidth, mdDefaultHeight);
 
 		_PLAYLIST_FOREGROUND_SIZE = glm::vec2(mdDefaultWidth - 40.f, mdDefaultHeight - 40.f);
@@ -115,10 +109,7 @@ namespace MP
 
 	void Data::CloseData()
 	{
-		TTF_CloseFont(_MUSIC_PLAYER_FONT);
-		TTF_CloseFont(_MUSIC_PLAYER_NUMBER_FONT);
-		_MUSIC_PLAYER_FONT = NULL;
-		_MUSIC_PLAYER_NUMBER_FONT = NULL;
+	
 	}
 }
 }

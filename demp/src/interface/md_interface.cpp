@@ -53,9 +53,12 @@ namespace mdEngine
 	}
 
 	/* *************************************************** */
-	Interface::Movable::Movable(glm::vec2 size, glm::vec2 pos) : m_Size(size), m_Pos(pos)
+	Interface::Movable::Movable() { }
+
+	Interface::Movable::Movable(glm::vec2 size, glm::vec2 pos, b8 addToCont) : m_Size(size), m_Pos(pos)
 	{
-		mdMovableContainer.push_back(this);
+		if(addToCont == true)
+			mdMovableContainer.push_back(this);
 	}
 
 	/* *************************************************** */
@@ -146,7 +149,6 @@ namespace mdEngine
 		m_ButtonPos = glm::vec2(m_StartPos.x, m_StartPos.y + m_ItemID * (m_ButtonSize.y));
 		m_TextPos = m_ButtonPos;
 
-		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
 		SetTextColor(Color::White);
 
@@ -335,7 +337,9 @@ namespace mdEngine
 			len = m_TextString.length();
 			m_TitleC.resize(len + 1);
 			m_TitleC = m_TextString;
-			TTF_SizeText(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);;
+			TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
+			TTF_SizeUTF8(font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);;
+			TTF_CloseFont(font);
 		}
 
 		return m_TextString;
@@ -370,7 +374,6 @@ namespace mdEngine
 
 	void Interface::PlaylistSeparator::InitItem()
 	{
-		m_Font = MP::Data::_MUSIC_PLAYER_FONT;
 		m_TextScale = 1.f;
 		m_ItemColor = Color::Pink;
 		SetTextColor(Color::Grey);
@@ -381,8 +384,9 @@ namespace mdEngine
 		u16 len = m_TextString.length();
 		m_TitleC.resize(len + 1);
 		m_TitleC = m_TextString;
-
-		TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
+		TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
+		TTF_SizeUTF8(font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
+		TTF_CloseFont(font);
 
 		std::shared_ptr<PlaylistSeparator> shrPtr(this);
 
@@ -679,13 +683,15 @@ namespace mdEngine
 		m_ItemSize = itemSize;
 	}
 
-	void Interface::TextBox::AddItem(const std::string itemName, GLuint iconTexture)
+	void Interface::TextBox::AddItem(std::string itemName, GLuint iconTexture)
 	{
-		GLuint tex = Text::LoadText(Data::_MUSIC_PLAYER_FONT, itemName, m_TextColorSDL);
+		TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), 14);
+		GLuint tex = Text::LoadText(font, itemName, m_TextColorSDL);
 
 		glm::ivec2 textSize;
 		std::string name = itemName;
-		TTF_SizeText(Data::_MUSIC_PLAYER_FONT, name.c_str(), &textSize.x, &textSize.y);
+		TTF_SizeText(font, name.c_str(), &textSize.x, &textSize.y);
+		TTF_CloseFont(font);
 
 		auto item = std::make_shared<TextBoxItem>(itemName, glm::vec2(m_Size.x, Data::_TEXT_BOX_ITEM_HEIGHT), glm::vec2(m_Pos.x, m_Pos.y + m_ItemsCount * Data::_TEXT_BOX_ITEM_HEIGHT),
 																		  glm::vec2(textSize) * m_ItemScale, glm::vec2(m_Pos.x + 40.f, m_Pos.y + m_ItemsCount * textSize.y * m_ItemScale),
@@ -795,7 +801,7 @@ namespace mdEngine
 		s32 offsetY = 5;
 
 		s32 labelTextXOffset = 3;
-		m_LabelTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
+		m_LabelTextObject = TextObject(Color::Black);
 		m_LabelTextObject.SetTextString(m_LabelText);
 		m_LabelTextObject.SetTextPos(glm::vec2(m_SliderPos.x - labelTextXOffset, m_SliderPos.y));
 		// Init sdl text
@@ -806,7 +812,7 @@ namespace mdEngine
 		m_SliderOutline = glm::vec4(m_SliderPos.x - outlineSizeOffsetX, m_SliderPos.y + m_LabelTextObject.GetTextSize().y + offsetY - (m_SliderSize.y - buttonTexSize.y) / 2,
 									m_SliderSize.x + 2 * outlineSizeOffsetX - 1.f, m_SliderSize.y);
 
-		m_ValueTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
+		m_ValueTextObject = TextObject(Color::Black);
 		if (m_Value == NULL)
 		{
 			std::stringstream ss;
@@ -879,7 +885,7 @@ namespace mdEngine
 		m_DefaultButton->SetButtonPos(glm::vec2(m_DefaultRect.x, m_DefaultRect.y));
 		m_DefaultButton->SetButtonSize(glm::vec2(m_DefaultRect.z, m_DefaultRect.w));
 
-		m_DefaultTextObject = TextObject(Data::_MUSIC_PLAYER_FONT, Color::Black);
+		m_DefaultTextObject = TextObject(Color::Black);
 
 		m_DefaultTextObject.SetTextString("Default");
 		m_DefaultTextObject.InitTextTexture();
@@ -1175,7 +1181,6 @@ namespace mdEngine
 		s32 textOffsetX = 5;
 		m_TextString = labelName;
 		m_TextPos = glm::vec2(pos.x - textOffsetX, pos.y);
-		m_Font = Data::_MUSIC_PLAYER_FONT;
 		m_TextColorSDL = SDLColor::Black;
 	}
 

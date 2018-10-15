@@ -40,6 +40,8 @@ namespace App
 
 	void ProcessMovable(Interface::Movable* bar);
 
+	void ProcessMovable(Interface::Movable* bar, SDL_Window* window, std::vector<Interface::Button*>* buttonCon);
+
 	void ProcessButton(std::shared_ptr<Interface::Button> button);
 
 	void ProcessButton(Interface::Button* button);

@@ -195,7 +195,8 @@ namespace MP
 	void UI::Update()
 	{
 		// Files are loading, don't take any input from user at that time
-		if (State::CheckState(State::FilesLoaded) == false)
+		if (State::CheckState(State::FilesLoaded) == false ||
+			State::CheckState(State::Window::HasFocus) == false)
 			return;
 
 

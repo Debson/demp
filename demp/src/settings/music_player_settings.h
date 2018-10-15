@@ -40,9 +40,6 @@ namespace MP
 		const s32 _PLAYLIST_ARROWS_SCROLL_DELAY = 500;
 		const s32 _PLAYLIST_ARROWS_SCROLL_INTERVAL = 15;
 
-		extern TTF_Font* _MUSIC_PLAYER_FONT;
-		extern TTF_Font* _MUSIC_PLAYER_NUMBER_FONT;
-
 		const glm::vec2 _MIN_PLAYER_SIZE = glm::vec2(500.f, 500.f);
 
 		const glm::vec2 _DEFAULT_PLAYER_POS = glm::vec2(0.f, 0.f);

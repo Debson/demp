@@ -8,6 +8,7 @@
 #include <string>
 
 #include "../settings/music_player_settings.h"
+#include "../settings/music_player_string.h"
 #include "../utility/md_types.h"
 #include "md_shader.h"
 
@@ -19,8 +20,8 @@ namespace mdEngine
 		{
 		public:
 			TextObject();
-			TextObject(TTF_Font* font, glm::vec3 col);
-			TextObject(TTF_Font* font, glm::vec3 col, std::string text);
+			explicit TextObject(glm::vec3 col, s32 fontSize = 14);
+			TextObject(glm::vec3 col, std::string text, s32 fontSize = 14);
 			virtual ~TextObject();
 
 			virtual void InitTextTexture();
@@ -43,7 +44,6 @@ namespace mdEngine
 			b8 HasTexture() const;
 			/* Initializes and returns a texture(does not initialize any class members, memory safe)*/
 			GLuint		GetLoadedTexture();
-			TTF_Font*	GetTextFont()  const;
 			f32			GetTextScale() const;
 			glm::vec2&	GetTextPos();
 			glm::vec2	GetTextSize() const;
@@ -51,8 +51,8 @@ namespace mdEngine
 
 		protected:
 			f32			  m_TextScale;
+			s32			  m_FontSize;
 			GLuint		  m_TextTexture;
-			TTF_Font*	  m_Font;
 			SDL_Color	  m_TextColorSDL;
 			glm::vec2	  m_TextOffset;
 			glm::vec2	  m_TextPos;
@@ -65,6 +65,7 @@ namespace mdEngine
 
 		void InitializeText();
 
+		GLuint			LoadText(std::string string, SDL_Color color, std::string fontPath = Strings::_FONT_PATH, s32 fontSize = 14);
 		GLuint			LoadText(TTF_Font* font, std::string string, SDL_Color color);
 		SDL_Texture*	LoadTextSDL(SDL_Renderer* renderer, TTF_Font* font, std::string string, SDL_Color color);
 		

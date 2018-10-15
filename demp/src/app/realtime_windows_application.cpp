@@ -415,7 +415,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 					State::SetState(State::Window::HasFocus);
 					break;
 				case (SDL_WINDOWEVENT_FOCUS_LOST):
-					State::ResetState(State::Window::HasFocus);;
+					State::ResetState(State::Window::HasFocus);
 					break;
 				case (SDL_WINDOWEVENT_ENTER):
 					State::SetState(State::Window::MouseEnter);
@@ -466,17 +466,15 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			UpdateRelativeMousePosition();
 
 
-			if (mdIsRunning == true && State::CheckState(State::OptionWindow::HasFocus) == false)
+			if (mdIsRunning == true)
 			{
 				UpdateWindowSize();
 				mdApplicationHandler->OnRealtimeUpdate();
 			}
-			else if (mdIsRunning == true)
-			{
-
-				if(Window::mdOptionsWindow != NULL)
-					Window::mdOptionsWindow->Update();
-			}
+			
+			for(auto & i : Window::WindowsContainer)
+				i.second->Update();
+			
 
 			Window::UpdateWindows();
 
@@ -485,11 +483,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
-			if (mdIsRunning == true &&
-				State::CheckState(State::OptionWindow::HasFocus) == false)
-			{
-				Graphics::UpdateGraphics();
-			}
+			
+			Graphics::UpdateGraphics();
+			
 
 			if (State::CheckState(State::Window::Minimized) == false ||
 				State::CheckState(State::Window::InTray) == false ||
@@ -688,6 +684,14 @@ glm::vec2 mdEngine::Window::GetWindowPos()
 {
 	s32 x, y;
 	SDL_GetWindowPosition(mdWindow, &x, &y);;
+
+	return glm::vec2(x, y);
+}
+
+glm::vec2 mdEngine::Window::GetWindowPos(SDL_Window* window)
+{
+	s32 x, y;
+	SDL_GetWindowPosition(window, &x, &y);;
 
 	return glm::vec2(x, y);
 }

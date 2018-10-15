@@ -10,6 +10,8 @@ namespace mdEngine
 	namespace Strings
 	{
 
+		const std::string _FONT_PATH = "assets/font/Times New Roman.ttf";
+
 		// Settings files texts
 		extern std::string _SETTINGS_FILE;
 		extern std::string _PLAYLIST_FILE;

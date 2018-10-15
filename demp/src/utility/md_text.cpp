@@ -10,6 +10,7 @@
 #include "md_shape.h"
 #include "../app/realtime_system_application.h"
 #include "../graphics/graphics.h"
+#include "../settings/music_player_string.h"
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_shader.h"
 
@@ -24,56 +25,56 @@ namespace mdEngine
 	Text::TextObject::TextObject()
 	{
 		m_TextString = "";
-		m_Font = NULL;
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
+		m_FontSize = 14;
 	}
 
-	Text::TextObject::TextObject(TTF_Font* font, glm::vec3 col)
+	Text::TextObject::TextObject(glm::vec3 col, s32 fontSize)
 	{
 		SDL_Color color = { static_cast<Uint8>(255 * col.x),
 							static_cast<Uint8>(255 * col.y),
 							static_cast<Uint8>(255 * col.z)
 						   };
 
-		m_Font = font;
+		m_FontSize = fontSize;
 		SetTextColor(col);
 		m_TextString = "";
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
-		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
+		//TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
-	Text::TextObject::TextObject(TTF_Font* font, glm::vec3 col, std::string text)
+	Text::TextObject::TextObject(glm::vec3 col, std::string text, s32 fontSize)
 	{
 		SDL_Color color = { static_cast<Uint8>(255 * col.x),
 							static_cast<Uint8>(255 * col.y),
 							static_cast<Uint8>(255 * col.z)
 						  };
 
-		m_Font = font;
 		SetTextColor(col);
 		m_TextString = text;
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
-		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
+		//TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
 	Text::TextObject::~TextObject() 
 	{ 
 		DeleteTexture();
-		m_Font = NULL;
 	}
 
 	void Text::TextObject::InitTextTexture()
 	{
 		if (m_TextTexture == 0)
 		{
-			TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
-			m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
+			TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
+			TTF_SizeUTF8(font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
+			m_TextTexture = LoadText(font, m_TextString, m_TextColorSDL);
+			TTF_CloseFont(font);
 		}
 	}
 
@@ -81,9 +82,12 @@ namespace mdEngine
 	{
 		DeleteTexture();
 
-		TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
+		TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
+		TTF_SizeUTF8(font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 
-		m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
+		m_TextTexture = LoadText(font, m_TextString, m_TextColorSDL);
+		TTF_CloseFont(font);
+
 	}
 
 	void Text::TextObject::DeleteTexture()
@@ -192,16 +196,12 @@ namespace mdEngine
 
 	GLuint Text::TextObject::GetLoadedTexture()
 	{
-		GLuint tempText = LoadText(m_Font, m_TextString, m_TextColorSDL);
+		GLuint tempText = LoadText(m_TextString, m_TextColorSDL);
+
 
 		return tempText;
 	}
 
-	TTF_Font* Text::TextObject::GetTextFont() const
-	{
-		return m_Font;
-	}
-	
 	f32 Text::TextObject::GetTextScale() const
 	{
 		return m_TextScale;
@@ -228,8 +228,10 @@ namespace mdEngine
 		
 	}
 
-	GLuint Text::LoadText(TTF_Font* font, std::string string, SDL_Color color)
+	GLuint Text::LoadText(std::string string, SDL_Color color, std::string fontPath, s32 fontSize)
 	{
+		TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), fontSize);
+
 		GLuint colors;
 		GLuint textTexture = 0;
 		SDL_Surface* textSurface;
@@ -257,6 +259,51 @@ namespace mdEngine
 		glBindTexture(GL_TEXTURE_2D, textTexture);
 		GLenum error = glGetError();
 		
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textSurface->w, textSurface->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, textSurface->pixels);
+
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		SDL_FreeSurface(textSurface);
+
+		TTF_CloseFont(font);
+
+		return textTexture;
+	}
+
+	GLuint Text::LoadText(TTF_Font* font, std::string string, SDL_Color color)
+	{
+		GLuint colors;
+		GLuint textTexture = 0;
+		SDL_Surface* textSurface;
+		GLenum format;
+
+		textSurface = TTF_RenderUTF8_Blended(font, string.c_str(), color);
+		if (textSurface == NULL)
+		{
+			MD_ERROR("String name: " + string + "     Color: " + std::to_string(color.r) + "  " + std::to_string(color.g) + "  " + std::to_string(color.b));
+			//std::cout << "Font address: " << font << "     String name: " << string.c_str() << "     Color: " << std::to_string(color.r) << "  " << std::to_string(color.g) << "  " << std::to_string(color.b) << std::endl;
+			return 0;
+		}
+		assert(textSurface != NULL);
+
+		colors = textSurface->format->BytesPerPixel;
+
+		format = GL_RGB;
+
+		if (colors == 4)
+			format = GL_RGBA;
+
+		/*if (bgra == true)
+			format = GL_BGRA;*/
+
+		glGenTextures(1, &textTexture);
+		glBindTexture(GL_TEXTURE_2D, textTexture);
+		GLenum error = glGetError();
+
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textSurface->w, textSurface->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, textSurface->pixels);
 
 		glGenerateMipmap(GL_TEXTURE_2D);

@@ -1,6 +1,7 @@
 #include "mp_audio_object.h"
 
 #include <thread>
+#include <SDL_ttf.h>
 
 #include <boost/range/iterator_range.hpp>
 #include <boost/filesystem.hpp>
@@ -13,6 +14,7 @@
 #include <taglib/mpeg/id3v2/frames/attachedpictureframe.h>
 
 
+#include "../utility/md_converter.h"
 #include "../utility/md_load_texture.h"
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_util.h"
@@ -187,9 +189,12 @@ void Audio::AudioObject::ReloadTextTexture()
 {
 	DeleteTexture();
 
+	TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
 	m_TextString = GetNameToPlaylist();
-	TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
-	m_TextTexture = LoadText(m_Font, m_TextString, m_TextColorSDL);
+	Converter::GetShortenString(m_TextString, m_ButtonSize.x, font);
+	TTF_SizeUTF8(font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
+	m_TextTexture = LoadText(font, m_TextString, m_TextColorSDL);
+	TTF_CloseFont(font);
 }
 
 

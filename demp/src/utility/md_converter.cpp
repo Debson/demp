@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iomanip>
 
+
 namespace mdEngine
 {
 	// DD::HH::MM::SS
@@ -64,20 +65,20 @@ namespace mdEngine
 
 		time += ":";
 
-		// seconds
-		if (seconds == 0)
-			time += "00";
-		else if (seconds > 0 && seconds < 10)
-		{
-			time += "0";
-			time += std::to_string(seconds);
-		}
-		else
-		{
-			time += std::to_string(seconds);
-		}
+// seconds
+if (seconds == 0)
+time += "00";
+else if (seconds > 0 && seconds < 10)
+{
+	time += "0";
+	time += std::to_string(seconds);
+}
+else
+{
+	time += std::to_string(seconds);
+}
 
-		return time;
+return time;
 	}
 
 	std::string Converter::SecToProperTimeFormatShort(f64 secs)
@@ -85,8 +86,8 @@ namespace mdEngine
 		std::string time = SecToProperTimeFormat(secs);
 
 		while (time[0] == '0' &&
-			   time[1] == '0' &&
-			   time.length() > 2)
+			time[1] == '0' &&
+			time.length() > 2)
 		{
 			time = time.substr(3, time.length());
 		}
@@ -101,7 +102,7 @@ namespace mdEngine
 		std::stringstream ss;
 		f64 mb = bytes * BYTE_TO_MB_BINARY;
 		s32 gb = mb * MB_TO_GB_BINARY;
-		
+
 		mb -= gb / MB_TO_GB_BINARY;
 
 		std::string size;
@@ -146,5 +147,58 @@ namespace mdEngine
 		str += " kHz";
 
 		return str;
+	}
+
+	std::string Converter::GetShortenString(std::string& in, s32 maxWidth, s32 fontSize, std::string fontPath)
+	{
+		s32 w, h;
+		TTF_Font* font = TTF_OpenFont(fontPath.c_str(), fontSize);
+
+		TTF_SizeUTF8(font, in.c_str(), &w, &h);
+		s32 i = 0;
+		while (w > maxWidth)
+		{
+			in = in.substr(0, in.length() - 1);
+			TTF_SizeUTF8(font, in.c_str(), &w, &h);
+			i++;
+		}
+
+		if (i != 0)
+		{
+			in = in.substr(0, in.length() - 3);
+			// delete all spaces
+			while(in[in.length() - 1] == ' ')
+				in = in.substr(0, in.length() - 1);
+			in += "...";
+		}
+
+		TTF_CloseFont(font);
+
+		return in;
+	}
+
+	std::string Converter::GetShortenString(std::string& in, s32 maxWidth, TTF_Font* font)
+	{
+		s32 w, h;
+
+		TTF_SizeUTF8(font, in.c_str(), &w, &h);
+		s32 i = 0;
+		while (w > maxWidth)
+		{
+			in = in.substr(0, in.length() - 1);
+			TTF_SizeUTF8(font, in.c_str(), &w, &h);
+			i++;
+		}
+
+		if (i != 0)
+		{
+			in = in.substr(0, in.length() - 3);
+			// delete all spaces
+			while (in[in.length() - 1] == ' ')
+				in = in.substr(0, in.length() - 1);
+			in += "...";
+		}
+
+		return in;
 	}
 }

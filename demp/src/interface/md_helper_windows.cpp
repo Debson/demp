@@ -4,13 +4,16 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 
-#include "../utility/md_util.h"
 #include "../audio/mp_audio.h"
 #include "../settings/music_player_settings.h"
 #include "../graphics/graphics.h"
+#include "../graphics/music_player_graphics_playlist.h"
 #include "../settings/music_player_string.h"
 #include "../app/realtime_system_application.h"
 #include "../player/music_player_state.h"
+#include "../utility/md_util.h"
+#include "../utility/md_converter.h"
+
 
 using namespace mdEngine::Graphics;
 
@@ -50,6 +53,7 @@ namespace mdEngine
 				Window::mdMusicInfoWindow = nullptr;
 			}
 		}
+
 	}
 
 	void Window::RenderWindows()
@@ -71,6 +75,8 @@ namespace mdEngine
 		if (m_Window == NULL)
 			return;
 
+		m_WindowMoved = false;
+
 		if (e->type == SDL_WINDOWEVENT && e->window.windowID == m_WindowID)
 		{
 			switch (e->window.event)
@@ -83,6 +89,15 @@ namespace mdEngine
 				break;
 			case SDL_WINDOWEVENT_LEAVE:
 				m_WindowHasFocus = false;
+				break;
+			case SDL_WINDOWEVENT_MOVED:
+				m_WindowMoved = true;
+				break;
+			case SDL_WINDOWEVENT_FOCUS_LOST:
+				m_HasFocus = false;
+				break;
+			case SDL_WINDOWEVENT_FOCUS_GAINED:
+				m_HasFocus = true;
 				break;
 			}
 		}
@@ -333,7 +348,7 @@ namespace mdEngine
 		m_ProgressBarPos = glm::vec2((m_Width - m_ProgressBarSize.x) / 2.f, m_Height / 2.f - m_ProgressBarSize.y);
 
 		s32 loadingPathTextOffsetY = 20;
-		m_LoadingPathText = Text::TextObject(MP::Data::_MUSIC_PLAYER_FONT, Color::Black);
+		m_LoadingPathText = Text::TextObject(Color::Black);
 		m_LoadingPathText.SetTextPos(glm::vec2(m_ProgressBarPos.x, m_ProgressBarPos.y - loadingPathTextOffsetY));
 
 
@@ -342,7 +357,7 @@ namespace mdEngine
 			m_ProgressBarPos.y + m_ProgressBarSize.y + 20.f);
 		m_CancelButton = new Interface::Button(m_CancelButtonSize, m_CancelButtonPos);
 
-		m_CancelText = Text::TextObject(MP::Data::_MUSIC_PLAYER_FONT, Color::Black);
+		m_CancelText = Text::TextObject(Color::Black);
 		m_CancelText.SetTextString("Cancel");
 		m_CancelText.InitTextTexture();
 
@@ -379,9 +394,8 @@ namespace mdEngine
 
 	void Window::LoadInfoWindow::Update()
 	{
-		if (m_Window == NULL)
+		if (m_Window == NULL || m_HasFocus == false)
 			return;
-
 
 		App::ProcessButton(m_CancelButton);
 
@@ -462,8 +476,8 @@ namespace mdEngine
 
 	Window::MusicInfoWindow::MusicInfoWindow(glm::vec2 pos)
 	{
-		m_Width = 150;
-		m_Height = 100;
+		m_Width = 400;
+		m_Height = 150;
 
 		m_Window = NULL;
 
@@ -472,7 +486,8 @@ namespace mdEngine
 			pos.y,
 			m_Width,
 			m_Height,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_SKIP_TASKBAR);
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN |
+			SDL_WINDOW_SKIP_TASKBAR | SDL_WINDOW_BORDERLESS);
 
 		assert(m_Window != NULL);
 
@@ -481,6 +496,12 @@ namespace mdEngine
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 		SDL_GetWindowWMInfo(m_Window, &info);
+
+		// always on top
+		SetWindowPos(info.info.win.window, HWND_TOPMOST,
+			pos.x, pos.y,
+			m_Width, m_Height,
+			SWP_NOSIZE);
 
 		// Disable minimize/maximize buttons
 		SetWindowLong(info.info.win.window, GWL_STYLE,
@@ -503,14 +524,83 @@ namespace mdEngine
 
 		glViewport(0, 0, static_cast<GLint>(m_Width), static_cast<GLint>(m_Height));
 
+		m_Movable = Interface::Movable(glm::vec2(m_Width, m_Height), glm::vec2(0.f), false);
+		f32 exitButtonSize = 15.f;
+		m_ExitButton = Interface::Button(glm::vec2(exitButtonSize), glm::vec2(m_Width - exitButtonSize, 0.f));
+		m_ButtonCont.push_back(&m_ExitButton);
 
-		//Window::WindowsContainer.insert(std::pair< std::string, std::shared_ptr<Window::WindowObject>>("MusicInfoWindow", this));
+		s32 oX = 10;
+		s32 oY = 20;
+		m_AlbumPicSize = glm::vec2(150.f, 100.f);
+		m_AlbumPicPos = glm::vec2(m_Width - m_AlbumPicSize.x - oX, oY);
+		s32 textPosX = 4.f;
+
+		// title text should be in larger font
+		s32 playingID = Graphics::MP::GetPlaylistObject()->GetPlayingID();
+		m_TitleText = Text::TextObject(Color::Red, 18);
+		std::string titleStr;
+		if (Audio::Object::GetAudioObject(playingID)->GetTitle().compare("") != 0)
+		{
+			m_TitleText.SetTextString(Audio::Object::GetAudioObject(playingID)->GetTitle());
+		}
+		else
+		{
+			titleStr = Audio::Object::GetAudioObject(playingID)->GetCompleteName();
+			m_TitleText.SetTextString(Converter::GetShortenString(titleStr, m_AlbumPicPos.x + textPosX, 18));
+		}
+
+		m_TitleText.SetTextPos(glm::vec2(textPosX, 10.f));
+		m_TitleText.InitTextTexture();
+
+		s32 offsetY = 3.f;
+		m_AlbumText = Text::TextObject(Color::White);
+		m_AlbumText.SetTextString(Audio::Object::GetAudioObject(playingID)->GetAlbum());
+		m_AlbumText.InitTextTexture();
+		m_AlbumText.SetTextPos(glm::vec2(textPosX, m_TitleText.GetTextSize().y + m_TitleText.GetTextPos().y + offsetY));
+
+
+		m_ArtistText = Text::TextObject(Color::White);
+		m_ArtistText.SetTextString(Audio::Object::GetAudioObject(playingID)->GetArtist());
+		m_ArtistText.SetTextPos(glm::vec2(textPosX, m_AlbumText.GetTextSize().y + m_AlbumText.GetTextPos().y));
+		m_ArtistText.InitTextTexture();
+
+		// space
+
+		// time text should be in larger font
+		offsetY = 25.f;
+		m_TimeText = Text::TextObject(Color::Red, 18);
+		m_TimeText.SetTextString(Converter::SecToProperTimeFormatShort(Audio::Object::GetAudioObject(playingID)->GetLength()));
+		m_TimeText.SetTextPos(glm::vec2(textPosX, m_ArtistText.GetTextSize().y + m_ArtistText.GetTextPos().y + offsetY));
+		m_TimeText.InitTextTexture();
+
+
+		m_InfoText = Text::TextObject(Color::White);
+		std::string inf = std::to_string((s32)Audio::Object::GetAudioObject(playingID)->GetFrequency() / 1000) + " kHz, ";
+		inf + std::to_string((s32)Audio::Object::GetAudioObject(playingID)->GetBitrate()) + " kbps, ";
+		inf += Converter::BytesToProperSizeFormat(Audio::Object::GetAudioObject(playingID)->GetObjectSize());
+
+
+		m_InfoText.SetTextString(inf);
+		m_InfoText.SetTextPos(glm::vec2(textPosX, m_TimeText.GetTextSize().y + m_TimeText.GetTextPos().y));
+		m_InfoText.InitTextTexture();
+
+
+		m_PathText = Text::TextObject(Color::White);
+		s32 slashPos = Audio::Object::GetAudioObject(playingID)->GetPath().find_last_of('\\');
+		inf = Audio::Object::GetAudioObject(playingID)->GetPath().substr(slashPos + 1, Audio::Object::GetAudioObject(playingID)->GetPath().length());
+		Converter::GetShortenString(inf, m_Width);
+		m_PathText.SetTextString(inf);
+		m_PathText.SetTextPos(glm::vec2(textPosX, m_InfoText.GetTextSize().y + m_InfoText.GetTextPos().y));
+		m_PathText.InitTextTexture();
+
+
+
+		m_FocusLostTimer = Time::Timer(2500);
 	}
 
 	Window::MusicInfoWindow::~MusicInfoWindow()
 	{
 		m_Active = false;
-		Window::WindowsContainer.erase("MusicInfoWindow");
 
 		SDL_GL_MakeCurrent(m_Window, *Window::GetMainWindowContext());
 
@@ -526,6 +616,39 @@ namespace mdEngine
 	{
 		if (m_Window == NULL)
 			return;
+
+		App::ProcessButton(&m_ExitButton);
+
+		if (m_ExitButton.isPressed == true)
+		{
+			OnDelete();
+		}
+
+		if (m_WindowMoved == true)
+		{
+			m_Movable.m_Pos = Window::GetWindowPos(m_Window);
+		}
+
+		if(m_HasFocus == true)
+			App::ProcessMovable(&m_Movable, m_Window, &m_ButtonCont);
+
+		if (m_HasFocus == false && m_FocusLostTimer.started == false && m_FocusLostTimer.finished == false)
+		{
+			m_FocusLostTimer.Start();
+		}
+
+		if (m_FocusLostTimer.finished == true)
+		{
+			OnDelete();
+		}
+
+		if (m_HasFocus == true && m_FocusLostTimer.started == true)
+		{
+			m_FocusLostTimer.Stop();
+			m_FocusLostTimer.Reset();
+		}
+
+		m_FocusLostTimer.Update();
 	}
 
 	void Window::MusicInfoWindow::Render()
@@ -535,12 +658,40 @@ namespace mdEngine
 
 		SDL_GL_MakeCurrent(m_Window, *Window::GetMainWindowContext());
 
-		glClearColor(Color::Azure.r, Color::Azure.g, Color::Azure.b, 1.f);
+		glClearColor(Color::DarkGrey.r, Color::DarkGrey.g, Color::DarkGrey.b, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_Shader->use();
 		m_Shader->setMat4("projection", m_Projection);
 		glViewport(0, 0, static_cast<GLint>(m_Width), static_cast<GLint>(m_Height));
 
+		glm::mat4 model;
+		model = glm::translate(model, glm::vec3(m_ExitButton.GetButtonPos(), 1.f));
+		model = glm::scale(model, glm::vec3(m_ExitButton.GetButtonSize(), 1.f));
+		m_Shader->setBool("plain", true);
+		m_Shader->setVec3("color", Color::Green);
+		m_Shader->setMat4("model", model);
+		Shader::Draw(m_Shader);
+		m_Shader->setVec3("color", Color::White);
+		m_Shader->setBool("plain", false);
+
+		m_TitleText.DrawString();
+		m_AlbumText.DrawString();
+		m_ArtistText.DrawString();
+
+		m_TimeText.DrawString();
+		m_InfoText.DrawString();
+		m_PathText.DrawString();
+
+		if (Audio::Object::GetAudioObject(Graphics::MP::GetPlaylistObject()->GetPlayingID()) != nullptr)
+		{
+			model = glm::mat4();
+			model = glm::translate(model, glm::vec3(m_AlbumPicPos, 1.f));
+			model = glm::scale(model, glm::vec3(m_AlbumPicSize, 1.f));
+			m_Shader->setMat4("model", model);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, Audio::Object::GetAudioObject(Graphics::MP::GetPlaylistObject()->GetPlayingID())->GetAlbumPictureTexture());
+			Shader::Draw(m_Shader);
+		}
 
 
 

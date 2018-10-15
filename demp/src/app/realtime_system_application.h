@@ -51,6 +51,7 @@ namespace mdEngine
 		void GetWindowScale(f32* scaleX, f32* scaleY);
 		void GetWindowPos(s32* x, s32* y);
 		glm::vec2 GetWindowPos();
+		glm::vec2 GetWindowPos(SDL_Window* window);
 		void UpdateViewport(s32 w, s32 h);
 		// Returns true if application height was changed do max window height, else false 
 		b8 CheckWindowSize();

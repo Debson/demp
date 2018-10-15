@@ -287,12 +287,12 @@ namespace mdEngine
 
 	void Graphics::InitializeText()
 	{
-		durationText			= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
-		itemsSizeText			= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
-		itemsCountText			= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
-		loadedItemsCountText	= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
-		musicInfoScrollText[0]	= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
-		musicInfoScrollText[1]	= Text::TextObject(Data::_MUSIC_PLAYER_NUMBER_FONT, Color::Grey);
+		durationText			= Text::TextObject(Color::Grey);
+		itemsSizeText			= Text::TextObject(Color::Grey);
+		itemsCountText			= Text::TextObject(Color::Grey);
+		loadedItemsCountText	= Text::TextObject(Color::Grey);
+		musicInfoScrollText[0]	= Text::TextObject(Color::Grey);
+		musicInfoScrollText[1]	= Text::TextObject(Color::Grey);
 
 		durationText.SetTextPos(Data::_TEXT_ITEMS_DURATION_POS);
 		itemsSizeText.SetTextPos(Data::_TEXT_ITEMS_SIZE_POS);
@@ -1125,6 +1125,8 @@ namespace mdEngine
 		{
 			Window::mdMusicInfoWindow = new Window::MusicInfoWindow(App::Input::GetGlobalMousePosition());
 			Window::WindowsContainer.insert(std::pair<std::string, Window::WindowObject*>("MusicInfoWindow", Window::mdMusicInfoWindow));
+			musicInfoScrollTextButton[0]->isPressedRight = false;
+			musicInfoScrollTextButton[1]->isPressedRight = false;
 		}
 
 		if (musicInfoScrollTextIsMoved == true)
