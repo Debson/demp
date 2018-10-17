@@ -91,7 +91,7 @@ namespace Audio
 
 		void GetInfo(std::shared_ptr<AudioObject> audioObj);
 
-		void GetID3Info(Info::ID3* info, std::string& path);
+		//void GetID3Info(Info::ID3* info, std::string& path);
 
 		std::string GetProcessedItemsCountStr();
 

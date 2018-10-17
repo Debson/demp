@@ -51,7 +51,8 @@ namespace mdEngine
 			SortPathsOnNewFileLoad		= (1llu << 47),
 			PathContainerSorted			= (1llu << 48),
 			TerminateWorkingThreads		= (1llu << 49),
-			ReloadFilesInfo				= (1llu << 50)
+			ReloadFilesInfo				= (1llu << 50),
+			RequestForInfoLoad			= (1llu << 52)
 		};
 
 		namespace Window

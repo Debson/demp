@@ -407,7 +407,6 @@ namespace MP
 			if (Audio::Object::GetSize() == 0)
 				return;
 
-			auto audioCon = Audio::Object::GetAudioObjectContainer();
 
 			/* Reset booleans that control music state */
 			PauseMusic();
@@ -422,14 +421,11 @@ namespace MP
 			if (Audio::Object::GetSize() < 1)
 				return;
 
-			if (RamLoadedMusic.get() != NULL)
-			{
-				if (IsPlaying() == false) //&& RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)))
-				{
+			if (RamLoadedMusic.get() != NULL) {
+				if (IsPlaying() == false) {//&& RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)))
 					mdMPStarted = true;
 				}
-				else
-				{
+				else {
 					mdMPStarted = false;
 					return;
 				}
@@ -441,9 +437,19 @@ namespace MP
 			Graphics::MP::GetPlaylistObject()->SetPlayingID(RamLoadedMusic.m_ID);
 			Graphics::MP::GetPlaylistObject()->SetSelectedID(RamLoadedMusic.m_ID);
 
-			if(Audio::Object::GetAudioObject(RamLoadedMusic.m_PreviousID) != nullptr)
+			if (Audio::Object::GetAudioObject(RamLoadedMusic.m_PreviousID) != nullptr) {
 				Audio::Object::GetAudioObject(RamLoadedMusic.m_PreviousID)->DeleteAlbumImageTexture();
+			}
 			Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)->LoadAlbumImage();
+
+			State::SetState(State::RequestForInfoLoad);
+
+			if (Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)->IsInfoLoaded() == false) {
+				Audio::Info::GetInfo(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID));
+			}
+
+			State::ResetState(State::RequestForInfoLoad);
+
 
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
 			playFadeTimer.Start();

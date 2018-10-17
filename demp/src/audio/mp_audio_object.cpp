@@ -251,6 +251,11 @@ f64 Audio::AudioObject::GetLength() const
 	return info->length;
 }
 
+b8 Audio::AudioObject::IsInfoLoaded() const
+{
+	return info->loaded;
+}
+
 Audio::Info::ID3* Audio::AudioObject::GetID3Struct()
 {
 	return info;

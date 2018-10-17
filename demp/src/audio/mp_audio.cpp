@@ -474,6 +474,8 @@ void Audio::UpdateAudioLogic()
 		}
 
 
+		if (Info::LoadedItemsInfoCount > currentContainersSize)
+			Info::LoadedItemsInfoCount = currentContainersSize;
 		// If added files info is extraced, set appropriate flag
 		if (currentContainersSize == Info::LoadedItemsInfoCount)
 		{
@@ -661,7 +663,7 @@ b8 Audio::AddAudioItem(std::string& path, s32 id)
 	audioObject->SetID(id);
 	audioObject->SetPath(path);
 	//audioObject->SetFolderPath(Info::GetFolderPath(str));
-	audioObject->GetID3Struct()->format = Info::GetExt(path);
+	//audioObject->GetID3Struct()->format = Info::GetExt(path);
 	m_AudioObjectContainer[id] = audioObject;
 
 	audioObject->Init();

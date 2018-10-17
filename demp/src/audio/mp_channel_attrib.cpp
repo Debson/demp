@@ -43,6 +43,7 @@ namespace Audio
 		std::vector<std::string> m_LoadedPaths;
 
 		void DeleteSpecialCharacters(std::string& str);
+		void GetID3Info(Info::ID3* info, std::string& path);
 	}
 
 	void Info::Update()
@@ -165,6 +166,9 @@ namespace Audio
 
 	void Info::GetInfo(std::shared_ptr<Audio::AudioObject> audioObj)
 	{
+		// Request for a info from main thread has been send, make other threads wait till main thread finishes its work
+		while(State::CheckState(State::RequestForInfoLoad) == true && std::this_thread::get_id() != MAIN_THREAD_ID) { }
+
 		ItemBeingProcessed = true;
 
 		std::lock_guard<std::mutex> lockGuard(mutex);
@@ -184,6 +188,7 @@ namespace Audio
 		BASS_CHANNELINFO chinf;
 		BASS_ChannelGetInfo(stream, &chinf);
 		info->ctype = chinf.ctype;
+		info->format = Info::GetExt(audioObj->GetPath());
 
 
 		BASS_ChannelGetAttribute(stream, BASS_ATTRIB_FREQ, &info->freq);
@@ -194,15 +199,26 @@ namespace Audio
 		info->size = fs::file_size(utf8_to_utf16(audioObj->GetPath()));
 		BASS_StreamFree(stream);
 
-		Graphics::MP::GetPlaylistObject()->AddToItemsDuration(info->length);
-		Graphics::MP::GetPlaylistObject()->AddToItemsSize(info->size);
+		/*	Some of the queries to retrieve info can be send from the main thread while
+			info is loading, don't add the length and size to overall because other threads
+			will process the same object which was in that query second time.
+		*/
+		if (std::this_thread::get_id() != MAIN_THREAD_ID)
+		{
+			Graphics::MP::GetPlaylistObject()->AddToItemsDuration(info->length);
+			Graphics::MP::GetPlaylistObject()->AddToItemsSize(info->size);
+		}
 
 #ifdef _EXTRACT_ID3_TAGS_
 		Info::GetID3Info(info, audioObj->GetPath());
 #endif
 
-		info->loaded = true;
-		LoadedItemsInfoCount++;
+		if (std::this_thread::get_id() != MAIN_THREAD_ID)
+		{
+			info->loaded = true;
+			LoadedItemsInfoCount++;
+		}
+		
 		ItemBeingProcessed = false;
 	}
 

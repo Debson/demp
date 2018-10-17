@@ -3,6 +3,8 @@
 #define MUSIC_PLAYER_SETTINGS_H
 
 #include <vector>
+#include <thread>
+
 #include <glm.hpp>
 
 #include "SDL_ttf.h"
@@ -20,6 +22,8 @@
 #define WAIT_TIME_BEFORE_NEXT_CALL 50
 #define MAX_PATH_WAIT_TIME 50
 #define LAST_EVENT_TIME 50
+
+const std::thread::id MAIN_THREAD_ID = std::this_thread::get_id();
 
 namespace mdEngine
 {

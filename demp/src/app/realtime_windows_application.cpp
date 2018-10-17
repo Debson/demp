@@ -563,17 +563,6 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 {
 	/* CLEAR AND FREE MEMORY */
 
-#ifdef _WIN32_
-	Shell_NotifyIcon(NIM_DELETE, &icon);
-
-	SetWindowLong(hwnd, GWL_EXSTYLE,
-		GetWindowLong(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
-	// Ask the window and its children to repaint
-	RedrawWindow(hwnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME |
-		RDW_ALLCHILDREN);
-#else
-
-#endif
 
 
 	MP::Config::SaveToConfig();
@@ -590,6 +579,17 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 	SDL_GL_DeleteContext(gl_context);
 	SDL_DestroyWindow(mdWindow);
 
+#ifdef _WIN32_
+	Shell_NotifyIcon(NIM_DELETE, &icon);
+
+	SetWindowLong(hwnd, GWL_EXSTYLE,
+		GetWindowLong(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+	// Ask the window and its children to repaint
+	RedrawWindow(hwnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME |
+		RDW_ALLCHILDREN);
+#else
+
+#endif
 	TTF_Quit();
 	BASS_Free();
 	SDL_Quit();

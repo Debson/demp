@@ -256,9 +256,6 @@ namespace mdEngine
 			if (fileInfoCorrupted == true)
 				info->infoCorrupted = true;
 
-			if (count > 220)
-				md_log("essa");
-
 			Audio::LoadPathsFromFile(*path, info);
 			count++;
 		}

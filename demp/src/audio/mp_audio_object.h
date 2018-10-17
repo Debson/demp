@@ -55,6 +55,7 @@ namespace Audio
 		f32 GetBitrate()						const;
 		s32 GetObjectSize()						const;
 		f64 GetLength()							const;
+		b8 IsInfoLoaded()						const;
 		Info::ID3* GetID3Struct();
 		// Function that loads the id3v2 image on different thread(image too large)
 		void LoadAlbumImageThreadFun();
