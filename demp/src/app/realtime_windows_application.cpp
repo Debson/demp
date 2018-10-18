@@ -317,6 +317,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				break;
 			case (SDL_DROPFILE):
 			{
+				static int filesCount = 0;
+				filesCount++;
 				if (State::CheckState(State::FilesLoaded) == false)
 					break;
 
@@ -327,6 +329,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				State::ResetState(State::InitialLoadFromFile);
 				State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
 				State::SetState(State::FilesAddedInfoNotLoaded);
+				Audio::DroppedItemsCount++;
 #ifdef _WIN32_
 				std::string p(event.drop.file);
 				Audio::PushToPlaylist(p);

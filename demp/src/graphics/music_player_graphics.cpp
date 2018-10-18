@@ -2282,6 +2282,7 @@ namespace mdEngine
 			itemsSizeText.SetTextString(MP::GetPlaylistObject()->GetItemsSizeString());
 			itemsCountText.SetTextString(std::to_string(Audio::Object::GetSize()));
 
+
 			durationText.ReloadTextTexture();
 			itemsSizeText.ReloadTextTexture();
 			itemsCountText.ReloadTextTexture();
@@ -2317,7 +2318,7 @@ namespace mdEngine
 		RenderVolume();
 		RenderMusicProgressBar();
 		RenderMusicUI();
-		RenderPlaylistInfo();
+		//RenderPlaylistInfo();
 		RenderAlbumCoverImage();
 		RenderMusicScrollInfo();
 		RenderPlaylistItemTextBox();

@@ -19,8 +19,6 @@
 
 #define MAX_ALBUM_IMAGE_SIZE 800000
 
-#define WAIT_TIME_BEFORE_NEXT_CALL 50
-#define MAX_PATH_WAIT_TIME 50
 #define LAST_EVENT_TIME 50
 
 const std::thread::id MAIN_THREAD_ID = std::this_thread::get_id();

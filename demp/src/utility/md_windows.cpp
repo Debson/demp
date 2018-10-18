@@ -24,6 +24,11 @@ namespace WindowsPlatform
 
 	void FileBrowser::OpenFileBrowser()
 	{
+		\wersyyehfdghfgjhfgh
+			//TODO: check this function, somehow it causes some errors to SDL_TTF
+
+
+
 		std::string filenameBuffer;
 		OPENFILENAME ofn;
 

@@ -3,7 +3,6 @@
 #include <sstream>
 #include <mutex>
 
-
 #include <gtc/matrix_transform.hpp>
 
 #include "md_shader.h"
@@ -83,6 +82,9 @@ namespace mdEngine
 		DeleteTexture();
 
 		TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
+
+		printf("Oh My Goodness, an error : %s", TTF_GetError());
+		assert(font != NULL);
 		TTF_SizeUTF8(font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 
 		m_TextTexture = LoadText(font, m_TextString, m_TextColorSDL);

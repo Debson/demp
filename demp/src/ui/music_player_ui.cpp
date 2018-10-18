@@ -1039,6 +1039,8 @@ namespace MP
 
 		if (fileBrowserFinished)
 		{
+			TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), 14);
+			TTF_CloseFont(font);
 			fileBrowserActive = false;
 			std::string fileNames = mdWindowsFile::GetFileNames();
 
@@ -1068,6 +1070,7 @@ namespace MP
 
 			if (nlCount == 0)
 			{
+				Audio::DroppedItemsCount++;
 				Audio::PushToPlaylist(dir);;
 			}
 			else
@@ -1078,7 +1081,9 @@ namespace MP
 					title = std::string();
 					title += dir + "\\";
 					title += fileNames.substr(0, titlePos);
-					fileNames = fileNames.substr(titlePos + 1, fileNames.length());;
+					fileNames = fileNames.substr(titlePos + 1, fileNames.length());
+
+					Audio::DroppedItemsCount++;
 					Audio::PushToPlaylist(title);
 				}
 			}

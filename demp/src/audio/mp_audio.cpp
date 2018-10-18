@@ -37,6 +37,8 @@ namespace Audio
 
 	static std::vector<Audio::Info::ID3*> m_ID3Container;
 
+	u32 DroppedItemsCount;
+
 	static s32 currentContainersSize = 0;
 	static s32 previousContainerSize = 0;
 	static s32 currentlyLoadedItemsCount = 0;
@@ -49,10 +51,10 @@ namespace Audio
 	static u8 threadsFinishedCount;
 	static u8 workingThreadsCount;
 
+
+
 	u32 AudioContainerSizeBeforeDeletion = 0;
 
-	Time::Timer lastFunctionCallTimer;
-	Time::Timer lastPathPushTimer;
 	b8 startLoadingProperties(false);
 	b8 startLoadingPaths(false);
 	b8 propertiesLoaded(true);
@@ -102,7 +104,7 @@ void Audio::StartAudio()
 {
 	State::SetState(State::FilesLoaded);
 	State::SetState(State::FilesInfoLoaded);
-;
+
 
 }
 
@@ -189,13 +191,8 @@ b8 Audio::LoadPathsFromFile(std::string& path, Info::ID3* id3)
 	return true;
 }
 
-b8 Audio::PushToPlaylist(std::string& path)
+b8 Audio::PushToPlaylist(std::string& path, b8 firstCall)
 {
-	/*	Timer that counts the time between every function call. If it will reach its
-		target time, all the paths that were gathered by this function will be further processed
-	*/
-	lastFunctionCallTimer.Start();
-
 	// Updates the vector with currently loaded paths, so it's up to date for IsPathLoaded function
 	Info::Update();
 
@@ -206,6 +203,11 @@ b8 Audio::PushToPlaylist(std::string& path)
 #define pathW path
 #endif
 
+	// Make note how many times this function was called directly from a SDL_DROPFILE event.
+	static u32 frameCount = 0;
+	if(firstCall == true)
+		frameCount++;
+
 	// Check if loaded path still exists
 	if (fs::exists(pathW) == true)
 	{
@@ -215,8 +217,6 @@ b8 Audio::PushToPlaylist(std::string& path)
 				MP::Settings::IsPathExistenceCheckingEnabled == true)
 			{
 				md_log("Audio item at path \"" + path + "\" already loaded!\n");
-				lastFunctionCallTimer.Stop();
-				lastFunctionCallTimer.Reset();
 				State::ResetStateOnLoadError();
 				return false;
 			}
@@ -248,9 +248,9 @@ b8 Audio::PushToPlaylist(std::string& path)
 							 MP::Settings::IsPathExistenceCheckingEnabled == true)
 					{
 						md_log("Audio item at path \"" + i.path().string() + "\" already loaded!\n");
-						lastFunctionCallTimer.Stop();
+						/*lastFunctionCallTimer.Stop();
 						lastFunctionCallTimer.Reset();
-						State::ResetStateOnLoadError();
+						State::ResetStateOnLoadError();*/
 						delete str;;
 					}
 					else
@@ -266,12 +266,17 @@ b8 Audio::PushToPlaylist(std::string& path)
 					// Iterated path is a folder, save it to process it later
 					tempFolderPathsVec.push_back(*str);
 				}
+				else
+				{
+					delete str;
+				}
 
 			}
 
+
 			// Iterate throught all the folders that were found in origin path
 			for(auto & i : tempFolderPathsVec)
-				PushToPlaylist(i);
+				PushToPlaylist(i, false);
 
 			tempFolderPathsVec.clear();
 		}
@@ -281,8 +286,6 @@ b8 Audio::PushToPlaylist(std::string& path)
 				MP::Settings::IsPathExistenceCheckingEnabled == true)
 			{
 				md_log("Audio item at path \"" + path + "\" already loaded!\n");
-				lastFunctionCallTimer.Stop();
-				lastFunctionCallTimer.Reset();
 				State::ResetStateOnLoadError();
 			}
 			else if (Info::CheckIfAudio(path))
@@ -296,28 +299,27 @@ b8 Audio::PushToPlaylist(std::string& path)
 				State::SetState(State::TerminateWorkingThreads);
 				Audio::CalculateDroppedPosInPlaylist();
 			}
-			else
-			{
-				lastFunctionCallTimer.Stop();
-				lastFunctionCallTimer.Reset();
-				//State::ResetStateOnLoadError();
-			}
 		}
 	}
 	else
 	{
 		md_log("File at path \"" + path + "\" does not exist!");
-		lastFunctionCallTimer.Stop();
-		lastFunctionCallTimer.Reset();
 		State::ResetStateOnLoadError();
 		State::ResetState(State::FilesDroppedNotLoaded);
 	}
 
 	if (m_AddedFilesPathContainer.empty() == true)
 	{
-		lastFunctionCallTimer.Stop();
-		lastFunctionCallTimer.Reset();
 		State::ResetStateOnLoadError();
+	}
+
+
+	// Check if all that's the last function call and start process of creating audio objects
+	if (firstCall == true && frameCount == DroppedItemsCount)
+	{
+		startLoadingProperties = true;
+		DroppedItemsCount = 0;
+		frameCount = 0;
 	}
 
 	return true;
@@ -328,12 +330,6 @@ void Audio::UpdateAudioLogic()
 	if (State::CheckState(State::Window::Exit) == true)
 		return;
 
-	if (lastFunctionCallTimer.GetTicksStart() > WAIT_TIME_BEFORE_NEXT_CALL)
-	{
-		startLoadingProperties = true;
-		lastFunctionCallTimer.Stop();
-		lastFunctionCallTimer.Reset();
-	}
 
 	if (State::CheckState(State::InitialLoadFromFile) == true &&
 		m_AddedFilesPathContainer.size() > 0)
