@@ -8,6 +8,7 @@
 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
+#include <boost/filesystem.hpp>
 
 #ifdef _DEBUG_
 #include "../utility/md_load_texture.h"
@@ -34,6 +35,7 @@
 
 using namespace mdEngine::Graphics;
 using namespace std::chrono_literals;
+namespace fs = boost::filesystem;
 
 namespace mdEngine
 {
@@ -51,6 +53,8 @@ namespace MP
 		Interface::Movable*		mdPlaylistMovableBottom;
 		Interface::Button*		mdAddFilesButton;
 
+
+		std::thread* fileLoadThread;
 		std::atomic<bool> fileBrowserFinished(false);
 		
 #ifdef _DEBUG_
@@ -119,8 +123,8 @@ namespace MP
 		//std::string locale = setlocale(LC_ALL, "");
 		//std::cout << "default locale:" << locale;
 
-		mdCurrentWidth = mdEngine::Window::windowProperties.mWindowWidth;
-		mdCurrentHeight = mdEngine::Window::windowProperties.mApplicationHeight;
+		mdCurrentWidth = mdEngine::Window::WindowProperties.m_WindowWidth;
+		mdCurrentHeight = mdEngine::Window::WindowProperties.m_ApplicationHeight;
 
 		mdDefaultWidth = 500.f;
 		mdDefaultHeight = 350.f;
@@ -131,10 +135,10 @@ namespace MP
 		s32 sizeX = 110;
 		new Interface::Movable(glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x, sizeX), glm::vec2(0.f, Data::_DEFAULT_PLAYER_SIZE.y - sizeX));
 		sizeX = 20;
-		mdPlaylistMovableLeft	= new Interface::Movable(glm::vec2(sizeX, Window::windowProperties.mApplicationHeight), glm::vec2(0.f));
-		mdPlaylistMovableRight	= new Interface::Movable(glm::vec2(sizeX, Window::windowProperties.mApplicationHeight), glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x - sizeX, 0.f));
+		mdPlaylistMovableLeft	= new Interface::Movable(glm::vec2(sizeX, Window::WindowProperties.m_ApplicationHeight), glm::vec2(0.f));
+		mdPlaylistMovableRight	= new Interface::Movable(glm::vec2(sizeX, Window::WindowProperties.m_ApplicationHeight), glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x - sizeX, 0.f));
 		sizeX = 25;
-		mdPlaylistMovableBottom = new Interface::Movable(glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x, sizeX), glm::vec2(0.f, Window::windowProperties.mApplicationHeight - sizeX));
+		mdPlaylistMovableBottom = new Interface::Movable(glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x, sizeX), glm::vec2(0.f, Window::WindowProperties.m_ApplicationHeight - sizeX));
 
 
 		mdResizableTop		= Interface::Resizable(glm::vec2(mdCurrentWidth, 5.f), glm::vec2(0, 0.f));
@@ -1024,25 +1028,29 @@ namespace MP
 	{
 		if (Graphics::m_AddFileTextBox.isItemPressed(Strings::_PLAYLIST_ADD_FILE))
 		{
+#ifdef _WIN32_
 			fileBrowserActive = true;
 			std::thread t(OpenFileBrowserWrap);
 			t.detach();
+#else
+#endif
 		}
 
 		if (Graphics::m_AddFileTextBox.isItemPressed(Strings::_PLAYLIST_ADD_FOLDER))
 		{
+#ifdef _WIN32_
 			fileBrowserActive = true;
 			std::thread t(OpenFolderBrowserWrap);
 			t.detach();
+#else
+#endif
 		}
 
 
 		if (fileBrowserFinished)
 		{
-			TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), 14);
-			TTF_CloseFont(font);
 			fileBrowserActive = false;
-			std::string fileNames = mdWindowsFile::GetFileNames();
+			std::string fileNames = utf16_to_utf8(mdWindowsFile::GetFileNames());
 
 			std::string title;
 			std::string dir;
@@ -1071,7 +1079,15 @@ namespace MP
 			if (nlCount == 0)
 			{
 				Audio::DroppedItemsCount++;
-				Audio::PushToPlaylist(dir);;
+				if (fs::is_directory(utf8_to_utf16(dir)))
+				{
+					fileLoadThread = new std::thread(Audio::PushToPlaylist, dir, true);
+					fileLoadThread->detach();
+				}
+				else
+				{
+					Audio::PushToPlaylist(dir);
+				}
 			}
 			else
 			{
@@ -1084,7 +1100,15 @@ namespace MP
 					fileNames = fileNames.substr(titlePos + 1, fileNames.length());
 
 					Audio::DroppedItemsCount++;
-					Audio::PushToPlaylist(title);
+					if (fs::is_directory(utf8_to_utf16(dir)))
+					{
+						fileLoadThread = new std::thread(Audio::PushToPlaylist, title, true);
+						fileLoadThread->detach();
+					}
+					else
+					{
+						Audio::PushToPlaylist(title);
+					}
 				}
 			}
 
@@ -1096,10 +1120,10 @@ namespace MP
 
 	void UI::UpdateInterfaceObjects()
 	{
-		mdPlaylistMovableLeft->m_Size = glm::vec2(mdPlaylistMovableLeft->m_Size.x, Window::windowProperties.mApplicationHeight);
-		mdPlaylistMovableRight->m_Size = glm::vec2(mdPlaylistMovableRight->m_Size.x, Window::windowProperties.mApplicationHeight);
+		mdPlaylistMovableLeft->m_Size = glm::vec2(mdPlaylistMovableLeft->m_Size.x, Window::WindowProperties.m_ApplicationHeight);
+		mdPlaylistMovableRight->m_Size = glm::vec2(mdPlaylistMovableRight->m_Size.x, Window::WindowProperties.m_ApplicationHeight);
 		mdPlaylistMovableBottom->m_Pos = glm::vec2(mdPlaylistMovableBottom->m_Pos.x, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
-		mdPlaylistMovableBottom->m_Size = glm::vec2(mdPlaylistMovableBottom->m_Size.x, Window::windowProperties.mApplicationHeight - Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - mdResizableBottom.m_Size.y);
+		mdPlaylistMovableBottom->m_Size = glm::vec2(mdPlaylistMovableBottom->m_Size.x, Window::WindowProperties.m_ApplicationHeight - Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y - mdResizableBottom.m_Size.y);
 
 		mdAddFilesButton->SetButtonPos(Data::_PLAYLIST_ADD_BUTTON_POS);
 		mdAddFilesButton->SetButtonSize(Data::_PLAYLIST_ADD_BUTTON_SIZE);

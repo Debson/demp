@@ -38,7 +38,7 @@ namespace Audio
 
 	b8 LoadPathsFromFile(std::string& path, Info::ID3* id3);
 
-	b8 PushToPlaylist(std::string& path, b8 firstCall = true);
+	b8 PushToPlaylist(std::string path, b8 firstCall = true);
 
 	void DeallocateAudioItems();
 

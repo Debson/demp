@@ -23,6 +23,7 @@ namespace mdEngine
 		s32 startXSimple, startYSimple;
 
 		s32 winSizeBeforeResizeBottom;
+		s32 winSizeBeforeResizeBottomStart;
 		s32 winSizeBeforeResizeTop;
 		s32 winPosBeforeResize;
 
@@ -40,29 +41,43 @@ namespace mdEngine
 		b8 wasInsideResizableTop(false);
 		b8 resizeFinished(false);
 
+		b8 resizeBottomFinished(false);
 	}
 
 	App::WindowProperties::WindowProperties() :
-						mWindowWidth(500), // 400
-						mWindowHeight(700), // 300
-						mApplicationHeight(700),
-						mApplicationWidth(500),
-						mStartApplicationHeight(700),
-						mWindowPositionX(600),
-						mWindowPositionY(100),
-						mWindowMode(WindowMode::Windowed),
+						m_WindowWidth(500), // 400
+						m_WindowHeight(700), // 300
+						m_ApplicationHeight(700),
+						m_ApplicationWidth(500),
+						m_StartApplicationHeight(700),
+						m_WindowPositionX(600),
+						m_WindowPositionY(100),
+						m_WindowHeightBeforeMaximize(0),
+						m_IsMaximized(false),
 						mVerticalSync(true)
 	{ }
 
 	void App::InitializeConfig()
 	{
-		Window::windowProperties.mApplicationHeight = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_APP_HEIGHT);
-		Window::windowProperties.mStartApplicationHeight = Window::windowProperties.mApplicationHeight;
+		Window::WindowProperties.m_ApplicationHeight = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_APP_HEIGHT);
+		Window::WindowProperties.m_StartApplicationHeight = Window::WindowProperties.m_ApplicationHeight;
 
-		if (Window::windowProperties.mApplicationHeight < MP::Data::_MIN_PLAYER_SIZE.y)
-			Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + 20.f;
-		if (Window::windowProperties.mApplicationHeight > Window::windowProperties.mWindowHeight)
-			Window::windowProperties.mApplicationHeight = Window::windowProperties.mWindowHeight;
+		if (Window::WindowProperties.m_ApplicationHeight < MP::Data::_MIN_PLAYER_SIZE.y)
+			Window::WindowProperties.m_ApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + 20.f;
+		if (Window::WindowProperties.m_ApplicationHeight > Window::WindowProperties.m_WindowHeight)
+			Window::WindowProperties.m_ApplicationHeight = Window::WindowProperties.m_WindowHeight;
+
+		s32 winX = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_WINDOW_POS_X);
+		s32 winY = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_WINDOW_POS_Y);
+
+		if (winX >= 0 && winX <= Window::MonitorProperties.m_MonitorWidth &&
+			winY >= 0 && winY <= Window::MonitorProperties.m_MonitorHeight)
+		{
+			Window::WindowProperties.m_WindowPositionX = winX;
+			Window::WindowProperties.m_WindowPositionY = winY;
+			Window::SetWindowPos(winX, winY);
+		}
+
 	}
 
 	void App::ProcessMovable(Interface::Movable* bar)
@@ -122,6 +137,11 @@ namespace mdEngine
 
 				if (wasInsideMovable && State::CheckState(State::Window::Resized) == false)
 				{
+					if (Window::WindowProperties.m_IsMaximized == true)
+					{
+						Window::WindowProperties.m_ApplicationHeight = Window::WindowProperties.m_WindowHeightBeforeMaximize;
+						Window::WindowProperties.m_IsMaximized = false;
+					}
 					State::SetState(State::Window::PositionChanged);
 					Window::SetWindowPos(newWX, newWY);
 				}
@@ -144,7 +164,7 @@ namespace mdEngine
 				bar->hasFocus = inside;
 
 				// TODO: dont call it every frame?
-				winSizeBeforeResizeTop = Window::windowProperties.mApplicationHeight;
+				winSizeBeforeResizeTop = Window::WindowProperties.m_ApplicationHeight;
 				wasInsideMovable = false;
 				Input::GetGlobalMousePosition(&globalMouseX, &globalMouseY);
 				Window::GetWindowPos(&startX, &startY);
@@ -196,6 +216,11 @@ namespace mdEngine
 
 			if (wasInsideMovableSimple)
 			{
+				if (Window::WindowProperties.m_IsMaximized == true)
+				{
+					Window::WindowProperties.m_ApplicationHeight = Window::WindowProperties.m_WindowHeightBeforeMaximize;
+					Window::WindowProperties.m_IsMaximized = false;
+				}
 				SDL_SetWindowPosition(window, newWX, newWY);
 			}
 		}
@@ -475,25 +500,27 @@ namespace mdEngine
 		else if(resizeFinished == true)
 		{
 			// TODO: dont call it every frame?
-			Window::windowProperties.mApplicationHeight = newSizeY;
+			Window::WindowProperties.m_ApplicationHeight = newSizeY;
 			u32 diff = 0;
 			
 
-			if (Window::windowProperties.mApplicationHeight < MP::Data::_MIN_PLAYER_SIZE.y)
+			if (Window::WindowProperties.m_ApplicationHeight < MP::Data::_MIN_PLAYER_SIZE.y)
 			{
-				Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y;
+				Window::WindowProperties.m_ApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y;
 				if (newWY > startYRes)
 					newWY = startYRes;
-				Window::SetWindowPos(startXRes, newWY + (winSizeBeforeResizeTop - Window::windowProperties.mApplicationHeight));
+				Window::SetWindowPos(startXRes, newWY + (winSizeBeforeResizeTop - Window::WindowProperties.m_ApplicationHeight));
 			}
 			else if(Window::CheckWindowSize() == false)
 			{
 				Window::SetWindowPos(startXRes, newWY);
 			}
 			//State::SetState(State::Window::Resized);
+
+
 			State::SetState(State::Window::ResizedFromTop);
 			barTop->m_Pos = glm::vec2(0, 0);
-			barBottom->m_Pos = glm::vec2(0, Window::windowProperties.mApplicationHeight - 5.f);
+			barBottom->m_Pos = glm::vec2(0, Window::WindowProperties.m_ApplicationHeight - 5.f);
 			resizeFinished = false;
 
 		}
@@ -506,7 +533,7 @@ namespace mdEngine
 
 			barTop->hasFocus = inside;
 
-			winSizeBeforeResizeTop = Window::windowProperties.mApplicationHeight;
+			winSizeBeforeResizeTop = Window::WindowProperties.m_ApplicationHeight;
 			wasInsideResizableTop = false;
 			Input::GetGlobalMousePosition(&globalMouseXRes, &globalMouseYRes);
 
@@ -544,7 +571,7 @@ namespace mdEngine
 			/*	If resizing is active and mouse is lower than bottom bound of appliaction and mouse has been
 				going up, stop resizing till it reaches that bottom bound
 			*/
-			b8 stopResizing = (Window::windowProperties.mApplicationHeight + winPosY < globalMouseY) && relY < 0;
+			b8 stopResizing = (Window::WindowProperties.m_ApplicationHeight + winPosY < globalMouseY) && relY < 0;
 			
 			if (wasInsideResizableBottom == true && 
 				MP::UI::Input::GetButtonExtraState() == false &&
@@ -552,38 +579,56 @@ namespace mdEngine
 			{
 				if(relY != 0)
 					State::SetState(State::Window::Resized);
-				Window::windowProperties.mDeltaHeightResize = relY;
 
-				Window::windowProperties.mApplicationHeight = winSizeBeforeResizeBottom + relY;
+				resizeBottomFinished = true;
+				Window::WindowProperties.m_ApplicationHeight = winSizeBeforeResizeBottom + relY;
 				if (Window::CheckWindowSize() == false)
 				{
 					winSizeBeforeResizeBottom += relY;
 
 					barBottom->m_Pos = glm::vec2(0, winSizeBeforeResizeBottom + relY - barBottom->m_Size.y);
 
-					if (Window::windowProperties.mApplicationHeight - barBottom->m_Size.y < MP::Data::_MIN_PLAYER_SIZE.y)
-						Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + barBottom->m_Size.y;
+					if (Window::WindowProperties.m_ApplicationHeight - barBottom->m_Size.y < MP::Data::_MIN_PLAYER_SIZE.y)
+						Window::WindowProperties.m_ApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + barBottom->m_Size.y;
 					if (barBottom->m_Pos.y < MP::Data::_MIN_PLAYER_SIZE.y)
 						barBottom->m_Pos.y = MP::Data::_MIN_PLAYER_SIZE.y;
+
+					
 				}
 				else
 				{
 					// Make sure that window is resized to it's max possible size (1080 for 1920x1080 res)
-					f32 diff = winSizeBeforeResizeBottom + relY - Window::windowProperties.mApplicationHeight;
+					f32 diff = winSizeBeforeResizeBottom + relY - Window::WindowProperties.m_ApplicationHeight;
 
 					winSizeBeforeResizeBottom += relY - diff;
 
 					barBottom->m_Pos = glm::vec2(0, winSizeBeforeResizeBottom + relY - diff - barBottom->m_Size.y);
 
-					if (Window::windowProperties.mApplicationHeight - barBottom->m_Size.y < MP::Data::_MIN_PLAYER_SIZE.y)
-						Window::windowProperties.mApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + barBottom->m_Size.y;
+					if (Window::WindowProperties.m_ApplicationHeight - barBottom->m_Size.y < MP::Data::_MIN_PLAYER_SIZE.y)
+						Window::WindowProperties.m_ApplicationHeight = MP::Data::_MIN_PLAYER_SIZE.y + barBottom->m_Size.y;
 					if (barBottom->m_Pos.y < MP::Data::_MIN_PLAYER_SIZE.y)
 						barBottom->m_Pos.y = MP::Data::_MIN_PLAYER_SIZE.y;
+
 				}
 			}
 		}
 		else
 		{
+			if (resizeBottomFinished)
+			{
+				s32 bottomPos = Window::GetWindowPos().y + Window::WindowProperties.m_ApplicationHeight;
+				if (bottomPos > Window::MonitorProperties.m_MonitorHeight - Window::MonitorProperties.m_TaskBarHeight)
+				{
+					Window::WindowProperties.m_WindowHeightBeforeMaximize = winSizeBeforeResizeBottomStart;
+					Window::WindowProperties.m_IsMaximized = true;
+					md_log(winSizeBeforeResizeBottomStart);
+					Window::SetWindowPos(Window::GetWindowPos().x, 0);
+					Window::WindowProperties.m_ApplicationHeight = Window::MonitorProperties.m_MonitorHeight - Window::MonitorProperties.m_TaskBarHeight;
+				}
+
+				resizeBottomFinished = false;
+			}
+
 			s32 mouseX, mouseY;
 			Input::GetMousePosition(&mouseX, &mouseY);
 			b8 inside = mouseX > barBottom->m_Pos.x && mouseX < (barBottom->m_Pos.x + barBottom->m_Size.x) &&
@@ -591,8 +636,10 @@ namespace mdEngine
 
 			barBottom->hasFocus = inside;
 			State::ResetState(State::Window::Resized);
-			winSizeBeforeResizeBottom = Window::windowProperties.mApplicationHeight;
+			winSizeBeforeResizeBottom = Window::WindowProperties.m_ApplicationHeight;
+			winSizeBeforeResizeBottomStart = Window::WindowProperties.m_ApplicationHeight;
 			wasInsideResizableBottom = false;
+
 		}
 	}
 

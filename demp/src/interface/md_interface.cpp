@@ -618,6 +618,13 @@ namespace mdEngine
 		m_Items.clear();
 	}
 
+	Interface::TextBox::TextBox(glm::vec2 pos, glm::vec2 size, mdShader* shader) : m_Pos(pos), 
+																				   m_Size(size), 
+																				   m_Shader(shader)
+	{ 
+		m_ItemsCount = 0;
+	}
+
 	Interface::TextBox::TextBox(MP::UI::Input::ButtonType code, glm::vec2 size, glm::vec2 pos, mdShader* shader) : 
 								m_Shader(shader)
 	{ 
@@ -626,8 +633,6 @@ namespace mdEngine
 		m_Type = code;
 		m_ItemsCount = 0;
 		m_TextBoxBackgroundTexture = 0;
-		m_Window = NULL;
-		m_WindowID = -1;
 		new Button(code, size, pos);
 	}
 
@@ -635,11 +640,13 @@ namespace mdEngine
 	{
 		assert(m_Shader != NULL);
 
-		// This will allow
-		m_Projection = glm::ortho(0.f, static_cast<f32>(Window::windowProperties.mWindowWidth + 50.f), 
-									   static_cast<f32>(Window::windowProperties.mWindowHeight), 0.f);
+
+		m_Shader->use();
+		m_Projection = glm::ortho(0.f, static_cast<f32>(Window::WindowProperties.m_WindowWidth + 50.f), 
+									   static_cast<f32>(Window::WindowProperties.m_WindowHeight), 0.f);
 		m_Shader->setMat4("projection", m_Projection);
-		glViewport(0.f, 0.f, Window::windowProperties.mWindowWidth + 50.f, Window::windowProperties.mWindowHeight);
+		glViewport(0.f, 0.f, static_cast<f32>(Window::WindowProperties.m_WindowWidth + 50.f), 
+							 static_cast<f32>(Window::WindowProperties.m_WindowHeight));
 
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(m_Pos, 0.95f));
@@ -684,7 +691,7 @@ namespace mdEngine
 		}
 
 		m_Shader->setMat4("projection", *Graphics::GetProjectionMatrix());
-		glViewport(0.f, 0.f, Window::windowProperties.mWindowWidth, Window::windowProperties.mWindowHeight);
+		glViewport(0.f, 0.f, Window::WindowProperties.m_WindowWidth, Window::WindowProperties.m_WindowHeight);
 	}
 
 	void Interface::TextBox::UpdateItemsPos()
@@ -701,26 +708,6 @@ namespace mdEngine
 		for (u16 i = 0; i < m_Items.size(); i++)
 		{
 			m_Items[i]->UpdateTextBoxItemPos(m_Pos, m_ItemsOffset);
-		}
-	}
-
-	void Interface::TextBox::ProcessInput(const SDL_Event* e)
-	{
-		if (m_Window == NULL)
-			return;
-
-		if (e->type == SDL_WINDOWEVENT && e->window.windowID == m_WindowID)
-		{
-			switch (e->window.event)
-			{
-			case SDL_WINDOWEVENT_CLOSE:
-				break;
-			case SDL_WINDOWEVENT_ENTER:
-				break;
-			case SDL_WINDOWEVENT_FOCUS_LOST:
-				Free();
-				break;
-			}
 		}
 	}
 
@@ -836,9 +823,7 @@ namespace mdEngine
 
 	void Interface::TextBox::Free()
 	{
-		SDL_DestroyWindow(m_Window);
-		m_WindowID = -1;
-		m_Window = NULL;
+
 	}
 
 	void Interface::PlaylistItemTextBox::SetSelectedItemID(u32 id)

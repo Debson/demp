@@ -282,7 +282,9 @@ namespace mdEngine
 		AddToFile(&file, Strings::_SHUFFLE_STATE, MP::Playlist::IsShuffleEnabled());
 		AddToFile(&file, Strings::_REPEAT_STATE, MP::Playlist::IsRepeatEnabled());
 		AddToFile(&file, Strings::_PLAYLIST_STATE, Graphics::MP::GetPlaylistObject()->IsToggled());
-		AddToFile(&file, Strings::_APP_HEIGHT, Window::windowProperties.mApplicationHeight);
+		AddToFile(&file, Strings::_APP_HEIGHT, Window::WindowProperties.m_ApplicationHeight);
+		AddToFile(&file, Strings::_WINDOW_POS_X, Window::GetWindowPos().x);
+		AddToFile(&file, Strings::_WINDOW_POS_Y, Window::GetWindowPos().y);
 		AddToFile(&file, Strings::_VOLUME_SCROLL_STEP, MP::Data::VolumeScrollStep);
 		AddToFile(&file, Strings::_PLAYLIST_SCROLL_STEP, MP::Data::PlaylistScrollStep);
 		AddToFile(&file, Strings::_MAX_RAM_LOADED_SIZE, MP::Data::_MAX_SIZE_RAM_LOADED);

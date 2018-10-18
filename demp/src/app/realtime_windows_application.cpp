@@ -13,6 +13,7 @@
 
 #include <bass.h>
 #include <GL/gl3w.h>
+#include <boost/filesystem.hpp>
 
 #ifdef _DEBUG_
 #include "../../external/imgui/imgui.h"
@@ -45,6 +46,8 @@
 // C RunTime Header Files
 #include <tchar.h>
 
+namespace fs = boost::filesystem;
+
 namespace mdEngine
 {
 	SDL_Window* mdWindow;
@@ -57,7 +60,7 @@ namespace mdEngine
 	HMENU hPopMenu;
 
 	s32 mdWindowID;
-	std::thread fileLoadThread;
+	std::thread* fileLoadThread;
 
 #ifdef _DEBUG_
 	ImGuiIO io;
@@ -70,7 +73,8 @@ namespace mdEngine
 	b8 mdIsActiveWindow(false);
 
 	App::ApplicationHandlerInterface* mdApplicationHandler(nullptr);
-	App::WindowProperties Window::windowProperties;
+	App::WindowProperties Window::WindowProperties;
+	App::MonitorProperties Window::MonitorProperties;
 
 	s32 mdActualWindowWidth;
 	s32 mdActualWindowHeight;
@@ -103,7 +107,7 @@ void mdEngine::SetupSDL()
 
 	SDL_GetCurrentDisplayMode(0, &current);
 
-	mdWindow = SDL_CreateWindow("demp", Window::windowProperties.mWindowPositionX, Window::windowProperties.mWindowPositionY,
+	mdWindow = SDL_CreateWindow("demp", Window::WindowProperties.m_WindowPositionX, Window::WindowProperties.m_WindowPositionY,
 		MP::Data::_DEFAULT_PLAYER_SIZE.x + 50, current.h,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
 
@@ -212,10 +216,10 @@ void mdEngine::SetupGlew()
 
 void mdEngine::UpdateWindowSize()
 {
-	if (State::CheckState(State::Window::Resized) == true)
+	/*if (State::CheckState(State::Window::Resized) == true)
 	{
 		SDL_GetWindowSize(mdWindow, &Window::windowProperties.mWindowWidth, &Window::windowProperties.mWindowHeight);
-	}
+	}*/
 }
 
 void mdEngine::ProceedToSafeClose()
@@ -227,7 +231,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 {
 	mdHasApplication = true;
 	mdApplicationHandler = &applicationHandler;
-	mdApplicationHandler->CollectWindowProperties(Window::windowProperties);
+	mdApplicationHandler->CollectWindowProperties(Window::WindowProperties);
 
 
 	if (BASS_Init(-1, 48000, 0, 0, NULL) == false)
@@ -240,10 +244,18 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	SetupSDL();
 
 	/* Get max display height and update window's size structure */
-	Window::windowProperties.mWindowHeight = current.h;
+	Window::WindowProperties.m_WindowHeight = current.h;
 	//Window::windowProperties.mWindowWidth = current.w;
-	mdActualWindowWidth = mdCurrentWindowWidth = Window::windowProperties.mWindowWidth;
-	mdActualWindowHeight = mdCurrentWindowHeight = Window::windowProperties.mWindowHeight;
+	mdActualWindowWidth = mdCurrentWindowWidth = Window::WindowProperties.m_WindowWidth;
+	mdActualWindowHeight = mdCurrentWindowHeight = Window::WindowProperties.m_WindowHeight;
+
+	RECT rect;
+	HWND taskBar = FindWindowW(L"Shell_traywnd", NULL);
+	GetWindowRect(taskBar, &rect);
+	Window::MonitorProperties.m_MonitorWidth	= current.w;
+	Window::MonitorProperties.m_MonitorHeight	= current.h;
+	Window::MonitorProperties.m_TaskBarHeight	= rect.bottom - rect.top;
+
 
 	SetupOpenGL();
 
@@ -299,11 +311,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			ImGui_ImplSDL2_ProcessEvent(&event);
 #endif
 
-			for (auto & i : *Graphics::GetTextBoxContainer())
-			{
-				i->ProcessInput(&event);
-			}
-
 			for (auto & i : Window::WindowsContainer)
 			{
 				i.second->ProcessEvents(&event);
@@ -322,7 +329,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				if (State::CheckState(State::FilesLoaded) == false)
 					break;
 
-				if(State::CheckState(State::PathContainerSorted) == false)
+				if (State::CheckState(State::PathContainerSorted) == false)
 					State::SetState(State::SortPathsOnNewFileLoad);
 
 				State::SetState(State::FileDropped);
@@ -332,7 +339,16 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				Audio::DroppedItemsCount++;
 #ifdef _WIN32_
 				std::string p(event.drop.file);
-				Audio::PushToPlaylist(p);
+				if (fs::is_directory(p))
+				{
+					fileLoadThread = new std::thread(Audio::PushToPlaylist, p, true);
+					fileLoadThread->detach();
+					delete fileLoadThread;
+				}
+				else
+				{
+					Audio::PushToPlaylist(p);
+				}
 #else
 				MP::PushToPlaylist(event.drop.file);
 #endif
@@ -480,6 +496,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				i.second->Update();
 			
 
+
 			Window::UpdateWindows();
 
 			SDL_GL_MakeCurrent(mdWindow, gl_context);
@@ -623,8 +640,8 @@ b8 mdEngine::IsAppClosing()
 
 void mdEngine::SetWindowProperties(const App::WindowProperties& windowProperties)
 {
-	mdActualWindowWidth = windowProperties.mWindowWidth;
-	mdActualWindowHeight = windowProperties.mWindowHeight;
+	mdActualWindowWidth = windowProperties.m_WindowWidth;
+	mdActualWindowHeight = windowProperties.m_WindowHeight;
 }
 
 void mdEngine::Window::HideToTray()
@@ -741,9 +758,9 @@ void mdEngine::Window::GetWindowPos(s32* x, s32* y)
 
 b8 mdEngine::Window::CheckWindowSize()
 {
-	if (windowProperties.mApplicationHeight > windowProperties.mWindowHeight)
+	if (WindowProperties.m_ApplicationHeight > WindowProperties.m_WindowHeight)
 	{
-		windowProperties.mApplicationHeight = windowProperties.mWindowHeight;
+		WindowProperties.m_ApplicationHeight = WindowProperties.m_WindowHeight;
 		return true;
 	}
 

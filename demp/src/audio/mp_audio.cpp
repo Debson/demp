@@ -191,7 +191,7 @@ b8 Audio::LoadPathsFromFile(std::string& path, Info::ID3* id3)
 	return true;
 }
 
-b8 Audio::PushToPlaylist(std::string& path, b8 firstCall)
+b8 Audio::PushToPlaylist(std::string path, b8 firstCall)
 {
 	// Updates the vector with currently loaded paths, so it's up to date for IsPathLoaded function
 	Info::Update();
@@ -417,6 +417,8 @@ void Audio::UpdateAudioLogic()
 				}
 			}
 		}
+
+		State::ResetState(State::FilesLoaded);
 
 		for (s8 i = 0; i < workingThreadsCount; i++)
 		{
@@ -956,7 +958,7 @@ void Audio::ActiveLoadInfoWindow()
 		Window::mdLoadInfoWindow == nullptr)
 	{
 		Window::mdLoadInfoWindow = new Window::LoadInfoWindow(glm::vec2(600, 100), glm::vec4(Window::GetWindowPos(), MP::Data::_DEFAULT_PLAYER_SIZE.x,
-																					 Window::windowProperties.mApplicationHeight));
+																					 Window::WindowProperties.m_ApplicationHeight));
 		Window::WindowsContainer.insert(std::pair< std::string, Window::WindowObject*>("LoadInfoWindow", Window::mdLoadInfoWindow));
 	}
 

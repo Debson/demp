@@ -29,6 +29,10 @@ namespace mdEngine
 		void Timer::Reset()
 		{
 			finished = false;
+			currentTime = 0;
+			startTime = SDL_GetTicks();
+			started = false;
+			finished = false;
 		}
 
 		f32 Timer::GetProgress()

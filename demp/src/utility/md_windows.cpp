@@ -17,20 +17,18 @@ namespace WindowsPlatform
 {
 	namespace FileBrowser
 	{
-		std::string convertedFilenames;
+		std::wstring convertedFilenames;
 		char filterC[] = "All Files\0*.*\0MP3 Files\0*.mp3\0WAV Files\0*.wav\0WMA Files\0*.wma\0";
 
 	}
 
 	void FileBrowser::OpenFileBrowser()
 	{
-		\wersyyehfdghfgjhfgh
-			//TODO: check this function, somehow it causes some errors to SDL_TTF
+		
+		//TODO: check this function, somehow it causes some errors to SDL_TTF
 
-
-
-		std::string filenameBuffer;
-		OPENFILENAME ofn;
+		std::wstring filenameBuffer;
+		OPENFILENAMEW ofn;
 
 		convertedFilenames.erase();
 
@@ -40,15 +38,15 @@ namespace WindowsPlatform
 		ZeroMemory(&ofn, sizeof(ofn));
 		ofn.lStructSize = sizeof(ofn);
 		ofn.hwndOwner = Window::GetHWNDWindow();
-		ofn.lpstrFilter = filterC;
+		ofn.lpstrFilter = L"All Files\0*.*\0\0";// filterC;
 		ofn.lpstrFile = &filenameBuffer[0];
 		ofn.nMaxFile = MAX_FILEPATH_BUFFER_SIZE;
-		ofn.lpstrTitle = "Open";
+		ofn.lpstrTitle = L"Open";
 		ofn.Flags = OFN_DONTADDTORECENT | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER;
 
 
-		if (GetOpenFileName(&ofn) == FALSE)
-			convertedFilenames = "";
+		if (GetOpenFileNameW(&ofn) == FALSE)
+			convertedFilenames = L"";
 
 		s8 nulls = 0;
 		for (size_t i = 0; i < filenameBuffer.length(); i++)
@@ -58,7 +56,7 @@ namespace WindowsPlatform
 				nulls++;
 				if (nulls > 1)
 					break;
-				convertedFilenames += '\n';
+				convertedFilenames += L'\n';
 				i++;
 			}
 			else
@@ -89,14 +87,14 @@ namespace WindowsPlatform
 	{
 		convertedFilenames.erase();
 
-		CHAR path[MAX_FOLDERPATH_BUFFER_SIZE];
+		WCHAR path[MAX_FOLDERPATH_BUFFER_SIZE];
 
 		std::string wsaved_path(savedPath.begin(), savedPath.end());
 		const char * path_param = wsaved_path.c_str();
 
 		BROWSEINFO bi = { 0 };
 		bi.lpszTitle = ("Browse for folder...");
-		bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+		bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_USENEWUI;
 		bi.lpfn = BrowseCallbackProc;
 		bi.lParam = (LPARAM)path_param;
 
@@ -105,7 +103,7 @@ namespace WindowsPlatform
 		if (pidl != 0)
 		{
 			//get the name of the folder and put it in path
-			SHGetPathFromIDList(pidl, path);
+			SHGetPathFromIDListW(pidl, path);
 
 			//free memory used
 			IMalloc * imalloc = 0;
@@ -119,7 +117,7 @@ namespace WindowsPlatform
 		}
 	}
 
-	std::string FileBrowser::GetFileNames()
+	std::wstring FileBrowser::GetFileNames()
 	{
 		return convertedFilenames;
 	}

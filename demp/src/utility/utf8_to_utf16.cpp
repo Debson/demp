@@ -1,5 +1,8 @@
 #include "utf8_to_utf16.h"
 
+#include <mutex>
+
+std::mutex mutex;
 
 std::wstring* utf8_to_utf16p(const std::string& utf8)
 {
@@ -76,6 +79,7 @@ std::wstring* utf8_to_utf16p(const std::string& utf8)
 
 std::wstring utf8_to_utf16(const std::string& utf8)
 {
+	std::lock_guard<std::mutex> lockGuard(mutex);
 	std::vector<unsigned long> unicode;
 	size_t i = 0;
 	while (i < utf8.size())
@@ -162,5 +166,7 @@ std::string utf16_to_utf8(const wchar_t* buffer, int len)
 
 std::string utf16_to_utf8(const std::wstring& str)
 {
+	//std::lock_guard<std::mutex> lockGuard(mutex);
+
 	return utf16_to_utf8(str.c_str(), (int)str.size());
 }

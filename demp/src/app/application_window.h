@@ -9,29 +9,28 @@ namespace mdEngine
 {
 namespace App
 {
-	enum class WindowMode
-	{
-		Windowed,
-		FullScreen,
-	};
-
-
 	struct WindowProperties
 	{
-		s32 mWindowWidth;
-		s32 mWindowHeight;
-		s32 mApplicationHeight;
-		s32 mApplicationWidth;
-		s32 mStartApplicationHeight;
-		s32 mWindowPositionX;
-		s32 mWindowPositionY;
-		s32 mDeltaHeightResize;
-		WindowMode mWindowMode;
-		
-		bool mVerticalSync;
+		s32 m_WindowWidth;
+		s32 m_WindowHeight;
+		s32 m_ApplicationHeight;
+		s32 m_ApplicationWidth;
+		s32 m_StartApplicationHeight;
+		s32 m_WindowPositionX;
+		s32 m_WindowPositionY;
+		s32 m_WindowHeightBeforeMaximize;
+		b8 m_IsMaximized;
+		b8 mVerticalSync;
 
 		WindowProperties(void);
 
+	};
+
+	struct MonitorProperties
+	{
+		s32 m_MonitorHeight;
+		s32 m_MonitorWidth;
+		s32 m_TaskBarHeight;
 	};
 
 	void InitializeConfig();

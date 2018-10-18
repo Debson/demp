@@ -60,8 +60,8 @@ namespace mdEngine
 				return;
 			}
 
-			mdProjection = glm::ortho(0.f, static_cast<float>(Window::windowProperties.mWindowWidth), 
-										   static_cast<float>(Window::windowProperties.mWindowHeight), 0.f);
+			mdProjection = glm::ortho(0.f, static_cast<float>(Window::WindowProperties.m_WindowWidth), 
+										   static_cast<float>(Window::WindowProperties.m_WindowHeight), 0.f);
 			shaderDefault->use();
 			shaderDefault->setInt("image", 0);
 			shaderDefault->setMat4("projection", mdProjection);
@@ -72,14 +72,14 @@ namespace mdEngine
 
 		void Shader::UpdateProjectionMatrix()
 		{
-			if (Window::windowProperties.mApplicationHeight > Window::windowProperties.mWindowHeight)
+			if (Window::WindowProperties.m_ApplicationHeight > Window::WindowProperties.m_WindowHeight)
 			{
-				mdProjection = glm::ortho(0.f, static_cast<float>(Window::windowProperties.mWindowWidth),
-											   static_cast<float>(Window::windowProperties.mApplicationHeight), 0.f);
+				mdProjection = glm::ortho(0.f, static_cast<float>(Window::WindowProperties.m_WindowWidth),
+											   static_cast<float>(Window::WindowProperties.m_ApplicationHeight), 0.f);
 				shaderDefault->use();
 				shaderDefault->setMat4("projection", mdProjection);
-				md_log(Window::windowProperties.mApplicationHeight);
-				Window::SetWindowSize(Window::windowProperties.mWindowWidth, Window::windowProperties.mApplicationHeight);
+				md_log(Window::WindowProperties.m_ApplicationHeight);
+				Window::SetWindowSize(Window::WindowProperties.m_WindowWidth, Window::WindowProperties.m_ApplicationHeight);
 			}
 		}
 

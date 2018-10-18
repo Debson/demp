@@ -14,6 +14,7 @@ namespace mdEngine
 	{
 		class ApplicationHandlerInterface;
 		struct WindowProperties;
+		struct MonitorProperties;
 
 	}
 }
@@ -31,7 +32,8 @@ namespace mdEngine
 
 	namespace Window
 	{
-		extern App::WindowProperties windowProperties;
+		extern App::WindowProperties WindowProperties;
+		extern App::MonitorProperties MonitorProperties;
 
 		void HideToTray();
 		void BackFromTray();

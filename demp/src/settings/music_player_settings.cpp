@@ -76,12 +76,12 @@ namespace MP
 	void Data::UpdateData()
 	{
 		// keep width as default for now
-		mdCurrentWidth = mdEngine::Window::windowProperties.mApplicationWidth;
-		mdCurrentHeight = mdEngine::Window::windowProperties.mApplicationHeight;
+		mdCurrentWidth = mdEngine::Window::WindowProperties.m_ApplicationWidth;
+		mdCurrentHeight = mdEngine::Window::WindowProperties.m_ApplicationHeight;
 
 		//std::cout << mdCurrentHeight << std::endl;
 		mdDefaultWidth = 500.f;
-		mdDefaultHeight = Window::windowProperties.mWindowHeight - 350.f;
+		mdDefaultHeight = Window::WindowProperties.m_WindowHeight - 350.f;
 
 
 		_MAIN_BACKGROUND_SIZE = glm::vec2(mdDefaultWidth, mdCurrentHeight);

@@ -183,12 +183,12 @@ namespace mdEngine
 		public:
 			TextBox();
 			~TextBox();
+			TextBox(glm::vec2 pos, glm::vec2 size, mdShader* shader);
 			TextBox(MP::UI::Input::ButtonType code, glm::vec2 size, glm::vec2 pos, mdShader* shader);
 
 			void Render();
 			void UpdateItemsPos();
 			void UpdateItemsPos(glm::vec2 pos);
-			void ProcessInput(const SDL_Event* e);
 			void SetBackgroundTexture(GLuint tex);
 			void SetSelectTexture(GLuint tex);
 			void SetPos(glm::vec2 pos);
@@ -210,11 +210,9 @@ namespace mdEngine
 			b8							m_Active;
 			u16							m_ItemsCount;
 			f32							m_ItemScale;
-			s32							m_WindowID;
 			GLuint						m_TextBoxBackgroundTexture;
 			GLuint						m_TextBoxSelectTexture;
 			mdShader*					m_Shader;
-			SDL_Window*					m_Window;
 			glm::vec2					m_Pos;
 			glm::vec2					m_ItemSize;
 			glm::vec3					m_Color;
