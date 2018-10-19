@@ -1555,6 +1555,11 @@ namespace mdEngine
 				playlistPositionOffset = 0;
 			}
 
+			/*if (Audio::Object::GetAudioObjectContainer()->empty() == true)
+			{
+				return;
+			}*/
+
 			/* Make sure playlist posiiton offset does not go any lower than bottom of the playlist */
 			if (State::CheckState(State::ContainersResized) == false &&
 				Audio::Object::GetAudioObjectContainer()->back() != NULL)
@@ -1824,6 +1829,7 @@ namespace mdEngine
 				}
 
 				// Note: indexes in multipleSelect vector are in descending order
+				//assert(MP::GetPlaylistObject()->GetIndexesToRender()->empty() == true);
 				if (*i >= MP::GetPlaylistObject()->GetIndexesToRender()->front() &&
 					*i <= MP::GetPlaylistObject()->GetIndexesToRender()->back())
 				{

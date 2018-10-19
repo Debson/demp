@@ -366,6 +366,8 @@ namespace mdEngine
 
 		CancelWasPressed = false;
 
+
+		m_ColorTimer = Time::Timer(150);
 		//Window::WindowsContainer.insert(std::pair< std::string, std::shared_ptr<Window::WindowObject>>("LoadInfoWindow", this));
 	}
 	
@@ -407,18 +409,50 @@ namespace mdEngine
 
 		u32 test = Audio::GetIndexOfLoadingObject();
 		auto audioCon = Audio::Object::GetAudioObjectContainer();
-		if (Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject() - 1) != nullptr)
+		
+		if ((State::CheckState(State::FilesLoading) == true && State::CheckState(State::FilesLoaded) == false) &&
+			Audio::Object::GetSize() > 0)
 		{
-			std::string test = Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject() - 1)->GetPath();
-			m_LoadingPathText.SetTextString(Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject() - 1)->GetPath());
-			m_LoadingPathText.ReloadTextTexture();
-		}
+			if (Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject() - 1) != nullptr)
+			{
+				std::string test = Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject() - 1)->GetPath();
+				m_LoadingPathText.SetTextString(Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject() - 1)->GetPath());
+				m_LoadingPathText.ReloadTextTexture();
+			}
 
-		m_BarProgress = (float)Audio::Object::GetSize() / (float)Audio::GetFilesAddedCount();
-		std::string title = "[" + std::to_string(Audio::Object::GetSize()) + "/";
-		title += std::to_string(Audio::GetFilesAddedCount()) + "]";
-		title += "Playlist name - Adding files...";
-		SDL_SetWindowTitle(m_Window, title.c_str());
+			m_Color = Color::Orange;
+			m_BarProgress = (float)Audio::Object::GetSize() / (float)Audio::GetFilesAddedCount();
+			std::string title = "[" + std::to_string(Audio::Object::GetSize()) + "/";
+			title += std::to_string(Audio::GetFilesAddedCount()) + "]";
+			title += "Playlist name - Adding files...";
+			SDL_SetWindowTitle(m_Window, title.c_str());
+		}
+		else
+		{
+			m_LoadingPathText.SetTextString("Processing added files...");
+			m_LoadingPathText.ReloadTextTexture();
+
+			static u8 r = 0;
+			static u8 g = 0;
+			static u8 b = 0;
+
+			if (m_ColorTimer.started == false)
+				m_ColorTimer.Start();
+
+			m_ColorTimer.Update();
+			if (m_ColorTimer.finished == true)
+			{
+				r++;
+				g = r * ++g;
+				b = g * ++r;
+			}
+			m_Color = glm::vec3(r / 255.f, g / 255.f, b / 255.f);
+			m_BarProgress = 1.f;
+			std::string title = "[ .... / .... ]";
+			title += "Playlist name - Adding files...";
+			SDL_SetWindowTitle(m_Window, title.c_str());
+
+		}
 	}
 
 	void Window::LoadInfoWindow::Render()
@@ -440,7 +474,7 @@ namespace mdEngine
 		model = glm::scale(model, glm::vec3(m_ProgressBarSize.x * m_BarProgress, m_ProgressBarSize.y, 1.0));
 		m_Shader->setMat4("model", model);
 		m_Shader->setBool("plain", true);
-		m_Shader->setVec3("color", Color::Orange);
+		m_Shader->setVec3("color", m_Color);
 		Shader::Draw(m_Shader);
 		m_Shader->setVec3("color", Color::White);
 		m_Shader->setBool("plain", false);

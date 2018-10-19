@@ -60,7 +60,10 @@ namespace mdEngine
 	HMENU hPopMenu;
 
 	s32 mdWindowID;
-	std::thread* fileLoadThread;
+	std::thread* fileLoadThread;	
+	std::vector<std::thread*> threadCon;
+	
+
 
 #ifdef _DEBUG_
 	ImGuiIO io;
@@ -339,16 +342,10 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				Audio::DroppedItemsCount++;
 #ifdef _WIN32_
 				std::string p(event.drop.file);
-				if (fs::is_directory(p))
-				{
-					fileLoadThread = new std::thread(Audio::PushToPlaylist, p, true);
-					fileLoadThread->detach();
-					delete fileLoadThread;
-				}
-				else
-				{
-					Audio::PushToPlaylist(p);
-				}
+				
+				Audio::SaveDroppedPath(p);
+				//Audio::PushToPlaylistTest(p);
+				
 #else
 				MP::PushToPlaylist(event.drop.file);
 #endif
@@ -357,7 +354,10 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				break;
 			}
 			case (SDL_DROPCOMPLETE):
-				//State::SetState(State::FileDropped);
+				//Audio::timeCount = SDL_GetTicks();
+				fileLoadThread = new std::thread(Audio::OnDropComplete);
+				fileLoadThread->detach();
+				delete fileLoadThread;
 				break;
 			case (SDL_MOUSEWHEEL):
 				UpdateScrollPosition(event.wheel.x, event.wheel.y);

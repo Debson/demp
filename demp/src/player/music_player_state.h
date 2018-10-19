@@ -22,6 +22,7 @@ namespace mdEngine
 			AudioHidden					= (1llu << 8),
 			AudioPlayStarted			= (1llu << 9),
 			FilesLoaded					= (1llu << 10),
+			FilesLoading				= (1llu << 53),
 			FilesInfoLoaded				= (1llu << 11),
 			PathLoadedFromFile			= (1llu << 12),
 			InitialLoadFromFile			= (1llu << 13),

@@ -18,6 +18,8 @@ namespace Audio
 
 	extern u32 DroppedItemsCount;
 
+	//extern u32 timeCount;
+
 	namespace Object
 	{
 		AudioObjectContainer* GetAudioObjectContainer();
@@ -39,6 +41,14 @@ namespace Audio
 	b8 LoadPathsFromFile(std::string& path, Info::ID3* id3);
 
 	b8 PushToPlaylist(std::string path, b8 firstCall = true);
+
+	void SaveDroppedPath(std::string path);
+
+	void OnDropComplete();
+
+	void PushToPlaylistTest(std::string path, b8 firstCall = true);
+
+
 
 	void DeallocateAudioItems();
 

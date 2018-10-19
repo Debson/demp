@@ -35,6 +35,8 @@ namespace Audio
 	static AudioObjectContainer			m_AudioObjectContainer;
 	AudioObjectContainer				m_AudioObjectContainerTemp;
 
+	std::vector<std::string> m_DroppedPathsContainer;
+
 	static std::vector<Audio::Info::ID3*> m_ID3Container;
 
 	u32 DroppedItemsCount;
@@ -47,11 +49,21 @@ namespace Audio
 	static u32 indexOfLoadingObject;
 
 	static std::mutex mutex;
+	static std::mutex fileAddMutex;
 
 	static u8 threadsFinishedCount;
 	static u8 workingThreadsCount;
 
+	// Counts amount of times PushToPlaylist with @param: firstCall = true was called
+	// By that, program can detect if all paths were processed and start creating audio objects
+	u32 functionCallCount;
 
+	// test
+	b8 pathsProceeded(false);
+	std::vector<std::string> pathCont;
+
+
+	//u32 timeCount;
 
 	u32 AudioContainerSizeBeforeDeletion = 0;
 
@@ -70,6 +82,8 @@ namespace Audio
 	b8 filesInfoScanned(false);
 	b8 anyFileCorrupted(false);
 
+	b8 cancelPathProcessing(false);
+
 	s32 indexOfDroppedOnItem = -1;
 	b8 droppedOnMainPlayer(false);
 
@@ -84,7 +98,6 @@ namespace Audio
 	void LoadFilesInfoWrap(std::vector<std::shared_ptr<Audio::AudioObject>*>* tempVec);
 
 	void ActiveLoadInfoWindow();
-
 
 	void ResetStateFlags();
 }
@@ -130,7 +143,7 @@ void Audio::CalculateDroppedPosInPlaylist()
 		s32 winX, winY;
 		App::Input::GetMousePosition(&mouseX, &mouseY);
 		droppedOnMainPlayer = false;
-		if (mouseY < MP::Data::_PLAYLIST_ITEMS_SURFACE_POS.y)
+		if (mouseY < MP::Data::_PLAYLIST_ITEMS_SURFACE_POS.y && Window::mdLoadInfoWindow == nullptr)
 		{
 			State::ResetState(State::FilesDroppedNotLoaded);
 			if(m_AudioObjectContainerTemp.empty() == true)
@@ -191,8 +204,25 @@ b8 Audio::LoadPathsFromFile(std::string& path, Info::ID3* id3)
 	return true;
 }
 
+void Audio::SaveDroppedPath(std::string path)
+{
+	m_DroppedPathsContainer.push_back(path);
+}
+
+void Audio::OnDropComplete()
+{
+	for (auto & i : m_DroppedPathsContainer)
+		PushToPlaylist(i, true);
+	m_DroppedPathsContainer.clear();
+}
+
 b8 Audio::PushToPlaylist(std::string path, b8 firstCall)
 {
+
+	if (cancelPathProcessing == true)
+		return false;
+
+	State::SetState(State::FilesLoading);
 	// Updates the vector with currently loaded paths, so it's up to date for IsPathLoaded function
 	Info::Update();
 
@@ -204,9 +234,8 @@ b8 Audio::PushToPlaylist(std::string path, b8 firstCall)
 #endif
 
 	// Make note how many times this function was called directly from a SDL_DROPFILE event.
-	static u32 frameCount = 0;
 	if(firstCall == true)
-		frameCount++;
+		functionCallCount++;
 
 	// Check if loaded path still exists
 	if (fs::exists(pathW) == true)
@@ -228,6 +257,9 @@ b8 Audio::PushToPlaylist(std::string path, b8 firstCall)
 			// Iterate throught all items in folder
 			for (auto & i : fs::directory_iterator(pathW))
 			{
+				if (cancelPathProcessing == true)
+					break;
+
 				// Since every audio object will have only one copy of this path in RAM, create in now
 #ifdef _WIN32_
 				auto str = new std::string(utf16_to_utf8(i.path().wstring()));
@@ -315,21 +347,50 @@ b8 Audio::PushToPlaylist(std::string path, b8 firstCall)
 
 
 	// Check if all that's the last function call and start process of creating audio objects
-	if (firstCall == true && frameCount == DroppedItemsCount)
+	if (firstCall == true && functionCallCount == DroppedItemsCount)
 	{
 		startLoadingProperties = true;
 		DroppedItemsCount = 0;
-		frameCount = 0;
+		functionCallCount = 0;
 	}
 
 	return true;
+}
+
+void Audio::PushToPlaylistTest(std::string path, b8 firstCall)
+{
+	std::wstring pathW = utf8_to_utf16(path);
+
+
+	if (fs::is_directory(pathW) == true)
+	{
+		for (auto & i : fs::directory_iterator(pathW))
+		{
+			if (fs::is_directory(i.path().wstring()) == true)
+				Audio::PushToPlaylistTest(utf16_to_utf8(i.path().wstring()), false);
+			else
+				pathCont.push_back(i.path().string());
+		}
+	}
+	else
+	{
+		pathCont.push_back(path);
+	}
+
+
+	static s32 count = 0;
+	if (firstCall == true)
+		count++;
+
+	if (firstCall == true && DroppedItemsCount == count)
+		pathsProceeded = true;
+
 }
 
 void Audio::UpdateAudioLogic()
 {
 	if (State::CheckState(State::Window::Exit) == true)
 		return;
-
 
 	if (State::CheckState(State::InitialLoadFromFile) == true &&
 		m_AddedFilesPathContainer.size() > 0)
@@ -338,10 +399,20 @@ void Audio::UpdateAudioLogic()
 		filesLoadedFromFile = true;
 	}
 
+	if (cancelPathProcessing == true)
+	{
+		m_AddedFilesPathContainer.clear();
+		cancelPathProcessing = false;
+		startLoadingProperties = false;
+		State::ResetStateOnLoadError();
+	}
+
 	// Files added, load them. If there were some errors durning loading config file, state ReloadFilesInfo is set.
 	if ((startLoadingProperties == true && m_AddedFilesPathContainer.empty() == false) || 
 		 State::CheckState(State::ReloadFilesInfo) == true)
 	{
+
+		//md_log(SDL_GetTicks() - timeCount);
 		s32 toProcessCount = m_AddedFilesPathContainer.size();
 		filesAddedCount = toProcessCount;
 
@@ -486,6 +557,11 @@ void Audio::UpdateAudioLogic()
 		{
 			State::ResetState(State::FilesInfoLoaded);
 		}
+	}
+	else if (m_AddedFilesPathContainer.size() > 500)
+	{
+		//State::ResetState(State::FilesLoaded);
+		//State::ResetState(State::FilesInfoLoaded);
 	}
 
 	if (m_AudioObjectContainer.empty() == true && 
@@ -692,6 +768,7 @@ void Audio::SetFoldersRep()
 		State::ResetState(State::CurrentlyPlayingDeleted);
 		State::ResetState(State::PathContainerSorted);
 		State::ResetState(State::TerminateWorkingThreads);
+		State::ResetState(State::FilesLoading);
 		Info::GetLoadedPathsContainer()->clear();
 
 		auto sepCon = Interface::Separator::GetContainer();
@@ -952,8 +1029,11 @@ void Audio::ActiveLoadInfoWindow()
 {
 #if 1
 	
+	//md_log(State::CheckState(State::FilesLoaded));
+
+	
 	// Files are loading and windows hasn't been created
-	if (State::CheckState(State::FilesLoaded) == false &&
+	if (State::CheckState(State::FilesLoading) == true &&
 		m_AddedFilesPathContainer.size() > 500 &&
 		Window::mdLoadInfoWindow == nullptr)
 	{
@@ -970,7 +1050,7 @@ void Audio::ActiveLoadInfoWindow()
 	}
 
 	// Files are loaded, delete window
-	if(State::CheckState(State::FilesLoaded) == true && Window::mdLoadInfoWindow != NULL)
+	if(State::CheckState(State::FilesLoading) == false && Window::mdLoadInfoWindow != NULL)
 	{
 		delete Window::mdLoadInfoWindow;
 
@@ -984,50 +1064,66 @@ void Audio::ActiveLoadInfoWindow()
 		{
 			auto test = &m_AudioObjectContainer;
 
-			u32 size = m_AudioObjectContainer.size();
-			for (s32 i = size - 1; i >= 0; i--)
+			// If were processed and are being loaded iterate throught this if statemtent
+			if (State::CheckState(State::FilesLoaded) == false)
 			{
-				if (i >= indexOfDroppedOnItem && i < indexOfDroppedOnItem + filesAddedCount)
-				{
-					m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + i);
-				}
-			}
 
-			if (droppedOnMainPlayer == true && m_AudioObjectContainerTemp.empty() == false)
-			{
-				m_AudioObjectContainer = AudioObjectContainer(m_AudioObjectContainerTemp);
-				m_AudioObjectContainerTemp.clear();
-				md_log("main player");
-				f64 size = 0;
-				f64 duration = 0;
-				for (auto & i : m_AudioObjectContainer)
+				u32 size = m_AudioObjectContainer.size();
+				for (s32 i = size - 1; i >= 0; i--)
 				{
-					size += i->GetID3Struct()->size;
-					duration += i->GetID3Struct()->length;
+					if (i >= indexOfDroppedOnItem && i < indexOfDroppedOnItem + filesAddedCount)
+					{
+						m_AudioObjectContainer.erase(m_AudioObjectContainer.begin() + i);
+					}
 				}
-				Graphics::MP::GetPlaylistObject()->SetItemsSize(size);
-				Graphics::MP::GetPlaylistObject()->SetItemsDuration(duration);
 
+				if (droppedOnMainPlayer == true && m_AudioObjectContainerTemp.empty() == false)
+				{
+					m_AudioObjectContainer = AudioObjectContainer(m_AudioObjectContainerTemp);
+					m_AudioObjectContainerTemp.clear();
+					md_log("main player");
+					f64 size = 0;
+					f64 duration = 0;
+					for (auto & i : m_AudioObjectContainer)
+					{
+						size += i->GetID3Struct()->size;
+						duration += i->GetID3Struct()->length;
+					}
+					Graphics::MP::GetPlaylistObject()->SetItemsSize(size);
+					Graphics::MP::GetPlaylistObject()->SetItemsDuration(duration);
+
+				}
+				else
+				{
+					m_AudioObjectContainer.resize(previousContainerSize);
+				}
+
+
+				State::SetState(State::AudioAdded);
+				State::SetState(State::FilesLoaded);
+				State::ResetState(State::FilesLoading);
+				State::SetState(State::ShuffleAfterLoad);
+				State::ResetState(State::PathContainerSorted);
+				State::ResetState(State::TerminateWorkingThreads);
+				//State::SetState(State::UpdatePlaylistInfoStrings);
+				State::ResetState(State::FilesAddedInfoNotLoaded);
+				State::ResetState(State::FilesDroppedNotLoaded);
+
+				Info::GetLoadedPathsContainer()->clear();
+
+
+				firstFilesLoaded = false;
+				indexOfDroppedOnItem = 0;
 			}
 			else
 			{
-				m_AudioObjectContainer.resize(previousContainerSize);
+				// If paths weren't processed iterate throught this block
+				DroppedItemsCount = 0;
+				functionCallCount = 0;
+				cancelPathProcessing = true;
 			}
 
-			State::SetState(State::AudioAdded);
-			State::SetState(State::FilesLoaded);
-			State::SetState(State::ShuffleAfterLoad);
-			State::ResetState(State::PathContainerSorted);
-			State::ResetState(State::TerminateWorkingThreads);
-			//State::SetState(State::UpdatePlaylistInfoStrings);
-			State::ResetState(State::FilesAddedInfoNotLoaded);
-			State::ResetState(State::FilesDroppedNotLoaded);
-
-			Info::GetLoadedPathsContainer()->clear();
-
-			firstFilesLoaded = false;
-			indexOfDroppedOnItem = 0;
-			if (droppedOnMainPlayer == true)
+			if (droppedOnMainPlayer == true || State::CheckState(State::FilesLoaded) == true)
 			{
 				currentContainersSize = m_AudioObjectContainer.size();
 			}
@@ -1037,9 +1133,9 @@ void Audio::ActiveLoadInfoWindow()
 			}
 			currentlyLoadedItemsCount = currentContainersSize;
 			Info::LoadedItemsInfoCount = currentContainersSize;
+			ResetStateFlags();
 
 			m_AddedFilesPathContainer.clear();
-			ResetStateFlags();
 
 			md_log_compare(indexOfDroppedOnItem, filesAddedCount);
 			Window::mdLoadInfoWindow->CancelWasPressed = false;

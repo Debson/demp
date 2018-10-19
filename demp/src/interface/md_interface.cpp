@@ -1359,6 +1359,7 @@ namespace mdEngine
 		for (auto & i : m_PlaylistSeparatorContainer)
 		{
 			auto subCon = i.second->GetSubFilesContainer();
+			assert(subCon->empty() == false);
 			if (*subCon->at(0).first <= id &&
 				*subCon->back().first >= id)
 			{

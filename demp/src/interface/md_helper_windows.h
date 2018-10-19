@@ -80,10 +80,11 @@ namespace mdEngine
 		private:
 
 			f32 m_BarProgress;
-				
+			Time::Timer m_ColorTimer;
 
 			Text::TextObject m_LoadingPathText;
 			Text::TextObject m_CancelText;
+			glm::vec3		 m_Color;
 
 			glm::vec2 m_ProgressBarPos;
 			glm::vec2 m_ProgressBarSize;
