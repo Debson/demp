@@ -694,9 +694,28 @@ namespace MP
 			mdCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
 		}
 
-		if(hasFocusResizable == false &&
-		   State::CheckState(State::Window::PositionChanged) == false &&
-		   mdCursor != NULL)
+		b8 buttonsFocus = Input::hasFocus(Input::ButtonType::SliderMusic);
+
+		for (auto & i : mdButtonsContainer)
+		{
+			buttonsFocus = buttonsFocus || i.second->hasFocus;
+		}
+		for (auto & i : *Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
+		{
+			buttonsFocus = buttonsFocus || Audio::Object::GetAudioObject(i)->hasFocus;
+		}
+
+		if (buttonsFocus == true && mdCursor == NULL)
+		{
+			mdCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+		}
+
+		b8 deleteCursor = hasFocusResizable == false &&
+						  buttonsFocus == false &&
+						  State::CheckState(State::Window::PositionChanged) == false;
+
+
+		if(deleteCursor == true && mdCursor != NULL)
 		{
 			SDL_FreeCursor(mdCursor);
 			mdCursor = NULL;

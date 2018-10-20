@@ -40,6 +40,7 @@ namespace mdEngine
 			virtual void SetTextPos(glm::vec2 pos);
 			virtual void SetTextSize(glm::vec2 size);
 			virtual void SetTextOffset(glm::vec2 offset);
+			virtual void SetFontSize(s32 fontSize);
 
 			b8 HasTexture() const;
 			/* Initializes and returns a texture(does not initialize any class members, memory safe)*/

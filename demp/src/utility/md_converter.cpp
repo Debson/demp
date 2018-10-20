@@ -65,29 +65,30 @@ namespace mdEngine
 
 		time += ":";
 
-// seconds
-if (seconds == 0)
-time += "00";
-else if (seconds > 0 && seconds < 10)
-{
-	time += "0";
-	time += std::to_string(seconds);
-}
-else
-{
-	time += std::to_string(seconds);
-}
+		// seconds
+		if (seconds == 0)
+		time += "00";
+		else if (seconds > 0 && seconds < 10)
+		{
+			time += "0";
+			time += std::to_string(seconds);
+		}
+		else
+		{
+			time += std::to_string(seconds);
+		}
 
-return time;
+		return time;
 	}
 
+	// Min length 5 chars MM:SS
 	std::string Converter::SecToProperTimeFormatShort(f64 secs)
 	{
 		std::string time = SecToProperTimeFormat(secs);
 
 		while (time[0] == '0' &&
-			time[1] == '0' &&
-			time.length() > 2)
+			   time[1] == '0' &&
+			   time.length() > 5)
 		{
 			time = time.substr(3, time.length());
 		}

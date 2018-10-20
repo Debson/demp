@@ -2173,6 +2173,9 @@ namespace mdEngine
 
 	void Graphics::UpdateMusicProgressTextBox()
 	{
+		if (Playlist::IsPlaying() == false)
+			return;
+
 		static b8 firstEntry(true);
 		static glm::vec2 mousePos;
 
@@ -2215,14 +2218,27 @@ namespace mdEngine
 
 			if (m_MusicProgressTextBox == NULL)
 			{
-				m_MusicProgressTextBox = new Interface::TextBox(mousePos, glm::vec2(80, 40), Shader::shaderDefault);
+				ICONINFO ii;
+				BITMAP bitmap;
+				GetIconInfo(GetCursor(), &ii);
+				GetObject(ii.hbmColor, sizeof(BITMAP), &bitmap);
+				u32 bp = bitmap.bmBitsPixel;
+
+				s32 length = Audio::Object::GetAudioObject(MP::GetPlaylistObject()->GetPlayingID())->GetLength();
+				s32 posInSec = length * (App::Input::GetMousePosition().x - Data::_MUSIC_PROGRESS_BAR_POS.x) / Data::_MUSIC_PROGRESS_BAR_SIZE.x;
+				std::string str = Converter::SecToProperTimeFormatShort(posInSec);
+				str += " (-" + Converter::SecToProperTimeFormatShort(length - posInSec) + ")";
+				str += " / " + Converter::SecToProperTimeFormatShort(length);
+
+				m_MusicProgressTextBox = new Interface::TextBox(glm::vec2(mousePos.x, mousePos.y + bitmap.bmHeight / 2.f), 
+																glm::vec2(140, 25), Shader::shaderDefault);
 				m_MusicProgressTextBox->SetTextColor(Color::White);
 				m_MusicProgressTextBox->SetBackgroundTexture(0);
 				m_MusicProgressTextBox->SetSelectTexture(playlist_add_textbox_select);
-				m_MusicProgressTextBox->SetItemScale(1.f);
+				m_MusicProgressTextBox->SetItemsOffset(glm::vec2(25.f, 5.f));
+				m_MusicProgressTextBox->SetFontSize(12);
+				m_MusicProgressTextBox->AddItem(str);
 			}
-
-			md_log((Data::_MUSIC_PROGRESS_BAR_POS.x - App::Input::GetMousePosition().x) / Data::_MUSIC_PROGRESS_BAR_SIZE.x);
 		}
 		else if (m_MusicProgressTextBox != NULL)
 		{
@@ -2314,7 +2330,7 @@ namespace mdEngine
 		InitializeTextBoxes();
 		m_PlaylistTextBoxTimer = Time::Timer(Data::PlaylistTextBoxTime);
 
-		m_MusicProgressTimer = Time::Timer(1000);
+		m_MusicProgressTimer = Time::Timer(600);
 
 		Interface::PlaylistSeparator::SetPlaylistOffsetY(&playlistPositionOffset);
 		Audio::AudioObject::SetPlaylistOffsetY(&playlistPositionOffset);

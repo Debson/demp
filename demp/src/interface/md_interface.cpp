@@ -591,15 +591,10 @@ namespace mdEngine
 	}
 
 	/* *************************************************** */
-	Interface::TextBoxItem::TextBoxItem(const std::string name, glm::vec2 itemSize, glm::vec2 itemPos,
-																 glm::vec2 textSize, glm::vec2 textPos,
-										GLuint textTexture, GLuint iconTexture)
+	Interface::TextBoxItem::TextBoxItem(std::string& name, glm::vec2 itemSize, glm::vec2 itemPos, GLuint iconTexture)
 	{
 		m_ButtonPos = itemPos;
 		m_ButtonSize = itemSize;
-		m_TextPos = textPos;
-		m_TextSize = textSize;
-		m_TextTexture = textTexture;
 		m_IconTexture = iconTexture;
 		m_InterfaceButtonContainer.push_back(make_pair(name, this));
 	}
@@ -773,18 +768,19 @@ namespace mdEngine
 
 	void Interface::TextBox::AddItem(std::string itemName, GLuint iconTexture)
 	{
-		TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), 14);
-		GLuint tex = Text::LoadText(font, itemName, m_TextColorSDL);
-
 		glm::ivec2 textSize;
 		std::string name = itemName;
-		TTF_SizeUTF8(font, name.c_str(), &textSize.x, &textSize.y);
-		TTF_CloseFont(font);
 
-		auto item = std::make_shared<TextBoxItem>(itemName, glm::vec2(m_Size.x, Data::_TEXT_BOX_ITEM_HEIGHT), glm::vec2(m_Pos.x, m_Pos.y + m_ItemsCount * Data::_TEXT_BOX_ITEM_HEIGHT),
-																		  glm::vec2(textSize) * m_ItemScale, glm::vec2(m_Pos.x + 40.f, m_Pos.y + m_ItemsCount * textSize.y * m_ItemScale),
-																		  tex, iconTexture);
+		auto item = std::make_shared<TextBoxItem>(itemName, 
+												  glm::vec2(m_Size.x, Data::_TEXT_BOX_ITEM_HEIGHT), 
+												  glm::vec2(m_Pos.x, m_Pos.y + m_ItemsCount * Data::_TEXT_BOX_ITEM_HEIGHT),
+												  iconTexture);
 		item->m_Index = m_ItemsCount;
+		item->SetTextPos(glm::vec2(m_Pos.x + m_ItemsOffset.x, m_Pos.y + m_ItemsCount * textSize.y * m_ItemScale + m_ItemsOffset.y));
+		item->SetTextString(itemName);
+		item->SetTextColor(m_TextColorVec);
+		item->SetFontSize(m_FontSize);
+		item->InitTextTexture();
 		m_Items.push_back(item);
 		m_ItemsCount++;
 	}

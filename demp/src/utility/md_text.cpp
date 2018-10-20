@@ -222,6 +222,10 @@ namespace mdEngine
 		return m_TextColorSDL;
 	}
 
+	void Text::TextObject::SetFontSize(s32 fontSize)
+	{
+		m_FontSize = fontSize;
+	}
 
 	void Text::InitializeText()
 	{

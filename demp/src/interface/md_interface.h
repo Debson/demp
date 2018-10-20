@@ -166,9 +166,7 @@ namespace mdEngine
 		{
 			friend class TextBox;
 			public:
-			TextBoxItem(const std::string name, glm::vec2 itemSize, glm::vec2 itemPos, 
-												 glm::vec2 textSize, glm::vec2 textPos,
-						GLuint textTexture, GLuint iconTexture = 0);
+			TextBoxItem(std::string& name, glm::vec2 itemSize, glm::vec2 itemPos, GLuint iconTexture = 0);
 
 			
 		private:
