@@ -47,6 +47,7 @@ namespace mdEngine
 				void SetCurrentMaxIndex(s32 max);
 				void SetCurrentOffset(s32 offset);
 				void SetHiddenSeparatorCount(s32 count);
+				void SetSelected(b8 val);
 				f64  GetItemsSize()				const;
 				f64  GetItemsDuration()			const;
 				std::vector<s32>* GetIndexesToRender();
@@ -71,6 +72,7 @@ namespace mdEngine
 				std::vector<s32*> multipleSelect;
 
 			private:
+				b8			m_IsSelected;
 				b8			m_Enabled;
 				b8			m_Toggled;
 				b8			m_Focus;

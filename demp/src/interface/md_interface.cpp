@@ -596,7 +596,7 @@ namespace mdEngine
 		m_ButtonPos = itemPos;
 		m_ButtonSize = itemSize;
 		m_IconTexture = iconTexture;
-		m_InterfaceButtonContainer.push_back(make_pair(name, this));
+		//m_InterfaceButtonContainer.push_back(make_pair(name, this));
 	}
 
 	void Interface::TextBoxItem::UpdateTextBoxItemPos(glm::vec2 pos, glm::vec2 offset)
@@ -629,6 +629,12 @@ namespace mdEngine
 		m_ItemsCount = 0;
 		m_TextBoxBackgroundTexture = 0;
 		new Button(code, size, pos);
+	}
+
+	void Interface::TextBox::Update()
+	{
+		for (auto & i : m_Items)
+			App::ProcessButton(i);
 	}
 
 	void Interface::TextBox::Render()
@@ -800,20 +806,26 @@ namespace mdEngine
 		return m_Size;
 	}
 
-	b8 Interface::TextBox::hasItemFocus(const std::string name) const
+	b8 Interface::TextBox::hasItemFocus(s32 id) const
 	{
-		auto item = std::find_if(m_InterfaceButtonContainer.begin(), m_InterfaceButtonContainer.end(),
-			[&](std::pair<const std::string, Button*> const & ref) { return ref.first.compare(name) == 0; });
+		/*auto item = std::find_if(m_InterfaceButtonContainer.begin(), m_InterfaceButtonContainer.end(),
+			[&](std::pair<const std::string, Button*> const & ref) { return ref.first.compare(name) == 0; });*/
 
-		return item == m_InterfaceButtonContainer.end() ? false : item->second->hasFocus;
+		if (id <= 0 || id >= m_Items.size())
+			return false;
+
+		return m_Items[id]->hasFocus;
 	}
 
-	b8 Interface::TextBox::isItemPressed(const std::string name) const
+	b8 Interface::TextBox::isItemPressed(s32 id) const
 	{
-		auto item = std::find_if(m_InterfaceButtonContainer.begin(), m_InterfaceButtonContainer.end(),
-			[&](std::pair<const std::string, Button*> const & ref) { return ref.first.compare(name) == 0; });
+		/*auto item = std::find_if(m_InterfaceButtonContainer.begin(), m_InterfaceButtonContainer.end(),
+			[&](std::pair<const std::string, Button*> const & ref) { return ref.first.compare(name) == 0; });*/
 
-		return item == m_InterfaceButtonContainer.end() ? false : item->second->isPressed;
+		if (id < 0 || id >= m_Items.size())
+			return false;
+
+		return m_Items[id]->isPressed;
 	}
 
 

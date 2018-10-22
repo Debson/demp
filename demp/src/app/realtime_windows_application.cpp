@@ -189,7 +189,7 @@ void mdEngine::SetupOpenGL()
 
 void mdEngine::SetupGlew()
 {
-	SDL_GL_SetSwapInterval(1); // Enable vsync
+	SDL_GL_SetSwapInterval(0); // disable vsync
 	
 	gl3wInit();
 
@@ -335,6 +335,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				if (State::CheckState(State::PathContainerSorted) == false)
 					State::SetState(State::SortPathsOnNewFileLoad);
 
+				State::ResetState(State::AddedByFileBrowser);
 				State::SetState(State::FileDropped);
 				State::ResetState(State::InitialLoadFromFile);
 				State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
@@ -551,19 +552,27 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 
 			if (State::IsBackgroundModeActive() == true)
 			{
-				MP::Data::UpdateFPS(3.f);
+				//SDL_GL_SetSwapInterval(0);
+				MP::Data::UpdateFPS(2.f);
+				f32 frameTicks = capTimer.GetTicks();
+				if (frameTicks < MP::Data::_SCREEN_TICK_PER_FRAME)
+				{
+					SDL_Delay(MP::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
+					md_log(MP::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
+				}
 			}
 			else
 			{
+				//SDL_GL_SetSwapInterval(1);
+				//MP::Data::UpdateFPS(3);
 				MP::Data::UpdateFPS(MP::Data::_SCREEN_FPS);
 			}
 
 
-			if (State::CheckState(State::Window::PositionChanged) == false &&
-				State::CheckState(State::Window::Resized) == false &&
-				State::CheckState(State::PlaylistMovement) == false &&
-				State::CheckState(State::FilesDroppedNotLoaded) == false)
+
+			if (State::HighFPSMode() == false)
 			{
+				//SDL_GL_SetSwapInterval(0); // disable vsyn
 				f32 frameTicks = capTimer.GetTicks();
 				if (frameTicks < MP::Data::_SCREEN_TICK_PER_FRAME)
 				{

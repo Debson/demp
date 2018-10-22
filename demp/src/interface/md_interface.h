@@ -184,6 +184,7 @@ namespace mdEngine
 			TextBox(glm::vec2 pos, glm::vec2 size, mdShader* shader);
 			TextBox(MP::UI::Input::ButtonType code, glm::vec2 size, glm::vec2 pos, mdShader* shader);
 
+			void Update();
 			void Render();
 			void UpdateItemsPos();
 			void UpdateItemsPos(glm::vec2 pos);
@@ -199,8 +200,8 @@ namespace mdEngine
 
 			void Free();
 
-			b8			hasItemFocus(const std::string name) const;
-			b8			isItemPressed(const std::string name) const;
+			b8			hasItemFocus(s32 id) const;
+			b8			isItemPressed(s32 id) const;
 			glm::vec2	GetPos() const;
 			glm::vec2	GetSize() const;
 

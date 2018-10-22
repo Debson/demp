@@ -34,7 +34,7 @@ namespace MP
 
 		
 
-		const s32 _SCREEN_FPS = 60;
+		const s32 _SCREEN_FPS = 30;
 		extern s32 _SCREEN_TICK_PER_FRAME;
 
 		const s32 _PLAYLIST_CHOOSE_ITEM_DELAY = 300;

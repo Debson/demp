@@ -82,6 +82,7 @@ namespace mdEngine
 			{
 			case SDL_WINDOWEVENT_CLOSE:
 				OnDelete();
+				State::ResetState(State::OtherWindowHasFocus);
 				break;
 			case SDL_WINDOWEVENT_ENTER:
 				m_WindowHasFocus = true;
@@ -94,9 +95,11 @@ namespace mdEngine
 				break;
 			case SDL_WINDOWEVENT_FOCUS_LOST:
 				m_HasFocus = false;
+				State::ResetState(State::OtherWindowHasFocus);
 				break;
 			case SDL_WINDOWEVENT_FOCUS_GAINED:
 				m_HasFocus = true;
+				State::SetState(State::OtherWindowHasFocus);
 				break;
 			}
 		}
@@ -124,7 +127,7 @@ namespace mdEngine
 			SDL_WINDOWPOS_CENTERED,
 			m_Width,
 			m_Height,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_SKIP_TASKBAR);
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_SKIP_TASKBAR | SDL_WINDOW_ALWAYS_ON_TOP);
 
 		assert(m_Window != NULL);
 
@@ -290,6 +293,7 @@ namespace mdEngine
 	void Window::OptionsWindow::OnDelete()
 	{
 		m_Active = false;
+		State::ResetState(State::OtherWindowHasFocus);
 	}
 
 	Window::LoadInfoWindow::LoadInfoWindow() { }
@@ -307,7 +311,7 @@ namespace mdEngine
 			playerWindowDim.y + playerWindowDim.w / 2.f,
 			m_Width,
 			m_Height,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_SKIP_TASKBAR);
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_SKIP_TASKBAR | SDL_WINDOW_ALWAYS_ON_TOP);
 
 		assert(m_Window != NULL);
 		
@@ -373,6 +377,7 @@ namespace mdEngine
 	
 	Window::LoadInfoWindow::~LoadInfoWindow()
 	{
+		OnDelete();
 		m_Active = false;
 		Window::WindowsContainer.erase("LoadInfoWindow");
 
@@ -410,7 +415,7 @@ namespace mdEngine
 		u32 test = Audio::GetIndexOfLoadingObject();
 		auto audioCon = Audio::Object::GetAudioObjectContainer();
 		
-		if ((State::CheckState(State::FilesLoading) == true && State::CheckState(State::FilesLoaded) == false) &&
+		if (State::CheckState(State::FilesLoaded) == false &&
 			Audio::Object::GetSize() > 0)
 		{
 			if (Audio::Object::GetAudioObject(Audio::GetIndexOfLoadingObject() - 1) != nullptr)
@@ -505,6 +510,7 @@ namespace mdEngine
 	void Window::LoadInfoWindow::OnDelete()
 	{
 		this->CancelWasPressed = true;
+		State::ResetState(State::OtherWindowHasFocus);
 	}
 
 	Window::MusicInfoWindow::MusicInfoWindow(glm::vec2 pos)
@@ -520,7 +526,7 @@ namespace mdEngine
 			m_Width,
 			m_Height,
 			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN |
-			SDL_WINDOW_SKIP_TASKBAR | SDL_WINDOW_BORDERLESS);
+			SDL_WINDOW_SKIP_TASKBAR | SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP);
 
 		assert(m_Window != NULL);
 
@@ -671,6 +677,10 @@ namespace mdEngine
 		if (m_Window == NULL)
 			return;
 
+
+		if (m_HasFocus == true)
+			State::CheckState(State::OtherWindowHasFocus) == true;
+
 		App::ProcessButton(&m_ExitButton);
 
 		if (m_ExitButton.isPressed == true)
@@ -765,6 +775,7 @@ namespace mdEngine
 			glDeleteTextures(1, &m_AlbumPicTex);
 			md_log("Album tex deleted by music info window");
 		}
+		State::ResetState(State::OtherWindowHasFocus);
 	}
 
 	void Window::MusicInfoWindow::DeleteAlbumPicOnClose()

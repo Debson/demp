@@ -22,7 +22,7 @@ namespace mdEngine
 			AudioHidden					= (1llu << 8),
 			AudioPlayStarted			= (1llu << 9),
 			FilesLoaded					= (1llu << 10),
-			FilesLoading				= (1llu << 53),
+			PathsBeingProcessed			= (1llu << 53),
 			FilesInfoLoaded				= (1llu << 11),
 			PathLoadedFromFile			= (1llu << 12),
 			InitialLoadFromFile			= (1llu << 13),
@@ -53,7 +53,14 @@ namespace mdEngine
 			PathContainerSorted			= (1llu << 48),
 			TerminateWorkingThreads		= (1llu << 49),
 			ReloadFilesInfo				= (1llu << 50),
-			RequestForInfoLoad			= (1llu << 52)
+			RequestForInfoLoad			= (1llu << 52),
+			AddedByFileBrowser			= (1llu << 54)
+		};
+
+		enum WindowEvent : u64
+		{
+			OtherWindowHasFocus			= (1llu << 55),
+			OtherWindowMoved			= (1llu << 56)
 		};
 
 		namespace Window
@@ -115,6 +122,8 @@ namespace mdEngine
 		void ResetMusicPlayerState();
 
 		b8 IsBackgroundModeActive();
+
+		b8 HighFPSMode();
 
 
 		// Flags that NEED to be restarted at end of the frame

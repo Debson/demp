@@ -434,7 +434,7 @@ namespace MP
 			mdMusicPaused = false;
 			mdStartNewOnEnd = true;
 
-			Graphics::MP::GetPlaylistObject()->SetPlayingID(RamLoadedMusic.m_ID);
+			Graphics::MP::GetPlaylistObject()->SetPlayingID(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)->GetID());
 			Graphics::MP::GetPlaylistObject()->SetSelectedID(RamLoadedMusic.m_ID);
 
 			if (Audio::Object::GetAudioObject(RamLoadedMusic.m_PreviousID) != nullptr) {
@@ -450,6 +450,8 @@ namespace MP
 
 			State::ResetState(State::RequestForInfoLoad);
 
+
+			State::SetState(State::AudioChosen);
 
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
 			playFadeTimer.Start();
@@ -565,7 +567,6 @@ namespace MP
 			}
 
 			State::SetState(State::AudioChanged);
-
 
 		}
 
@@ -775,7 +776,7 @@ namespace MP
 			{
 				mdStartNewOnEnd = false;
 				mdCurrentShuffleMusicPos = 0;
-				Graphics::MP::GetPlaylistObject()->SetPlayingID(-1);
+				//Graphics::MP::GetPlaylistObject()->SetPlayingID(-1);
 				RamLoadedMusic.Free();
 			}
 
@@ -816,12 +817,11 @@ namespace MP
 					md_log(songID);
 					RamLoadedMusic.load(Audio::Object::GetAudioObject(songID));
 					Playlist::SetPosition((s32)Parser::GetFloat(file, Strings::_SONG_POSITION));
-					Graphics::MP::GetPlaylistObject()->SetPlayingID(songID);
+					Graphics::MP::GetPlaylistObject()->SetPlayingID(Audio::Object::GetAudioObject(songID)->GetID());
 					State::SetState(State::InitialLoadFromFile);
 				}
 				State::ResetState(State::LoadMusicOnFileLoad);
 			}
-
 		}
 
 		void DeleteMusic(const std::vector<s32>* indexes)
@@ -926,12 +926,41 @@ namespace MP
 				mdStartNewOnEnd = false;
 			}*/
 
-			return	mdMPStarted == true &&
-					IsPlaying() == false &&
-					mdRepeatMusic == false &&
-					mdStartNewOnEnd == true &&
-					State::CheckState(State::AudioChosen) == false &&
-					State::CheckState(State::FilesLoaded) == true;
+			/*if (mdRepeatMusic == false)
+				return false;
+
+			if (mdMPStarted == false)
+				return false;
+
+
+			if (State::CheckState(State::FilesLoading) == true)
+				return false;
+
+			if (mdStartNewOnEnd == false)
+				return false;
+
+			if (IsPlaying() == true)
+				return false;
+
+			return true;*/
+
+			if (Playlist::IsPlaying() == true)
+			{
+				return false;
+			}
+
+			if (Audio::Object::GetSize() > 1 && mdRepeatMusic == false && mdMPStarted == true)
+				return true;
+
+			// Free loaded song
+			if (Audio::Object::GetSize() <= 1)
+			{
+				//Graphics::MP::GetPlaylistObject()->SetPlayingID(-1);
+				RamLoadedMusic.Free();
+				mdMPStarted = false;
+			}
+
+			return false;
 		}
 
 		b8 IsLoaded()

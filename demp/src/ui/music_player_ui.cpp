@@ -198,6 +198,18 @@ namespace MP
 
 	void UI::Update()
 	{
+
+		if (State::CheckState(State::OtherWindowHasFocus) == true || 
+			State::CheckState(State::PlaylistMovement) == true)
+		{
+			if (mdCursor != NULL)
+			{
+				SDL_FreeCursor(mdCursor);
+				mdCursor = NULL;
+			}
+
+			return;
+		}
 		// Files are loading, don't take any input from user at that time
 		if (State::CheckState(State::FilesLoaded) == false)
 			//State::CheckState(State::Window::HasFocus) == false)
@@ -217,34 +229,37 @@ namespace MP
 		for (u16 i = 0; i < mdButtonsContainer.size(); i++)
 			App::ProcessButton(mdButtonsContainer[i].second);
 
-		// Make sure that hitboxes that are not visible cannot be clicked
-		App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
-		for (auto i : *Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
+		if (Graphics::MP::GetPlaylistObject()->IsEnabled() == true)
 		{
-			if (Audio::Object::GetAudioObject(i) == nullptr ||
-				State::CheckState(State::Window::Resized) == true)
+			// Make sure that hitboxes that are not visible cannot be clicked
+			App::SetButtonCheckBounds(Data::_PLAYLIST_ITEMS_SURFACE_POS.y, Data::_PLAYLIST_ITEMS_SURFACE_SIZE.y);
+			for (auto i : *Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
 			{
-				break;
+				if (Audio::Object::GetAudioObject(i) == nullptr ||
+					State::CheckState(State::Window::Resized) == true)
+				{
+					break;
+				}
+
+				if (Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false &&
+					Graphics::MP::GetPlaylistObject()->PlaylistTextBoxActive == false)
+				{
+					App::ProcesPlaylistButton(Audio::Object::GetAudioObject(i));
+				}
+				else if (Graphics::MP::GetPlaylistObject()->PlaylistTextBoxActive == true)
+				{
+					Audio::Object::GetAudioObject(i)->bottomHasFocus = false;
+					Audio::Object::GetAudioObject(i)->topHasFocus = false;
+				}
+
 			}
 
-			if (Audio::Object::GetAudioObject(i)->IsPlaylistItemHidden() == false &&
-				Graphics::MP::GetPlaylistObject()->PlaylistTextBoxActive == false)
+			// Process playlist separator buttons
+			auto sepCon = Interface::Separator::GetContainer();
+			for (u16 i = 0; i < Interface::Separator::GetSize(); i++)
 			{
-				App::ProcesPlaylistButton(Audio::Object::GetAudioObject(i));
+				App::ProcesPlaylistButton(sepCon->at(i).second);
 			}
-			else if (Graphics::MP::GetPlaylistObject()->PlaylistTextBoxActive == true)
-			{
-				Audio::Object::GetAudioObject(i)->bottomHasFocus = false;
-				Audio::Object::GetAudioObject(i)->topHasFocus = false;
-			}
-
-		}
-
-		// Process playlist separator buttons
-		auto sepCon = Interface::Separator::GetContainer();
-		for (u16 i = 0; i < Interface::Separator::GetSize(); i++)
-		{
-			App::ProcesPlaylistButton(sepCon->at(i).second);
 		}
 
 		// Proces interface buttons
@@ -256,7 +271,8 @@ namespace MP
 		}
 
 		HandleInput();
-		if (State::CheckState(State::PlaylistEmpty) == false)
+		if (State::CheckState(State::PlaylistEmpty) == false &&
+			Graphics::MP::GetPlaylistObject()->IsEnabled() == true)
 		{
 			HandlePlaylistInput();
 			HandleSeparatorInput();
@@ -1045,24 +1061,27 @@ namespace MP
 
 	void UI::PlaylistFileExplorer()
 	{
-		if (Graphics::m_AddFileTextBox.isItemPressed(Strings::_PLAYLIST_ADD_FILE))
+		if (Graphics::m_AddFileTextBox != NULL)
 		{
+			if (Graphics::m_AddFileTextBox->isItemPressed(0))
+			{
 #ifdef _WIN32_
-			fileBrowserActive = true;
-			std::thread t(OpenFileBrowserWrap);
-			t.detach();
+				fileBrowserActive = true;
+				std::thread t(OpenFileBrowserWrap);
+				t.detach();
 #else
 #endif
-		}
+			}
 
-		if (Graphics::m_AddFileTextBox.isItemPressed(Strings::_PLAYLIST_ADD_FOLDER))
-		{
+			if (Graphics::m_AddFileTextBox->isItemPressed(1))
+			{
 #ifdef _WIN32_
-			fileBrowserActive = true;
-			std::thread t(OpenFolderBrowserWrap);
-			t.detach();
+				fileBrowserActive = true;
+				std::thread t(OpenFolderBrowserWrap);
+				t.detach();
 #else
 #endif
+			}
 		}
 
 
@@ -1077,10 +1096,13 @@ namespace MP
 			dir = fileNames.substr(0, dirPos);
 			fileNames = fileNames.substr(dirPos + 1, fileNames.length());
 
+			if (State::CheckState(State::FilesLoaded) == false)
+				return;
+
 			if (State::CheckState(State::PathContainerSorted) == false)
 				State::SetState(State::SortPathsOnNewFileLoad);
 
-			//State::SetState(State::FileDropped);
+			State::SetState(State::FileDropped);
 			State::ResetState(State::InitialLoadFromFile);
 			State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
 			State::SetState(State::FilesAddedInfoNotLoaded);
@@ -1098,15 +1120,7 @@ namespace MP
 			if (nlCount == 0)
 			{
 				Audio::DroppedItemsCount++;
-				if (fs::is_directory(utf8_to_utf16(dir)))
-				{
-					fileLoadThread = new std::thread(Audio::PushToPlaylist, dir, true);
-					fileLoadThread->detach();
-				}
-				else
-				{
-					Audio::PushToPlaylist(dir);
-				}
+				Audio::SaveDroppedPath(dir);
 			}
 			else
 			{
@@ -1119,18 +1133,18 @@ namespace MP
 					fileNames = fileNames.substr(titlePos + 1, fileNames.length());
 
 					Audio::DroppedItemsCount++;
-					if (fs::is_directory(utf8_to_utf16(dir)))
 					{
-						fileLoadThread = new std::thread(Audio::PushToPlaylist, title, true);
-						fileLoadThread->detach();
-					}
-					else
-					{
-						Audio::PushToPlaylist(title);
+						Audio::SaveDroppedPath(title);
 					}
 				}
+
+
 			}
 
+			State::SetState(State::AddedByFileBrowser);
+			fileLoadThread = new std::thread(Audio::OnDropComplete);
+			fileLoadThread->detach();
+			delete fileLoadThread;
 
 			fileBrowserFinished = false;
 		}

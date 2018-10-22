@@ -221,6 +221,7 @@ namespace mdEngine
 					Window::WindowProperties.m_ApplicationHeight = Window::WindowProperties.m_WindowHeightBeforeMaximize;
 					Window::WindowProperties.m_IsMaximized = false;
 				}
+				State::SetState(State::Window::PositionChanged);
 				SDL_SetWindowPosition(window, newWX, newWY);
 			}
 		}

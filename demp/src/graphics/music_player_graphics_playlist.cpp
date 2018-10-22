@@ -71,7 +71,7 @@ namespace mdEngine
 
 		s32 MP::PlaylistObject::GetPlayingID() const
 		{
-			return mdEngine::MP::Playlist::RamLoadedMusic.get() != NULL ? mdEngine::MP::Playlist::RamLoadedMusic.m_ID : -1;
+			return mdEngine::MP::Playlist::RamLoadedMusic.get() != NULL ? m_PlayingID : -1;
 		}
 
 		glm::vec2 MP::PlaylistObject::GetPos() const
@@ -137,6 +137,11 @@ namespace mdEngine
 		void MP::PlaylistObject::SetHiddenSeparatorCount(s32 count)
 		{
 			m_HiddenSeparatorCount = count;
+		}
+
+		void MP::PlaylistObject::SetSelected(b8 val)
+		{
+			m_IsSelected = val;
 		}
 
 		f64 MP::PlaylistObject::GetItemsSize() const
