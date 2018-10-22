@@ -14,6 +14,8 @@ namespace Graphics
 		// TODO: It cant be an extern variable...
 		typedef std::vector<Interface::TextBox*> TextBoxContainer;
 
+		extern Interface::PlaylistItemTextBox*	m_PlaylistItemTextBox;
+
 		extern Interface::TextBox* m_AddFileTextBox;
 
 		void UpdatePlaylistCursorOffset();

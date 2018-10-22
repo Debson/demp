@@ -176,13 +176,13 @@ namespace mdEngine
 
 		};
 
-		class TextBox : public TextObject
+		class TextBox : public TextObject, public Button
 		{
 		public:
 			TextBox();
 			~TextBox();
 			TextBox(glm::vec2 pos, glm::vec2 size, mdShader* shader);
-			TextBox(MP::UI::Input::ButtonType code, glm::vec2 size, glm::vec2 pos, mdShader* shader);
+			//TextBox(glm::vec2 size, glm::vec2 pos, mdShader* shader);
 
 			void Update();
 			void Render();
@@ -206,6 +206,8 @@ namespace mdEngine
 			glm::vec2	GetSize() const;
 
 		private:
+			Button* m_Button;
+
 			b8							m_Active;
 			u16							m_ItemsCount;
 			f32							m_ItemScale;

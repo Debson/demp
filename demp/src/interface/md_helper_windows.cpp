@@ -513,10 +513,10 @@ namespace mdEngine
 		State::ResetState(State::OtherWindowHasFocus);
 	}
 
-	Window::MusicInfoWindow::MusicInfoWindow(glm::vec2 pos)
+	Window::MusicInfoWindow::MusicInfoWindow(glm::vec2 pos, s32 id)
 	{
-		m_Width = 370;
-		m_Height = 147;
+		m_Width = MP::Data::_MUSIC_INFO_WINDOW_SIZE.x;
+		m_Height = MP::Data::_MUSIC_INFO_WINDOW_SIZE.y;
 
 		m_Window = NULL;
 
@@ -578,7 +578,16 @@ namespace mdEngine
 		m_ExitButton = Interface::Button(glm::vec2(exitButtonSize), glm::vec2(m_Width - exitButtonSize, 0.f));
 		m_ButtonCont.push_back(&m_ExitButton);
 
-		m_MusicID = Graphics::MP::GetPlaylistObject()->GetPlayingID();
+		if (id >= 0)
+			m_MusicID = id;
+		else
+			m_MusicID = Graphics::MP::GetPlaylistObject()->GetPlayingID();
+
+		if (Audio::Object::GetAudioObject(m_MusicID)->GetAlbumPictureTexture() == 0)
+		{
+			Audio::Object::GetAudioObject(m_MusicID)->LoadAlbumImage();
+			m_DeleteAlbumPic = true;
+		}
 
 		s32 fontSizeSmall = 12;
 		s32 fontSizeLarge = 18;
@@ -654,6 +663,8 @@ namespace mdEngine
 		m_PathText.SetTextPos(glm::vec2(textPosX, m_InfoText.GetTextSize().y + m_InfoText.GetTextPos().y));
 		m_PathText.InitTextTexture();
 
+
+	
 
 		m_FocusLostTimer = Time::Timer(2000);
 	}

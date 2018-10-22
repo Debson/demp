@@ -119,6 +119,9 @@ namespace WindowsPlatform
 
 	std::wstring FileBrowser::GetFileNames()
 	{
+		if (convertedFilenames[0] == L'\n')
+			return L"";
+
 		return convertedFilenames;
 	}
 	

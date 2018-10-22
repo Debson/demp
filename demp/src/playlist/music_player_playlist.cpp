@@ -436,6 +436,7 @@ namespace MP
 
 			Graphics::MP::GetPlaylistObject()->SetPlayingID(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)->GetID());
 			Graphics::MP::GetPlaylistObject()->SetSelectedID(RamLoadedMusic.m_ID);
+			State::ResetState(State::CurrentlyPlayingDeleted);
 
 			if (Audio::Object::GetAudioObject(RamLoadedMusic.m_PreviousID) != nullptr) {
 				Audio::Object::GetAudioObject(RamLoadedMusic.m_PreviousID)->DeleteAlbumImageTexture();
@@ -910,6 +911,8 @@ namespace MP
 		b8 StartNextSong()
 		{
 
+			if ((Playlist::GetMusicLength() - Playlist::GetPosition() > 2) || Playlist::IsPlaying() == true)
+				return false;
 			/*	Uncomment so music won't repeat after it reaches last song on the playlist or 
 				last song in the shuffle container
 			*/
@@ -926,34 +929,11 @@ namespace MP
 				mdStartNewOnEnd = false;
 			}*/
 
-			/*if (mdRepeatMusic == false)
-				return false;
-
-			if (mdMPStarted == false)
-				return false;
-
-
-			if (State::CheckState(State::FilesLoading) == true)
-				return false;
-
-			if (mdStartNewOnEnd == false)
-				return false;
-
-			if (IsPlaying() == true)
-				return false;
-
-			return true;*/
-
-			if (Playlist::IsPlaying() == true)
-			{
-				return false;
-			}
-
-			if (Audio::Object::GetSize() > 1 && mdRepeatMusic == false && mdMPStarted == true)
+			if (Audio::Object::GetSize() > 1 && mdRepeatMusic == false && mdMPStarted == true && mdStartNewOnEnd == true)
 				return true;
 
 			// Free loaded song
-			if (Audio::Object::GetSize() <= 1)
+			if (Audio::Object::GetSize() <= 1 || mdStartNewOnEnd == false)
 			{
 				//Graphics::MP::GetPlaylistObject()->SetPlayingID(-1);
 				RamLoadedMusic.Free();

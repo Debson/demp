@@ -33,6 +33,9 @@ namespace MP
 		static f32 mdDefaultHeight = 320.f;
 
 		
+		const s32 _WINDOW_TEXTBOXES_OFFSET = 150;
+
+		const glm::vec2 _MUSIC_INFO_WINDOW_SIZE = glm::vec2(370, 147);
 
 		const s32 _SCREEN_FPS = 30;
 		extern s32 _SCREEN_TICK_PER_FRAME;
@@ -172,6 +175,8 @@ namespace MP
 
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_POS;
 		const glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE = glm::vec2(120.f, 60);
+
+		const glm::vec2 _PLAYLIST_ITEM_TEXTBOX_SIZE = glm::vec2(180.f, 80.f);
 
 		const s16 _TEXT_BOX_ITEM_HEIGHT = 20;
 

@@ -617,18 +617,10 @@ namespace mdEngine
 																				   m_Size(size), 
 																				   m_Shader(shader)
 	{ 
-		m_ItemsCount = 0;
-	}
-
-	Interface::TextBox::TextBox(MP::UI::Input::ButtonType code, glm::vec2 size, glm::vec2 pos, mdShader* shader) : 
-								m_Shader(shader)
-	{ 
-		m_Pos = pos;
-		m_Size = size;
-		m_Type = code;
+		m_ButtonPos = pos;
+		m_ButtonSize = size;
 		m_ItemsCount = 0;
 		m_TextBoxBackgroundTexture = 0;
-		new Button(code, size, pos);
 	}
 
 	void Interface::TextBox::Update()
@@ -642,11 +634,12 @@ namespace mdEngine
 		assert(m_Shader != NULL);
 
 
+		s32 winOffset = Data::_WINDOW_TEXTBOXES_OFFSET;
 		m_Shader->use();
-		m_Projection = glm::ortho(0.f, static_cast<f32>(Window::WindowProperties.m_WindowWidth + 50.f), 
+		m_Projection = glm::ortho(0.f, static_cast<f32>(Window::WindowProperties.m_WindowWidth + winOffset),
 									   static_cast<f32>(Window::WindowProperties.m_WindowHeight), 0.f);
 		m_Shader->setMat4("projection", m_Projection);
-		glViewport(0.f, 0.f, static_cast<f32>(Window::WindowProperties.m_WindowWidth + 50.f), 
+		glViewport(0.f, 0.f, static_cast<f32>(Window::WindowProperties.m_WindowWidth + winOffset),
 							 static_cast<f32>(Window::WindowProperties.m_WindowHeight));
 
 		glm::mat4 model;
@@ -787,6 +780,7 @@ namespace mdEngine
 		item->SetTextColor(m_TextColorVec);
 		item->SetFontSize(m_FontSize);
 		item->InitTextTexture();
+		item->ResetState();
 		m_Items.push_back(item);
 		m_ItemsCount++;
 	}
@@ -811,7 +805,7 @@ namespace mdEngine
 		/*auto item = std::find_if(m_InterfaceButtonContainer.begin(), m_InterfaceButtonContainer.end(),
 			[&](std::pair<const std::string, Button*> const & ref) { return ref.first.compare(name) == 0; });*/
 
-		if (id <= 0 || id >= m_Items.size())
+		if (id < 0 || id >= m_Items.size())
 			return false;
 
 		return m_Items[id]->hasFocus;

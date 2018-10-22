@@ -97,7 +97,7 @@ namespace mdEngine
 		class MusicInfoWindow : public WindowObject
 		{
 		public:
-			MusicInfoWindow(glm::vec2 pos);
+			MusicInfoWindow(glm::vec2 pos, s32 id = -1);
 			~MusicInfoWindow();
 
 

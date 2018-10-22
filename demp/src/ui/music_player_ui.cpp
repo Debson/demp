@@ -849,8 +849,11 @@ namespace MP
 
 			if (Audio::Object::GetAudioObject(i)->isPressedRight == true)
 			{
-				Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
+				//Graphics::MP::GetPlaylistObject()->multipleSelect.clear();
 				Graphics::MP::GetPlaylistObject()->multipleSelect.push_back(currentPlaylistItemID);
+				std::sort(Graphics::MP::GetPlaylistObject()->multipleSelect.begin(), Graphics::MP::GetPlaylistObject()->multipleSelect.end());
+
+				Graphics::MP::GetPlaylistObject()->multipleSelect.erase(std::unique(Graphics::MP::GetPlaylistObject()->multipleSelect.begin(), Graphics::MP::GetPlaylistObject()->multipleSelect.end()), Graphics::MP::GetPlaylistObject()->multipleSelect.end());
 			}
 
 			if (Audio::Object::GetAudioObject(i)->isPressed == true)
@@ -892,7 +895,6 @@ namespace MP
 						State::SetState(State::AudioChosen);
 					}
 				}
-
 			}
 
 
@@ -1089,6 +1091,12 @@ namespace MP
 		{
 			fileBrowserActive = false;
 			std::string fileNames = utf16_to_utf8(mdWindowsFile::GetFileNames());
+
+			if (fileNames == "")
+			{
+				fileBrowserFinished = false;
+				return;
+			}
 
 			std::string title;
 			std::string dir;

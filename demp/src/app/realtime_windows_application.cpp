@@ -111,7 +111,7 @@ void mdEngine::SetupSDL()
 	SDL_GetCurrentDisplayMode(0, &current);
 
 	mdWindow = SDL_CreateWindow("demp", Window::WindowProperties.m_WindowPositionX, Window::WindowProperties.m_WindowPositionY,
-		MP::Data::_DEFAULT_PLAYER_SIZE.x + 50, current.h,
+		MP::Data::_DEFAULT_PLAYER_SIZE.x + MP::Data::_WINDOW_TEXTBOXES_OFFSET, current.h,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
 
 	mdWindowID = SDL_GetWindowID(mdWindow);
