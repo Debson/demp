@@ -137,6 +137,10 @@ namespace MP
 		const glm::vec2 _SETTINGS_BUTTON_POS = glm::vec2(Data::_SETTINGS_BUTTON_BACKGROUND_POS.x + (Data::_SETTINGS_BUTTON_BACKGROUND_SIZE.x - Data::_SETTINGS_BUTTON_SIZE.x) / 2.f,
 														 Data::_SETTINGS_BUTTON_BACKGROUND_POS.y + (Data::_SETTINGS_BUTTON_BACKGROUND_SIZE.y - Data::_SETTINGS_BUTTON_SIZE.y) / 2.f);
 
+		const glm::vec2 _SETTINGS_BUTTON_TEXTBOX_SIZE = glm::vec2(140, 100);
+		const glm::vec2 _SETTINGS_BUTTON_TEXTBOX_POS = glm::vec2(_SETTINGS_BUTTON_BACKGROUND_POS.x,
+											_SETTINGS_BUTTON_BACKGROUND_POS.y + _SETTINGS_BUTTON_BACKGROUND_SIZE.y);
+
 
 		const glm::vec2 _PLAY_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f - 20.f - musicUIOffsetX, mdDefaultHeight - 80.f - musicUIOffsetY);;
 		const glm::vec2 _PLAY_BUTTON_SIZE = glm::vec2(40.f, 40.f);

@@ -237,6 +237,17 @@ namespace mdEngine
 			u32 m_SelectedID;
 		};
 
+		class SettingsTextBox : public TextBox
+		{
+		public:
+			using TextBox::TextBox;
+
+			void Init();
+
+		private:
+
+		};
+
 		class ButtonSlider
 		{
 		public:
@@ -313,6 +324,21 @@ namespace mdEngine
 			glm::vec4 m_CheckBoxOutline;
 			glm::vec3 m_CheckBoxColor;
 			mdShader* m_Shader;
+		};
+
+
+		class MusicTimeProgressObject : private TextObject, private Button
+		{
+		public:
+			MusicTimeProgressObject();
+			void Init();
+			void Update();
+			void Render();
+
+		private:
+			b8	m_TimeReversed;
+			s32 m_CurrentTime;
+			//Text::TextObject m_BackgroundText;
 		};
 
 

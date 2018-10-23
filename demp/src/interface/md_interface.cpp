@@ -625,6 +625,7 @@ namespace mdEngine
 
 	void Interface::TextBox::Update()
 	{
+		App::ProcessButton(this);
 		for (auto & i : m_Items)
 			App::ProcessButton(i);
 	}
@@ -836,6 +837,23 @@ namespace mdEngine
 	u32 Interface::PlaylistItemTextBox::GetSelectedItemID()
 	{
 		return m_SelectedID;
+	}
+
+
+	void Interface::SettingsTextBox::Init()
+	{
+		this->SetPos(Data::_SETTINGS_BUTTON_TEXTBOX_POS);
+		this->SetSize(Data::_SETTINGS_BUTTON_TEXTBOX_SIZE);
+		this->SetTextColor(Color::White);
+		this->SetBackgroundTexture(0);	// custom text
+		this->SetSelectTexture(0); // custom tex
+		this->SetItemsOffset(glm::vec2(10.f, 5.f));
+		this->SetFontSize(12);
+
+		this->AddItem("Options");
+		this->AddItem("Add files");
+		this->AddItem("Add folder");
+		this->UpdateItemsPos();
 	}
 
 	Interface::ButtonSlider::ButtonSlider() { }
@@ -1333,7 +1351,73 @@ namespace mdEngine
 		DeleteTexture();
 	}
 
+
+	Interface::MusicTimeProgressObject::MusicTimeProgressObject()
+	{
+		SetTextColor(Color::White);
+		m_FontPath = Strings::_FONT_DIGITAL_PATH;
+		m_FontSize = 48;
+		SetTextString("00:00");
+		SetTextPos(Data::_MUSIC_TIME_PROGRESS_POS);
+		m_Transparency = 0.8f;
+		m_TimeReversed = false;
+
+		/*m_BackgroundText = Text::TextObject(Color::White, m_FontSize, m_FontPath, 0.2);
+		m_BackgroundText.SetTextString("888:88");*/
+	}
+
+	void Interface::MusicTimeProgressObject::Init()
+	{
+		InitTextTexture();
+		SetTextPos(glm::vec2((Data::_MUSIC_TIME_PROGRESS_POS.x - this->GetTextSize().x) / 2.f,
+							  Data::_MUSIC_TIME_PROGRESS_POS.y - this->GetTextSize().y / 2.f));
+
+		/*TTF_Font* font = TTF_OpenFont(m_FontPath.c_str(), m_FontSize);
+		s32 w, h;
+		TTF_SizeUTF8(font, "-", &w, &h);
+		TTF_CloseFont(font);
+		m_BackgroundText.SetTextPos(glm::vec2(GetTextPos().x - w, GetTextPos().y));
+		m_BackgroundText.InitTextTexture();*/
+
+		SetButtonPos(GetTextPos());
+		SetButtonSize(GetTextSize());
+	}
+
+	void Interface::MusicTimeProgressObject::Update()
+	{
+		App::ProcessButton(this);
+		if (this->isPressed == true)
+		{
+			m_TimeReversed = !m_TimeReversed;
+			TTF_Font* font = TTF_OpenFont(m_FontPath.c_str(), m_FontSize);
+			s32 w, h;
+			TTF_SizeUTF8(font, "-", &w, &h);
+			TTF_CloseFont(font);
+			SetTextPos(glm::vec2(GetTextPos().x - (m_TimeReversed ? (w) : (w * -1)), GetTextPos().y));
+		}
+
+		if (m_CurrentTime != (s32)Playlist::GetPosition() || this->isPressed == true)
+		{
+			//md_log((s32)Playlist::GetPosition());
+			m_CurrentTime = (s32)Playlist::GetPosition();
+			if (m_TimeReversed == true)
+			{
+				this->SetTextString("-" + Converter::SecToProperTimeFormatShort(Playlist::GetMusicLength() - m_CurrentTime));
+			}
+			else
+				this->SetTextString(Converter::SecToProperTimeFormatShort(m_CurrentTime));
+
+			this->ReloadTextTexture();
+		}
+	}
+
+	void Interface::MusicTimeProgressObject::Render()
+	{
+		this->DrawString();
+		//m_BackgroundText.DrawString();
+	}
 	
+
 	Interface::PlaylistSeparatorContainer*  Interface::Separator::GetContainer()
 	{
 		return &m_PlaylistSeparatorContainer;

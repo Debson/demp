@@ -35,9 +35,9 @@ namespace mdEngine
 		Interface::TextBox*				m_AddFileTextBox;
 		Interface::PlaylistItemTextBox*	m_PlaylistItemTextBox;	// Textbox when right mouse click on item
 		Interface::TextBox*				m_MusicProgressTextBox;
+		Interface::SettingsTextBox*		m_SettingsTextBox;
 
-
-		Text::TextObject*				m_MusicTimeText;
+		Interface::MusicTimeProgressObject* m_MusicTimeProgress;
 
 		Time::Timer m_PlaylistTextBoxTimer;
 		Time::Timer m_MusicProgressTimer;
@@ -88,6 +88,7 @@ namespace mdEngine
 		b8 playlistAddFileActive(false);
 		b8 playlistAddFileButtonPressed(false);
 		b8 playlistItemTextBoxActive(false);
+		b8 settingsTextBoxActive(false);
 
 		b8 musicInfoWindowActiveFromPlaylist(false);
 		b8 musicProgressTextBoxActive(false);
@@ -1823,7 +1824,6 @@ namespace mdEngine
 		// Update before any checking is done
 		if (m_PlaylistItemTextBox != NULL)
 		{
-			App::ProcessButton(m_PlaylistItemTextBox);
 			m_PlaylistItemTextBox->Update();
 		}
 
@@ -2110,11 +2110,63 @@ namespace mdEngine
 
 	void Graphics::UpdateSettingsButtons()
 	{
+		if (Input::isButtonPressed(Input::ButtonType::Options))
+		{
+			settingsTextBoxActive = !settingsTextBoxActive;
+		}
+
+		
+		if (settingsTextBoxActive == true && m_SettingsTextBox == NULL)
+		{
+			m_SettingsTextBox = new Interface::SettingsTextBox(Data::_SETTINGS_BUTTON_TEXTBOX_POS,
+															   Data::_SETTINGS_BUTTON_TEXTBOX_SIZE, 
+															   Shader::shaderDefault);
+			m_SettingsTextBox->Init();
+		}
+		else if (settingsTextBoxActive == false && m_SettingsTextBox != NULL)
+		{
+			delete m_SettingsTextBox;
+			m_SettingsTextBox = NULL;
+		}
+
+		if (m_SettingsTextBox != NULL)
+		{
+			m_SettingsTextBox->Update();
+
+			if (m_SettingsTextBox->isItemPressed(0) == true)
+			{
+				settingsTextBoxActive = false;
+			}
+
+			if (m_SettingsTextBox->isItemPressed(1) == true)
+			{
+				settingsTextBoxActive = false;
+			}
+
+			if (m_SettingsTextBox->isItemPressed(2) == true)
+			{
+				settingsTextBoxActive = false;
+			}
+
+			if (App::Input::IsKeyPressed(App::KeyCode::MouseLeft) == true &&
+				m_SettingsTextBox->hasFocus == false &&
+				Input::hasFocus(Input::ButtonType::Options) == false)
+			{
+				settingsTextBoxActive = false;
+			}
+		}
+
+
 
 	}
 
 	void Graphics::RenderSettingsButtons()
 	{
+		if (m_SettingsTextBox != NULL)
+		{
+			m_SettingsTextBox->Render();
+		}
+
 		// UI left
 		Shader::shaderDefault->setVec3("color", Color::White);
 
@@ -2345,38 +2397,29 @@ namespace mdEngine
 
 	void Graphics::UpdateMusicTimeProgress()
 	{
-		static s32 currentTime = 0;
-		if (currentTime != (s32)Playlist::GetPosition() && m_MusicTimeText != NULL)
+		if (MP::GetPlaylistObject()->GetPlayingID() >= 0 && m_MusicTimeProgress == NULL)
 		{
-			md_log((s32)Playlist::GetPosition());
-			currentTime = (s32)Playlist::GetPosition();
+			m_MusicTimeProgress = new Interface::MusicTimeProgressObject();
+			m_MusicTimeProgress->Init();
+		}
+		else if (MP::GetPlaylistObject()->GetPlayingID() == -1 && m_MusicTimeProgress != NULL)
+		{
+			delete m_MusicTimeProgress;
+			m_MusicTimeProgress = NULL;
+		}
 
-			m_MusicTimeText->SetTextString(Converter::SecToProperTimeFormatShort(Playlist::GetPosition()));
-			m_MusicTimeText->ReloadTextTexture();
-		}
-		if (MP::GetPlaylistObject()->GetPlayingID() >= 0 && m_MusicTimeText == NULL)
+		if (m_MusicTimeProgress != NULL)
 		{
-			m_MusicTimeText = new Text::TextObject(Color::White, 48, Strings::_FONT_DIGITAL_PATH, 0.8f);
-			m_MusicTimeText->SetTextString("00:00");
-			m_MusicTimeText->SetTextPos(Data::_MUSIC_TIME_PROGRESS_POS);
-			m_MusicTimeText->InitTextTexture();
-			m_MusicTimeText->SetTextPos(glm::vec2((Data::_MUSIC_TIME_PROGRESS_POS.x - m_MusicTimeText->GetTextSize().x) / 2.f, 
-												   Data::_MUSIC_TIME_PROGRESS_POS.y - m_MusicTimeText->GetTextSize().y / 2.f));
-			
-		}
-		else if (MP::GetPlaylistObject()->GetPlayingID() == -1 && m_MusicTimeText != NULL)
-		{
-			delete m_MusicTimeText;
-			m_MusicTimeText = NULL;
+			m_MusicTimeProgress->Update();
 		}
 
 	}
 
 	void Graphics::RenderMusicTimeProgress()
 	{
-		if (m_MusicTimeText != NULL)
+		if (m_MusicTimeProgress != NULL)
 		{
-			m_MusicTimeText->DrawString();
+			m_MusicTimeProgress->Render();
 		}
 	}
 

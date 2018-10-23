@@ -128,15 +128,22 @@ namespace MP
 
 		mdDefaultWidth = 500.f;
 		mdDefaultHeight = 350.f;
-
+		//TOP bar
 		new Interface::Movable(glm::vec2(mdDefaultWidth, 40), glm::vec2(0.f, 0.f));
 		//new Interface::Movable(glm::vec2(20, Data::_DEFAULT_PLAYER_SIZE.y), glm::vec2(0.f, 0.f));
 		//new Interface::Movable(glm::vec2(20, Data::_DEFAULT_PLAYER_SIZE.y), glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x - 20, 0.f));
-		s32 sizeX = 110;
-		new Interface::Movable(glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x, sizeX), glm::vec2(0.f, Data::_DEFAULT_PLAYER_SIZE.y - sizeX));
-		sizeX = 20;
+
+		// Middle
+		s32 sizeY = 130;
+		s32 posY = 110;
+		new Interface::Movable(glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x, sizeY), glm::vec2(0.f, Data::_DEFAULT_PLAYER_SIZE.y - posY));
+
+		// Sides
+		s32 sizeX = 20;
 		mdPlaylistMovableLeft	= new Interface::Movable(glm::vec2(sizeX, Window::WindowProperties.m_ApplicationHeight), glm::vec2(0.f));
 		mdPlaylistMovableRight	= new Interface::Movable(glm::vec2(sizeX, Window::WindowProperties.m_ApplicationHeight), glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x - sizeX, 0.f));
+
+		// bottom
 		sizeX = 25;
 		mdPlaylistMovableBottom = new Interface::Movable(glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x, sizeX), glm::vec2(0.f, Window::WindowProperties.m_ApplicationHeight - sizeX));
 
@@ -623,7 +630,9 @@ namespace MP
 			Window::MinimizeWindow();
 		}
 
-		if (Input::isButtonPressed(Input::ButtonType::Options) && Window::mdOptionsWindow == nullptr)
+		if (Graphics::m_SettingsTextBox != NULL && 
+			Graphics::m_SettingsTextBox->isItemPressed(0) && 
+			Window::mdOptionsWindow == NULL)
 		{
 			Window::mdOptionsWindow = new Window::OptionsWindow();
 			Window::WindowsContainer.insert(std::pair< std::string, Window::WindowObject*>("OptionsWindow", Window::mdOptionsWindow));
@@ -1076,6 +1085,29 @@ namespace MP
 			}
 
 			if (Graphics::m_AddFileTextBox->isItemPressed(1))
+			{
+#ifdef _WIN32_
+				fileBrowserActive = true;
+				std::thread t(OpenFolderBrowserWrap);
+				t.detach();
+#else
+#endif
+			}
+		}
+
+		if (Graphics::m_SettingsTextBox != NULL)
+		{
+			if (Graphics::m_SettingsTextBox->isItemPressed(1))
+			{
+#ifdef _WIN32_
+				fileBrowserActive = true;
+				std::thread t(OpenFileBrowserWrap);
+				t.detach();
+#else
+#endif
+			}
+
+			if (Graphics::m_SettingsTextBox->isItemPressed(2))
 			{
 #ifdef _WIN32_
 				fileBrowserActive = true;

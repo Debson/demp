@@ -16,7 +16,9 @@ namespace Graphics
 
 		extern Interface::PlaylistItemTextBox*	m_PlaylistItemTextBox;
 
-		extern Interface::TextBox* m_AddFileTextBox;
+		extern Interface::TextBox*				m_AddFileTextBox;
+
+		extern Interface::SettingsTextBox*		m_SettingsTextBox;
 
 		void UpdatePlaylistCursorOffset();
 
