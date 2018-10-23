@@ -21,8 +21,9 @@ namespace mdEngine
 		static std::mutex mutex;
 	}
 
-	Text::TextObject::TextObject()
+	Text::TextObject::TextObject() : m_Transparency(1.f)
 	{
+		m_FontPath = Strings::_FONT_PATH;
 		m_TextString = "";
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
@@ -30,7 +31,7 @@ namespace mdEngine
 		m_FontSize = 14;
 	}
 
-	Text::TextObject::TextObject(glm::vec3 col, s32 fontSize)
+	Text::TextObject::TextObject(glm::vec3 col, s32 fontSize) : m_Transparency(1.f)
 	{
 		SDL_Color color = { static_cast<Uint8>(255 * col.x),
 							static_cast<Uint8>(255 * col.y),
@@ -39,6 +40,7 @@ namespace mdEngine
 
 		m_FontSize = fontSize;
 		SetTextColor(col);
+		m_FontPath = Strings::_FONT_PATH;
 		m_TextString = "";
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
@@ -46,7 +48,7 @@ namespace mdEngine
 		//TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	}
 
-	Text::TextObject::TextObject(glm::vec3 col, std::string text, s32 fontSize)
+	Text::TextObject::TextObject(glm::vec3 col, std::string text, s32 fontSize) : m_Transparency(1.f)
 	{
 		SDL_Color color = { static_cast<Uint8>(255 * col.x),
 							static_cast<Uint8>(255 * col.y),
@@ -54,11 +56,25 @@ namespace mdEngine
 						  };
 
 		SetTextColor(col);
+		m_FontPath = Strings::_FONT_PATH;
 		m_TextString = text;
 		m_TextScale = 1.f;
 		m_TextOffset = glm::vec2();
 		m_TextTexture = 0;
-		//TTF_SizeUTF8(m_Font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
+	}
+
+	Text::TextObject::TextObject(glm::vec3 col, s32 fontSize, std::string fontPath, f32 transparency) : m_FontSize(fontSize), m_Transparency(transparency)
+	{
+		SDL_Color color = { static_cast<Uint8>(255 * col.x),
+							static_cast<Uint8>(255 * col.y),
+							static_cast<Uint8>(255 * col.z)
+		};
+
+		SetTextColor(col);
+		m_FontPath = fontPath;
+		m_TextScale = 1.f;
+		m_TextOffset = glm::vec2();
+		m_TextTexture = 0;
 	}
 
 	Text::TextObject::~TextObject() 
@@ -70,7 +86,7 @@ namespace mdEngine
 	{
 		if (m_TextTexture == 0)
 		{
-			TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
+			TTF_Font* font = TTF_OpenFont(m_FontPath.c_str(), m_FontSize);
 			TTF_SizeUTF8(font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 			m_TextTexture = LoadText(font, m_TextString, m_TextColorSDL);
 			TTF_CloseFont(font);
@@ -81,7 +97,7 @@ namespace mdEngine
 	{
 		DeleteTexture();
 
-		TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
+		TTF_Font* font = TTF_OpenFont(m_FontPath.c_str(), m_FontSize);
 		assert(font != NULL);
 		TTF_SizeUTF8(font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 
@@ -111,8 +127,10 @@ namespace mdEngine
 		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.0));
 		Graphics::Shader::shaderDefault->setMat4("model", model);
 		Graphics::Shader::shaderDefault->setVec3("color", m_TextColorVec);
+		Graphics::Shader::shaderDefault->setFloat("transVal", m_Transparency);
 		glBindTexture(GL_TEXTURE_2D, m_TextTexture);
 		Graphics::Shader::Draw(Graphics::Shader::shaderDefault);
+		Graphics::Shader::shaderDefault->setFloat("transVal", 1.f);
 		Graphics::Shader::shaderDefault->setVec3("color", Color::White);
 	}
 

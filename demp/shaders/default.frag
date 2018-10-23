@@ -18,11 +18,11 @@ uniform bool roundEdges;
 uniform bool roundEdgesBackground;
 uniform bool outlineEnabled;
 
-
 uniform float aspectXY;
 uniform float border_width;
 uniform float playlistMinY;
 uniform float playlistMaxY;
+uniform float transVal = 1.0;
 
 uniform vec2 playlistBoundsY;
 uniform vec2 playlistBoundsX;
@@ -68,7 +68,7 @@ void main()
 	}
 	else
 	{
-		FragColor = texColor * vec4(color, 1.0);
+		FragColor = texColor * vec4(color, transVal);
 	}
 
 	if(playlistCutY)
@@ -104,6 +104,7 @@ void main()
 	{
 		FragColor = colorRGBA;
 	}
+
 
 
 	if(roundEdgesBackground == true)

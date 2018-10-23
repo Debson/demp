@@ -183,8 +183,11 @@ namespace MP
 		extern glm::vec2 _PLAYLIST_ADD_ICON_POS;
 		const glm::vec2 _PLAYLIST_ADD_ICON_SIZE = glm::vec2(_TEXT_BOX_ITEM_HEIGHT - 4);
 
-		const glm::vec2 _ALBUM_COVER_IMAGE_SIZE = glm::vec2(300, 150);
-		const glm::vec2 _ALBUM_COVER_IMAGE_POS = glm::vec2((mdDefaultWidth - _ALBUM_COVER_IMAGE_SIZE.x) / 2.f, 70.f);
+		const glm::vec2 _ALBUM_COVER_IMAGE_SIZE = glm::vec2(270, 150);
+		//const glm::vec2 _ALBUM_COVER_IMAGE_POS = glm::vec2((mdDefaultWidth - _ALBUM_COVER_IMAGE_SIZE.x) / 2.f, 70.f);
+		const glm::vec2 _ALBUM_COVER_IMAGE_POS = glm::vec2(_PLAY_BUTTON_POS.x + _PLAY_BUTTON_SIZE.x / 2.f - _ALBUM_COVER_IMAGE_SIZE.x / 2.f, 70.f);
+
+		const glm::vec2 _MUSIC_TIME_PROGRESS_POS = glm::vec2(_ALBUM_COVER_IMAGE_POS.x + _MAIN_FOREGROUND_POS.x, _ALBUM_COVER_IMAGE_POS.y + _ALBUM_COVER_IMAGE_SIZE.y / 2.f);
 
 
 		static f32 textOffsetY = 5.f;

@@ -22,6 +22,7 @@ namespace mdEngine
 			TextObject();
 			explicit TextObject(glm::vec3 col, s32 fontSize = 14);
 			TextObject(glm::vec3 col, std::string text, s32 fontSize = 14);
+			TextObject(glm::vec3 col, s32 fontSize, std::string fontPath, f32 transVal = 1.f);
 			virtual ~TextObject();
 
 			virtual void InitTextTexture();
@@ -52,6 +53,7 @@ namespace mdEngine
 
 		protected:
 			f32			  m_TextScale;
+			f32			  m_Transparency;
 			s32			  m_FontSize;
 			GLuint		  m_TextTexture;
 			SDL_Color	  m_TextColorSDL;
@@ -60,6 +62,7 @@ namespace mdEngine
 			glm::vec3	  m_TextColorVec;
 			glm::ivec2	  m_TextSize;
 			std::string	  m_TextString;
+			std::string	  m_FontPath;
 
 		private:
 		};

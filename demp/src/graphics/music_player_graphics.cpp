@@ -34,8 +34,10 @@ namespace mdEngine
 		Interface::Button*				m_AddFileButtonRef;
 		Interface::TextBox*				m_AddFileTextBox;
 		Interface::PlaylistItemTextBox*	m_PlaylistItemTextBox;	// Textbox when right mouse click on item
-		Interface::TextBox*				m_PlaylistTextBox;		// Textbox when right mouse click on playlist
 		Interface::TextBox*				m_MusicProgressTextBox;
+
+
+		Text::TextObject*				m_MusicTimeText;
 
 		Time::Timer m_PlaylistTextBoxTimer;
 		Time::Timer m_MusicProgressTimer;
@@ -86,7 +88,6 @@ namespace mdEngine
 		b8 playlistAddFileActive(false);
 		b8 playlistAddFileButtonPressed(false);
 		b8 playlistItemTextBoxActive(false);
-		b8 playlistTextBoxActive(false);
 
 		b8 musicInfoWindowActiveFromPlaylist(false);
 		b8 musicProgressTextBoxActive(false);
@@ -246,6 +247,9 @@ namespace mdEngine
 
 		void UpdateMusicProgressTextBox();
 		void RenderMusicProgressTextBox();
+
+		void UpdateMusicTimeProgress();
+		void RenderMusicTimeProgress();
 	}
 
 	void Graphics::UpdatePlaylistCursorOffset()
@@ -1809,7 +1813,6 @@ namespace mdEngine
 
 	void Graphics::UpdatePlaylistItemTextBox()
 	{
-		md_log(Graphics::MP::GetPlaylistObject()->GetPlayingID());
 		static s32 mouseX, mouseY;
 		glm::vec2 mousePos = App::Input::GetMousePosition();
 
@@ -1822,11 +1825,6 @@ namespace mdEngine
 		{
 			App::ProcessButton(m_PlaylistItemTextBox);
 			m_PlaylistItemTextBox->Update();
-		}
-		if (m_PlaylistTextBox != NULL)
-		{
-			App::ProcessButton(m_PlaylistTextBox);
-			m_PlaylistTextBox->Update();
 		}
 
 		if (m_PlaylistItemTextBox != NULL)
@@ -1886,8 +1884,6 @@ namespace mdEngine
 
 				playlistItemTextBoxActive = false;
 			}
-
-
 		}
 
 		if (App::Input::IsKeyPressed(App::KeyCode::I) == true && MP::GetPlaylistObject()->multipleSelect.size() == 1)
@@ -1911,7 +1907,7 @@ namespace mdEngine
 
 
 		if (App::Input::IsKeyPressed(App::KeyCode::MouseRight) == true && inside &&
-			playlistItemTextBoxActive == false && playlistTextBoxActive == false)
+			playlistItemTextBoxActive == false)
 		{
 			m_PlaylistTextBoxTimer.finished = true;
 			mouseX = mousePos.x;
@@ -1925,13 +1921,11 @@ namespace mdEngine
 			mouseY = mousePos.y;
 
 			playlistItemTextBoxActive = false;
-			playlistTextBoxActive = false;
 		}
 		else if (App::Input::IsKeyPressed(App::KeyCode::MouseLeft) == true && m_PlaylistItemTextBox != NULL &&
 				 m_PlaylistItemTextBox->hasFocus == false)
 		{
 			playlistItemTextBoxActive = false;
-			playlistTextBoxActive = false;
 			glDeleteTextures(1, &playlist_textbox_texture);
 		}
 
@@ -1944,7 +1938,6 @@ namespace mdEngine
 				if (Audio::Object::GetAudioObject(i)->hasFocus == true)
 				{
 					playlistItemTextBoxActive = true;
-					playlistTextBoxActive = false;
 					playlistItemHasFocus = true;
 					break;
 				}
@@ -1953,14 +1946,13 @@ namespace mdEngine
 
 			if (playlistItemHasFocus == false)
 			{
-				playlistTextBoxActive = true;
 				playlistItemTextBoxActive = false;
 
 				// update position then create window
 				
 			}
 
-			if (playlistItemTextBoxActive == true || playlistTextBoxActive == true)
+			if (playlistItemTextBoxActive == true)
 			{
 				playlistPositionOffsetTemp = playlistPositionOffset;;
 			}
@@ -2007,32 +1999,8 @@ namespace mdEngine
 			m_PlaylistItemTextBox = NULL;
 		}
 
-		if (playlistTextBoxActive == true && m_PlaylistTextBox == NULL)
-		{
-			m_PlaylistTextBox = new Interface::TextBox(mousePos, Data::_PLAYLIST_ITEM_TEXTBOX_SIZE, Shader::shaderDefault);
-
-			m_PlaylistTextBox->SetTextColor(Color::White);
-			m_PlaylistTextBox->SetBackgroundTexture(playlist_add_textbox_background);
-			m_PlaylistTextBox->SetSelectTexture(playlist_add_textbox_select);
-			m_PlaylistTextBox->SetItemScale(1.f);
-			m_PlaylistTextBox->SetItemsOffset(glm::vec2(5.f, 5.f));
-			m_PlaylistTextBox->AddItem("on playlist");
-			m_PlaylistTextBox->UpdateItemsPos(mousePos);
-
-			m_PlaylistTextBox->SetBackgroundTexture(playlist_textbox_texture);
-
-		}
-		else if (playlistTextBoxActive == false && m_PlaylistTextBox != NULL)
-		{
-			delete m_PlaylistTextBox;
-			m_PlaylistTextBox = NULL;
-		}
-
-		MP::GetPlaylistObject()->PlaylistTextBoxActive = playlistItemTextBoxActive || playlistTextBoxActive;
+		MP::GetPlaylistObject()->PlaylistTextBoxActive = playlistItemTextBoxActive;
 		m_PlaylistTextBoxTimer.Update();
-
-		m_PlaylistTextBox;
-		m_PlaylistTextBox;
 	}
 
 	void Graphics::RenderPlaylistItemTextBox()
@@ -2040,10 +2008,6 @@ namespace mdEngine
 		if (m_PlaylistItemTextBox != NULL)
 		{
 			m_PlaylistItemTextBox->Render();
-		}
-		if (m_PlaylistTextBox != NULL)
-		{
-			m_PlaylistTextBox->Render();
 		}
 	}
 
@@ -2379,6 +2343,43 @@ namespace mdEngine
 			m_MusicProgressTextBox->Render();
 	}
 
+	void Graphics::UpdateMusicTimeProgress()
+	{
+		static s32 currentTime = 0;
+		if (currentTime != (s32)Playlist::GetPosition() && m_MusicTimeText != NULL)
+		{
+			md_log((s32)Playlist::GetPosition());
+			currentTime = (s32)Playlist::GetPosition();
+
+			m_MusicTimeText->SetTextString(Converter::SecToProperTimeFormatShort(Playlist::GetPosition()));
+			m_MusicTimeText->ReloadTextTexture();
+		}
+		if (MP::GetPlaylistObject()->GetPlayingID() >= 0 && m_MusicTimeText == NULL)
+		{
+			m_MusicTimeText = new Text::TextObject(Color::White, 48, Strings::_FONT_DIGITAL_PATH, 0.8f);
+			m_MusicTimeText->SetTextString("00:00");
+			m_MusicTimeText->SetTextPos(Data::_MUSIC_TIME_PROGRESS_POS);
+			m_MusicTimeText->InitTextTexture();
+			m_MusicTimeText->SetTextPos(glm::vec2((Data::_MUSIC_TIME_PROGRESS_POS.x - m_MusicTimeText->GetTextSize().x) / 2.f, 
+												   Data::_MUSIC_TIME_PROGRESS_POS.y - m_MusicTimeText->GetTextSize().y / 2.f));
+			
+		}
+		else if (MP::GetPlaylistObject()->GetPlayingID() == -1 && m_MusicTimeText != NULL)
+		{
+			delete m_MusicTimeText;
+			m_MusicTimeText = NULL;
+		}
+
+	}
+
+	void Graphics::RenderMusicTimeProgress()
+	{
+		if (m_MusicTimeText != NULL)
+		{
+			m_MusicTimeText->DrawString();
+		}
+	}
+
 	Graphics::TextBoxContainer* Graphics::GetTextBoxContainer()
 	{
 		return &m_TextBoxContainer;
@@ -2531,6 +2532,10 @@ namespace mdEngine
 		UpdatePlaylistAddButtons();
 		UpdateSettingsButtons();
 		UpdateMusicProgressTextBox();
+		UpdateMusicTimeProgress();
+
+		Input::SetButtonExtraState(volumeSliderActive || musicSliderActive || playlistSliderActive ||
+			UI::fileBrowserActive || playlistAddFileActive);
 	}
 
 	void Graphics::RenderMainWindow()
@@ -2558,10 +2563,7 @@ namespace mdEngine
 		RenderWindowControlButtons();
 		RenderSettingsButtons();
 		RenderMusicProgressTextBox();
-
-		Input::SetButtonExtraState(volumeSliderActive || musicSliderActive || playlistSliderActive || 
-								   UI::fileBrowserActive || playlistAddFileActive || playlistTextBoxActive);
-
+		RenderMusicTimeProgress();
 	}
 
 	void Graphics::CloseMainWindow()

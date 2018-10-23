@@ -674,7 +674,6 @@ namespace MP
 				break;
 			case App::InputEvent::kScrollEvent:
 				mdVolume -= (Data::VolumeScrollStep / 100.f);
-				md_log(mdVolume);
 				break;
 			};
 

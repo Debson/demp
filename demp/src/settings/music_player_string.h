@@ -11,6 +11,7 @@ namespace mdEngine
 	{
 
 		const std::string _FONT_PATH = "E:\\SDL Projects\\demp\\demp\\assets\\font\\TimesNewRoman.ttf";
+		const std::string _FONT_DIGITAL_PATH = "E:\\SDL Projects\\demp\\demp\\assets\\font\\digital.ttf";
 
 		// Settings files texts
 		extern std::string _SETTINGS_FILE;
