@@ -558,7 +558,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				if (frameTicks < MP::Data::_SCREEN_TICK_PER_FRAME)
 				{
 					SDL_Delay(MP::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
-					md_log(MP::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
+					//md_log(MP::Data::_SCREEN_TICK_PER_FRAME - frameTicks);
 				}
 			}
 			else

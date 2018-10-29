@@ -87,6 +87,7 @@ namespace mdEngine
 		ResetState(AudioHidden);
 		ResetState(Window::PositionChanged);
 		ResetState(State::DeletionInProgress);
+		ResetState(State::VolumeChangedOnce);
 		//State::ResetState(State::PlaylistMovement);
 
 	}

@@ -122,8 +122,8 @@ namespace mdEngine
 
 		Graphics::Shader::shaderDefault->use();
 		glm::mat4 model;
-		model = glm::translate(model, glm::vec3(glm::vec2(m_TextPos.x + m_TextOffset.x,
-														  m_TextPos.y + m_TextOffset.y), drawOverAnything ? 1.f : 0.9f));
+		model = glm::translate(model, glm::vec3(glm::vec2(s32(m_TextPos.x + m_TextOffset.x),
+														  s32(m_TextPos.y + m_TextOffset.y)), drawOverAnything ? 1.f : 0.9f));
 		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.0));
 		Graphics::Shader::shaderDefault->setMat4("model", model);
 		Graphics::Shader::shaderDefault->setVec3("color", m_TextColorVec);
@@ -139,10 +139,9 @@ namespace mdEngine
 		Graphics::Shader::shaderDefault->use();
 		glm::mat4 model;
 		model = glm::translate(model, 
-							   glm::vec3(glm::vec2(m_TextPos.x + m_TextOffset.x, 
-													m_TextPos.y + m_TextOffset.y), 
-								   0.9f)
-							  );
+							   glm::vec3(glm::vec2(s32(m_TextPos.x + m_TextOffset.x), 
+												   s32(m_TextPos.y + m_TextOffset.y)), 
+								   0.9f));
 		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.f));
 		Graphics::Shader::shaderDefault->setMat4("model", model);
 		Graphics::Shader::shaderDefault->setVec3("color", m_TextColorVec);
@@ -157,8 +156,8 @@ namespace mdEngine
 
 
 		glm::mat4 model;
-		model = glm::translate(model, glm::vec3(glm::vec2(m_TextPos.x + m_TextOffset.x,
-			m_TextPos.y + m_TextOffset.y), 0.9f));
+		model = glm::translate(model, glm::vec3(glm::vec2(s32(m_TextPos.x + m_TextOffset.x),
+														  s32(m_TextPos.y + m_TextOffset.y)), 0.9f));
 		model = glm::scale(model, glm::vec3((glm::vec2)m_TextSize * m_TextScale, 1.0));
 		shader->setMat4("model", model);
 		shader->setVec3("color", m_TextColorVec);

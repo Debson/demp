@@ -31,11 +31,13 @@ namespace mdEngine
 	namespace Graphics
 	{
 		Interface::Button*				m_PlaylistBarSlider;
-		Interface::Button*				m_AddFileButtonRef;
 		Interface::TextBox*				m_AddFileTextBox;
 		Interface::PlaylistItemTextBox*	m_PlaylistItemTextBox;	// Textbox when right mouse click on item
 		Interface::TextBox*				m_MusicProgressTextBox;
 		Interface::SettingsTextBox*		m_SettingsTextBox;
+		Interface::PlaylistAddButton	m_PlaylistAddButton;
+
+		Interface::VolumeChangedText*	m_VolumeChangedText;
 
 		Interface::MusicTimeProgressObject* m_MusicTimeProgress;
 
@@ -515,6 +517,7 @@ namespace mdEngine
 
 		if (volumeSliderActive == true)
 		{
+			State::SetState(State::VolumeChangedOnce);
 			State::SetState(State::VolumeChanged);
 			s32 mouseX, mouseY;
 			App::Input::GetMousePosition(&mouseX, &mouseY);
@@ -974,6 +977,31 @@ namespace mdEngine
 
 	void Graphics::UpdateMusicScrollInfo()
 	{
+
+		if (State::CheckState(State::VolumeChangedOnce) == true && m_VolumeChangedText == NULL)
+		{
+			m_VolumeChangedText = new Interface::VolumeChangedText(glm::vec2(Data::_DEFAULT_PLAYER_SIZE.x / 2.f, 
+													musicInfoScrollText[musicInfoScrollPingPong].GetTextPos().y));
+
+		}
+		else if (State::CheckState(State::VolumeChangedOnce) == true)
+		{
+			m_VolumeChangedText->Reset();
+		}
+
+		if (m_VolumeChangedText != NULL)
+		{
+			m_VolumeChangedText->Update();
+
+			if (m_VolumeChangedText->IsActive() == false)
+			{
+				delete m_VolumeChangedText;
+				m_VolumeChangedText = NULL;
+			}
+		}
+
+
+
 		if (Audio::Object::GetSize() == 0 &&
 			Playlist::RamLoadedMusic.get() == NULL)
 		{
@@ -987,7 +1015,7 @@ namespace mdEngine
 		{
 			musicInfoScrollTextTimer.Stop();
 			musicInfoScrollTextTimer.Reset();
-			md_log(musicInfoScrollTextTimer.GetProgress());
+			//md_log(musicInfoScrollTextTimer.GetProgress());
 			musicInfoScrollText[0].SetTextString(MP::GetPlaylistObject()->GetMusicInfoScrollString());
 			musicInfoScrollText[0].SetTextScale(1.f);
 			musicInfoScrollText[0].ReloadTextTexture();
@@ -1015,7 +1043,6 @@ namespace mdEngine
 			if (musicInfoScrollText[0].GetTextPos().x > Data::_MAIN_FOREGROUND_POS.x + rewindOffsetX &&
 				musicInfoScrollTextTimer.started == false)
 			{
-				md_log("wtf");
 				musicInfoScrollTextTimer.Start();
 				musicInfoScrollTextRewind = false;
 			}
@@ -1146,7 +1173,7 @@ namespace mdEngine
 	void Graphics::RenderMusicScrollInfo()
 	{
 		// Cut text that is out of bounds of main player foreground
-		if (Playlist::IsPlaying() == true)
+		if (Playlist::IsPlaying() == true && m_VolumeChangedText == NULL)
 		{
 			Shader::shaderDefault->use();
 			Shader::shaderDefault->setBool("plainRGBA", false);
@@ -1161,6 +1188,11 @@ namespace mdEngine
 			// Update texts hitboxes
 			musicInfoScrollTextButton[musicInfoScrollPingPong]->SetButtonPos(musicInfoScrollText[musicInfoScrollPingPong].GetTextPos());
 			musicInfoScrollTextButton[!musicInfoScrollPingPong]->SetButtonPos(musicInfoScrollText[!musicInfoScrollPingPong].GetTextPos());
+		}
+
+		if (m_VolumeChangedText != NULL)
+		{
+			m_VolumeChangedText->Render();
 		}
 	}
 
@@ -2081,6 +2113,8 @@ namespace mdEngine
 				playlistAddFileActive = false;
 			}
 		}
+
+		m_PlaylistAddButton.Update();
 	}
 
 	void Graphics::RenderPlaylistAddButtons()
@@ -2090,22 +2124,7 @@ namespace mdEngine
 			m_AddFileTextBox->Render();
 		}
 
-		glm::vec3 color(1.f);
-		if (Input::hasFocus(Input::ButtonType::PlaylistAddFile))
-			color = Color::Red * Color::Grey;
-		else
-			color = Color::Grey;
-
-		// Add button
-		glm::mat4 model;
-		model = glm::translate(model, glm::vec3(Data::_PLAYLIST_ADD_BUTTON_POS, 0.6));
-		model = glm::scale(model, glm::vec3(Data::_PLAYLIST_ADD_BUTTON_SIZE, 1.0));
-		Shader::shaderDefault->setMat4("model", model);
-		Shader::shaderDefault->setVec3("color", color);
-		glBindTexture(GL_TEXTURE_2D, playlist_add_file);
-		Shader::Draw(Shader::shaderDefault);
-
-		Shader::shaderDefault->setVec3("color", Color::White);
+		m_PlaylistAddButton.Render();
 	}
 
 	void Graphics::UpdateSettingsButtons()
@@ -2397,16 +2416,16 @@ namespace mdEngine
 
 	void Graphics::UpdateMusicTimeProgress()
 	{
-		if (MP::GetPlaylistObject()->GetPlayingID() >= 0 && m_MusicTimeProgress == NULL)
+		if (m_MusicTimeProgress == NULL)
 		{
 			m_MusicTimeProgress = new Interface::MusicTimeProgressObject();
 			m_MusicTimeProgress->Init();
 		}
-		else if (MP::GetPlaylistObject()->GetPlayingID() == -1 && m_MusicTimeProgress != NULL)
+		/*else if (m_MusicTimeProgress != NULL)
 		{
 			delete m_MusicTimeProgress;
 			m_MusicTimeProgress = NULL;
-		}
+		}*/
 
 		if (m_MusicTimeProgress != NULL)
 		{
@@ -2483,17 +2502,15 @@ namespace mdEngine
 		if (it != mdButtonsContainer.end())
 			m_PlaylistBarSlider = it->second;
 
-		auto item = std::find_if(mdButtonsContainer.begin(), mdButtonsContainer.end(),
-			[&](std::pair<Input::ButtonType, Interface::Button*> const& ref) { return ref.first == Input::ButtonType::PlaylistAddFile; });
-
-		if (item != mdButtonsContainer.end())
-			m_AddFileButtonRef = item->second;
-
 		musicInfoScrollTextTimer = Time::Timer(Data::MusicInfoScrollStopTimer);
 		musicInfoScrollTextButton[0] = new Interface::Button(Input::ButtonType::Other, glm::vec2(), glm::vec2());
 		musicInfoScrollTextButton[1] = new Interface::Button(Input::ButtonType::Other, glm::vec2(), glm::vec2());
 
 		InitializeText();
+
+		m_PlaylistAddButton = Interface::PlaylistAddButton(Data::_PLAYLIST_ADD_BUTTON_POS, 
+														   Data::_PLAYLIST_ADD_BUTTON_SIZE, 
+														   playlist_add_file);
 
 		InitializeTextBoxes();
 		m_PlaylistTextBoxTimer = Time::Timer(Data::PlaylistTextBoxTime);
@@ -2647,13 +2664,19 @@ namespace mdEngine
 		glDeleteTextures(1, &playlist_add_textbox_background);
 		glDeleteTextures(1, &playlist_add_textbox_select);
 
-
 		durationText.DeleteTexture();
 		itemsSizeText.DeleteTexture();
 		itemsCountText.DeleteTexture();
 		loadedItemsCountText.DeleteTexture();
 		musicInfoScrollText[0].DeleteTexture();
 		musicInfoScrollText[1].DeleteTexture();
+
+		delete m_AddFileTextBox;
+		delete m_PlaylistItemTextBox;
+		delete m_MusicProgressTextBox;
+		delete m_SettingsTextBox;
+		delete m_VolumeChangedText;
+		delete m_MusicTimeProgress;
 
 		delete[] textTexture;
 		delete[] predefinedPos;

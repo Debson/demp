@@ -19,6 +19,7 @@
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_text.h"
 #include "../utility/md_load_texture.h"
+#include "../utility/md_math.h"
 
 using namespace mdEngine::MP::UI;
 using namespace mdEngine::Graphics;
@@ -165,6 +166,7 @@ namespace mdEngine
 	{
 		m_FolderRep = false;
 		m_ClickCount = 0;
+		m_MusicLengthText = NULL;
 	}
 
 	Interface::PlaylistItem::~PlaylistItem() 
@@ -193,6 +195,8 @@ namespace mdEngine
 		assert(Audio::Object::GetAudioObject(m_ItemID) != nullptr);
 
 		m_TitleC = m_TextString;
+
+
 		//TTF_SizeUTF8(m_Font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
 		//m_TextString = GetShortenTextString();
 	}
@@ -229,6 +233,19 @@ namespace mdEngine
 		{
 			m_ItemColor *= Color::Red;
 		}
+
+
+		if (m_MusicLengthText == NULL)
+		{
+			m_MusicLengthText = new Text::TextObject(Color::White, 12);
+			m_MusicLengthText->SetTextString(Converter::SecToProperTimeFormatShort(Audio::Object::GetAudioObject(m_ItemID)->GetLength()));
+			m_MusicLengthText->InitTextTexture();
+		}
+	
+		
+		m_MusicLengthText->SetTextPos(glm::vec2(m_ButtonPos.x + m_ButtonSize.x - m_MusicLengthText->GetTextSize().x, m_PlaylistItemPos.y));
+		m_MusicLengthText->DrawString();
+		
 
 		Shader::shaderDefault->use();
 		halvesColor *= m_ItemColor;
@@ -322,6 +339,21 @@ namespace mdEngine
 	void Interface::PlaylistItem::SetPlaylistOffsetY(f32* offsetY)
 	{
 		m_PlaylistOffsetY = offsetY;
+	}
+
+	void Interface::PlaylistItem::DeleteTexture()
+	{
+		if (m_TextTexture > 0)
+		{
+			glDeleteTextures(1, &m_TextTexture);
+			m_TextTexture = 0;
+		}
+
+		if (m_MusicLengthText != NULL)
+		{
+			delete m_MusicLengthText;
+			m_MusicLengthText = NULL;
+		}
 	}
 
 	b8 Interface::PlaylistItem::IsVisible() const
@@ -427,9 +459,6 @@ namespace mdEngine
 		u16 len = m_TextString.length();
 		m_TitleC.resize(len + 1);
 		m_TitleC = m_TextString;
-		//TTF_Font* font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), m_FontSize);
-		//TTF_SizeUTF8(font, m_TitleC.c_str(), &m_TextSize.x, &m_TextSize.y);
-		//TTF_CloseFont(font);
 		
 		std::shared_ptr<PlaylistSeparator> shrPtr(this);
 
@@ -1356,7 +1385,7 @@ namespace mdEngine
 	{
 		SetTextColor(Color::White);
 		m_FontPath = Strings::_FONT_DIGITAL_PATH;
-		m_FontSize = 48;
+		m_FontSize = 36;
 		SetTextString("00:00");
 		SetTextPos(Data::_MUSIC_TIME_PROGRESS_POS);
 		m_Transparency = 0.8f;
@@ -1369,8 +1398,10 @@ namespace mdEngine
 	void Interface::MusicTimeProgressObject::Init()
 	{
 		InitTextTexture();
-		SetTextPos(glm::vec2((Data::_MUSIC_TIME_PROGRESS_POS.x - this->GetTextSize().x) / 2.f,
-							  Data::_MUSIC_TIME_PROGRESS_POS.y - this->GetTextSize().y / 2.f));
+		/*SetTextPos(glm::vec2((Data::_MUSIC_TIME_PROGRESS_POS.x - this->GetTextSize().x) / 2.f,
+							  Data::_MUSIC_TIME_PROGRESS_POS.y - this->GetTextSize().y / 2.f));*/
+
+		SetTextPos(Data::_MUSIC_TIME_PROGRESS_POS);
 
 		/*TTF_Font* font = TTF_OpenFont(m_FontPath.c_str(), m_FontSize);
 		s32 w, h;
@@ -1386,7 +1417,7 @@ namespace mdEngine
 	void Interface::MusicTimeProgressObject::Update()
 	{
 		App::ProcessButton(this);
-		if (this->isPressed == true)
+		if (this->isPressed == true && Playlist::IsPlaying() == true)
 		{
 			m_TimeReversed = !m_TimeReversed;
 			TTF_Font* font = TTF_OpenFont(m_FontPath.c_str(), m_FontSize);
@@ -1396,7 +1427,13 @@ namespace mdEngine
 			SetTextPos(glm::vec2(GetTextPos().x - (m_TimeReversed ? (w) : (w * -1)), GetTextPos().y));
 		}
 
-		if (m_CurrentTime != (s32)Playlist::GetPosition() || this->isPressed == true)
+
+		if (m_CurrentTime != (s32)Playlist::GetPosition() && Playlist::IsPlaying() == false)
+		{
+			this->SetTextString("00:00");
+			this->ReloadTextTexture();
+		}
+		else if (m_CurrentTime != (s32)Playlist::GetPosition() || this->isPressed == true)
 		{
 			//md_log((s32)Playlist::GetPosition());
 			m_CurrentTime = (s32)Playlist::GetPosition();
@@ -1407,6 +1444,12 @@ namespace mdEngine
 			else
 				this->SetTextString(Converter::SecToProperTimeFormatShort(m_CurrentTime));
 
+			// Greater than 100 minutes
+			/*if (Playlist::GetMusicLength() - m_CurrentTime > 6000 || m_CurrentTime > 6000)
+			{
+				this->SetTextString("99:59");
+			}*/
+
 			this->ReloadTextTexture();
 		}
 	}
@@ -1416,7 +1459,105 @@ namespace mdEngine
 		this->DrawString();
 		//m_BackgroundText.DrawString();
 	}
+
+
+	Interface::PlaylistAddButton::PlaylistAddButton() { }
+
+	Interface::PlaylistAddButton::PlaylistAddButton(glm::vec2 pos, glm::vec2 size, GLuint tex) : 
+												m_Pos(pos), m_Size(size), m_Texture(tex), m_Color(Color::Grey) 
+	{ 
+		m_FadeTimer = Time::Timer(500);
+		m_HadFocus = false;
+		m_FadeActive = false;
+		m_Interp = 0.f;
+	}
+
+	void Interface::PlaylistAddButton::Update()
+	{
+		if (Input::hasFocus(Input::ButtonType::PlaylistAddFile))
+		{
+			m_Color = Color::Red * Color::Grey;
+			m_HadFocus = true;
+		}
+
+		if (Input::hasFocus(Input::ButtonType::PlaylistAddFile) == false && m_HadFocus == true)
+		{
+			m_FadeActive = true;
+			m_HadFocus = false;
+			m_Interp = 0.f;
+		}
+		
+		if (m_FadeActive == true)
+		{
+			m_Color = glm::vec3(Math::Lerp(Color::Red.r, Color::Grey.r, m_Interp),
+								Math::Lerp(Color::Red.g, Color::Grey.g, m_Interp),
+								Math::Lerp(Color::Red.b, Color::Grey.b, m_Interp));
+			if (m_Interp > 1.f)
+				m_FadeActive= false;
+			m_Interp += 7.f * Time::deltaTime;
+			//md_log(interp);
+		}
+		
+	}
 	
+	void Interface::PlaylistAddButton::Render()
+	{
+		glm::mat4 model;
+		model = glm::translate(model, glm::vec3(Data::_PLAYLIST_ADD_BUTTON_POS, 0.6));
+		model = glm::scale(model, glm::vec3(Data::_PLAYLIST_ADD_BUTTON_SIZE, 1.0));
+		Shader::shaderDefault->setMat4("model", model);
+		Shader::shaderDefault->setVec3("color", m_Color);
+		glBindTexture(GL_TEXTURE_2D, m_Texture);
+		Shader::Draw(Shader::shaderDefault);
+
+		Shader::shaderDefault->setVec3("color", Color::White);
+	}
+
+	// ***************************
+	Interface::VolumeChangedText::VolumeChangedText() { }
+
+	Interface::VolumeChangedText::VolumeChangedText(glm::vec2 pos) : m_StartPos(pos)
+	{
+		m_FontSize = 14;
+		SetTextColor(Color::Red);
+		m_CurrentVol = Playlist::GetVolume();
+		m_TextString = "Volume " + std::to_string(s32(m_CurrentVol * 100)) + "%";
+		InitTextTexture();
+		m_TextPos = glm::vec2(m_StartPos.x - GetTextSize().x / 2.f, m_StartPos.y);
+		m_TextTimer = Time::Timer(2000);
+		m_TextTimer.Start();
+	}
+
+	void Interface::VolumeChangedText::Update()
+	{
+		if (Playlist::GetVolume() != m_CurrentVol)
+		{
+			m_CurrentVol = Playlist::GetVolume();
+			m_TextString = "Volume " + std::to_string(s32(m_CurrentVol * 100)) + "%";
+			ReloadTextTexture();
+			m_TextPos = glm::vec2(m_StartPos.x - GetTextSize().x / 2.f, m_StartPos.y);
+		}
+
+
+		m_TextTimer.Update();
+	}
+
+	void Interface::VolumeChangedText::Render()
+	{
+		DrawString(true);
+	}
+
+	void Interface::VolumeChangedText::Reset()
+	{
+		m_TextTimer.Stop();
+		m_TextTimer.Reset();
+		m_TextTimer.Start();
+	}
+
+	b8 Interface::VolumeChangedText::IsActive()
+	{
+		return !m_TextTimer.finished;
+	}
 
 	Interface::PlaylistSeparatorContainer*  Interface::Separator::GetContainer()
 	{

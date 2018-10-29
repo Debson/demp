@@ -645,6 +645,7 @@ namespace MP
 		void IncreaseVolume(App::InputEvent event)
 		{
 			State::SetState(State::VolumeChanged);
+			State::SetState(State::VolumeChangedOnce);
 			MuteVolume(false);
 
 			switch (event)
@@ -666,6 +667,7 @@ namespace MP
 		void LowerVolume(App::InputEvent event)
 		{
 			State::SetState(State::VolumeChanged);
+			State::SetState(State::VolumeChangedOnce);
 
 			switch (event)
 			{
@@ -816,6 +818,7 @@ namespace MP
 				{
 					md_log(songID);
 					RamLoadedMusic.load(Audio::Object::GetAudioObject(songID));
+					Audio::Object::GetAudioObject(songID)->LoadAlbumImage();
 					Playlist::SetPosition((s32)Parser::GetFloat(file, Strings::_SONG_POSITION));
 					Graphics::MP::GetPlaylistObject()->SetPlayingID(Audio::Object::GetAudioObject(songID)->GetID());
 					State::SetState(State::InitialLoadFromFile);
@@ -932,7 +935,7 @@ namespace MP
 				return true;
 
 			// Free loaded song
-			if (Audio::Object::GetSize() <= 1 || mdStartNewOnEnd == false)
+			if ((Audio::Object::GetSize() <= 1 || mdStartNewOnEnd == false) && mdRepeatMusic == false)
 			{
 				//Graphics::MP::GetPlaylistObject()->SetPlayingID(-1);
 				RamLoadedMusic.Free();

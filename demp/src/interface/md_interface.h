@@ -98,6 +98,7 @@ namespace mdEngine
 			void SetItemColor(glm::vec3 color);
 			b8 IsSelected();
 			static void SetPlaylistOffsetY(f32* offsetY);
+			void DeleteTexture();
 
 			b8			 IsVisible() const;
 			b8			 IsPlaying() const;
@@ -118,6 +119,7 @@ namespace mdEngine
 			glm::vec2		m_PlaylistItemPos;
 			std::string		m_TitleC;
 			std::string		m_Path;
+			Text::TextObject* m_MusicLengthText;
 			static f32*		m_PlaylistOffsetY;
 		};
 
@@ -158,6 +160,7 @@ namespace mdEngine
 			s32 m_RenderedItemsCount;
 			std::string m_Path;
 			Text::TextObject m_SeparatorInfoText;
+			
 
 			SeparatorSubContainer m_SubFilesPaths;
 		};
@@ -339,6 +342,45 @@ namespace mdEngine
 			b8	m_TimeReversed;
 			s32 m_CurrentTime;
 			//Text::TextObject m_BackgroundText;
+		};
+
+		class PlaylistAddButton
+		{
+		public:
+			PlaylistAddButton();
+			PlaylistAddButton(glm::vec2 pos, glm::vec2 size, GLuint tex);
+
+			void Update();
+			void Render();
+
+		private:
+			b8 m_HadFocus;
+			b8 m_FadeActive;
+			GLuint m_Texture;
+			f32 m_Interp;
+			glm::vec3 m_Color;
+			glm::vec2 m_Pos;
+			glm::vec2 m_Size;
+			Time::Timer m_FadeTimer;
+
+		};
+
+		class VolumeChangedText : private Text::TextObject
+		{
+		public:
+			VolumeChangedText();
+			VolumeChangedText(glm::vec2 pos);
+
+			void Update();
+			void Render();
+			void Reset();
+			b8 IsActive();
+
+		private:
+
+			f32 m_CurrentVol;
+			glm::vec2 m_StartPos;
+			Time::Timer m_TextTimer;
 		};
 
 

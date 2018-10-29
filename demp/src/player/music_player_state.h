@@ -43,6 +43,7 @@ namespace mdEngine
 			ContainersResized			= (1llu << 19),
 			PlaylistMovement			= (1llu << 20),
 			VolumeChanged				= (1llu << 21),
+			VolumeChangedOnce			= (1llu << 57),
 			CrossfadeEnabled			= (1llu << 22),
 			PlaylistRolling				= (1llu << 23),
 			OnExitMinimizeToTray		= (1llu << 24),

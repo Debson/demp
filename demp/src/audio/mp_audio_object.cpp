@@ -86,6 +86,8 @@ void Audio::AudioObject::Init()
 {
 	m_AlbumImageTex = 0;
 	InitItem();
+
+
 }
 
 s32& Audio::AudioObject::GetID()
@@ -221,7 +223,7 @@ void Audio::AudioObject::ReloadTextTexture()
 		font = TTF_OpenFont(Strings::_FONT_PATH.c_str(), AudioObjectFontSize);
 
 	m_TextString = GetNameToPlaylist();
-	Converter::GetShortenString(m_TextString, m_ButtonSize.x, font);
+	Converter::GetShortenString(m_TextString, m_ButtonSize.x - 30.f, font);
 	TTF_SizeUTF8(font, m_TextString.c_str(), &m_TextSize.x, &m_TextSize.y);
 	m_TextTexture = LoadText(font, m_TextString, m_TextColorSDL);
 	if (AudioObjectFont == NULL)

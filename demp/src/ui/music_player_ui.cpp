@@ -231,6 +231,13 @@ namespace MP
 
 		App::ProcessResizableBottom(&mdResizableBottom, &mdResizableTop);
 
+		if (State::CheckState(State::Window::Resized) == true ||
+			State::CheckState(State::Window::PositionChanged) == true)
+		{
+			mdResizableBottom.m_Pos = glm::vec2(mdResizableBottom.m_Pos.x,
+												Window::WindowProperties.m_ApplicationHeight - mdResizableBottom.m_Size.y);
+		}
+
 		UpdateMouseCursor();
 
 		for (u16 i = 0; i < mdButtonsContainer.size(); i++)
