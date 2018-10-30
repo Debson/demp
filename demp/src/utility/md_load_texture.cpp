@@ -35,6 +35,10 @@ GLuint mdLoadTexture(std::string path, mdEngine::b8 clamp)
 	}
 	else
 	{
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+			"Missing file",
+			"File is missing. Please reinstall the program.",
+			NULL);
 		std::cout << "Texture failed to load at path: " << path << std::endl;
 		stbi_image_free(data);
 	}
@@ -66,6 +70,10 @@ GLuint mdLoadTexture(void* data, mdEngine::u32 size)
 	else
 	{
 		std::cout << "Texture failed to load." << std::endl;
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+			"Missing file",
+			"File is missing. Please reinstall the program.",
+			NULL);
 	}
 
 	stbi_image_free(dataUC);
@@ -83,7 +91,6 @@ GLuint mdLoadTexture(unsigned char* data, mdEngine::s32 width, mdEngine::s32 hei
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); // generate a texture
 		glGenerateMipmap(GL_TEXTURE_2D); // Automatically generate all required mipmaps for currently bound texture
-
 										 // Set texture wrapping and filtering
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -93,6 +100,10 @@ GLuint mdLoadTexture(unsigned char* data, mdEngine::s32 width, mdEngine::s32 hei
 	else
 	{
 		std::cout << "Texture failed to load." << std::endl;
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+			"Missing file",
+			"File is missing. Please reinstall the program.",
+			NULL);
 	}
 
 	return textureID;

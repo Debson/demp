@@ -168,5 +168,6 @@ std::string utf16_to_utf8(const std::wstring& str)
 {
 	//std::lock_guard<std::mutex> lockGuard(mutex);
 
+	//return "testtest";
 	return utf16_to_utf8(str.c_str(), (int)str.size());
 }

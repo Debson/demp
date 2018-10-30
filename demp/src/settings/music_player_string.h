@@ -5,13 +5,15 @@
 #include <iostream>
 #include "../utility/md_types.h"
 
+
+
 namespace mdEngine
 {
 	namespace Strings
 	{
 
-		const std::string _FONT_PATH = "E:\\SDL Projects\\demp\\demp\\assets\\font\\TimesNewRoman.ttf";
-		const std::string _FONT_DIGITAL_PATH = "E:\\SDL Projects\\demp\\demp\\assets\\font\\digital.ttf";
+		extern std::string _FONT_PATH;
+		extern std::string _FONT_DIGITAL_PATH;
 
 		// Settings files texts
 		extern std::string _SETTINGS_FILE;

@@ -309,3 +309,9 @@ demp/external/id3lib-3\.8\.3/id3lib-3\.8\.3/
 demp/settings/
 
 demp/external/bass24/
+
+demp/demp\.rc
+
+demp/resource\.h
+
+Setup/Setup\.vdproj

@@ -31,6 +31,16 @@ namespace App
 		s32 m_MonitorHeight;
 		s32 m_MonitorWidth;
 		s32 m_TaskBarHeight;
+
+		MonitorProperties(void);
+	};
+
+	struct TrayIconProperties
+	{
+		glm::ivec2 m_TrayPos;
+		glm::ivec2 m_TraySize;
+
+		TrayIconProperties(void);
 	};
 
 	void InitializeConfig();

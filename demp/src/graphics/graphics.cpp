@@ -28,15 +28,15 @@ namespace mdEngine
 
 		void Shader::InitShader()
 		{
-			shaderDefault =  new mdShader("shaders/default.vert", "shaders/default.frag", nullptr);
+			shaderDefault =  new mdShader("shaders\\default.vert", "shaders\\default.frag", nullptr);
 
 			if (shaderDefault == NULL)
 			{
 				std::cout << "ERRROR: Could not initialize shader\n";
 				return;
 			}
-
-			shaderBorder = new mdShader("shaders/border.vert", "shaders/border.frag", "shaders/border.geom");
+	
+			shaderBorder = new mdShader("shaders\\border.vert", "shaders\\border.frag", "shaders\\border.geom");
 
 			if (shaderBorder == NULL)
 			{

@@ -57,6 +57,13 @@ namespace mdEngine
 						mVerticalSync(true)
 	{ }
 
+
+	App::MonitorProperties::MonitorProperties() : m_MonitorHeight(0), 
+												  m_MonitorWidth(0), 
+												  m_TaskBarHeight(0) { }
+
+	App::TrayIconProperties::TrayIconProperties() : m_TrayPos(glm::vec2()) { }
+
 	void App::InitializeConfig()
 	{
 		Window::WindowProperties.m_ApplicationHeight = Parser::GetInt(Strings::_SETTINGS_FILE, Strings::_APP_HEIGHT);

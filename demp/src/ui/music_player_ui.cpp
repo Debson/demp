@@ -116,6 +116,8 @@ namespace MP
 		void PlaylistItemsArrowsScrollUp();
 
 		void PlaylistItemArrowsScrollDown();
+
+		void FileDragDetector();
 	}
 
 	void UI::Start()
@@ -205,9 +207,11 @@ namespace MP
 
 	void UI::Update()
 	{
+		FileDragDetector();
 
 		if (State::CheckState(State::OtherWindowHasFocus) == true || 
-			State::CheckState(State::PlaylistMovement) == true)
+			State::CheckState(State::PlaylistMovement) == true ||
+			State::CheckState(State::Window::HasFocus) == false)
 		{
 			if (mdCursor != NULL)
 			{
@@ -675,13 +679,12 @@ namespace MP
 			Playlist::RepeatMusic();
 		}
 
-
-		if (App::Input::IsScrollForwardActive() && Graphics::MP::GetMainPlayerObject()->hasFocus())
+		if (App::Input::IsScrollForwardActive() && (Graphics::MP::GetMainPlayerObject()->hasFocus() || State::CheckState(State::Window::MouseOnTrayIcon)))
 		{
 			Playlist::IncreaseVolume(App::InputEvent::kScrollEvent);
 		}
 
-		if (App::Input::IsScrollBackwardActive() && Graphics::MP::GetMainPlayerObject()->hasFocus())
+		if (App::Input::IsScrollBackwardActive() && (Graphics::MP::GetMainPlayerObject()->hasFocus() || State::CheckState(State::Window::MouseOnTrayIcon)))
 		{
 			Playlist::LowerVolume(App::InputEvent::kScrollEvent);
 		}
@@ -1207,6 +1210,11 @@ namespace MP
 
 		mdAddFilesButton->SetButtonPos(Data::_PLAYLIST_ADD_BUTTON_POS);
 		mdAddFilesButton->SetButtonSize(Data::_PLAYLIST_ADD_BUTTON_SIZE);
+	}
+
+	void UI::FileDragDetector()
+	{
+
 	}
 }
 }

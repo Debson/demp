@@ -1210,6 +1210,7 @@ namespace mdEngine
 		{
 			if (Audio::Object::GetAudioObject(MP::GetPlaylistObject()->GetPlayingID())->GetAlbumPictureTexture() == 0)
 				return;
+			//glViewport(Data::_ALBUM_COVER_IMAGE_POS.x, Data::_ALBUM_COVER_IMAGE_POS.y, Data::_ALBUM_COVER_IMAGE_SIZE.x, Data::_ALBUM_COVER_IMAGE_SIZE.y);
 			glm::mat4 model;
 			model = glm::translate(model, glm::vec3(Data::_ALBUM_COVER_IMAGE_POS, 1.f));
 			model = glm::scale(model, glm::vec3(Data::_ALBUM_COVER_IMAGE_SIZE, 1.f));
@@ -1217,6 +1218,7 @@ namespace mdEngine
 			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, Audio::Object::GetAudioObject(MP::GetPlaylistObject()->GetPlayingID())->GetAlbumPictureTexture());
 			Shader::Draw(Shader::shaderDefault);
+			//glViewport(0, 0, Window::WindowProperties.m_ApplicationWidth, Window::WindowProperties.m_WindowHeight);
 		}
 
 	}
@@ -2449,49 +2451,49 @@ namespace mdEngine
 
 	void Graphics::StartMainWindow()
 	{
-		main_background				= mdLoadTexture("assets/main.png");
-		main_foreground				= mdLoadTexture("assets/main.png");
+		main_background				= mdLoadTexture("assets\\main.style");
+		main_foreground				= mdLoadTexture("assets\\main.style");
 
-		ui_buttons_background		= mdLoadTexture("assets/ui_buttons_background.png");
-		ui_buttons_background_left  = mdLoadTexture("assets/ui_buttons_background_left.png");
-		exit_background				= mdLoadTexture("assets/exit_background.png");
-		stay_on_top_background		= mdLoadTexture("assets/stay_on_top_background.png");
-		minimize_background			= mdLoadTexture("assets/minimize_background.png");
-		settings_background			= mdLoadTexture("assets/settings_background.png");
-		exit_icon					= mdLoadTexture("assets/exit_icon.png");
-		stay_on_top_icon			= mdLoadTexture("assets/stay_on_top_icon.png");
-		minimize_icon				= mdLoadTexture("assets/minimize_icon.png");
-		settings_icon				= mdLoadTexture("assets/settings_icon.png");
-		exit_background_glow		= mdLoadTexture("assets/exit_icon_glow.png");
-		minimize_background_glow	= mdLoadTexture("assets/minimize_icon_glow.png");
-		stay_on_top_background_glow = mdLoadTexture("assets/stay_on_top_icon_glow.png");
-		settings_background_glow	= mdLoadTexture("assets/settings_icon_glow.png");
+		ui_buttons_background		= mdLoadTexture("assets\\ui_buttons_background.style");
+		ui_buttons_background_left  = mdLoadTexture("assets\\ui_buttons_background_left.style");
+		exit_background				= mdLoadTexture("assets\\exit_background.style");
+		stay_on_top_background		= mdLoadTexture("assets\\stay_on_top_background.style");
+		minimize_background			= mdLoadTexture("assets\\minimize_background.style");
+		settings_background			= mdLoadTexture("assets\\settings_background.style");
+		exit_icon					= mdLoadTexture("assets\\exit_icon.style");
+		stay_on_top_icon			= mdLoadTexture("assets\\stay_on_top_icon.style");
+		minimize_icon				= mdLoadTexture("assets\\minimize_icon.style");
+		settings_icon				= mdLoadTexture("assets\\settings_icon.style");
+		exit_background_glow		= mdLoadTexture("assets\\exit_icon_glow.style");
+		minimize_background_glow	= mdLoadTexture("assets\\minimize_icon_glow.style");
+		stay_on_top_background_glow = mdLoadTexture("assets\\stay_on_top_icon_glow.style");
+		settings_background_glow	= mdLoadTexture("assets\\settings_icon_glow.style");
 		
 
-		volume_bar				= mdLoadTexture("assets/volume_bar.png");
-		volume_speaker			= mdLoadTexture("assets/volume_speaker.png");
-		volume_speaker_muted	= mdLoadTexture("assets/volume_speaker_muted.png");
-		volume_speaker_low		= mdLoadTexture("assets/volume_speaker_low.png");
-		volume_speaker_medium	= mdLoadTexture("assets/volume_speaker_medium.png");;
+		volume_bar				= mdLoadTexture("assets\\volume_bar.style");
+		volume_speaker			= mdLoadTexture("assets\\volume_speaker.style");
+		volume_speaker_muted	= mdLoadTexture("assets\\volume_speaker_muted.style");
+		volume_speaker_low		= mdLoadTexture("assets\\volume_speaker_low.style");
+		volume_speaker_medium	= mdLoadTexture("assets\\volume_speaker_medium.style");;
 
 
-		play_button				= mdLoadTexture("assets/play_button.png");
-		stop_button				= mdLoadTexture("assets/stop_button.png");
-		next_button				= mdLoadTexture("assets/next_button.png");
-		previous_button			= mdLoadTexture("assets/previous_button.png");
-		shuffle_button			= mdLoadTexture("assets/shuffle_button.png");
-		repeat_button			= mdLoadTexture("assets/repeat_button.png");
-		dot_icon				= mdLoadTexture("assets/dot_button_state.png");
-		playlist_button			= mdLoadTexture("assets/playlist_button.png");
-		playlist_add_file		= mdLoadTexture("assets/playlist_add.png");
+		play_button				= mdLoadTexture("assets\\play_button.style");
+		stop_button				= mdLoadTexture("assets\\stop_button.style");
+		next_button				= mdLoadTexture("assets\\next_button.style");
+		previous_button			= mdLoadTexture("assets\\previous_button.style");
+		shuffle_button			= mdLoadTexture("assets\\shuffle_button.style");
+		repeat_button			= mdLoadTexture("assets\\repeat_button.style");
+		dot_icon				= mdLoadTexture("assets\\dot_button_state.style");
+		playlist_button			= mdLoadTexture("assets\\playlist_button.style");
+		playlist_add_file		= mdLoadTexture("assets\\playlist_add.style");
 
-		music_progress_bar		= mdLoadTexture("assets/music_progress_bar.png");
+		music_progress_bar		= mdLoadTexture("assets\\music_progress_bar.style");
 
 
-		playlist_add_file_icon			= mdLoadTexture("assets/playlist_add_file_icon.png");;
-		playlist_add_folder_icon		= mdLoadTexture("assets/playlist_add_folder_icon.png");
-		playlist_add_textbox_background = mdLoadTexture("assets/playlist_add_files_textbox.png");
-		playlist_add_textbox_select		= mdLoadTexture("assets/playlist_add_select_background.png");
+		playlist_add_file_icon			= mdLoadTexture("assets\\playlist_add_file_icon.style");;
+		playlist_add_folder_icon		= mdLoadTexture("assets\\playlist_add_folder_icon.style");
+		playlist_add_textbox_background = mdLoadTexture("assets\\playlist_add_files_textbox.style");
+		playlist_add_textbox_select		= mdLoadTexture("assets\\playlist_add_select_background.style");
 
 
 		deltaVolumePos = (s32)(Playlist::GetVolume() * 100.f * 0.9f);

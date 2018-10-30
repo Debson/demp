@@ -3,13 +3,16 @@
 #include "../utility/utf8_to_utf16.h"
 
 #include "boost/filesystem.hpp"
-
+#include "../utility/md_util.h"
 
 #ifdef _WIN32_
 #include <windows.h>
 #include <lmcons.h>
+#include <direct.h>
+#define GetCurrentDir _getcwd
 #else
-
+#include <unistd.h>
+#define GetCurrentDir getcwd
 #endif // _WIN32_
 
 
@@ -18,6 +21,9 @@ namespace mdEngine
 	namespace Strings
 	{
 		std::string _SAVED_PATH = "C:\\Users\\michd\\Desktop\\test folder with music";
+		std::string _FONT_PATH = "\\assets\\font\\TimesNewRoman.ttf";
+		std::string _FONT_DIGITAL_PATH = "\\assets\\font\\digital.ttf";
+
 
 		std::string _SETTINGS_FILE;
 		std::string _PLAYLIST_FILE;
@@ -25,6 +31,13 @@ namespace mdEngine
 
 	void Strings::InitializeStrings()
 	{
+		// Get aboslute path for a font
+		char cCurrentPath[FILENAME_MAX];
+		GetCurrentDir(cCurrentPath, FILENAME_MAX);
+		_FONT_PATH = cCurrentPath + _FONT_PATH;
+		_FONT_DIGITAL_PATH = cCurrentPath + _FONT_DIGITAL_PATH;
+
+		// Get user appdata directory
 		char username[UNLEN + 1];
 		DWORD username_len = UNLEN + 1;
 		GetUserName(username, &username_len);

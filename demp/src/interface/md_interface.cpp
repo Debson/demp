@@ -924,7 +924,7 @@ namespace mdEngine
 	void Interface::ButtonSlider::Init(mdShader* shader)
 	{
 		m_Shader = shader;
-		m_LeftTexture = mdLoadTexture("E:\\SDL Projects\\demp\\demp\\assets\\switch.png");
+		m_LeftTexture = mdLoadTexture("assets\\switch.style");
 		m_RightTexture = m_LeftTexture;
 
 		if (m_LeftTexture == NULL)
@@ -1430,6 +1430,16 @@ namespace mdEngine
 
 		if (m_CurrentTime != (s32)Playlist::GetPosition() && Playlist::IsPlaying() == false)
 		{
+			if (m_TimeReversed == true)
+			{
+				TTF_Font* font = TTF_OpenFont(m_FontPath.c_str(), m_FontSize);
+				s32 w, h;
+				TTF_SizeUTF8(font, "-", &w, &h);
+				TTF_CloseFont(font);
+				SetTextPos(glm::vec2(GetTextPos().x + w, GetTextPos().y));
+				m_TimeReversed = false;
+			}
+
 			this->SetTextString("00:00");
 			this->ReloadTextTexture();
 		}

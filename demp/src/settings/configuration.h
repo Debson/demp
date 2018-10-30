@@ -5,7 +5,7 @@
 #define _WIN32_
 //#define _LINUX_
 
-#define _DEBUG_
+//#define _DEBUG_
 #define _DEBUG_OUTPUT_
 
 // #define NDEBUG // disable asserts

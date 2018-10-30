@@ -78,6 +78,7 @@ namespace mdEngine
 	App::ApplicationHandlerInterface* mdApplicationHandler(nullptr);
 	App::WindowProperties Window::WindowProperties;
 	App::MonitorProperties Window::MonitorProperties;
+	App::TrayIconProperties Window::TrayIconProperties;
 
 	s32 mdActualWindowWidth;
 	s32 mdActualWindowHeight;
@@ -156,7 +157,7 @@ void mdEngine::SetupSDL()
 		icon.cbSize = sizeof(icon);
 		icon.hWnd = wmInfo.info.win.window;
 		strcpy_s(icon.szTip, "demp");
-
+		Window::TrayIconProperties.m_TraySize = glm::ivec2(32);
 		bool success = Shell_NotifyIcon(NIM_ADD, &icon);
 	}
 
@@ -179,11 +180,11 @@ void mdEngine::SetupOpenGL()
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	/*SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);*/
 	
 }
 
@@ -306,8 +307,16 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 		Time::deltaTime = currentFrame - previousFrame;
 		previousFrame = currentFrame;
 
-
-		State::ResetState(State::Window::MouseOnTrayIcon);
+		if (State::CheckState(State::Window::MouseOnTrayIcon) == true)
+		{
+			glm::vec2 mousePos = App::Input::GetGlobalMousePosition();
+			b8 inside = (mousePos.x < Window::TrayIconProperties.m_TrayPos.x + Window::TrayIconProperties.m_TraySize.x) &&
+						 mousePos.x > Window::TrayIconProperties.m_TrayPos.x && 
+						(mousePos.y > Window::TrayIconProperties.m_TrayPos.y) && (mousePos.y < Window::TrayIconProperties.m_TrayPos.y + Window::TrayIconProperties.m_TraySize.y);
+			
+			if(inside == false)
+				State::ResetState(State::Window::MouseOnTrayIcon);
+		}
 		while (SDL_PollEvent(&event) != 0)
 		{
 #ifdef _DEBUG_
@@ -404,6 +413,15 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 						break;
 					case WM_MOUSEMOVE:
 						State::SetState(State::Window::MouseOnTrayIcon);
+						if (Window::TrayIconProperties.m_TrayPos == glm::ivec2() ||
+							App::Input::GetGlobalMousePosition().y < Window::TrayIconProperties.m_TrayPos.y ||
+							App::Input::GetGlobalMousePosition().x < Window::TrayIconProperties.m_TrayPos.x)
+						{
+							Window::TrayIconProperties.m_TrayPos = App::Input::GetGlobalMousePosition();
+						}
+						break;
+					case WM_MOUSEWHEEL:
+						md_log("scroll");
 						break;
 					}
 				}
@@ -424,9 +442,12 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 					}
 					break;
 				
+				case WM_NCXBUTTONUP:
+					md_log("dragging");
+					break;
 				}
-			}
 
+			}
 
 			if (event.type == SDL_WINDOWEVENT && event.window.windowID == mdWindowID)
 			{
@@ -495,50 +516,34 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			
 			for(auto & i : Window::WindowsContainer)
 				i.second->Update();
-			
-
 
 			Window::UpdateWindows();
-
-			SDL_GL_MakeCurrent(mdWindow, gl_context);
-#ifdef _DEBUG_
-			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
-			
-			Graphics::UpdateGraphics();
-			
 
 			if (State::CheckState(State::Window::Minimized) == false ||
 				State::CheckState(State::Window::InTray) == false ||
 				State::CheckState(State::AudioChangedInTray) == true)
 			{
+				SDL_GL_MakeCurrent(mdWindow, gl_context);
+				glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
+
+				Graphics::UpdateGraphics();
+
 				Graphics::Shader::shaderDefault->use();
 				Graphics::Shader::shaderDefault->setMat4("projection", *Graphics::GetProjectionMatrix());
 
 				Graphics::RenderGraphics();
 				mdApplicationHandler->OnRealtimeRender();
-			}
-
-			glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-			ImGui::Render();
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-			SDL_GL_SwapWindow(mdWindow);
+#ifdef _DEBUG_
+				glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+				ImGui::Render();
+				ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 #else
-			glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			if (State::CheckState(State::Window::Minimized) == false ||
-				State::CheckState(State::Window::InTray) == false)
-			{
-				Graphics::RenderGraphics();
-				mdApplicationHandler->OnRealtimeRender();
-			}
-
-			if (MP::UI::GetOptionsWindow()->IsActive() == true)
-			{
-				MP::UI::GetOptionsWindow()->Render();
-			}
+				
 #endif
+				SDL_GL_SwapWindow(mdWindow);
+			}
 			// Render options window
 
 			for (auto & i : Window::WindowsContainer)
@@ -548,12 +553,10 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 					i.second->Render();
 				}
 			}
-	
 
 			if (State::IsBackgroundModeActive() == true)
 			{
-				//SDL_GL_SetSwapInterval(0);
-				MP::Data::UpdateFPS(2.f);
+				MP::Data::UpdateFPS(1.f);
 				f32 frameTicks = capTimer.GetTicks();
 				if (frameTicks < MP::Data::_SCREEN_TICK_PER_FRAME)
 				{
@@ -563,16 +566,11 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 			}
 			else
 			{
-				//SDL_GL_SetSwapInterval(1);
-				//MP::Data::UpdateFPS(3);
 				MP::Data::UpdateFPS(MP::Data::_SCREEN_FPS);
 			}
 
-
-
 			if (State::HighFPSMode() == false)
 			{
-				//SDL_GL_SetSwapInterval(0); // disable vsyn
 				f32 frameTicks = capTimer.GetTicks();
 				if (frameTicks < MP::Data::_SCREEN_TICK_PER_FRAME)
 				{
