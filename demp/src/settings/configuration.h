@@ -7,7 +7,7 @@
 
 //#define _DEBUG_
 #define _DEBUG_OUTPUT_
-//#define _DEBUG_CURRENT_PATH_
+#define _DEBUG_CURRENT_PATH_
 
 // #define NDEBUG // disable asserts
 #define _EXTRACT_ID3_TAGS_

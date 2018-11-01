@@ -524,8 +524,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 
 				Graphics::UpdateGraphics();
-				if (mdIsRunning == false)
-					return;
 
 				Graphics::Shader::shaderDefault->use();
 				Graphics::Shader::shaderDefault->setMat4("projection", *Graphics::GetProjectionMatrix());

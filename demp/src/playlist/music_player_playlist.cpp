@@ -892,7 +892,7 @@ namespace MP
 				Audio::Object::GetSize() > 0)
 			{
 				Audio::PerformSetFoldersRep();
-				Audio::LoadFilesInfo();
+				//Audio::LoadFilesInfo();
 			}
 
 			Audio::AudioContainerSizeBeforeDeletion = 0;

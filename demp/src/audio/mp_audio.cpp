@@ -706,6 +706,7 @@ void Audio::PerformDeletion(s32 index, b8 smallDeletion)
 	Info::LoadedItemsInfoCount < 0 ? (Info::LoadedItemsInfoCount = 0) : 0;
 
 
+	
 	// If there is no audio objects, set playlist state to empty
 	if (m_AudioObjectContainer.empty() == true)
 	{
@@ -786,6 +787,12 @@ void Audio::SetFoldersRep()
 		*/
 		
 		// ??????????????????
+
+		// Info is loaded again after deletion, even though 
+		State::ResetState(State::AudioDeleted);
+		AudioContainerSizeBeforeDeletion = 0;
+
+
 		State::ResetState(State::AddedByFileBrowser);
 		State::SetState(State::AudioAdded);
 		State::SetState(State::ShuffleAfterLoad);
@@ -828,8 +835,7 @@ void Audio::SetFoldersRep()
 			if (i->GetID3Struct()->loaded == false)
 				filesInfoScanned = false;
 
-			if (filesLoadedFromFile == true &&
-				i->GetID3Struct()->infoCorrupted == false &&
+			if (i->GetID3Struct()->infoCorrupted == false &&
 				i->GetID3Struct()->loaded == true)
 			{
 				Info::LoadedItemsInfoCount++;
@@ -967,7 +973,8 @@ void Audio::LoadFilesInfoWrap(std::vector<std::shared_ptr<AudioObject>*>* tempVe
 		}
 		else
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			break;
 		}
 	}
 	

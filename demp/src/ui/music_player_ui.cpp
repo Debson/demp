@@ -345,7 +345,7 @@ namespace MP
 	{
 		s32 len = Audio::Object::GetSize();
 		std::vector<s32> vec;
-		for (s32 i = 0; i < len; i++)
+		for (s32 i = 1; i < len; i++)
 			vec.push_back(i);
 
 		std::reverse(vec.begin(), vec.end());
@@ -736,8 +736,10 @@ namespace MP
 		{
 			buttonsFocus = buttonsFocus || i.second->hasFocus;
 		}
+
 		for (auto & i : *Graphics::MP::GetPlaylistObject()->GetIndexesToRender())
 		{
+			assert(Audio::Object::GetAudioObject(i) != nullptr);
 			buttonsFocus = buttonsFocus || Audio::Object::GetAudioObject(i)->hasFocus;
 		}
 
