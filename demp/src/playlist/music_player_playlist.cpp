@@ -303,6 +303,10 @@ namespace MP
 
 			// App was closed durning some audio file playback, go back exactly to that audio file and it's position
 			Parser::GetInt(file, Strings::_SONG_POSITION) > 0 ? State::SetState(State::LoadMusicOnFileLoad) : (void)0;
+			// App opened as a default music player, reset state
+			if (State::CheckState(State::LoadMusicOnFileLoad) == true)
+				State::ResetState(State::LoadMusicOnFileLoad);
+
 		}
 
 		void Playlist::Start()
@@ -418,10 +422,11 @@ namespace MP
 			if (GetPosition() > 0)
 				pos = GetPosition();
 
-			if (Audio::Object::GetSize() < 1)
+			if (Audio::Object::GetSize() < 1 || RamLoadedMusic.get() == NULL)
 				return;
 
-			if (RamLoadedMusic.get() != NULL) {
+			if (RamLoadedMusic.get() != NULL) 
+			{
 				if (IsPlaying() == false) {//&& RamLoadedMusic.load(Audio::Object::GetAudioObject(RamLoadedMusic.m_ID)))
 					mdMPStarted = true;
 				}
@@ -816,7 +821,7 @@ namespace MP
 				s32 songID = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
 				if (songID < Audio::Object::GetSize() && songID >= 0)
 				{
-					md_log(songID);
+					md_log("music loaded on file load");
 					RamLoadedMusic.load(Audio::Object::GetAudioObject(songID));
 					Audio::Object::GetAudioObject(songID)->LoadAlbumImage();
 					Playlist::SetPosition((s32)Parser::GetFloat(file, Strings::_SONG_POSITION));
@@ -824,6 +829,17 @@ namespace MP
 					State::SetState(State::InitialLoadFromFile);
 				}
 				State::ResetState(State::LoadMusicOnFileLoad);
+			}
+
+			if (State::CheckState(State::AddedByCommandLine) == true &&
+				State::CheckState(State::FilesLoaded) == true &&
+				Audio::Object::GetSize() > 0)
+			{
+				if (RamLoadedMusic.load(Audio::Object::GetAudioObject(0)) == true)
+				{
+					Playlist::PlayMusic();
+				}
+				State::ResetState(State::AddedByCommandLine);
 			}
 		}
 

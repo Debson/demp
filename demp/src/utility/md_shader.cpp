@@ -3,7 +3,7 @@
 
 mdShader::mdShader() { }
 
-mdShader::mdShader(const GLchar* vertexPath, const GLchar* fragmentPath, const GLchar* geometryPath = nullptr)
+mdShader::mdShader(std::string vertexPath, std::string fragmentPath, std::string geometryPath)
 {
 	std::string vertexCode;
 	std::string fragmentCode;
@@ -31,7 +31,7 @@ mdShader::mdShader(const GLchar* vertexPath, const GLchar* fragmentPath, const G
 		vertexCode = vShaderStream.str();
 		fragmentCode = fShaderStream.str();
 
-		if (geometryPath != nullptr)
+		if (geometryPath.empty() == false)
 		{
 			gShaderFile.open(geometryPath);
 			std::stringstream gShaderStream;
@@ -62,7 +62,7 @@ mdShader::mdShader(const GLchar* vertexPath, const GLchar* fragmentPath, const G
 	checkCompileErrors(fragment, "FRAGMENT");
 
 	GLuint geometry;
-	if (geometryPath != nullptr)
+	if (geometryPath.empty() == false)
 	{
 		const GLchar *gShaderCode = geometryCode.c_str();
 		geometry = glCreateShader(GL_GEOMETRY_SHADER);
@@ -75,7 +75,7 @@ mdShader::mdShader(const GLchar* vertexPath, const GLchar* fragmentPath, const G
 	ID = glCreateProgram();
 	glAttachShader(ID, vertex);
 	glAttachShader(ID, fragment);
-	if (geometryPath != nullptr)
+	if (geometryPath.empty() == false)
 	{
 		glAttachShader(ID, geometry);
 	}
@@ -84,7 +84,7 @@ mdShader::mdShader(const GLchar* vertexPath, const GLchar* fragmentPath, const G
 
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
-	if (geometryPath != nullptr)
+	if (geometryPath.empty() == false)
 	{
 		glDeleteShader(geometry);
 	}

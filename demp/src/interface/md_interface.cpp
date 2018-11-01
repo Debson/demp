@@ -924,7 +924,7 @@ namespace mdEngine
 	void Interface::ButtonSlider::Init(mdShader* shader)
 	{
 		m_Shader = shader;
-		m_LeftTexture = mdLoadTexture("assets\\switch.style");
+		m_LeftTexture = mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\switch.style");
 		m_RightTexture = m_LeftTexture;
 
 		if (m_LeftTexture == NULL)

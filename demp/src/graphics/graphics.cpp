@@ -28,7 +28,8 @@ namespace mdEngine
 
 		void Shader::InitShader()
 		{
-			shaderDefault =  new mdShader("shaders\\default.vert", "shaders\\default.frag", nullptr);
+			shaderDefault =  new mdShader(Strings::_CURRENT_DIRECTORY_PATH + "shaders\\default.vert", 
+										  Strings::_CURRENT_DIRECTORY_PATH + "shaders\\default.frag");
 
 			if (shaderDefault == NULL)
 			{
@@ -36,7 +37,9 @@ namespace mdEngine
 				return;
 			}
 	
-			shaderBorder = new mdShader("shaders\\border.vert", "shaders\\border.frag", "shaders\\border.geom");
+			shaderBorder = new mdShader(Strings::_CURRENT_DIRECTORY_PATH + "shaders\\border.vert", 
+										Strings::_CURRENT_DIRECTORY_PATH + "shaders\\border.frag", 
+										Strings::_CURRENT_DIRECTORY_PATH + "shaders\\border.geom");
 
 			if (shaderBorder == NULL)
 			{

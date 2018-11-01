@@ -91,4 +91,15 @@ namespace mdEngine
 		//State::ResetState(State::PlaylistMovement);
 
 	}
+
+	void State::OnFileAddition()
+	{
+		if (CheckState(State::PathContainerSorted) == false)
+			SetState(State::SortPathsOnNewFileLoad);
+
+		SetState(State::FileDropped);
+		ResetState(State::InitialLoadFromFile);
+		CheckState(State::PlaylistEmpty) == false ? SetState(State::FilesDroppedNotLoaded) : (void)0;
+		SetState(State::FilesAddedInfoNotLoaded);
+	}
 }

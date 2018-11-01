@@ -556,9 +556,10 @@ namespace mdEngine
 			s32 mouseX, mouseY;
 			Input::GetMousePosition(&mouseX, &mouseY);
 
+			SDL_CaptureMouse(SDL_TRUE);
+
 			int relX = 0, relY = 0;
 			Input::GetRelavtiveMousePosition(&relX, &relY);
-
 
 			b8 inside = mouseX > barBottom->m_Pos.x && mouseX < (barBottom->m_Pos.x + barBottom->m_Size.x) &&
 				mouseY > barBottom->m_Pos.y && mouseY < (barBottom->m_Pos.y + barBottom->m_Size.y);
@@ -587,9 +588,9 @@ namespace mdEngine
 			{
 				if(relY != 0)
 					State::SetState(State::Window::Resized);
-
 				resizeBottomFinished = true;
 				Window::WindowProperties.m_ApplicationHeight = winSizeBeforeResizeBottom + relY;
+				//md_log(relY);
 				if (Window::CheckWindowSize() == false)
 				{
 					winSizeBeforeResizeBottom += relY;

@@ -176,7 +176,15 @@ namespace mdEngine
 
 	b8 Parser::ReadPathsFromFile(const std::string& fileName)
 	{
+		// App opened as a defauly music player
+		if (State::CheckState(State::AddedByCommandLine) == true)
+		{
+			boost::filesystem::remove(fileName);
+			return true;
+		}
+
 		// Move to line with content(paths and file info)
+
 		s32 filesInfoScanned = Parser::GetInt(fileName, Strings::_CONTENT_LOADED);
 		s32 filesDuration = Parser::GetInt(fileName, Strings::_CONTENT_DURATION);
 		if (filesDuration <= 0 && filesInfoScanned > 0)

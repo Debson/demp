@@ -315,3 +315,5 @@ demp/demp\.rc
 demp/resource\.h
 
 Setup/Setup\.vdproj
+
+demp/demp\.exe

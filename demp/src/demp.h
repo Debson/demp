@@ -10,7 +10,6 @@
 class Demp : public mdEngine::App::ApplicationHandlerInterface
 {
 public:
-	Demp();
 	virtual ~Demp();
 
 	virtual void OnWindowOpen();

@@ -36,6 +36,7 @@ namespace Audio
 	AudioObjectContainer				m_AudioObjectContainerTemp;
 
 	std::vector<std::string> m_DroppedPathsContainer;
+	std::vector<std::string> m_CommandLinePathsContainer;
 
 	static std::vector<Audio::Info::ID3*> m_ID3Container;
 
@@ -209,6 +210,12 @@ b8 Audio::LoadPathsFromFile(std::string& path, Info::ID3* id3)
 void Audio::SaveDroppedPath(std::string path)
 {
 	m_DroppedPathsContainer.push_back(path);
+}
+
+void Audio::SavePathFromCommandLine(const char* path)
+{
+	m_CommandLinePathsContainer.push_back(path);
+	State::SetState(State::AddedByCommandLine);
 }
 
 void Audio::OnDropComplete()
@@ -393,6 +400,19 @@ void Audio::UpdateAudioLogic()
 {
 	if (State::CheckState(State::Window::Exit) == true)
 		return;
+
+	if (m_CommandLinePathsContainer.empty() == false && State::CheckState(State::Started) == true)
+	{
+		for (auto & i : m_CommandLinePathsContainer)
+		{
+			State::OnFileAddition();
+			State::ResetState(State::AddedByFileBrowser);
+			Audio::DroppedItemsCount++;
+			PushToPlaylist(i, true);
+		}
+		m_CommandLinePathsContainer.clear();
+	}
+
 
 	if (State::CheckState(State::InitialLoadFromFile) == true &&
 		m_AddedFilesPathContainer.size() > 0)

@@ -14,6 +14,7 @@ namespace mdEngine
 
 		extern std::string _FONT_PATH;
 		extern std::string _FONT_DIGITAL_PATH;
+		extern std::string _CURRENT_DIRECTORY_PATH;
 
 		// Settings files texts
 		extern std::string _SETTINGS_FILE;
@@ -56,6 +57,7 @@ namespace mdEngine
 		const std::string _PLAYLIST_ADD_FOLDER = "Folder";
 
 		void InitializeStrings();
+		void SetProgramPath(const char *path);
 	}
 }
 

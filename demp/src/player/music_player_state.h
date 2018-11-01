@@ -55,7 +55,9 @@ namespace mdEngine
 			TerminateWorkingThreads		= (1llu << 49),
 			ReloadFilesInfo				= (1llu << 50),
 			RequestForInfoLoad			= (1llu << 52),
-			AddedByFileBrowser			= (1llu << 54)
+			AddedByFileBrowser			= (1llu << 54),
+			AddedByCommandLine			= (1llu << 59),
+			Started						= (1llu << 58)
 		};
 
 		enum WindowEvent : u64
@@ -132,6 +134,8 @@ namespace mdEngine
 
 		// States that should be reseted every frame
 		void StartNewFrame();
+
+		void OnFileAddition();
 	}
 }
 

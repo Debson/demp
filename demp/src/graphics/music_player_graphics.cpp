@@ -209,6 +209,9 @@ namespace mdEngine
 
 		void InitializeTextBoxes();
 
+		// If true returned, some texture couldn't be loaded, throw error
+		b8 CheckTextureError();
+
 		void UpdatePlaylistWindow();
 		void RenderPlaylistWindow();
 
@@ -2047,8 +2050,10 @@ namespace mdEngine
 
 	void Graphics::UpdatePlaylistAddButtons()
 	{
-		if(m_AddFileTextBox != NULL)
-			App::ProcessButton(m_AddFileTextBox);
+		if (m_AddFileTextBox != NULL)
+		{
+			m_AddFileTextBox->Update();
+		}
 
 		/*if (State::CheckState(State::Window::Resized) == true)
 		{
@@ -2062,19 +2067,18 @@ namespace mdEngine
 		{
 			playlistAddFileActive = !playlistAddFileActive;
 			
-		}
-		else if (App::Input::IsKeyDown(App::KeyCode::MouseLeft) && m_AddFileTextBox != NULL &&
+		}else if (App::Input::IsKeyDown(App::KeyCode::MouseLeft) && 
+			m_AddFileTextBox != NULL &&
 			m_AddFileTextBox->hasFocus == false && 
 			Input::hasFocus(Input::ButtonType::PlaylistAddFile) == false)
 		{
-			//playlistAddFileActive = false;
+			playlistAddFileActive = false;
 		}
 
 		if (playlistAddFileActive == true && m_AddFileTextBox == NULL)
 		{
 			m_AddFileTextBox = new Interface::TextBox(glm::vec2(Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_POS.x,
-				Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_POS.y +
-				Data::_PLAYLIST_ADD_BUTTON_SIZE.y + 200),
+				Data::_PLAYLIST_ADD_BUTTON_POS.y + Data::_PLAYLIST_ADD_BUTTON_SIZE.y),
 				Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE,
 				Shader::shaderDefault);
 
@@ -2449,51 +2453,80 @@ namespace mdEngine
 		return &m_TextBoxContainer;
 	}
 
+	b8 Graphics::CheckTextureError()
+	{
+		if (main_background && main_foreground && ui_buttons_background && ui_buttons_background_left  &&
+			exit_icon && minimize_icon && stay_on_top_icon && settings_icon &&
+			exit_background && minimize_background && stay_on_top_background && settings_background &&
+			exit_background_glow && minimize_background_glow && stay_on_top_background_glow &&
+			settings_background_glow && volume_bar  && volume_speaker  && volume_speaker_muted  &&
+			volume_speaker_low && volume_speaker_medium && play_button && stop_button && next_button &&
+			previous_button && shuffle_button && repeat_button && dot_icon && playlist_button &&
+			playlist_add_file  && music_progress_bar  && playlist_add_file_icon && playlist_add_folder_icon &&
+			playlist_add_textbox_background && playlist_add_textbox_select)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	void Graphics::StartMainWindow()
 	{
-		main_background				= mdLoadTexture("assets\\main.style");
-		main_foreground				= mdLoadTexture("assets\\main.style");
+		main_background				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\main.style");
+		main_foreground				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\main.style");
 
-		ui_buttons_background		= mdLoadTexture("assets\\ui_buttons_background.style");
-		ui_buttons_background_left  = mdLoadTexture("assets\\ui_buttons_background_left.style");
-		exit_background				= mdLoadTexture("assets\\exit_background.style");
-		stay_on_top_background		= mdLoadTexture("assets\\stay_on_top_background.style");
-		minimize_background			= mdLoadTexture("assets\\minimize_background.style");
-		settings_background			= mdLoadTexture("assets\\settings_background.style");
-		exit_icon					= mdLoadTexture("assets\\exit_icon.style");
-		stay_on_top_icon			= mdLoadTexture("assets\\stay_on_top_icon.style");
-		minimize_icon				= mdLoadTexture("assets\\minimize_icon.style");
-		settings_icon				= mdLoadTexture("assets\\settings_icon.style");
-		exit_background_glow		= mdLoadTexture("assets\\exit_icon_glow.style");
-		minimize_background_glow	= mdLoadTexture("assets\\minimize_icon_glow.style");
-		stay_on_top_background_glow = mdLoadTexture("assets\\stay_on_top_icon_glow.style");
-		settings_background_glow	= mdLoadTexture("assets\\settings_icon_glow.style");
+		ui_buttons_background		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\ui_buttons_background.style");
+		ui_buttons_background_left  = mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\ui_buttons_background_left.style");
+		exit_background				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\exit_background.style");
+		stay_on_top_background		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\stay_on_top_background.style");
+		minimize_background			= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\minimize_background.style");
+		settings_background			= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\settings_background.style");
+		exit_icon					= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\exit_icon.style");
+		stay_on_top_icon			= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\stay_on_top_icon.style");
+		minimize_icon				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\minimize_icon.style");
+		settings_icon				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\settings_icon.style");
+		exit_background_glow		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\exit_icon_glow.style");
+		minimize_background_glow	= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\minimize_icon_glow.style");
+		stay_on_top_background_glow = mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\stay_on_top_icon_glow.style");
+		settings_background_glow	= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\settings_icon_glow.style");
 		
 
-		volume_bar				= mdLoadTexture("assets\\volume_bar.style");
-		volume_speaker			= mdLoadTexture("assets\\volume_speaker.style");
-		volume_speaker_muted	= mdLoadTexture("assets\\volume_speaker_muted.style");
-		volume_speaker_low		= mdLoadTexture("assets\\volume_speaker_low.style");
-		volume_speaker_medium	= mdLoadTexture("assets\\volume_speaker_medium.style");;
+		volume_bar				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\volume_bar.style");
+		volume_speaker			= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\volume_speaker.style");
+		volume_speaker_muted	= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\volume_speaker_muted.style");
+		volume_speaker_low		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\volume_speaker_low.style");
+		volume_speaker_medium	= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\volume_speaker_medium.style");;
 
 
-		play_button				= mdLoadTexture("assets\\play_button.style");
-		stop_button				= mdLoadTexture("assets\\stop_button.style");
-		next_button				= mdLoadTexture("assets\\next_button.style");
-		previous_button			= mdLoadTexture("assets\\previous_button.style");
-		shuffle_button			= mdLoadTexture("assets\\shuffle_button.style");
-		repeat_button			= mdLoadTexture("assets\\repeat_button.style");
-		dot_icon				= mdLoadTexture("assets\\dot_button_state.style");
-		playlist_button			= mdLoadTexture("assets\\playlist_button.style");
-		playlist_add_file		= mdLoadTexture("assets\\playlist_add.style");
+		play_button				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\play_button.style");
+		stop_button				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\stop_button.style");
+		next_button				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\next_button.style");
+		previous_button			= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\previous_button.style");
+		shuffle_button			= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\shuffle_button.style");
+		repeat_button			= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\repeat_button.style");
+		dot_icon				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\dot_button_state.style");
+		playlist_button			= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_button.style");
+		playlist_add_file		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_add.style");
 
-		music_progress_bar		= mdLoadTexture("assets\\music_progress_bar.style");
+		music_progress_bar		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\music_progress_bar.style");
 
 
-		playlist_add_file_icon			= mdLoadTexture("assets\\playlist_add_file_icon.style");;
-		playlist_add_folder_icon		= mdLoadTexture("assets\\playlist_add_folder_icon.style");
-		playlist_add_textbox_background = mdLoadTexture("assets\\playlist_add_files_textbox.style");
-		playlist_add_textbox_select		= mdLoadTexture("assets\\playlist_add_select_background.style");
+		playlist_add_file_icon			= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_add_file_icon.style");;
+		playlist_add_folder_icon		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_add_folder_icon.style");
+		playlist_add_textbox_background = mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_add_files_textbox.style");
+		playlist_add_textbox_select		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_add_select_background.style");
+
+
+		if (CheckTextureError() == true)
+		{
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+				"Missing file",
+				"File is missing. Please reinstall the program.",
+				NULL);
+			mdEngine::AppExit();
+			return;
+		}
 
 
 		deltaVolumePos = (s32)(Playlist::GetVolume() * 100.f * 0.9f);

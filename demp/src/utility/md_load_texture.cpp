@@ -1,4 +1,5 @@
 #include "md_load_texture.h"
+#include "../app/realtime_system_application.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -35,12 +36,10 @@ GLuint mdLoadTexture(std::string path, mdEngine::b8 clamp)
 	}
 	else
 	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-			"Missing file",
-			"File is missing. Please reinstall the program.",
-			NULL);
+		
 		std::cout << "Texture failed to load at path: " << path << std::endl;
 		stbi_image_free(data);
+		mdEngine::AppExit();
 	}
 
 	return textureID;
@@ -70,10 +69,8 @@ GLuint mdLoadTexture(void* data, mdEngine::u32 size)
 	else
 	{
 		std::cout << "Texture failed to load." << std::endl;
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-			"Missing file",
-			"File is missing. Please reinstall the program.",
-			NULL);
+		
+		mdEngine::AppExit();
 	}
 
 	stbi_image_free(dataUC);
@@ -100,10 +97,8 @@ GLuint mdLoadTexture(unsigned char* data, mdEngine::s32 width, mdEngine::s32 hei
 	else
 	{
 		std::cout << "Texture failed to load." << std::endl;
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-			"Missing file",
-			"File is missing. Please reinstall the program.",
-			NULL);
+		
+		mdEngine::AppExit();
 	}
 
 	return textureID;

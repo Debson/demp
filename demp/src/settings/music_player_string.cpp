@@ -21,22 +21,17 @@ namespace mdEngine
 	namespace Strings
 	{
 		std::string _SAVED_PATH = "C:\\Users\\michd\\Desktop\\test folder with music";
-		std::string _FONT_PATH = "\\assets\\font\\TimesNewRoman.ttf";
-		std::string _FONT_DIGITAL_PATH = "\\assets\\font\\digital.ttf";
+		std::string _FONT_PATH = "assets\\font\\TimesNewRoman.ttf";
+		std::string _FONT_DIGITAL_PATH = "assets\\font\\digital.ttf";
 
 
 		std::string _SETTINGS_FILE;
 		std::string _PLAYLIST_FILE;
+		std::string _CURRENT_DIRECTORY_PATH;
 	}
 
 	void Strings::InitializeStrings()
 	{
-		// Get aboslute path for a font
-		char cCurrentPath[FILENAME_MAX];
-		GetCurrentDir(cCurrentPath, FILENAME_MAX);
-		_FONT_PATH = cCurrentPath + _FONT_PATH;
-		_FONT_DIGITAL_PATH = cCurrentPath + _FONT_DIGITAL_PATH;
-
 		// Get user appdata directory
 		char username[UNLEN + 1];
 		DWORD username_len = UNLEN + 1;
@@ -69,5 +64,22 @@ namespace mdEngine
 		
 		//_SETTINGS_FILE = "E:\\SDL Projects\\demp\\demp\\settings\\settings.txt";
 	    //_PATHS_FILE = "E:\\SDL Projects\\demp\\demp\\settings\\path.txt";
+	}
+
+
+	void Strings::SetProgramPath(const char *path)
+	{
+		_CURRENT_DIRECTORY_PATH = std::string(path);
+#ifdef _DEBUG_CURRENT_PATH_
+		s32 pos = _CURRENT_DIRECTORY_PATH.find_last_of('\\');
+		_CURRENT_DIRECTORY_PATH = _CURRENT_DIRECTORY_PATH.substr(0, pos);
+		pos = _CURRENT_DIRECTORY_PATH.find_last_of('\\');
+		_CURRENT_DIRECTORY_PATH = _CURRENT_DIRECTORY_PATH.substr(0, pos) + "\\";
+#else
+		s32 pos = _CURRENT_DIRECTORY_PATH.find_last_of('\\');
+		_CURRENT_DIRECTORY_PATH = _CURRENT_DIRECTORY_PATH.substr(0, pos) + "\\";
+#endif
+		_FONT_PATH = _CURRENT_DIRECTORY_PATH + _FONT_PATH;
+		_FONT_DIGITAL_PATH = _CURRENT_DIRECTORY_PATH + _FONT_DIGITAL_PATH;
 	}
 }

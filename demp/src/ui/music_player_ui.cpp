@@ -234,6 +234,7 @@ namespace MP
 		App::ProcessResizableTop(&mdResizableTop, &mdResizableBottom);
 
 		App::ProcessResizableBottom(&mdResizableBottom, &mdResizableTop);
+		//md_log("bottom processed");
 
 		if (State::CheckState(State::Window::Resized) == true ||
 			State::CheckState(State::Window::PositionChanged) == true)
@@ -1131,6 +1132,9 @@ namespace MP
 
 		if (fileBrowserFinished)
 		{
+			// After file browser captuer mouse is switching off
+			SDL_CaptureMouse(SDL_TRUE);
+
 			fileBrowserActive = false;
 			std::string fileNames = utf16_to_utf8(mdWindowsFile::GetFileNames());
 
@@ -1149,13 +1153,7 @@ namespace MP
 			if (State::CheckState(State::FilesLoaded) == false)
 				return;
 
-			if (State::CheckState(State::PathContainerSorted) == false)
-				State::SetState(State::SortPathsOnNewFileLoad);
-
-			State::SetState(State::FileDropped);
-			State::ResetState(State::InitialLoadFromFile);
-			State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
-			State::SetState(State::FilesAddedInfoNotLoaded);
+			State::OnFileAddition();
 
 			s32 nlCount = 0;
 			for (s32 i = 0; i < fileNames.length(); i++)

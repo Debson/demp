@@ -209,8 +209,6 @@ namespace mdEngine
 			glm::vec2	GetSize() const;
 
 		private:
-			Button* m_Button;
-
 			b8							m_Active;
 			u16							m_ItemsCount;
 			f32							m_ItemScale;

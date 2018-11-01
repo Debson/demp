@@ -265,7 +265,10 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 
 	SetupGlew();
-	
+
+	mdIsRunning = true;
+	mdAppClosing = false;
+
 	mdApplicationHandler->OnWindowOpen();
 	Graphics::StartGraphics();
 
@@ -276,9 +279,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
-	mdIsRunning = true;
-	mdAppClosing = false;
-
+	
 	SDL_Event event;
 
 	Time::deltaTime = Time::Time();
@@ -340,15 +341,9 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				filesCount++;
 				if (State::CheckState(State::FilesLoaded) == false)
 					break;
-
-				if (State::CheckState(State::PathContainerSorted) == false)
-					State::SetState(State::SortPathsOnNewFileLoad);
-
 				State::ResetState(State::AddedByFileBrowser);
-				State::SetState(State::FileDropped);
-				State::ResetState(State::InitialLoadFromFile);
-				State::CheckState(State::PlaylistEmpty) == false ? State::SetState(State::FilesDroppedNotLoaded) : (void)0;
-				State::SetState(State::FilesAddedInfoNotLoaded);
+
+				State::OnFileAddition();
 				Audio::DroppedItemsCount++;
 #ifdef _WIN32_
 				std::string p(event.drop.file);
@@ -529,6 +524,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 
 				Graphics::UpdateGraphics();
+				if (mdIsRunning == false)
+					return;
 
 				Graphics::Shader::shaderDefault->use();
 				Graphics::Shader::shaderDefault->setMat4("projection", *Graphics::GetProjectionMatrix());
@@ -545,6 +542,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				SDL_GL_SwapWindow(mdWindow);
 			}
 			// Render options window
+			State::SetState(State::Started);
 
 			for (auto & i : Window::WindowsContainer)
 			{

@@ -44,10 +44,11 @@ namespace Audio
 
 	void SaveDroppedPath(std::string path);
 
+	void SavePathFromCommandLine(const char* path);
+
 	void OnDropComplete();
 
 	void PushToPlaylistTest(std::string path, b8 firstCall = true);
-
 
 
 	void DeallocateAudioItems();
