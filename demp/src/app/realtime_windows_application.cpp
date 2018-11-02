@@ -3,6 +3,7 @@
 #include <string>
 #include <Windows.h>
 #include <shellapi.h>
+#include <cstdlib>
 
 #include <thread>
 
@@ -98,6 +99,35 @@ namespace mdEngine
 	void UpdateWindowSize();
 
 	void ProceedToSafeClose();
+
+	b8 CheckIfInstanceExists();
+}
+
+b8 mdEngine::CheckIfInstanceExists()
+{
+	auto m_singleInstanceMutex = CreateMutex(NULL, TRUE, "demp_md");
+	if (m_singleInstanceMutex == NULL || GetLastError() == ERROR_ALREADY_EXISTS) {
+		HWND existingApp = FindWindow(0, "demp");
+		if (existingApp) SetForegroundWindow(existingApp);
+
+		/*LPWSTR *strCmdLine;
+		int argc = 0;
+		strCmdLine = CommandLineToArgvW(GetCommandLineW(), &argc);
+		if (argc == 2)
+		{
+			std::wstring str = L"CMDPATH=" + std::wstring(strCmdLine[1]);
+			if (!_putenv("CMDPATH=foobar"))
+			{
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "failed", "failed to set env var", NULL);
+			}
+			system("demp.exe");
+			//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "App as default", utf16_to_utf8(str).c_str(), NULL);
+		}*/
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 void mdEngine::SetupSDL()
@@ -233,6 +263,13 @@ void mdEngine::ProceedToSafeClose()
 
 void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
+	// App is already opened, exit it
+	if (CheckIfInstanceExists() == true)
+	{
+		State::SetState(State::Window::Exit);
+		return;
+	}
+
 	mdHasApplication = true;
 	mdApplicationHandler = &applicationHandler;
 	mdApplicationHandler->CollectWindowProperties(Window::WindowProperties);
@@ -274,12 +311,22 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 	SDL_CaptureMouse(SDL_TRUE);
 
+
+
+	/*if (!_putenv("CMDPATH"))
+	{
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "failed", "failed to set env var 1st", NULL);
+	}
+	system("demp.exe");*/
+
 	glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 }
 
 void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
-	
+	if (State::CheckState(State::Window::Exit) == true)
+		return;
+
 	SDL_Event event;
 
 	Time::deltaTime = Time::Time();
@@ -584,10 +631,10 @@ void mdEngine::StopRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
-	/* CLEAR AND FREE MEMORY */
+	if (State::CheckState(State::Window::Exit) == true)
+		return;
 
-
-
+	/* CLEAR AND FREE UP THE MEMORY */
 	MP::Config::SaveToConfig();
 	mdApplicationHandler->OnWindowClose();
 	//MP::UI::GetOptionsWindow()->Free();

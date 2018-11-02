@@ -21,6 +21,7 @@
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_util.h"
 
+
 namespace fs = boost::filesystem;
 
 namespace Audio
@@ -435,21 +436,28 @@ b8 Audio::AudioObject::LoadAlbumImageFromFolder()
 	auto sepItem = Interface::Separator::GetSeparatorByID(m_ItemID);
 	assert(sepItem != nullptr);
 	// Max treshold of amount of files in the folder on which searching will be performed
-	// Change hardcode
-	if (sepItem->GetSubFilesContainer()->size() > 500)
+	if (sepItem->GetSubFilesContainer()->size() > MAX_FILE_NUMBER_TO_CANCEL_SEARCH)
 	{
 		md_log("Folder has too many files to perform searching!");
 		return false;
 	}
+
+	u32 fileCount = 0;
 	// Iterate through all the items in audio file folder and search for the first image, if found, load it
 	for (auto & i : fs::directory_iterator(utf8_to_utf16(this->GetFolderPath())))
 	{
-		if (fs::is_regular_file(i.path()) == true && 
+		if (fs::is_regular_file(i.path()) == true &&
 			Info::CheckIfImage(i.path().string()) == true)
 		{
 			m_AlbumImageTex = mdLoadTexture(i.path().string());
 			return true;
 		}
+		else
+			fileCount++;
+
+	// Search in only first "MAX_FILE_NUMBER_TO_CANCEL_SEARCH" files
+		if (fileCount > MAX_FILE_NUMBER_TO_CANCEL_SEARCH)
+			break;
 	}
 
 	return false;

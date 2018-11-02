@@ -3,6 +3,9 @@
 #include <iostream>
 #include <algorithm>
 
+#include <shellapi.h>
+#include <cstdlib>
+
 #include <gtc/matrix_transform.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -65,6 +68,7 @@ namespace mdEngine
 
 		std::vector<std::shared_ptr<Audio::AudioObject>> audioVecToRenderTeGraphics;
 
+		std::wstring secondArg = L"";
 
 		//std::vector<s32> indexesToRenderVec;
 
@@ -1213,10 +1217,13 @@ namespace mdEngine
 		{
 			if (Audio::Object::GetAudioObject(MP::GetPlaylistObject()->GetPlayingID())->GetAlbumPictureTexture() == 0)
 				return;
+			
 			//glViewport(Data::_ALBUM_COVER_IMAGE_POS.x, Data::_ALBUM_COVER_IMAGE_POS.y, Data::_ALBUM_COVER_IMAGE_SIZE.x, Data::_ALBUM_COVER_IMAGE_SIZE.y);
 			glm::mat4 model;
 			model = glm::translate(model, glm::vec3(Data::_ALBUM_COVER_IMAGE_POS, 1.f));
 			model = glm::scale(model, glm::vec3(Data::_ALBUM_COVER_IMAGE_SIZE, 1.f));
+			//model = glm::translate(model, glm::vec3(0.f, 0.f, 1.f));
+			//model = glm::scale(model, glm::vec3(200.f, 1200.f, 1.f));
 			Shader::shaderDefault->setVec3("color", Color::White);
 			Shader::shaderDefault->setMat4("model", model);
 			glBindTexture(GL_TEXTURE_2D, Audio::Object::GetAudioObject(MP::GetPlaylistObject()->GetPlayingID())->GetAlbumPictureTexture());
@@ -2613,6 +2620,18 @@ namespace mdEngine
 			itemsSizeText.ReloadTextTexture();
 			itemsCountText.ReloadTextTexture();
 		}
+
+		char * p = getenv("CMDPATH");
+		if (p == 0) 
+		{
+			//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "App as default", p, NULL);
+			//Audio::SavePathFromCommandLine(p);
+		}
+		else
+		{
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "App as default", p, NULL);
+		}
+
 
 		UpdatePlaylistWindow();
 		UpdateVolume();

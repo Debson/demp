@@ -34,9 +34,6 @@ int main(int argc, char** argv)
 {
 	mdEngine::Strings::SetProgramPath(argv[0]);
 
-	//const char * path = "C:\\Users\\debson\\Desktop\\11 Corduroy.mp3";
-	//const char * path = "C:\\Users\\debson\\Desktop\\I No Longer Fear The Razor Guarding My Heel (IV) Track 3 (No Pause).mp3";
-	//Audio::SavePathFromCommandLine(path);
 	if (argc == 2)
 	{
 		Audio::SavePathFromCommandLine(argv[1]);

@@ -17,9 +17,14 @@
 #define MAX_FILEPATH_BUFFER_SIZE 65536
 #define MAX_FOLDERPATH_BUFFER_SIZE 512
 
+#define MAX_FILE_NUMBER_TO_CANCEL_SEARCH 500
 #define MAX_ALBUM_IMAGE_SIZE 800000
 
 #define LAST_EVENT_TIME 50
+
+
+
+
 
 const std::thread::id MAIN_THREAD_ID = std::this_thread::get_id();
 
@@ -248,6 +253,7 @@ namespace MP
 		const std::vector<std::string> SupportedAudioFormats =
 		{
 			".mp3",
+			".mp4",
 			".wav",
 			".wma"
 		};
