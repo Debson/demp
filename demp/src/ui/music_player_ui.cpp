@@ -344,8 +344,8 @@ namespace MP
 	void UI::DeleteAllFiles()
 	{
 		s32 len = Audio::Object::GetSize();
-		std::vector<s32> vec;
-		for (s32 i = 1; i < len; i++)
+		std::vector<u32> vec;
+		for (u32 i = 0; i < len; i++)
 			vec.push_back(i);
 
 		std::reverse(vec.begin(), vec.end());
@@ -940,7 +940,7 @@ namespace MP
 
 			// WHY WHEN IT IS SORTED IN DESCENDING ORDER IT DELETES FASTER????????????????
 			s32 temp = *Graphics::MP::GetPlaylistObject()->multipleSelect.back();
-			std::vector<s32> indexes;
+			std::vector<u32> indexes;
 			for (auto i : Graphics::MP::GetPlaylistObject()->multipleSelect)
 			{
 				indexes.push_back(*i);

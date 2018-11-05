@@ -1004,7 +1004,7 @@ namespace mdEngine
 
 		m_ButtonsBackgroundColor = Color::Orange;
 
-		s32 fadeTimeValue	= 200;
+		s32 fadeTimeValue	= 150;
 		m_FadeTimerRight	= Time::Timer(fadeTimeValue);
 		m_FadeTimerLeft		= Time::Timer(fadeTimeValue);
 

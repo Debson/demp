@@ -17,6 +17,8 @@ namespace mdEngine
 		extern std::string _CURRENT_DIRECTORY_PATH;
 
 		// Settings files texts
+		extern std::string _APPDATA_PATH;
+		extern std::string _TEMP_CHILD_CONSOLE_ARG;
 		extern std::string _SETTINGS_FILE;
 		extern std::string _PLAYLIST_FILE;
 		const std::string _DATABASE_FILE			= "E:\\SDL Projects\\demp\\demp\\data.db";

@@ -57,7 +57,9 @@ namespace mdEngine
 			RequestForInfoLoad			= (1llu << 52),
 			AddedByFileBrowser			= (1llu << 54),
 			AddedByCommandLine			= (1llu << 59),
-			Started						= (1llu << 58)
+			AppStarted					= (1llu << 58),
+			CommunicationWithChildCreated = (1llu << 60)
+
 		};
 
 		enum WindowEvent : u64

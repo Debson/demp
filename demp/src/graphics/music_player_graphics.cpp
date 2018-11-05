@@ -1891,7 +1891,7 @@ namespace mdEngine
 
 			if (m_PlaylistItemTextBox->isItemPressed(1) == true)
 			{
-				std::vector<s32> indexes;
+				std::vector<u32> indexes;
 				for (auto & i : MP::GetPlaylistObject()->multipleSelect)
 				{
 					indexes.push_back(*i);
@@ -2620,18 +2620,6 @@ namespace mdEngine
 			itemsSizeText.ReloadTextTexture();
 			itemsCountText.ReloadTextTexture();
 		}
-
-		char * p = getenv("CMDPATH");
-		if (p == 0) 
-		{
-			//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "App as default", p, NULL);
-			//Audio::SavePathFromCommandLine(p);
-		}
-		else
-		{
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "App as default", p, NULL);
-		}
-
 
 		UpdatePlaylistWindow();
 		UpdateVolume();

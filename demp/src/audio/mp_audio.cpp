@@ -101,6 +101,8 @@ namespace Audio
 	void ActiveLoadInfoWindow();
 
 	void ResetStateFlags();
+
+	void ListenForCommunicationFromChild();
 }
 
 void Audio::InitializeConfig()
@@ -401,7 +403,7 @@ void Audio::UpdateAudioLogic()
 	if (State::CheckState(State::Window::Exit) == true)
 		return;
 
-	if (m_CommandLinePathsContainer.empty() == false && State::CheckState(State::Started) == true)
+	if (m_CommandLinePathsContainer.empty() == false && State::CheckState(State::AppStarted) == true)
 	{
 		for (auto & i : m_CommandLinePathsContainer)
 		{
@@ -576,6 +578,7 @@ void Audio::UpdateAudioLogic()
 			//State::SetState(State::UpdatePlaylistInfoStrings);
 
 			State::SetState(State::FilesInfoLoaded);
+			State::ResetState(State::CommunicationWithChildCreated);
 		}
 		else
 		{
@@ -607,6 +610,8 @@ void Audio::UpdateAudioLogic()
 	}
 
 	ActiveLoadInfoWindow();
+
+	ListenForCommunicationFromChild();
 
 }
 
@@ -1214,6 +1219,38 @@ void Audio::ActiveLoadInfoWindow()
 
 #endif
 
+}
+
+void Audio::ListenForCommunicationFromChild()
+{
+	if (fs::exists(utf8_to_utf16(Strings::_TEMP_CHILD_CONSOLE_ARG)) == true &&
+		State::CheckState(State::CommunicationWithChildCreated) == false)
+	{
+		State::SetState(State::CommunicationWithChildCreated);
+		std::fstream file;
+		char buff[1024];
+		file.open(utf8_to_utf16(Strings::_TEMP_CHILD_CONSOLE_ARG), std::ios::in | std::ios::binary);
+		if (file.is_open() == false)
+		{
+			MD_ERROR("Error: Could not open a file for read!\n");
+		}
+
+		file.getline(buff, 1024);
+		//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "File found!", buff, NULL);
+
+		file.close();
+		fs::remove(utf8_to_utf16(Strings::_TEMP_CHILD_CONSOLE_ARG));
+
+		// Delete all files from playlist and add detected file
+		MP::UI::DeleteAllFiles();
+		MP::Playlist::StopMusic();
+		State::OnFileAddition();
+		State::ResetState(State::AddedByFileBrowser);
+		Audio::DroppedItemsCount++;
+		PushToPlaylist(buff, true);
+		State::SetState(State::AddedByCommandLine);
+		State::SetState(State::AudioChangedInTray);
+	}
 }
 
 u32 Audio::GetIndexOfLoadingObject()

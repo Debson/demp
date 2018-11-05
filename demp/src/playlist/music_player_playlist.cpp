@@ -150,7 +150,7 @@ namespace MP
 				std::cout << stderr;
 
 				if(fs::exists(audioObject->GetPathUTF8()) == false)
-					DeleteMusic(&std::vector<s32>(1, audioObject->GetID()));
+					DeleteMusic(&std::vector<u32>(1, audioObject->GetID()));
 
 
 				return false;
@@ -196,7 +196,7 @@ namespace MP
 						m_MusicStream = BASS_StreamCreateFile(TRUE, m_Data, 0, size, BASS_STREAM_AUTOFREE);
 						if (check_file() == false)
 						{
-							DeleteMusic(&std::vector<s32>(1, audioObject->GetID()));
+							DeleteMusic(&std::vector<u32>(1, audioObject->GetID()));
 							return load(Audio::Object::GetAudioObject(m_ID + 1));
 						}
 					}
@@ -223,7 +223,7 @@ namespace MP
 					if (check_file() == false && 
 						m_ID + 1 < Audio::Object::GetSize())
 					{
-						DeleteMusic(&std::vector<s32>(1, audioObject->GetID()));
+						DeleteMusic(&std::vector<u32>(1, audioObject->GetID()));
 						return load(Audio::Object::GetAudioObject(m_ID + 1));;
 					}
 				}
@@ -843,7 +843,7 @@ namespace MP
 			}
 		}
 
-		void DeleteMusic(const std::vector<s32>* indexes)
+		void DeleteMusic(const std::vector<u32>* indexes)
 		{
 			if (State::CheckState(State::FilesDroppedNotLoaded) == true)
 			{
@@ -920,7 +920,7 @@ namespace MP
 				State::SetState(State::AudioChangedInTray);
 			}
 			// If it is first 2-3 seconds of the song, reset that state.
-			if (GetPosition() > 2.f && GetPosition() - 3.f <= 0)
+			if (GetPosition() > 2.f && GetPosition() - 3.f <= 0 && IsPlaying() == true)
 			{
 				State::ResetState(State::AudioChangedInTray);
 			}

@@ -17,7 +17,7 @@ namespace Time
 		~Timer();
 
 		f32 targetTime;
-		f32 startTime;
+		Uint32 startTime;
 		f32 currentTime;
 
 		b8 started;

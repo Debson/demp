@@ -35,7 +35,7 @@
 #include "../sqlite/md_sqlite.h";
 #include "../utility/md_time.h"
 
-
+#define ICO1 101
 #define IDM_EXIT 32771
 #define ID_S_EXIT                       32772
 #define IDM_SHOW_DEMP					32773
@@ -46,6 +46,8 @@
 #include <shellapi.h>
 // C RunTime Header Files
 #include <tchar.h>
+
+
 
 namespace fs = boost::filesystem;
 
@@ -96,6 +98,12 @@ namespace mdEngine
 
 	void SetupGlew();
 
+#ifdef _WIN32_
+	void SetupWindows();
+#else
+
+#endif
+
 	void UpdateWindowSize();
 
 	void ProceedToSafeClose();
@@ -110,19 +118,23 @@ b8 mdEngine::CheckIfInstanceExists()
 		HWND existingApp = FindWindow(0, "demp");
 		if (existingApp) SetForegroundWindow(existingApp);
 
-		/*LPWSTR *strCmdLine;
 		int argc = 0;
-		strCmdLine = CommandLineToArgvW(GetCommandLineW(), &argc);
+		LPWSTR * strCmdLine = CommandLineToArgvW(GetCommandLineW(), &argc);
 		if (argc == 2)
 		{
-			std::wstring str = L"CMDPATH=" + std::wstring(strCmdLine[1]);
-			if (!_putenv("CMDPATH=foobar"))
+			std::fstream file;
+			file.open(Strings::_TEMP_CHILD_CONSOLE_ARG, std::ios::out | std::ios::binary);
+			if (file.is_open() == false)
 			{
-				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "failed", "failed to set env var", NULL);
+				MD_ERROR("Error: Could not open a file for writing!\n");
+				return false;
 			}
-			system("demp.exe");
-			//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "App as default", utf16_to_utf8(str).c_str(), NULL);
-		}*/
+
+			file << utf16_to_utf8(strCmdLine[1]);
+			file.close();
+		}
+
+		LocalFree(strCmdLine);
 
 		return TRUE;
 	}
@@ -160,43 +172,6 @@ void mdEngine::SetupSDL()
 		std::cout << "ERROR: TTF not initialized!\n";
 		return;
 	}
-
-	/* Retrieve hwnd window info and set transparecny for specific color.
-	   Works only on Windows. 
-	   TODO: implement that on linux later on.
-	*/
-#ifdef _WIN32_
-	SDL_GetWindowWMInfo(mdWindow, &wmInfo);
-	hwnd = wmInfo.info.win.window;
-	SetWindowLong(hwnd, GWL_EXSTYLE,
-		GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
-
-
-	SetLayeredWindowAttributes(hwnd, RGB(0xFF, 0xFE, 0xFF), 0, LWA_COLORKEY);
-
-	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
-
-	SDL_GetWindowWMInfo(mdWindow, &wmInfo);
-	SDL_VERSION(&wmInfo.version);
-
-	if (SDL_GetWindowWMInfo(mdWindow, &wmInfo))
-	{
-		icon.uCallbackMessage = WM_USER + 1;
-		icon.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
-		icon.hIcon = LoadIcon(NULL, IDI_INFORMATION);
-		icon.cbSize = sizeof(icon);
-		icon.hWnd = wmInfo.info.win.window;
-		strcpy_s(icon.szTip, "demp");
-		Window::TrayIconProperties.m_TraySize = glm::ivec2(32);
-		bool success = Shell_NotifyIcon(NIM_ADD, &icon);
-	}
-
-#else
-
-
-
-
-#endif
 }
 
 void mdEngine::SetupOpenGL()
@@ -248,6 +223,45 @@ void mdEngine::SetupGlew()
 #endif
 }
 
+#ifdef _WIN32_
+void mdEngine::SetupWindows()
+{
+	/* Retrieve hwnd window info and set transparecny for specific color.
+   Works only on Windows.
+   TODO: implement that on linux later on.
+*/
+	SDL_GetWindowWMInfo(mdWindow, &wmInfo);
+	hwnd = wmInfo.info.win.window;
+	SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+
+	//SetLayeredWindowAttributes(hwnd, RGB(127, 127, 127), 0, LWA_COLORKEY);
+
+	SetLayeredWindowAttributes(hwnd, RGB(0xFF, 0xFE, 0xFF), 0, ULW_COLORKEY);
+
+
+	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
+
+	SDL_GetWindowWMInfo(mdWindow, &wmInfo);
+	SDL_VERSION(&wmInfo.version);
+
+	if (SDL_GetWindowWMInfo(mdWindow, &wmInfo))
+	{
+		ZeroMemory(&icon, sizeof(NOTIFYICONDATA));
+		icon.cbSize = sizeof(NOTIFYICONDATA);
+		icon.hWnd = wmInfo.info.win.window;
+		icon.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+		icon.uCallbackMessage = WM_USER + 1;
+		icon.hIcon = (HICON)LoadImage(NULL, TEXT("assets\\icons\\demp_icon.ico"), IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+		strcpy_s(icon.szTip, "demp");
+		Window::TrayIconProperties.m_TraySize = glm::ivec2(32);
+		bool success = Shell_NotifyIcon(NIM_ADD, &icon);
+	}
+
+}
+#else
+
+#endif
+
 void mdEngine::UpdateWindowSize()
 {
 	/*if (State::CheckState(State::Window::Resized) == true)
@@ -263,11 +277,13 @@ void mdEngine::ProceedToSafeClose()
 
 void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
+	// Initialize config path before anything is done
+	Strings::InitializeStrings();
+
 	// App is already opened, exit it
 	if (CheckIfInstanceExists() == true)
 	{
-		State::SetState(State::Window::Exit);
-		return;
+		exit(1);
 	}
 
 	mdHasApplication = true;
@@ -299,8 +315,6 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 
 	SetupOpenGL();
-
-
 	SetupGlew();
 
 	mdIsRunning = true;
@@ -309,15 +323,10 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	mdApplicationHandler->OnWindowOpen();
 	Graphics::StartGraphics();
 
+	SetupWindows();
+
 	SDL_CaptureMouse(SDL_TRUE);
 
-
-
-	/*if (!_putenv("CMDPATH"))
-	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "failed", "failed to set env var 1st", NULL);
-	}
-	system("demp.exe");*/
 
 	glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 }
@@ -462,9 +471,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 							Window::TrayIconProperties.m_TrayPos = App::Input::GetGlobalMousePosition();
 						}
 						break;
-					case WM_MOUSEWHEEL:
-						md_log("scroll");
-						break;
 					}
 				}
 				break;
@@ -476,6 +482,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 					case IDM_SHOW_DEMP:
 						Window::ShowWindow();
 						Window::RestoreWindow();
+						State::ResetState(State::Window::InTray);
 						break;
 					case IDM_EXIT:
 						Shell_NotifyIcon(NIM_DELETE, &icon);
@@ -566,7 +573,8 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				State::CheckState(State::AudioChangedInTray) == true)
 			{
 				SDL_GL_MakeCurrent(mdWindow, gl_context);
-				glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
+				//glClearColor(Color::TransparentClearColor.x, Color::TransparentClearColor.y, Color::TransparentClearColor.z, 1.f);
+				glClearColor(Color::TransparentClearColor.r, Color::TransparentClearColor.g, Color::TransparentClearColor.b, 1.f);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 
@@ -587,7 +595,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 				SDL_GL_SwapWindow(mdWindow);
 			}
 			// Render options window
-			State::SetState(State::Started);
+			State::SetState(State::AppStarted);
 
 			for (auto & i : Window::WindowsContainer)
 			{
@@ -631,9 +639,6 @@ void mdEngine::StopRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
-	if (State::CheckState(State::Window::Exit) == true)
-		return;
-
 	/* CLEAR AND FREE UP THE MEMORY */
 	MP::Config::SaveToConfig();
 	mdApplicationHandler->OnWindowClose();

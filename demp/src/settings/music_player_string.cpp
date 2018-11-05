@@ -15,6 +15,7 @@
 #define GetCurrentDir getcwd
 #endif // _WIN32_
 
+namespace fs = boost::filesystem;
 
 namespace mdEngine
 {
@@ -25,6 +26,9 @@ namespace mdEngine
 		std::string _FONT_DIGITAL_PATH = "assets\\font\\digital.ttf";
 
 
+		
+		std::string _APPDATA_PATH;
+		std::string _TEMP_CHILD_CONSOLE_ARG = std::string();
 		std::string _SETTINGS_FILE;
 		std::string _PLAYLIST_FILE;
 		std::string _CURRENT_DIRECTORY_PATH;
@@ -47,9 +51,16 @@ namespace mdEngine
 		_SETTINGS_FILE += "\\Users\\";
 		_SETTINGS_FILE += username;
 		_SETTINGS_FILE += "\\AppData\\Roaming\\demp";
+
+		_APPDATA_PATH = _SETTINGS_FILE + '\\';
+		_TEMP_CHILD_CONSOLE_ARG = _APPDATA_PATH + "temp.bin";
+		if(fs::exists(utf8_to_utf16(Strings::_TEMP_CHILD_CONSOLE_ARG)))
+			fs::remove(utf8_to_utf16(Strings::_TEMP_CHILD_CONSOLE_ARG));
+
+
 		//C:\Users\debson\AppData\Roaming
-		boost::filesystem::path dir(_SETTINGS_FILE);
-		if (boost::filesystem::create_directory(dir))
+		fs::path dir(_SETTINGS_FILE);
+		if (fs::create_directory(dir))
 		{
 			std::cerr << "Directory Created: " << _SETTINGS_FILE << std::endl;
 		}

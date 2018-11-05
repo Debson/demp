@@ -81,7 +81,7 @@ namespace MP
 
 		void ReloadMusic(std::string path);
 
-		void DeleteMusic(const std::vector<s32>* indexes);
+		void DeleteMusic(const std::vector<u32>* indexes);
 
 		b8 IsLoaded();
 
