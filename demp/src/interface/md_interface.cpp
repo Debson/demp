@@ -11,6 +11,7 @@
 #include "../settings/music_player_settings.h"
 #include "../playlist/music_player_playlist.h"
 #include "../player/music_player_state.h"
+#include "../player/music_player_resources.h"
 #include "../graphics/graphics.h"
 #include "../graphics/music_player_graphics_playlist.h"
 #include "../ui/music_player_ui.h"
@@ -924,7 +925,7 @@ namespace mdEngine
 	void Interface::ButtonSlider::Init(mdShader* shader)
 	{
 		m_Shader = shader;
-		m_LeftTexture = mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\switch.style");
+		m_LeftTexture = Resources::interface_button_slider;
 		m_RightTexture = m_LeftTexture;
 
 		if (m_LeftTexture == NULL)
@@ -1264,8 +1265,6 @@ namespace mdEngine
 
 	void Interface::ButtonSlider::Free()
 	{
-		glDeleteTextures(1, &m_LeftTexture);
-		glDeleteTextures(1, &m_RightTexture);
 		m_ValueTextObject.DeleteTexture();
 		m_LabelTextObject.DeleteTexture();
 		m_DefaultTextObject.DeleteTexture();

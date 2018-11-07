@@ -82,7 +82,6 @@ void main()
 			FragColor = texColor * vec4(color, 1.0);
 		}
 	}
-	
 	if(playlistCutX)
 	{
 		if(pos.x > playlistBoundsX.y || pos.x < playlistBoundsX.x)
@@ -94,19 +93,14 @@ void main()
 			FragColor = texColor * vec4(color, 1.0);
 		}
 	}
-
 	if(plain)
 	{
 		FragColor = vec4(color, 1.0);
 	}
-
 	if(plainRGBA)
 	{
 		FragColor = colorRGBA;
 	}
-
-
-
 	if(roundEdgesBackground == true)
 	{
 		float tex = 0.02 * playerHeightChange;
@@ -123,8 +117,5 @@ void main()
 		if(TexCoords.x > 1 - tex && TexCoords.y > 1 -tex && distance(TexCoords, vec2(1 - tex, 1 - tex)) > tex)
 			FragColor = vec4(0.0);
 	}
-
-
-
 	gl_FragColor = FragColor;
 }

@@ -18,6 +18,7 @@
 #include "../playlist/music_player_playlist.h"
 #include "../player/music_player.h"
 #include "../player/music_player_state.h"
+#include "../player/music_player_resources.h"
 #include "../settings/music_player_string.h"
 #include "../settings/music_player_settings.h"
 #include "../utility/md_text.h"
@@ -49,7 +50,7 @@ namespace mdEngine
 
 		static TextBoxContainer m_TextBoxContainer;
 
-		GLuint main_background = 0, main_foreground = 0;
+		/*GLuint main_background = 0, main_foreground = 0;
 		GLuint ui_buttons_background, ui_buttons_background_left,
 			exit_icon, minimize_icon, stay_on_top_icon, settings_icon,
 			exit_background, minimize_background, stay_on_top_background, settings_background,
@@ -61,7 +62,7 @@ namespace mdEngine
 		GLuint music_progress_bar;
 		GLuint playlist_add_file_icon, playlist_add_folder_icon, playlist_add_textbox_background, playlist_add_textbox_select;
 
-		GLuint playlist_textbox_texture;
+		GLuint playlist_textbox_texture;*/
 
 
 		std::vector<s32> playlistSeparatorsIDsVec;
@@ -434,7 +435,7 @@ namespace mdEngine
 		model = glm::scale(model, glm::vec3(Data::_MAIN_BACKGROUND_SIZE.x, Data::_MAIN_BACKGROUND_SIZE.y, 1.f));;
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setBool("cut", true);
-		glBindTexture(GL_TEXTURE_2D, main_background);
+		glBindTexture(GL_TEXTURE_2D, Resources::main_background);
 		Shader::Draw(Shader::shaderDefault);
 		Shader::shaderDefault->setBool("cut", false);
 		Shader::shaderDefault->setBool("roundEdgesBackground", false);
@@ -445,7 +446,7 @@ namespace mdEngine
 		model = glm::scale(model, glm::vec3(Data::_MAIN_FOREGROUND_SIZE, 1.f));
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setBool("cut", true);
-		glBindTexture(GL_TEXTURE_2D, main_foreground);
+		glBindTexture(GL_TEXTURE_2D, Resources::main_foreground);
 		Shader::Draw(Shader::shaderDefault);;
 		Shader::shaderDefault->setBool("cut", false);
 
@@ -457,7 +458,7 @@ namespace mdEngine
 			model = glm::scale(model, glm::vec3(Data::_PLAYLIST_FOREGROUND_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
 			Shader::shaderDefault->setBool("cut", true);
-			glBindTexture(GL_TEXTURE_2D, main_foreground);
+			glBindTexture(GL_TEXTURE_2D, Resources::main_foreground);
 			Shader::Draw(Shader::shaderDefault);
 			Shader::shaderDefault->setBool("cut", false);
 		}
@@ -472,7 +473,7 @@ namespace mdEngine
 			lastMousePos = deltaVolumePos;
 			model = glm::scale(model, glm::vec3(Data::_PLAYLIST_BUTTON_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, playlist_button);
+			glBindTexture(GL_TEXTURE_2D, Resources::playlist_button);
 			Shader::Draw(Shader::shaderDefault);
 		}
 		else
@@ -483,7 +484,7 @@ namespace mdEngine
 			lastMousePos = deltaVolumePos;
 			model = glm::scale(model, glm::vec3(Data::_PLAYLIST_BUTTON_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, playlist_button);
+			glBindTexture(GL_TEXTURE_2D, Resources::playlist_button);
 			Shader::Draw(Shader::shaderDefault);
 			Shader::shaderDefault->setVec3("color", Color::White);
 
@@ -540,15 +541,15 @@ namespace mdEngine
 		volumeSpeakerTex = 0;
 		if (Data::VolumeLevel > 0.65)
 		{
-			volumeSpeakerTex = volume_speaker;
+			volumeSpeakerTex = Resources::volume_speaker;
 		}
 		else if (Data::VolumeLevel > 0.3)
 		{
-			volumeSpeakerTex = volume_speaker_medium;
+			volumeSpeakerTex = Resources::volume_speaker_medium;
 		}
 		else
 		{
-			volumeSpeakerTex = volume_speaker_low;
+			volumeSpeakerTex = Resources::volume_speaker_low;
 		}
 	}
 
@@ -564,7 +565,7 @@ namespace mdEngine
 			model = glm::translate(model, glm::vec3(Data::_VOLUME_SPEAKER_POS, 0.3f));
 			model = glm::scale(model, glm::vec3(Data::_VOLUME_SPEAKER_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, volume_speaker_muted);
+			glBindTexture(GL_TEXTURE_2D, Resources::volume_speaker_muted);
 			Shader::Draw(Shader::shaderDefault);
 		}
 		else if (volumeMuted == true || deltaVolumePos <= 0)
@@ -575,7 +576,7 @@ namespace mdEngine
 			model = glm::translate(model, glm::vec3(Data::_VOLUME_SPEAKER_POS, 0.3f));
 			model = glm::scale(model, glm::vec3(Data::_VOLUME_SPEAKER_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, volume_speaker_muted);
+			glBindTexture(GL_TEXTURE_2D, Resources::volume_speaker_muted);
 			Shader::Draw(Shader::shaderDefault);
 			Shader::shaderDefault->setVec3("color", Color::White);
 		}
@@ -609,7 +610,7 @@ namespace mdEngine
 		model = glm::scale(model, glm::vec3(Data::_VOLUME_BAR_SIZE, 1.f));
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setVec3("color", Color::DarkGrey);
-		glBindTexture(GL_TEXTURE_2D, volume_bar);
+		glBindTexture(GL_TEXTURE_2D, Resources::volume_bar);
 		Shader::Draw(Shader::shaderDefault);
 		Shader::shaderDefault->setVec3("color", Color::White);
 
@@ -632,7 +633,7 @@ namespace mdEngine
 
 			model = glm::scale(model, glm::vec3(Data::_SLIDER_DOT_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, dot_icon);
+			glBindTexture(GL_TEXTURE_2D, Resources::dot_icon);
 			Shader::Draw(Shader::shaderDefault);
 
 			if (volumeMuted == false)
@@ -642,7 +643,7 @@ namespace mdEngine
 				model = glm::scale(model, glm::vec3(deltaVolumePos, Data::_VOLUME_BAR_SIZE.y, 1.f));
 				Shader::shaderDefault->setMat4("model", model);
 				Shader::shaderDefault->setVec3("color", Color::Green);
-				glBindTexture(GL_TEXTURE_2D, volume_bar);
+				glBindTexture(GL_TEXTURE_2D, Resources::volume_bar);
 				Shader::Draw(Shader::shaderDefault);
 				Shader::shaderDefault->setVec3("color", Color::White);
 			}
@@ -654,7 +655,7 @@ namespace mdEngine
 			model = glm::scale(model, glm::vec3(deltaVolumePos, Data::_VOLUME_BAR_SIZE.y, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
 			Shader::shaderDefault->setVec3("color", Color::Grey);
-			glBindTexture(GL_TEXTURE_2D, volume_bar);
+			glBindTexture(GL_TEXTURE_2D, Resources::volume_bar);
 			Shader::Draw(Shader::shaderDefault);
 			Shader::shaderDefault->setVec3("color", Color::White);
 		}
@@ -707,7 +708,7 @@ namespace mdEngine
 		model = glm::scale(model, glm::vec3(Data::_MUSIC_PROGRESS_BAR_SIZE, 1.f));
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setVec3("color", Color::DarkGrey);
-		glBindTexture(GL_TEXTURE_2D, music_progress_bar);
+		glBindTexture(GL_TEXTURE_2D, Resources::music_progress_bar);
 		Shader::Draw(Shader::shaderDefault);
 		Shader::shaderDefault->setVec3("color", Color::White);
 
@@ -718,7 +719,7 @@ namespace mdEngine
 			model = glm::translate(model, glm::vec3(Data::_MUSIC_PROGRESS_BAR_POS, 0.35f));
 			model = glm::scale(model, glm::vec3(deltaMusicPos, Data::_MUSIC_PROGRESS_BAR_SIZE.y, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, music_progress_bar);
+			glBindTexture(GL_TEXTURE_2D, Resources::music_progress_bar);
 			Shader::Draw(Shader::shaderDefault);
 			Shader::shaderDefault->setVec3("color", Color::White);
 
@@ -728,7 +729,7 @@ namespace mdEngine
 			lastMousePos = deltaVolumePos;
 			model = glm::scale(model, glm::vec3(Data::_SLIDER_DOT_SIZE, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, dot_icon);
+			glBindTexture(GL_TEXTURE_2D, Resources::dot_icon);
 			Shader::Draw(Shader::shaderDefault);
 
 
@@ -739,7 +740,7 @@ namespace mdEngine
 			model = glm::translate(model, glm::vec3(Data::_MUSIC_PROGRESS_BAR_POS, 0.35f));
 			model = glm::scale(model, glm::vec3(deltaMusicPos, Data::_MUSIC_PROGRESS_BAR_SIZE.y, 1.f));
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, music_progress_bar);
+			glBindTexture(GL_TEXTURE_2D, Resources::music_progress_bar);
 			Shader::Draw(Shader::shaderDefault);
 		}
 	}
@@ -794,13 +795,13 @@ namespace mdEngine
 			dotModel = glm::scale(dotModel, glm::vec3(Data::_DOT_BUTTON_STATE_SIZE, 1.f));
 			Shader::shaderDefault->setVec3("color", color);
 			Shader::shaderDefault->setMat4("model", dotModel);
-			glBindTexture(GL_TEXTURE_2D, dot_icon);
+			glBindTexture(GL_TEXTURE_2D, Resources::dot_icon);
 			Shader::Draw(Shader::shaderDefault);
 
 		}
 		Shader::shaderDefault->setVec3("color", color);
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, shuffle_button);
+		glBindTexture(GL_TEXTURE_2D, Resources::shuffle_button);
 		Shader::Draw(Shader::shaderDefault);
 
 
@@ -823,7 +824,7 @@ namespace mdEngine
 		}
 		Shader::shaderDefault->setVec3("color", color);
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, previous_button);
+		glBindTexture(GL_TEXTURE_2D, Resources::previous_button);
 		Shader::Draw(Shader::shaderDefault);
 
 
@@ -858,7 +859,7 @@ namespace mdEngine
 			Shader::shaderDefault->setVec3("color", color);
 
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, play_button);
+			glBindTexture(GL_TEXTURE_2D, Resources::play_button);
 			Shader::Draw(Shader::shaderDefault);
 		}
 
@@ -887,7 +888,7 @@ namespace mdEngine
 			Shader::shaderDefault->setVec3("color", color);
 
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, stop_button);
+			glBindTexture(GL_TEXTURE_2D, Resources::stop_button);
 			Shader::Draw(Shader::shaderDefault);
 		}
 
@@ -911,7 +912,7 @@ namespace mdEngine
 		}
 		Shader::shaderDefault->setVec3("color", color);
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, next_button);
+		glBindTexture(GL_TEXTURE_2D, Resources::next_button);
 		Shader::Draw(Shader::shaderDefault);
 
 
@@ -947,12 +948,12 @@ namespace mdEngine
 			dotModel = glm::scale(dotModel, glm::vec3(Data::_DOT_BUTTON_STATE_SIZE, 1.f));
 			Shader::shaderDefault->setVec3("color", color);
 			Shader::shaderDefault->setMat4("model", dotModel);
-			glBindTexture(GL_TEXTURE_2D, dot_icon);
+			glBindTexture(GL_TEXTURE_2D, Resources::dot_icon);
 			Shader::Draw(Shader::shaderDefault);
 		}
 		Shader::shaderDefault->setVec3("color", color);
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, repeat_button);
+		glBindTexture(GL_TEXTURE_2D, Resources::repeat_button);
 		Shader::Draw(Shader::shaderDefault);
 
 		Shader::shaderDefault->setVec3("color", Color::White);		
@@ -1804,7 +1805,7 @@ namespace mdEngine
 			{
 				if (i.second->IsVisible() == true)
 				{
-					i.second->DrawItem(main_foreground);
+					i.second->DrawItem(Resources::main_foreground);
 				}
 			}
 
@@ -1827,7 +1828,7 @@ namespace mdEngine
 					Shader::shaderDefault->setVec3("color", Color::White);
 					continue;
 				}
-				item->DrawItem(main_foreground);
+				item->DrawItem(Resources::main_foreground);
 			}
 
 			for (auto & i : MP::GetPlaylistObject()->multipleSelect)
@@ -1970,7 +1971,7 @@ namespace mdEngine
 				 m_PlaylistItemTextBox->hasFocus == false)
 		{
 			playlistItemTextBoxActive = false;
-			glDeleteTextures(1, &playlist_textbox_texture);
+			glDeleteTextures(1, &Resources::playlist_textbox_texture);
 		}
 
 
@@ -2005,7 +2006,7 @@ namespace mdEngine
 		}
 
 
-		playlist_textbox_texture; // = mdLoadTexture("path....");
+		Resources::playlist_textbox_texture; // = mdLoadTexture("path....");
 		if (playlistItemTextBoxActive == true && m_PlaylistItemTextBox == NULL)
 		{
 			State::SetState(State::OtherWindowHasFocus);
@@ -2013,8 +2014,8 @@ namespace mdEngine
 			m_PlaylistItemTextBox = new Interface::PlaylistItemTextBox(mousePos, Data::_PLAYLIST_ITEM_TEXTBOX_SIZE, Shader::shaderDefault);
 
 			m_PlaylistItemTextBox->SetTextColor(Color::White);
-			m_PlaylistItemTextBox->SetBackgroundTexture(playlist_add_textbox_background);
-			m_PlaylistItemTextBox->SetSelectTexture(playlist_add_textbox_select);
+			m_PlaylistItemTextBox->SetBackgroundTexture(Resources::playlist_add_textbox_background);
+			m_PlaylistItemTextBox->SetSelectTexture(Resources::playlist_add_textbox_select);
 			m_PlaylistItemTextBox->SetItemScale(1.f);
 			m_PlaylistItemTextBox->SetItemsOffset(glm::vec2(5.f, 5.f));
 			m_PlaylistItemTextBox->SetFontSize(12);
@@ -2034,7 +2035,7 @@ namespace mdEngine
 
 			}
 
-			m_PlaylistItemTextBox->SetBackgroundTexture(playlist_textbox_texture);
+			m_PlaylistItemTextBox->SetBackgroundTexture(Resources::playlist_textbox_texture);
 		}
 		else if (playlistItemTextBoxActive == false && m_PlaylistItemTextBox != NULL)
 		{
@@ -2090,12 +2091,12 @@ namespace mdEngine
 				Shader::shaderDefault);
 
 			m_AddFileTextBox->SetTextColor(Color::White);
-			m_AddFileTextBox->SetBackgroundTexture(playlist_add_textbox_background);
-			m_AddFileTextBox->SetSelectTexture(playlist_add_textbox_select);
+			m_AddFileTextBox->SetBackgroundTexture(Resources::playlist_add_textbox_background);
+			m_AddFileTextBox->SetSelectTexture(Resources::playlist_add_textbox_select);
 			m_AddFileTextBox->SetItemScale(1.f);
 			m_AddFileTextBox->SetItemsOffset(glm::vec2(45.f, 5.f));
-			m_AddFileTextBox->AddItem(Strings::_PLAYLIST_ADD_FILE, playlist_add_file_icon);
-			m_AddFileTextBox->AddItem(Strings::_PLAYLIST_ADD_FOLDER, playlist_add_folder_icon);
+			m_AddFileTextBox->AddItem(Strings::_PLAYLIST_ADD_FILE, Resources::playlist_add_file_icon);
+			m_AddFileTextBox->AddItem(Strings::_PLAYLIST_ADD_FOLDER, Resources::playlist_add_folder_icon);
 		}
 		else if (playlistAddFileActive == false && m_AddFileTextBox != NULL)
 		{
@@ -2206,14 +2207,14 @@ namespace mdEngine
 		model = glm::translate(model, glm::vec3(Data::_UI_BUTTONS_BACKGROUND_LEFT_POS, 0.2f));
 		model = glm::scale(model, glm::vec3(Data::_UI_BUTTONS_BACKGROUND_LEFT_SIZE, 1.f));;
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, ui_buttons_background_left);
+		glBindTexture(GL_TEXTURE_2D, Resources::ui_buttons_background_left);
 		Shader::Draw(Shader::shaderDefault);
 
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(Data::_SETTINGS_BUTTON_BACKGROUND_POS, 0.3f));
 		model = glm::scale(model, glm::vec3(Data::_SETTINGS_BUTTON_BACKGROUND_SIZE, 1.f));;
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, settings_background);
+		glBindTexture(GL_TEXTURE_2D, Resources::settings_background);
 		Shader::Draw(Shader::shaderDefault);
 
 
@@ -2224,7 +2225,7 @@ namespace mdEngine
 			model = glm::translate(model, glm::vec3(Data::_SETTINGS_BUTTON_POS, 0.4f));
 			model = glm::scale(model, glm::vec3(Data::_SETTINGS_BUTTON_SIZE, 1.f));;
 			Shader::shaderDefault->setMat4("model", model);
-			glBindTexture(GL_TEXTURE_2D, settings_background_glow);
+			glBindTexture(GL_TEXTURE_2D, Resources::settings_background_glow);
 			Shader::Draw(Shader::shaderDefault);
 		}
 
@@ -2232,7 +2233,7 @@ namespace mdEngine
 		model = glm::translate(model, glm::vec3(Data::_SETTINGS_BUTTON_POS, 0.4f));
 		model = glm::scale(model, glm::vec3(Data::_SETTINGS_BUTTON_SIZE, 1.f));;
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, settings_icon);
+		glBindTexture(GL_TEXTURE_2D, Resources::settings_icon);
 		Shader::Draw(Shader::shaderDefault);
 	}
 
@@ -2250,7 +2251,7 @@ namespace mdEngine
 		model = glm::translate(model, glm::vec3(Data::_UI_BUTTONS_BACKGROUND_RIGHT_POS, 0.2f));
 		model = glm::scale(model, glm::vec3(Data::_UI_BUTTONS_BACKGROUND_RIGHT_SIZE, 1.f));;
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, ui_buttons_background);
+		glBindTexture(GL_TEXTURE_2D, Resources::ui_buttons_background);
 		Shader::Draw(Shader::shaderDefault);
 
 
@@ -2258,21 +2259,21 @@ namespace mdEngine
 		model = glm::translate(model, glm::vec3(Data::_EXIT_BUTTON_BACKGROUND_POS, 0.3f));
 		model = glm::scale(model, glm::vec3(Data::_EXIT_BUTTON_BACKGROUND_SIZE, 1.f));
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, exit_background);
+		glBindTexture(GL_TEXTURE_2D, Resources::exit_background);
 		Shader::Draw(Shader::shaderDefault);
 
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(Data::_STAY_ON_TOP_BUTTON_BACKGROUND_POS, 0.3f));
 		model = glm::scale(model, glm::vec3(Data::_STAY_ON_TOP_BUTTON_BACKGROUND_SIZE, 1.f));
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, stay_on_top_background);
+		glBindTexture(GL_TEXTURE_2D, Resources::stay_on_top_background);
 		Shader::Draw(Shader::shaderDefault);
 
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(Data::_MINIMIZE_BUTTON_BACKGROUND_POS, 0.3f));
 		model = glm::scale(model, glm::vec3(Data::_MINIMIZE_BUTTON_BACKGROUND_SIZE, 1.f));
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, minimize_background);
+		glBindTexture(GL_TEXTURE_2D, Resources::minimize_background);
 		Shader::Draw(Shader::shaderDefault);
 
 
@@ -2288,7 +2289,7 @@ namespace mdEngine
 													0.35f));
 
 			model = glm::scale(model, glm::vec3(newSize, 1.f));
-			tex = exit_background_glow;
+			tex = Resources::exit_background_glow;
 			buttonHasFocus = true;
 		}
 		else if (Input::hasFocus(Input::ButtonType::StayOnTop) == true)
@@ -2298,7 +2299,7 @@ namespace mdEngine
 															  Data::_STAY_ON_TOP_BUTTON_POS.y - (newSize.y - Data::_STAY_ON_TOP_BUTTON_SIZE.y) / 2.f),
 													0.35f));
 			model = glm::scale(model, glm::vec3(newSize, 1.f));
-			tex = stay_on_top_background_glow;
+			tex = Resources::stay_on_top_background_glow;
 			buttonHasFocus = true;
 		}
 		else if (Input::hasFocus(Input::ButtonType::Minimize) == true)
@@ -2308,7 +2309,7 @@ namespace mdEngine
 															  Data::_MINIMIZE_BUTTON_POS.y - (newSize.y - Data::_MINIMIZE_BUTTON_SIZE.y) / 2.f),
 													0.35f));
 			model = glm::scale(model, glm::vec3(newSize, 1.f));
-			tex = minimize_background_glow;
+			tex = Resources::minimize_background_glow;
 			buttonHasFocus = true;
 		}
 
@@ -2324,21 +2325,21 @@ namespace mdEngine
 		model = glm::translate(model, glm::vec3(Data::_EXIT_BUTTON_POS, 0.4f));
 		model = glm::scale(model, glm::vec3(Data::_EXIT_BUTTON_SIZE, 1.f));;
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, exit_icon);
+		glBindTexture(GL_TEXTURE_2D, Resources::exit_icon);
 		Shader::Draw(Shader::shaderDefault);
 
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(Data::_STAY_ON_TOP_BUTTON_POS, 0.4f));
 		model = glm::scale(model, glm::vec3(Data::_STAY_ON_TOP_BUTTON_SIZE, 1.f));;
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, stay_on_top_icon);
+		glBindTexture(GL_TEXTURE_2D, Resources::stay_on_top_icon);
 		Shader::Draw(Shader::shaderDefault);
 
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(Data::_MINIMIZE_BUTTON_POS, 0.4f));
 		model = glm::scale(model, glm::vec3(Data::_MINIMIZE_BUTTON_SIZE, 1.f));;
 		Shader::shaderDefault->setMat4("model", model);
-		glBindTexture(GL_TEXTURE_2D, minimize_icon);
+		glBindTexture(GL_TEXTURE_2D, Resources::minimize_icon);
 		Shader::Draw(Shader::shaderDefault);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
@@ -2406,7 +2407,7 @@ namespace mdEngine
 																glm::vec2(125, 25), Shader::shaderDefault);
 				m_MusicProgressTextBox->SetTextColor(Color::White);
 				m_MusicProgressTextBox->SetBackgroundTexture(0);
-				m_MusicProgressTextBox->SetSelectTexture(playlist_add_textbox_select);
+				m_MusicProgressTextBox->SetSelectTexture(Resources::playlist_add_textbox_select);
 				m_MusicProgressTextBox->SetItemsOffset(glm::vec2(15.f, 5.f));
 				m_MusicProgressTextBox->SetFontSize(12);
 				m_MusicProgressTextBox->AddItem(str);
@@ -2460,27 +2461,11 @@ namespace mdEngine
 		return &m_TextBoxContainer;
 	}
 
-	b8 Graphics::CheckTextureError()
-	{
-		if (main_background && main_foreground && ui_buttons_background && ui_buttons_background_left  &&
-			exit_icon && minimize_icon && stay_on_top_icon && settings_icon &&
-			exit_background && minimize_background && stay_on_top_background && settings_background &&
-			exit_background_glow && minimize_background_glow && stay_on_top_background_glow &&
-			settings_background_glow && volume_bar  && volume_speaker  && volume_speaker_muted  &&
-			volume_speaker_low && volume_speaker_medium && play_button && stop_button && next_button &&
-			previous_button && shuffle_button && repeat_button && dot_icon && playlist_button &&
-			playlist_add_file  && music_progress_bar  && playlist_add_file_icon && playlist_add_folder_icon &&
-			playlist_add_textbox_background && playlist_add_textbox_select)
-		{
-			return false;
-		}
-
-		return true;
-	}
+	
 
 	void Graphics::StartMainWindow()
 	{
-		main_background				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\main.style");
+		/*main_background				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\main.style");
 		main_foreground				= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\main.style");
 
 		ui_buttons_background		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\ui_buttons_background.style");
@@ -2522,18 +2507,7 @@ namespace mdEngine
 		playlist_add_file_icon			= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_add_file_icon.style");;
 		playlist_add_folder_icon		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_add_folder_icon.style");
 		playlist_add_textbox_background = mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_add_files_textbox.style");
-		playlist_add_textbox_select		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_add_select_background.style");
-
-
-		if (CheckTextureError() == true)
-		{
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-				"Missing file",
-				"File is missing. Please reinstall the program.",
-				NULL);
-			mdEngine::AppExit();
-			return;
-		}
+		playlist_add_textbox_select		= mdLoadTexture(Strings::_CURRENT_DIRECTORY_PATH + "assets\\playlist_add_select_background.style");*/
 
 
 		deltaVolumePos = (s32)(Playlist::GetVolume() * 100.f * 0.9f);
@@ -2552,7 +2526,7 @@ namespace mdEngine
 
 		m_PlaylistAddButton = Interface::PlaylistAddButton(Data::_PLAYLIST_ADD_BUTTON_POS, 
 														   Data::_PLAYLIST_ADD_BUTTON_SIZE, 
-														   playlist_add_file);
+														   Resources::playlist_add_file);
 
 		InitializeTextBoxes();
 		m_PlaylistTextBoxTimer = Time::Timer(Data::PlaylistTextBoxTime);
@@ -2670,41 +2644,7 @@ namespace mdEngine
 
 	void Graphics::CloseMainWindow()
 	{
-		glDeleteTextures(1, &main_background);
-		glDeleteTextures(1, &main_foreground);
-		glDeleteTextures(1, &ui_buttons_background);
-		glDeleteTextures(1, &ui_buttons_background_left);
-		glDeleteTextures(1, &exit_background);
-		glDeleteTextures(1, &stay_on_top_background);
-		glDeleteTextures(1, &minimize_background);
-		glDeleteTextures(1, &settings_background);
-		glDeleteTextures(1, &exit_icon);
-		glDeleteTextures(1, &stay_on_top_icon);
-		glDeleteTextures(1, &minimize_icon);
-		glDeleteTextures(1, &settings_icon);
-		glDeleteTextures(1, &exit_background_glow);
-		glDeleteTextures(1, &minimize_background_glow);
-		glDeleteTextures(1, &stay_on_top_background_glow);
-		glDeleteTextures(1, &settings_background_glow);
-		glDeleteTextures(1, &volume_bar);
-		glDeleteTextures(1, &volume_speaker);
-		glDeleteTextures(1, &volume_speaker_muted);
-		glDeleteTextures(1, &volume_speaker_low);
-		glDeleteTextures(1, &volume_speaker_medium);
-		glDeleteTextures(1, &play_button);
-		glDeleteTextures(1, &stop_button);
-		glDeleteTextures(1, &next_button);
-		glDeleteTextures(1, &previous_button);
-		glDeleteTextures(1, &shuffle_button);
-		glDeleteTextures(1, &repeat_button);
-		glDeleteTextures(1, &dot_icon);
-		glDeleteTextures(1, &playlist_button);
-		glDeleteTextures(1, &playlist_add_file);
-		glDeleteTextures(1, &music_progress_bar);
-		glDeleteTextures(1, &playlist_add_file_icon);
-		glDeleteTextures(1, &playlist_add_folder_icon);;
-		glDeleteTextures(1, &playlist_add_textbox_background);
-		glDeleteTextures(1, &playlist_add_textbox_select);
+		
 
 		durationText.DeleteTexture();
 		itemsSizeText.DeleteTexture();

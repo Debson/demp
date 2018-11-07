@@ -317,3 +317,23 @@ demp/resource\.h
 Setup/Setup\.vdproj
 
 demp/demp\.exe
+
+demp/external/minizip/
+
+demp/external/zlib123/contrib/masmx64/
+
+demp/external/zlib123/examples/
+
+*.starypijany
+
+*.zip
+
+demp/external/zlib123/
+
+demp/external/bit7z-v2\.1\.0-msvc2015_x86/include/
+
+demp/external/bit7z-v2\.1\.0-msvc2015_x86/
+
+demp/external/zlib123dll/dll32/demo/
+
+demp/external/zlib123dll/

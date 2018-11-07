@@ -4,10 +4,12 @@
 #include <gtc/matrix_transform.hpp>
 
 #include "music_player_graphics.h"
+#include "shaders.h"
 #include "../app/realtime_system_application.h"
+#include "../player/music_player_resources.h"
+#include "../settings/music_player_settings.h"
 #include "../utility/md_shape.h"
 #include "../utility/md_text.h"
-#include "../settings/music_player_settings.h"
 
 using namespace mdEngine::MP::UI;
 
@@ -28,8 +30,7 @@ namespace mdEngine
 
 		void Shader::InitShader()
 		{
-			shaderDefault =  new mdShader(Strings::_CURRENT_DIRECTORY_PATH + "shaders\\default.vert", 
-										  Strings::_CURRENT_DIRECTORY_PATH + "shaders\\default.frag");
+			shaderDefault =  new mdShader(ShadersCode::Default_Vert, ShadersCode::Default_Frag);
 
 			if (shaderDefault == NULL)
 			{
@@ -37,9 +38,7 @@ namespace mdEngine
 				return;
 			}
 	
-			shaderBorder = new mdShader(Strings::_CURRENT_DIRECTORY_PATH + "shaders\\border.vert", 
-										Strings::_CURRENT_DIRECTORY_PATH + "shaders\\border.frag", 
-										Strings::_CURRENT_DIRECTORY_PATH + "shaders\\border.geom");
+			shaderBorder = new mdShader(ShadersCode::Border_Vert, ShadersCode::Border_Frag, ShadersCode::Border_Geom);
 
 			if (shaderBorder == NULL)
 			{
@@ -157,8 +156,9 @@ namespace mdEngine
 
 	void Graphics::StartGraphics()
 	{
-		Text::InitializeText();
+		Resources::Init();
 		Shader::InitShader();
+		Text::InitializeText();
 		StartMainWindow();
 	}
 
@@ -175,6 +175,7 @@ namespace mdEngine
 	void Graphics::CloseGraphics()
 	{
 		Shader::Free();
+		Resources::Free();
 		CloseMainWindow();
 	}
 

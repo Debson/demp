@@ -3,7 +3,6 @@ layout (location=0) in vec4 vertex;
 
 out vec2 TexCoords;
 
-
 out vec4 pos;
 
 uniform mat4 model;

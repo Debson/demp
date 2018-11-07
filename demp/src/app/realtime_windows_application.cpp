@@ -15,6 +15,9 @@
 #include <bass.h>
 #include <GL/gl3w.h>
 #include <boost/filesystem.hpp>
+#include <bit7zlibrary.hpp>
+#include <bitextractor.hpp>
+#include <bitformat.hpp>
 
 #ifdef _DEBUG_
 #include "../../external/imgui/imgui.h"
@@ -50,6 +53,7 @@
 
 
 namespace fs = boost::filesystem;
+
 
 namespace mdEngine
 {
@@ -328,6 +332,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	SDL_CaptureMouse(SDL_TRUE);
 
 
+
 	glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 }
 
@@ -343,6 +348,7 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 	f64 previousFrame = 0;
 	f64 currentFrame = 0;
 	Time::Timer capTimer;
+
 
 	while (mdIsRunning == true)
 	{

@@ -22,8 +22,8 @@ namespace mdEngine
 	namespace Strings
 	{
 		std::string _SAVED_PATH = "C:\\Users\\michd\\Desktop\\test folder with music";
-		std::string _FONT_PATH = "assets\\font\\TimesNewRoman.ttf";
-		std::string _FONT_DIGITAL_PATH = "assets\\font\\digital.ttf";
+		std::string _FONT_PATH = "assets\\font\\TextFont.ttf";
+		std::string _FONT_DIGITAL_PATH = "assets\\font\\TimeFont.ttf";
 
 
 		
