@@ -15,6 +15,16 @@ namespace Audio
 
 	namespace Info
 	{
+		enum FileType
+		{
+			MP3,
+			MP4,
+			WAV,
+			WMA,
+			OGG
+		};
+
+
 		struct ID3
 		{
 			ID3() 
@@ -35,7 +45,6 @@ namespace Audio
 				freq		= 0;
 				size		= 0;
 				length		= 0;
-				ctype		= 0;
 				infoCorrupted = false;
 			}
 

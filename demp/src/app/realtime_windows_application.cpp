@@ -15,9 +15,8 @@
 #include <bass.h>
 #include <GL/gl3w.h>
 #include <boost/filesystem.hpp>
-#include <bit7zlibrary.hpp>
-#include <bitextractor.hpp>
-#include <bitformat.hpp>
+
+
 
 #ifdef _DEBUG_
 #include "../../external/imgui/imgui.h"
@@ -255,7 +254,7 @@ void mdEngine::SetupWindows()
 		icon.hWnd = wmInfo.info.win.window;
 		icon.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
 		icon.uCallbackMessage = WM_USER + 1;
-		icon.hIcon = (HICON)LoadImage(NULL, TEXT("assets\\icons\\demp_icon.ico"), IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+		icon.hIcon = (HICON)LoadImage(NULL, TEXT("assets\\icons\\demp.ico"), IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
 		strcpy_s(icon.szTip, "demp");
 		Window::TrayIconProperties.m_TraySize = glm::ivec2(32);
 		bool success = Shell_NotifyIcon(NIM_ADD, &icon);
@@ -324,6 +323,7 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 	mdIsRunning = true;
 	mdAppClosing = false;
 
+	
 	mdApplicationHandler->OnWindowOpen();
 	Graphics::StartGraphics();
 
@@ -331,10 +331,10 @@ void mdEngine::OpenRealtimeApplication(mdEngine::App::ApplicationHandlerInterfac
 
 	SDL_CaptureMouse(SDL_TRUE);
 
-
-
 	glViewport(0, 0, mdCurrentWindowWidth, mdCurrentWindowHeight);
 }
+
+
 
 void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface& applicationHandler)
 {
@@ -348,7 +348,6 @@ void mdEngine::RunRealtimeApplication(mdEngine::App::ApplicationHandlerInterface
 	f64 previousFrame = 0;
 	f64 currentFrame = 0;
 	Time::Timer capTimer;
-
 
 	while (mdIsRunning == true)
 	{

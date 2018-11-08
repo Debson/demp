@@ -28,6 +28,7 @@
 #include "../utility/utf8_to_utf16.h"
 #include "../utility/md_util.h"
 #include "../utility/md_load_texture.h"
+#include "../utility/md_string.h"
 
 
 namespace fs = boost::filesystem;
@@ -44,6 +45,7 @@ namespace Audio
 
 		void DeleteSpecialCharacters(std::string& str);
 		void GetID3Info(Info::ID3* info, std::string& path);
+		b8 IsSupported(std::string& type);
 	}
 
 	void Info::Update()
@@ -224,6 +226,9 @@ namespace Audio
 
 	void Info::GetID3Info(Info::ID3* info, std::string& path)
 	{
+		if (IsSupported(info->format) == false)
+			return;
+
 		TagLib::FileRef file(utf8_to_utf16(path).c_str());
 
 		if (file.tag()->isEmpty() == false)
@@ -265,6 +270,18 @@ namespace Audio
 			if (buff != TagLib::String::null)
 				info->genre = buff.toCString();
 		}
+	}
+
+	b8 Info::IsSupported(std::string& type)
+	{
+		std::string ext = '.' + tolower(type);
+		for (auto & i : MP::Data::NotSupportedByTaglib)
+		{
+			if (ext.compare(i) == 0)
+				return false;
+		}
+
+		return true;
 	}
 
 	std::string Info::GetProcessedItemsCountStr()

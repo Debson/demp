@@ -678,14 +678,15 @@ namespace mdEngine
 			s32 mouseX, mouseY;
 			App::Input::GetMousePosition(&mouseX, &mouseY);
 			deltaMusicPos = mouseX - Data::_MUSIC_PROGRESS_BAR_POS.x;
-			if (deltaMusicPos > Data::_MUSIC_PROGRESS_BAR_SIZE.x)
-				deltaMusicPos = Data::_MUSIC_PROGRESS_BAR_SIZE.x;
-			if (deltaMusicPos < 0)
-				deltaMusicPos = 0;
 
 			if (App::Input::IsKeyDown(App::KeyCode::MouseLeft) == false)
 				Playlist::SetPosition(deltaMusicPos / (float)Data::_MUSIC_PROGRESS_BAR_SIZE.x * Playlist::GetMusicLength());
 		}
+
+		if (deltaMusicPos > Data::_MUSIC_PROGRESS_BAR_SIZE.x)
+			deltaMusicPos = Data::_MUSIC_PROGRESS_BAR_SIZE.x;
+		if (deltaMusicPos < 0)
+			deltaMusicPos = 0;
 
 		if (Input::hasFocus(Input::ButtonType::SliderMusic) &&
 			App::Input::IsKeyDown(App::KeyCode::MouseLeft) &&

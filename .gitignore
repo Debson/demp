@@ -337,3 +337,13 @@ demp/external/bit7z-v2\.1\.0-msvc2015_x86/
 demp/external/zlib123dll/dll32/demo/
 
 demp/external/zlib123dll/
+
+demp/external/bit7z/include/
+
+demp/external/chilkat/include/
+
+demp/external/chilkat/
+
+demp/external/unzip101e/
+
+demp/external/

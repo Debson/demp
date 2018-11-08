@@ -254,8 +254,28 @@ namespace MP
 		{
 			".mp3",
 			".mp4",
+			".mp2",
+			".mp1",
 			".wav",
-			".wma"
+			".wma",
+			".ogg",
+			".flac",
+			".aiff",
+			".asf",
+			".m4a",
+			".aac", // not supported by taglib
+			".ac3", // not supported by taglib
+			".amr"  // not supported by taglib
+		};
+
+
+		const std::vector<std::string> NotSupportedByTaglib =
+		{
+			".aac",		// not supported by taglib
+			".ac3",		// not supported by taglib
+			".amr",		// not supported by taglib
+			".mp2",		// not supported by taglib
+			".mp1"
 		};
 
 		const std::vector<std::string> SupportedImageFormats =
