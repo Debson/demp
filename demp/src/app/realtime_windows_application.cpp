@@ -254,7 +254,7 @@ void mdEngine::SetupWindows()
 		icon.hWnd = wmInfo.info.win.window;
 		icon.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
 		icon.uCallbackMessage = WM_USER + 1;
-		icon.hIcon = (HICON)LoadImage(NULL, TEXT("assets\\icons\\demp.ico"), IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+		icon.hIcon = (HICON)LoadImage(NULL, TEXT("demp.ico"), IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
 		strcpy_s(icon.szTip, "demp");
 		Window::TrayIconProperties.m_TraySize = glm::ivec2(32);
 		bool success = Shell_NotifyIcon(NIM_ADD, &icon);

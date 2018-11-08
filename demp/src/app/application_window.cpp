@@ -45,10 +45,10 @@ namespace mdEngine
 	}
 
 	App::WindowProperties::WindowProperties() :
-						m_WindowWidth(500), // 400
+						m_WindowWidth(MP::Data::_DEFAULT_PLAYER_SIZE.x), // 400
 						m_WindowHeight(700), // 300
 						m_ApplicationHeight(700),
-						m_ApplicationWidth(500),
+						m_ApplicationWidth(MP::Data::_DEFAULT_PLAYER_SIZE.x),
 						m_StartApplicationHeight(700),
 						m_WindowPositionX(600),
 						m_WindowPositionY(100),

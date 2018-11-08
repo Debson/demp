@@ -34,8 +34,8 @@ namespace MP
 {
 	namespace Data
 	{
-		static f32 mdDefaultWidth = 500.f;
-		static f32 mdDefaultHeight = 320.f;
+		static f32 mdDefaultWidth = 460.f;
+		static f32 mdDefaultHeight = 260.f;
 
 		
 		const s32 _WINDOW_TEXTBOXES_OFFSET = 150;
@@ -50,10 +50,10 @@ namespace MP
 		const s32 _PLAYLIST_ARROWS_SCROLL_DELAY = 500;
 		const s32 _PLAYLIST_ARROWS_SCROLL_INTERVAL = 15;
 
-		const glm::vec2 _MIN_PLAYER_SIZE = glm::vec2(500.f, 500.f);
+		const glm::vec2 _MIN_PLAYER_SIZE = glm::vec2(460.f, 500.f);
 
 		const glm::vec2 _DEFAULT_PLAYER_POS = glm::vec2(0.f, 0.f);
-		const glm::vec2 _DEFAULT_PLAYER_SIZE = glm::vec2(500.f, mdDefaultHeight);
+		const glm::vec2 _DEFAULT_PLAYER_SIZE = glm::vec2(mdDefaultWidth, mdDefaultHeight);
 
 		const glm::vec2 _DEFAULT_WINDOW_POS = glm::vec2(0.f, 0.f);;
 		const glm::vec2 _DEFAULT_WINDOW_SIZE = glm::vec2(mdDefaultWidth, 700.f);
@@ -170,14 +170,15 @@ namespace MP
 		extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_POS;
 		extern glm::vec2 _PLAYLIST_ITEMS_SURFACE_SIZE;
 
-		const glm::vec2 _PLAYLIST_ITEM_SIZE = glm::vec2(430.f, 30.f);;
+		const glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, 20.f);;
+		const glm::vec2 _PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdDefaultWidth - 20.f - _PLAYLIST_SCROLL_BAR_SIZE.x, 
+															 _PLAYLIST_FOREGROUND_POS.y);
+
+		const glm::vec2 _PLAYLIST_ITEM_SIZE = glm::vec2(mdDefaultWidth - 50.f - _PLAYLIST_SCROLL_BAR_SIZE.x, 30.f);;
 
 		const glm::vec2 _PLAYLIST_SEPARATOR_POS_OFFSET = glm::vec2(10.f, 0.f);
 		const glm::vec2 _PLAYLIST_SEPARATOR_SIZE = glm::vec2(_PLAYLIST_ITEM_SIZE.x + _PLAYLIST_SEPARATOR_POS_OFFSET.x, 20.f);
 
-		const glm::vec2 _PLAYLIST_SCROLL_BAR_SIZE = glm::vec2(20.f, 20.f);;
-		const glm::vec2 _PLAYLIST_SCROLL_BAR_POS = glm::vec2(mdDefaultWidth - 20.f - _PLAYLIST_SCROLL_BAR_SIZE.x, 
-															 _PLAYLIST_FOREGROUND_POS.y);
 
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_POS;
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_SIZE;
@@ -192,9 +193,9 @@ namespace MP
 		extern glm::vec2 _PLAYLIST_ADD_ICON_POS;
 		const glm::vec2 _PLAYLIST_ADD_ICON_SIZE = glm::vec2(_TEXT_BOX_ITEM_HEIGHT - 4);
 
-		const glm::vec2 _ALBUM_COVER_IMAGE_SIZE = glm::vec2(270, 150);
+		const glm::vec2 _ALBUM_COVER_IMAGE_SIZE = glm::vec2(180, 110);
 		//const glm::vec2 _ALBUM_COVER_IMAGE_POS = glm::vec2((mdDefaultWidth - _ALBUM_COVER_IMAGE_SIZE.x) / 2.f, 70.f);
-		const glm::vec2 _ALBUM_COVER_IMAGE_POS = glm::vec2(_PLAY_BUTTON_POS.x + _PLAY_BUTTON_SIZE.x / 2.f - _ALBUM_COVER_IMAGE_SIZE.x / 2.f, 70.f);
+		const glm::vec2 _ALBUM_COVER_IMAGE_POS = glm::vec2(_PLAY_BUTTON_POS.x + _PLAY_BUTTON_SIZE.x / 2.f - _ALBUM_COVER_IMAGE_SIZE.x / 2.f, _PLAY_BUTTON_POS.y - _ALBUM_COVER_IMAGE_SIZE.y - 10.f);
 
 		const glm::vec2 _MUSIC_TIME_PROGRESS_POS = glm::vec2(_VOLUME_SPEAKER_POS.x, 
 															 _ALBUM_COVER_IMAGE_POS.y);
@@ -209,7 +210,7 @@ namespace MP
 
 		const glm::vec2 _TEXT_LOADED_ITEMS_COUNT_POS = glm::vec2(400, mdDefaultHeight + textOffsetY);
 
-		const glm::vec2 _TEXT_MUSIC_TITLE_SCROLL_POS = glm::vec2(80, 50);
+		const glm::vec2 _TEXT_MUSIC_TITLE_SCROLL_POS = glm::vec2(80, 30);
 
 		extern s32 _MAX_SIZE_RAM_LOADED;
 
@@ -254,8 +255,6 @@ namespace MP
 		{
 			".mp3",
 			".mp4",
-			".mp2",
-			".mp1",
 			".wav",
 			".wma",
 			".ogg",
@@ -263,9 +262,16 @@ namespace MP
 			".aiff",
 			".asf",
 			".m4a",
-			".aac", // not supported by taglib
-			".ac3", // not supported by taglib
-			".amr"  // not supported by taglib
+			".m4b",
+			".m4p",
+			".m4r",
+			".mpga",
+			".3gp",		// not supported by taglib
+			".mp2",		// not supported by taglib
+			".mp1",		// not supported by taglib
+			".aac",		// not supported by taglib
+			".ac3",		// not supported by taglib
+			".amr",		// not supported by taglib
 		};
 
 
@@ -275,7 +281,8 @@ namespace MP
 			".ac3",		// not supported by taglib
 			".amr",		// not supported by taglib
 			".mp2",		// not supported by taglib
-			".mp1"
+			".mp1",		// not supported by taglib
+			".3gp"
 		};
 
 		const std::vector<std::string> SupportedImageFormats =

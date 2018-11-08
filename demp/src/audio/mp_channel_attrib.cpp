@@ -230,7 +230,7 @@ namespace Audio
 			return;
 
 		TagLib::FileRef file(utf8_to_utf16(path).c_str());
-
+#if 1
 		if (file.tag()->isEmpty() == false)
 		{
 			info->channels = file.audioProperties()->channels();
@@ -270,6 +270,7 @@ namespace Audio
 			if (buff != TagLib::String::null)
 				info->genre = buff.toCString();
 		}
+#endif
 	}
 
 	b8 Info::IsSupported(std::string& type)

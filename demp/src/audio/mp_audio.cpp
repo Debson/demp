@@ -1249,7 +1249,8 @@ void Audio::ListenForCommunicationFromChild()
 		Audio::DroppedItemsCount++;
 		PushToPlaylist(buff, true);
 		State::SetState(State::AddedByCommandLine);
-		State::SetState(State::AudioChangedInTray);
+		if(State::CheckState(State::Window::InTray) == true)
+			State::SetState(State::AudioChangedInTray);
 	}
 }
 

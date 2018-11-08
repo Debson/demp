@@ -80,7 +80,7 @@ namespace MP
 		mdCurrentHeight = mdEngine::Window::WindowProperties.m_ApplicationHeight;
 
 		//std::cout << mdCurrentHeight << std::endl;
-		mdDefaultWidth = 500.f;
+		mdDefaultWidth = _DEFAULT_PLAYER_SIZE.x;
 		mdDefaultHeight = Window::WindowProperties.m_WindowHeight - 350.f;
 
 

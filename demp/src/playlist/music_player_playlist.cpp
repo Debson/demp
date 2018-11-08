@@ -833,7 +833,8 @@ namespace MP
 
 			if (State::CheckState(State::AddedByCommandLine) == true &&
 				State::CheckState(State::FilesLoaded) == true &&
-				Audio::Object::GetSize() > 0)
+				Audio::Object::GetSize() > 0 &&
+				Audio::Object::GetAudioObject(0) != nullptr)
 			{
 				if (RamLoadedMusic.load(Audio::Object::GetAudioObject(0)) == true)
 				{

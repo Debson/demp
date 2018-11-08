@@ -43,8 +43,6 @@ namespace mdEngine
 	}
 
 
-
-
 	void Resources::Init()
 	{
 

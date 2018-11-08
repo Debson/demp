@@ -515,13 +515,14 @@ namespace mdEngine
 			State::CheckState(State::Window::Resized) == false)
 		{
 			volumeSliderActive = true;
+			volumeMuted = false;
 		}
 		else if (App::Input::IsKeyDown(App::KeyCode::MouseLeft) == false)
 		{
 			volumeSliderActive = false;
 		}
 
-
+		
 
 		if (volumeSliderActive == true)
 		{
