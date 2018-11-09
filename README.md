@@ -1,2 +1,2 @@
 # damp
-Cross platform music player.
+Music player.
