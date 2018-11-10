@@ -151,6 +151,8 @@ namespace mdEngine
 					}
 					State::SetState(State::Window::PositionChanged);
 					Window::SetWindowPos(newWX, newWY);
+
+					
 				}
 			}
 			else
@@ -166,6 +168,17 @@ namespace mdEngine
 					mouseY < MP::Data::_UI_BUTTONS_BACKGROUND_RIGHT_POS.y + MP::Data::_UI_BUTTONS_BACKGROUND_RIGHT_SIZE.y)
 				{
 					inside = false;
+				}
+
+				if (wasInsideMovable == true)
+				{
+					if (Window::GetWindowPos().y < 0 && Window::GetWindowPos().y > -50)
+					{
+						Window::SetWindowPos(Window::GetWindowPos().x, 0);
+						Window::WindowProperties.m_IsMaximized = true;
+						Window::WindowProperties.m_WindowHeightBeforeMaximize = Window::WindowProperties.m_ApplicationHeight;
+						Window::WindowProperties.m_ApplicationHeight = Window::MonitorProperties.m_MonitorHeight - Window::MonitorProperties.m_TaskBarHeight;
+					}
 				}
 
 				bar->hasFocus = inside;

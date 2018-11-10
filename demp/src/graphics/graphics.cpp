@@ -5,13 +5,26 @@
 
 #include "music_player_graphics.h"
 #include "shaders.h"
+#include "md_vertices.h"
 #include "../app/realtime_system_application.h"
 #include "../player/music_player_resources.h"
 #include "../settings/music_player_settings.h"
 #include "../utility/md_shape.h"
 #include "../utility/md_text.h"
 
+
 using namespace mdEngine::MP::UI;
+
+float mainWindowVertices[] = {
+	// positions   // texCoords
+	0.0f, 1.0f, 0.0f, 1.0f,
+	1.0f, 0.0f, 1.0f, 0.0f,
+	0.0f, 0.0f, 0.0f, 0.0f,
+
+	0.0f, 1.0f, 0.0f, 1.0f,
+	1.0f, 1.0f, 1.0f, 1.0f,
+	1.0f, 0.0f, 1.0f, 0.0f
+};
 
 namespace mdEngine
 {
@@ -25,6 +38,7 @@ namespace mdEngine
 			mdShader* shaderBorder	= NULL;
 			mdShader* shaderWindow  = NULL;	
 			mdShape* quad			= NULL;
+			mdShape* mainWindowQuad = NULL;
 			mdShape* dot			= NULL;
 		}
 
@@ -49,6 +63,14 @@ namespace mdEngine
 			quad = mdShape::QUAD();
 
 			if (quad == NULL)
+			{
+				std::cout << "ERROR: Could not initialize shape \"QUAD\"\n";
+				return;
+			}
+
+			mainWindowQuad = mdShape::QUAD();
+
+			if(mainWindowQuad == NULL)
 			{
 				std::cout << "ERROR: Could not initialize shape \"QUAD\"\n";
 				return;
@@ -89,6 +111,31 @@ namespace mdEngine
 		{
 			quad->Draw(shader);
 			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+		//tests
+		void Shader::DrawMainWindow(mdShader* shader)
+		{
+			if (App::Input::IsKeyPressed(App::KeyCode::KeypadPlus))
+			{
+				mainWindowVertices[7] += 0.01f;
+				mainWindowVertices[11] += 0.01f;
+				mainWindowVertices[23] += 0.01f;
+				md_log_compare(mainWindowVertices[11], mainWindowVertices[23]);
+			}
+			if (App::Input::IsKeyPressed(App::KeyCode::KeypadMinus))
+			{
+				mainWindowVertices[7] -= 0.01f;
+				mainWindowVertices[11] -= 0.01f;
+				mainWindowVertices[23] -= 0.01f;
+				md_log_compare(mainWindowVertices[11], mainWindowVertices[23]);
+			}
+
+			glBindBuffer(GL_ARRAY_BUFFER, *mainWindowQuad->GetVBO());
+			glBufferData(GL_ARRAY_BUFFER, sizeof(mainWindowVertices), &mainWindowVertices, GL_STATIC_DRAW);
+			mainWindowQuad->Draw(shader);
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+
 		}
 
 		void Shader::DrawDot()

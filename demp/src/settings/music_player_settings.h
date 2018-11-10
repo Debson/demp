@@ -69,21 +69,24 @@ namespace MP
 		const glm::vec2 _PLAYLIST_FOREGROUND_POS = glm::vec2(20.f, mdDefaultHeight + 20.f);;
 		extern glm::vec2 _PLAYLIST_FOREGROUND_SIZE;
 
-		static s16 musicUIOffsetX = -60;
+		static s16 musicUIOffsetX = -70;
 		static s16 musicUIOffsetY = 10;
 		static s16 musicProgressBarOffsetY = 8;
+		static s16 barsUIOffsetX = 10.f;
 
-		const glm::vec2 _VOLUME_BAR_POS = glm::vec2(mdDefaultWidth / 2.f - 170.f, mdDefaultHeight - 60.f - musicUIOffsetY);;
+
+		const glm::vec2 _MUSIC_PROGRESS_BAR_SIZE = glm::vec2(mdDefaultWidth / 2.f + 100.f, 5.f);
+		const glm::vec2 _MUSIC_PROGRESS_BAR_POS = glm::vec2(mdDefaultWidth / 2.f - _MUSIC_PROGRESS_BAR_SIZE.x / 2.f, mdDefaultHeight - musicUIOffsetY - musicProgressBarOffsetY);
+
+		const glm::vec2 _VOLUME_BAR_POS = glm::vec2(_MUSIC_PROGRESS_BAR_POS.x, mdDefaultHeight - 60.f - musicUIOffsetY);;
 		const glm::vec2 _VOLUME_BAR_SIZE = glm::vec2(90.f, 4.f);;
 
-		const glm::vec2 _MUSIC_PROGRESS_BAR_POS = glm::vec2(mdDefaultWidth / 2.f - 175.f, mdDefaultHeight - musicUIOffsetY - musicProgressBarOffsetY);
-		const glm::vec2 _MUSIC_PROGRESS_BAR_SIZE = glm::vec2(mdDefaultWidth / 2.f + 100.f, 5.f);
 
-		const glm::vec2 _VOLUME_SPEAKER_POS = glm::vec2(mdDefaultWidth / 2.f - 200.f, mdDefaultHeight - 66.f - musicUIOffsetY);
 		const glm::vec2 _VOLUME_SPEAKER_SIZE = glm::vec2(15.f, 15.f);;
+		const glm::vec2 _VOLUME_SPEAKER_POS = glm::vec2(_VOLUME_BAR_POS.x - _VOLUME_SPEAKER_SIZE.x - 10.f, mdDefaultHeight - 66.f - musicUIOffsetY);
 
 		const glm::vec2 _MUSIC_PROGRESS_BAR_DOT_POS = glm::vec2(_MUSIC_PROGRESS_BAR_POS.x, _MUSIC_PROGRESS_BAR_POS.y - 2.f);;
-		const glm::vec2 _VOLUME_BAR_DOT_POS = glm::vec2(mdDefaultWidth / 2.f - 130.f, mdDefaultHeight - 63.f - musicUIOffsetY);;
+		const glm::vec2 _VOLUME_BAR_DOT_POS = glm::vec2(mdDefaultWidth / 2.f - 130.f + barsUIOffsetX, mdDefaultHeight - 63.f - musicUIOffsetY);;
 		const glm::vec2 _SLIDER_DOT_SIZE = glm::vec2(9.f, 9.f);
 
 		static f32 ui_buttons_scale = 0.9f;
@@ -161,6 +164,9 @@ namespace MP
 
 		const glm::vec2 _REPEAT_BUTTON_POS = glm::vec2(mdDefaultWidth / 2.f + 90.f - musicUIOffsetX, mdDefaultHeight - 65.f - musicUIOffsetY);;
 		const glm::vec2 _REPEAT_BUTTON_SIZE = glm::vec2(20.f, 12.f);
+
+		const glm::vec2 _REPEAT_ONE_DOT_SIZE = glm::vec2(10.f);
+		const glm::vec2 _REPEAT_ONE_DOT_POS = glm::vec2(_REPEAT_BUTTON_POS.x + _REPEAT_BUTTON_SIZE.x - 10.f, _REPEAT_BUTTON_POS.y - 2.f);
 
 		const glm::vec2 _DOT_BUTTON_STATE_SIZE = glm::vec2(5.f);
 

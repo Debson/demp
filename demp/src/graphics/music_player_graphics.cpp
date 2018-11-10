@@ -85,7 +85,11 @@ namespace mdEngine
 		s32 maxPosTest, minPosTest;
 
 		b8 shuffleActive(false);
-		b8 repeatActive(false);
+		/*	0. Play throught, finish at last song.
+			1. Repeat whole playlist.
+			2. Repeat just 1 song,
+		*/
+		u8 repeatState;
 		b8 playActive(false);
 		b8 volumeMuted(false);
 		b8 volumeSliderActive(false);
@@ -214,9 +218,6 @@ namespace mdEngine
 
 		void InitializeTextBoxes();
 
-		// If true returned, some texture couldn't be loaded, throw error
-		b8 CheckTextureError();
-
 		void UpdatePlaylistWindow();
 		void RenderPlaylistWindow();
 
@@ -334,7 +335,11 @@ namespace mdEngine
 	{
 		std::string file = Strings::_SETTINGS_FILE;
 		shuffleActive = Parser::GetInt(file, Strings::_SHUFFLE_STATE);
-		repeatActive = Parser::GetInt(file, Strings::_REPEAT_STATE);
+
+		repeatState = Parser::GetInt(file, Strings::_REPEAT_STATE);
+		if (repeatState < 0 || repeatState > 2)
+			repeatState = 0;
+
 		Parser::GetInt(file, Strings::_PLAYLIST_STATE) == 1 ? (MP::GetPlaylistObject()->Toggle(), MP::GetPlaylistObject()->Enable()) : MP::GetPlaylistObject()->UnToggle();
 		s32 test = Parser::GetInt(file, Strings::_CURRENT_SONG_ID);
 
@@ -368,6 +373,16 @@ namespace mdEngine
 	void Graphics::UpdatePlaylistWindow()
 	{
 		toggledWindowHeight = Window::WindowProperties.m_ApplicationHeight;
+		
+		if (MP::GetPlaylistObject()->IsToggled() == false &&
+			MP::GetPlaylistObject()->IsEnabled() == false)
+		{
+			Window::WindowProperties.m_CurrentWindowHeight = Data::_DEFAULT_PLAYER_SIZE.y;
+		}
+		else
+		{
+			Window::WindowProperties.m_CurrentWindowHeight = Window::WindowProperties.m_ApplicationHeight;
+		}
 
 		MP::GetPlaylistObject()->SetPos(glm::vec2(0.f, Data::_PLAYLIST_FOREGROUND_POS.y));
 		MP::GetPlaylistObject()->SetSize(glm::vec2(Window::WindowProperties.m_WindowWidth, Window::WindowProperties.m_ApplicationHeight));
@@ -426,9 +441,10 @@ namespace mdEngine
 	void Graphics::RenderPlaylistWindow()
 	{
 		/* Main background*/
+
 		Shader::shaderDefault->setBool("roundEdgesBackground", true);
-		Shader::shaderDefault->setFloat("playerHeightChange", (((float)Data::_MIN_PLAYER_SIZE.y + 20.f) /
-												((float)mdEngine::Window::WindowProperties.m_ApplicationHeight)));
+		Shader::shaderDefault->setFloat("playerHeightChange", ((Data::_MIN_PLAYER_SIZE.y + 20.f) /
+																(float)mdEngine::Window::WindowProperties.m_ApplicationHeight));
 		//md_log(((float)Data::_MIN_PLAYER_SIZE.y + 20.f) / ((float)mdEngine::Window::windowProperties.mApplicationHeight));
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(Data::_MAIN_BACKGROUND_POS.x, Data::_MAIN_BACKGROUND_POS.y, 0.f));
@@ -436,7 +452,7 @@ namespace mdEngine
 		Shader::shaderDefault->setMat4("model", model);
 		Shader::shaderDefault->setBool("cut", true);
 		glBindTexture(GL_TEXTURE_2D, Resources::main_background);
-		Shader::Draw(Shader::shaderDefault);
+		Shader::DrawMainWindow(Shader::shaderDefault);
 		Shader::shaderDefault->setBool("cut", false);
 		Shader::shaderDefault->setBool("roundEdgesBackground", false);
 
@@ -522,6 +538,10 @@ namespace mdEngine
 			volumeSliderActive = false;
 		}
 
+		if ((App::Input::IsScrollBackwardActive() || App::Input::IsScrollForwardActive()) && MP::GetMainPlayerObject()->hasFocus() == true)
+		{
+			volumeMuted = false;
+		}
 		
 
 		if (volumeSliderActive == true)
@@ -920,10 +940,14 @@ namespace mdEngine
 
 		// Repeat
 		if (Input::isButtonPressed(Input::ButtonType::Repeat))
-			repeatActive = !repeatActive;
+		{
+			repeatState++;
+			if (repeatState > 2)
+				repeatState = 0;
+		}
 
 		model = glm::mat4();
-		if (Input::hasFocus(Input::ButtonType::Repeat) && repeatActive == false)
+		if (Input::hasFocus(Input::ButtonType::Repeat) && repeatState == 0)
 		{
 			focusMultiplier = 1.02f;
 			color = Color::White;
@@ -932,13 +956,14 @@ namespace mdEngine
 			model = glm::scale(model, glm::vec3(Data::_REPEAT_BUTTON_SIZE * focusMultiplier, 1.f));
 
 		}
-		else if (repeatActive == false)
+		else if (repeatState == 0)
 		{
 			color = Color::Grey;
 			model = glm::translate(model, glm::vec3(Data::_REPEAT_BUTTON_POS, 0.3f));
 			model = glm::scale(model, glm::vec3(Data::_REPEAT_BUTTON_SIZE, 1.f));;
 		}
-		else
+
+		if(repeatState == 1)
 		{
 			color = Color::Green;
 			model = glm::translate(model, glm::vec3(Data::_REPEAT_BUTTON_POS, 0.3f));
@@ -953,6 +978,21 @@ namespace mdEngine
 			glBindTexture(GL_TEXTURE_2D, Resources::dot_icon);
 			Shader::Draw(Shader::shaderDefault);
 		}
+		else if (repeatState == 2)
+		{
+			color = Color::Green;
+			model = glm::translate(model, glm::vec3(Data::_REPEAT_BUTTON_POS, 0.3f));
+			model = glm::scale(model, glm::vec3(Data::_REPEAT_BUTTON_SIZE, 1.f));
+
+			dotModel = glm::mat4();
+			dotModel = glm::translate(dotModel, glm::vec3(Data::_REPEAT_ONE_DOT_POS, 0.4f));
+			dotModel = glm::scale(dotModel, glm::vec3(Data::_REPEAT_ONE_DOT_SIZE, 1.f));
+			Shader::shaderDefault->setVec3("color", color);
+			Shader::shaderDefault->setMat4("model", dotModel);
+			glBindTexture(GL_TEXTURE_2D, Resources::repeat_dot);
+			Shader::Draw(Shader::shaderDefault);
+		}
+
 		Shader::shaderDefault->setVec3("color", color);
 		Shader::shaderDefault->setMat4("model", model);
 		glBindTexture(GL_TEXTURE_2D, Resources::repeat_button);
@@ -2054,7 +2094,7 @@ namespace mdEngine
 	{
 		if (m_PlaylistItemTextBox != NULL)
 		{
-			m_PlaylistItemTextBox->Render();
+			m_PlaylistItemTextBox->Render(true);
 		}
 	}
 
@@ -2087,6 +2127,11 @@ namespace mdEngine
 
 		if (playlistAddFileActive == true && m_AddFileTextBox == NULL)
 		{
+			Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_POS = glm::vec2(Data::_PLAYLIST_ADD_BUTTON_POS.x, Window::WindowProperties.m_ApplicationHeight - 20.f);
+			s32 iconOffsetX = 10.f;
+			Data::_PLAYLIST_ADD_ICON_POS = glm::vec2(Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_POS.x + iconOffsetX, 0.f);
+
+
 			m_AddFileTextBox = new Interface::TextBox(glm::vec2(Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_POS.x,
 				Data::_PLAYLIST_ADD_BUTTON_POS.y + Data::_PLAYLIST_ADD_BUTTON_SIZE.y),
 				Data::_PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE,
@@ -2199,7 +2244,7 @@ namespace mdEngine
 	{
 		if (m_SettingsTextBox != NULL)
 		{
-			m_SettingsTextBox->Render();
+			m_SettingsTextBox->Render(true);
 		}
 
 		// UI left

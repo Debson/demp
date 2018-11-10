@@ -144,6 +144,10 @@ namespace mdEngine
 		*mouseY = mdRelativeMouseY;
 	}
 
+	glm::vec2 App::Input::GetRelavtiveMousePosition()
+	{
+		return glm::vec2(mdRelativeMouseX, mdRelativeMouseY);
+	}
 
 	b8 App::Input::IsMouseActive()
 	{

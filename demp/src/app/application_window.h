@@ -13,6 +13,7 @@ namespace App
 	{
 		s32 m_WindowWidth;
 		s32 m_WindowHeight;
+		s32 m_CurrentWindowHeight;
 		s32 m_ApplicationHeight;
 		s32 m_ApplicationWidth;
 		s32 m_StartApplicationHeight;

@@ -17,6 +17,7 @@ namespace mdEngine
 			void InitShader();
 			void UpdateProjectionMatrix();
 			void Draw(mdShader* shader);
+			void DrawMainWindow(mdShader* shader);
 			void DrawDot();
 			void DrawOutline(glm::vec4 dim, f32 scale, glm::vec3 color = glm::vec3(0.f));
 			void ReloadOnNewContext();

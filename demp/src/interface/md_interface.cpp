@@ -660,7 +660,7 @@ namespace mdEngine
 			App::ProcessButton(i);
 	}
 
-	void Interface::TextBox::Render()
+	void Interface::TextBox::Render(b8 roundEdges)
 	{
 		assert(m_Shader != NULL);
 
@@ -679,9 +679,16 @@ namespace mdEngine
 		//m_Shader->setBool("plain", true);
 		m_Shader->setVec3("color", Color::White);
 		m_Shader->setMat4("model", model);
+		if (roundEdges == true)
+		{
+			m_Shader->setBool("roundEdges", true);
+			m_Shader->setFloat("roundEdgesFactor", 0.04);
+		}
 		glBindTexture(GL_TEXTURE_2D, m_TextBoxBackgroundTexture);
 		Graphics::Shader::Draw(m_Shader);
 		//m_Shader->setBool("plain", false);
+		
+		m_Shader->setBool("roundEdges", false);
 
 		for (s32 i = 0; i < m_Items.size(); i++)
 		{
@@ -1518,7 +1525,6 @@ namespace mdEngine
 		Shader::shaderDefault->setVec3("color", m_Color);
 		glBindTexture(GL_TEXTURE_2D, m_Texture);
 		Shader::Draw(Shader::shaderDefault);
-
 		Shader::shaderDefault->setVec3("color", Color::White);
 	}
 

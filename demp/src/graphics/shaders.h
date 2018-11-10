@@ -47,6 +47,7 @@ namespace mdEngine
 		uniform float playlistMinY;\n\
 		uniform float playlistMaxY;\n\
 		uniform float transVal = 1.0;\n\
+		uniform float roundEdgesFactor = 0.2f;\n\
 \n\
 		uniform vec2 playlistBoundsY;\n\
 		uniform vec2 playlistBoundsX;\n\
@@ -132,6 +133,22 @@ namespace mdEngine
 			if (roundEdgesBackground == true)\n\
 			{\n\
 				float tex = 0.02 * playerHeightChange;\n\
+				// top right\n\
+				if (TexCoords.x < tex && TexCoords.y < tex && distance(TexCoords, vec2(tex)) > tex)\n\
+					FragColor = vec4(0.0);\n\
+				// top left\n\
+				if (TexCoords.x > 1 - tex && TexCoords.y < tex && distance(TexCoords, vec2(1 - tex, tex)) > tex)\n\
+					FragColor = vec4(0.0);\n\
+				// bottom right\n\
+				if (TexCoords.x < tex && TexCoords.y > 1 - tex && distance(TexCoords, vec2(tex, 1 - tex)) > tex)\n\
+					FragColor = vec4(0.0);\n\
+				// bottom left\n\
+				if (TexCoords.x > 1 - tex && TexCoords.y > 1 - tex && distance(TexCoords, vec2(1 - tex, 1 - tex)) > tex)\n\
+					FragColor = vec4(0.0);\n\
+			}\n\
+			if(roundEdges == true)\n\
+			{\n\
+				float tex = roundEdgesFactor;\n\
 				// top right\n\
 				if (TexCoords.x < tex && TexCoords.y < tex && distance(TexCoords, vec2(tex)) > tex)\n\
 					FragColor = vec4(0.0);\n\

@@ -28,7 +28,7 @@ namespace mdEngine
 			exit_background_glow, minimize_background_glow, stay_on_top_background_glow, settings_background_glow;
 
 		GLuint volume_bar, volume_speaker, volume_speaker_muted, volume_speaker_low, volume_speaker_medium;
-		GLuint play_button, stop_button, next_button, previous_button, shuffle_button, repeat_button, dot_icon, playlist_button,
+		GLuint play_button, stop_button, next_button, previous_button, shuffle_button, repeat_button, repeat_dot, dot_icon, playlist_button,
 			playlist_add_file;
 		GLuint music_progress_bar;
 		GLuint playlist_add_file_icon, playlist_add_folder_icon, playlist_add_textbox_background, playlist_add_textbox_select;
@@ -38,6 +38,7 @@ namespace mdEngine
 
 		const std::string textureEnding("assets\\textures.jkdm");
 
+		// If true returned, some texture couldn't be loaded, throw error
 		b8 CheckTextureError();
 		void ExtractAndLoadTex(GLuint* tex, u32 name, bit7z::BitExtractor *extractor);
 	}
@@ -45,7 +46,7 @@ namespace mdEngine
 
 	void Resources::Init()
 	{
-
+		// TODO: ADD ERROR HANDLING WHEN FILE DOESN'T EXISTS
 
 		std::string dir = Strings::_CURRENT_DIRECTORY_PATH + textureEnding;
 
@@ -68,6 +69,10 @@ namespace mdEngine
 		}
 
 		bit7z::BitExtractor extractor(lib, bit7z::BitFormat::Zip);
+
+		// tests
+		/*ExtractAndLoadTex(&main_background, files["main_foreground.png"], &extractor);
+		ExtractAndLoadTex(&main_foreground, files["main_foreground.png"], &extractor);*/
 
 		ExtractAndLoadTex(&main_background,					files["main.png"], &extractor);
 		ExtractAndLoadTex(&main_foreground,					files["main.png"], &extractor);
@@ -96,6 +101,7 @@ namespace mdEngine
 		ExtractAndLoadTex(&previous_button,					files["previous_button.png"], &extractor);
 		ExtractAndLoadTex(&shuffle_button,					files["shuffle_button.png"], &extractor);
 		ExtractAndLoadTex(&repeat_button,					files["repeat_button.png"], &extractor);
+		ExtractAndLoadTex(&repeat_dot,						files["repeat_dot.png"], &extractor);
 		ExtractAndLoadTex(&dot_icon,						files["dot_button_state.png"], &extractor);
 		ExtractAndLoadTex(&playlist_button,					files["playlist_button.png"], &extractor);
 		ExtractAndLoadTex(&playlist_add_file,				files["playlist_add.png"], &extractor);

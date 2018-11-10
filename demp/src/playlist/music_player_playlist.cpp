@@ -59,7 +59,13 @@ namespace MP
 
 		f32 mdVolumeScrollStep = 2.f;
 
-		b8 mdRepeatMusic(false);
+		/*	0. Play throught, finish at last song.
+			1. Repeat whole playlist.
+			2. Repeat just 1 song,
+		*/
+		u8 mdRepeatMusicState;
+
+		//b8 mdRepeatMusic(false);
 		b8 mdShuffleMusic(false);
 
 		b8 mdShuffleMusicSet(false);
@@ -722,7 +728,7 @@ namespace MP
 
 		void RepeatMusicProcedure()
 		{
-			if (mdRepeatMusic == true)
+			if (mdRepeatMusicState == 2)
 			{
 				if (IsPlaying() == false && mdMPStarted == true)
 				{
@@ -936,23 +942,26 @@ namespace MP
 				last song in the shuffle container
 			*/
 
-			/*if (RamLoadedMusic.m_ID + 1 >= Audio::Object::GetSize() &&
-				mdShuffleMusic == false)
+			if (mdRepeatMusicState == 0)
 			{
-				mdStartNewOnEnd = false;
+				if (RamLoadedMusic.m_ID + 1 >= Audio::Object::GetSize() &&
+					mdShuffleMusic == false)
+				{
+					mdStartNewOnEnd = false;
+				}
+
+				if (mdCurrentShuffleMusicPos + 1 >= mdShuffleMusicPosContainer.size() &&
+					mdShuffleMusic == true)
+				{
+					mdStartNewOnEnd = false;
+				}
 			}
 
-			if (mdCurrentShuffleMusicPos + 1 >= mdShuffleMusicPosContainer.size() && 
-				mdShuffleMusic == true)
-			{
-				mdStartNewOnEnd = false;
-			}*/
-
-			if (Audio::Object::GetSize() > 1 && mdRepeatMusic == false && mdMPStarted == true && mdStartNewOnEnd == true)
+			if (Audio::Object::GetSize() > 1 && mdRepeatMusicState == 1 && mdMPStarted == true && mdStartNewOnEnd == true)
 				return true;
 
 			// Free loaded song
-			if ((Audio::Object::GetSize() <= 1 || mdStartNewOnEnd == false) && mdRepeatMusic == false)
+			if ((Audio::Object::GetSize() <= 1 || mdStartNewOnEnd == false) && mdRepeatMusicState == 0)
 			{
 				//Graphics::MP::GetPlaylistObject()->SetPlayingID(-1);
 				RamLoadedMusic.Free();
@@ -992,7 +1001,7 @@ namespace MP
 
 		b8 IsRepeatEnabled()
 		{
-			return mdRepeatMusic;
+			return mdRepeatMusicState == 2 ? true : false;
 		}
 
 
@@ -1153,7 +1162,11 @@ namespace MP
 		void RepeatMusic()
 		{
 			//if(IsPlaying() == true)
-				mdRepeatMusic = !mdRepeatMusic;
+				//mdRepeatMusic = !mdRepeatMusic;
+				mdRepeatMusicState++;
+				if (mdRepeatMusicState > 2)
+					mdRepeatMusicState = 0;
+				md_log((s32)mdRepeatMusicState);
 		}
 
 		void ShuffleMusic()

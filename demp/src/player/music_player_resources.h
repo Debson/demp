@@ -14,7 +14,7 @@ namespace mdEngine
 			exit_background_glow, minimize_background_glow, stay_on_top_background_glow, settings_background_glow;
 
 		extern GLuint volume_bar, volume_speaker, volume_speaker_muted, volume_speaker_low, volume_speaker_medium;
-		extern GLuint play_button, stop_button, next_button, previous_button, shuffle_button, repeat_button, dot_icon, playlist_button,
+		extern GLuint play_button, stop_button, next_button, previous_button, shuffle_button, repeat_button, repeat_dot, dot_icon, playlist_button,
 			playlist_add_file;
 		extern GLuint music_progress_bar;
 		extern GLuint playlist_add_file_icon, playlist_add_folder_icon, playlist_add_textbox_background, playlist_add_textbox_select;

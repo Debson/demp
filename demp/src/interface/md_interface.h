@@ -188,7 +188,7 @@ namespace mdEngine
 			//TextBox(glm::vec2 size, glm::vec2 pos, mdShader* shader);
 
 			void Update();
-			void Render();
+			void Render(b8 roundEdges = false);
 			void UpdateItemsPos();
 			void UpdateItemsPos(glm::vec2 pos);
 			void SetBackgroundTexture(GLuint tex);

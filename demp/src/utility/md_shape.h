@@ -18,9 +18,13 @@ public:
 	~mdShape();
 
 	static mdShape* QUAD();
+	static mdShape* MAIN_WINDOW_QUAD();
 	static mdShape* DOT();
 
 	virtual void Draw(mdShader* shader);
+
+	GLuint* GetVBO();
+	GLuint* GETVAO();
 
 private:
 	GLuint vbo = 0;

@@ -91,15 +91,15 @@ namespace MP
 		_PLAYLIST_ITEMS_SURFACE_POS = glm::vec2(_PLAYLIST_FOREGROUND_POS.x + (_PLAYLIST_SEPARATOR_SIZE.x - _PLAYLIST_ITEM_SIZE.x), 
 												_PLAYLIST_FOREGROUND_POS.y);
 		_PLAYLIST_ITEMS_SURFACE_SIZE = glm::vec2(mdCurrentWidth - 100.f, mdCurrentHeight - 30.f);
-		_PLAYLIST_ADD_BUTTON_POS = glm::vec2(40.f, _PLAYLIST_ITEMS_SURFACE_SIZE.y);
+		_PLAYLIST_ADD_BUTTON_POS = glm::vec2(20.f, _PLAYLIST_ITEMS_SURFACE_SIZE.y);
 		_PLAYLIST_ADD_BUTTON_SIZE = glm::vec2(mdCurrentHeight - _PLAYLIST_ITEMS_SURFACE_SIZE.y);
 
-		Data::_MAIN_BACKGROUND_SIZE.y = mdCurrentHeight;
+		//Data::_MAIN_BACKGROUND_SIZE.y = mdCurrentHeight;
 
-		_PLAYLIST_ADD_BUTTON_TEXTBOX_POS = glm::vec2(40.f, mdCurrentHeight - 20.f);
+		/*_PLAYLIST_ADD_BUTTON_TEXTBOX_POS = glm::vec2(_PLAYLIST_ADD_BUTTON_POS.x, mdCurrentHeight - 20.f);
 	
 		s32 iconOffsetX = 10.f;
-		_PLAYLIST_ADD_ICON_POS = glm::vec2(_PLAYLIST_ADD_BUTTON_TEXTBOX_POS.x + iconOffsetX, 0.f);
+		_PLAYLIST_ADD_ICON_POS = glm::vec2(_PLAYLIST_ADD_BUTTON_TEXTBOX_POS.x + iconOffsetX, 0.f);*/
 
 	}
 
