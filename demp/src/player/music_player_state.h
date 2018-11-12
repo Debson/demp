@@ -58,7 +58,8 @@ namespace mdEngine
 			AddedByFileBrowser			= (1llu << 54),
 			AddedByCommandLine			= (1llu << 59),
 			AppStarted					= (1llu << 58),
-			CommunicationWithChildCreated = (1llu << 60)
+			CommunicationWithChildCreated = (1llu << 60),
+			LocalizeOnPlaylist			= (1llu << 61)
 
 		};
 

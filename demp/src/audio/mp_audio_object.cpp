@@ -350,7 +350,7 @@ void Audio::AudioObject::LoadAlbumImage()
 			return; // Skip other part of the function
 		}
 		
-		m_AlbumImageTex = mdLoadTexture(m_AlbumImageData, m_AlbumImageDataSize);
+		m_AlbumImageTex = mdLoadTextureAlbum(m_AlbumImageData, m_AlbumImageDataSize);
 		free(m_AlbumImageData);
 		m_AlbumImageData = NULL;
 	}

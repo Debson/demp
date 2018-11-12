@@ -192,7 +192,7 @@ namespace MP
 		extern glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_POS;
 		const glm::vec2 _PLAYLIST_ADD_BUTTON_TEXTBOX_SIZE = glm::vec2(120.f, 60);
 
-		const glm::vec2 _PLAYLIST_ITEM_TEXTBOX_SIZE = glm::vec2(180.f, 80.f);
+		const glm::vec2 _PLAYLIST_ITEM_TEXTBOX_SIZE = glm::vec2(180.f, 90.f);
 
 		const s16 _TEXT_BOX_ITEM_HEIGHT = 20;
 

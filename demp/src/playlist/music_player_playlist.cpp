@@ -464,6 +464,7 @@ namespace MP
 
 
 			State::SetState(State::AudioChosen);
+			State::SetState(State::AudioChanged);
 
 			BASS_ChannelPlay(RamLoadedMusic.get(), true);
 			playFadeTimer.Start();
@@ -577,9 +578,6 @@ namespace MP
 					
 				}
 			}
-
-			State::SetState(State::AudioChanged);
-
 		}
 
 		void PreviousMusic()
@@ -591,7 +589,6 @@ namespace MP
 
 				BASS_ChannelStop(RamLoadedMusic.get());
 
-				State::SetState(State::AudioChanged);
 				State::ResetState(State::CurrentlyPlayingDeleted);
 
 				if (RamLoadedMusic.m_ID > Audio::Object::GetSize())

@@ -984,12 +984,22 @@ namespace mdEngine
 			model = glm::translate(model, glm::vec3(Data::_REPEAT_BUTTON_POS, 0.3f));
 			model = glm::scale(model, glm::vec3(Data::_REPEAT_BUTTON_SIZE, 1.f));
 
+			glm::mat4 oneModel;
+			oneModel = glm::mat4();
+			oneModel = glm::translate(oneModel, glm::vec3(Data::_REPEAT_ONE_DOT_POS, 0.4f));
+			oneModel = glm::scale(oneModel, glm::vec3(Data::_REPEAT_ONE_DOT_SIZE, 1.f));
+			Shader::shaderDefault->setVec3("color", color);
+			Shader::shaderDefault->setMat4("model", oneModel);
+			glBindTexture(GL_TEXTURE_2D, Resources::repeat_dot);
+			Shader::Draw(Shader::shaderDefault);
+
 			dotModel = glm::mat4();
-			dotModel = glm::translate(dotModel, glm::vec3(Data::_REPEAT_ONE_DOT_POS, 0.4f));
-			dotModel = glm::scale(dotModel, glm::vec3(Data::_REPEAT_ONE_DOT_SIZE, 1.f));
+			dotModel = glm::translate(dotModel, glm::vec3(Data::_REPEAT_BUTTON_POS.x + Data::_REPEAT_BUTTON_SIZE.x / 2.f - Data::_DOT_BUTTON_STATE_SIZE.x / 2.f - dotOffsetXRepeat,
+				Data::_REPEAT_BUTTON_POS.y + 18.f, 0.3f));
+			dotModel = glm::scale(dotModel, glm::vec3(Data::_DOT_BUTTON_STATE_SIZE, 1.f));
 			Shader::shaderDefault->setVec3("color", color);
 			Shader::shaderDefault->setMat4("model", dotModel);
-			glBindTexture(GL_TEXTURE_2D, Resources::repeat_dot);
+			glBindTexture(GL_TEXTURE_2D, Resources::dot_icon);
 			Shader::Draw(Shader::shaderDefault);
 		}
 
@@ -1511,9 +1521,11 @@ namespace mdEngine
 				Playing ID must be a valid ID(if audio file is not loaded = -1, so must be ">" 0)
 			*/
 			if ((State::CheckState(State::AudioChanged) == true ||
-				State::CheckState(State::InitialLoadFromFile) == true) &&
+				State::CheckState(State::InitialLoadFromFile) == true ||
+				State::CheckState(State::LocalizeOnPlaylist) == true) &&
 				MP::GetPlaylistObject()->GetPlayingID() >= 0 &&
-				MP::GetPlaylistObject()->PlaylistTextBoxActive == false)
+				(MP::GetPlaylistObject()->PlaylistTextBoxActive == false ||
+				State::CheckState(State::LocalizeOnPlaylist) == true))
 			{
 				s32 playingID = MP::GetPlaylistObject()->GetPlayingID();
 
@@ -1544,6 +1556,7 @@ namespace mdEngine
 
 				State::ResetState(State::AudioChanged);
 				State::ResetState(State::InitialLoadFromFile);
+				State::ResetState(State::LocalizeOnPlaylist);
 				loadItemsTextures = true;
 			}
 			else
@@ -1971,7 +1984,16 @@ namespace mdEngine
 
 				playlistItemTextBoxActive = false;
 			}
+
+			if (m_PlaylistItemTextBox->isItemPressed(3) == true)
+			{
+				if(MP::GetPlaylistObject()->GetPlayingID() >= 0)
+					State::SetState(State::LocalizeOnPlaylist);
+				playlistItemTextBoxActive = false;
+			}
 		}
+
+
 
 		if (App::Input::IsKeyPressed(App::KeyCode::I) == true && MP::GetPlaylistObject()->multipleSelect.size() == 1)
 		{
@@ -2064,6 +2086,7 @@ namespace mdEngine
 			m_PlaylistItemTextBox->AddItem("Play");
 			m_PlaylistItemTextBox->AddItem("Remove selected files                 Del");
 			m_PlaylistItemTextBox->AddItem("File info");
+			m_PlaylistItemTextBox->AddItem("Localize current");
 			m_PlaylistItemTextBox->UpdateItemsPos(mousePos);
 			for (auto & i : *MP::GetPlaylistObject()->GetIndexesToRender())
 			{
