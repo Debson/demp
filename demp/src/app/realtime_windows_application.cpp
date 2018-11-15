@@ -679,7 +679,7 @@ void mdEngine::CloseRealtimeApplication(mdEngine::App::ApplicationHandlerInterfa
 	mdApplicationHandler = nullptr;
 }
 
-void mdEngine::AppExit()
+void mdEngine::AppExit(b8 exitOnError)
 {
 	mdAppClosing = true;
 
@@ -690,8 +690,14 @@ void mdEngine::AppExit()
 
 	while(State::CheckState(State::SafeExitPossible) == true) { }
 
+	if(exitOnError == true)
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+			"Missing file",
+			"File is missing. Please reinstall the program.",
+			NULL);
 	mdIsRunning = false;
 }
+
 
 b8 mdEngine::IsAppClosing()
 {

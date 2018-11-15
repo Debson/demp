@@ -307,12 +307,13 @@ namespace MP
 
 			Parser::GetInt(file, Strings::_ON_EXIT_MINIMIZE_TO_TRAY) == 1 ? State::SetState(State::OnExitMinimizeToTray) : (void)0;
 
-			// App was closed durning some audio file playback, go back exactly to that audio file and it's position
-			Parser::GetInt(file, Strings::_SONG_POSITION) > 0 ? State::SetState(State::LoadMusicOnFileLoad) : (void)0;
-			// App opened as a default music player, reset state
-			if (State::CheckState(State::LoadMusicOnFileLoad) == true)
-				State::ResetState(State::LoadMusicOnFileLoad);
 
+			// App was closed durning some audio file playback, go back exactly to that audio file and it's position
+			if(State::CheckState(State::LoadMusicOnFileLoad) == false)
+				Parser::GetFloat(file, Strings::_SONG_POSITION) > 0 ? State::SetState(State::LoadMusicOnFileLoad) : (void)0;
+			else
+				// App opened as a default music player, reset state
+				State::ResetState(State::LoadMusicOnFileLoad);
 		}
 
 		void Playlist::Start()

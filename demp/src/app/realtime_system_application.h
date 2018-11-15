@@ -28,7 +28,7 @@ namespace mdEngine
 	void CloseRealtimeApplication(App::ApplicationHandlerInterface& applicationHandler);
 	void SetWindowProperties(const App::WindowProperties &windowProperties);
 
-	void AppExit();
+	void AppExit(b8 exitOnError = false);
 	b8 IsAppClosing();
 
 	namespace Window

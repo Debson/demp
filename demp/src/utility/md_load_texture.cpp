@@ -39,7 +39,7 @@ GLuint mdLoadTexture(std::string path, mdEngine::b8 clamp)
 		
 		std::cout << "Texture failed to load at path: " << path << std::endl;
 		stbi_image_free(data);
-		mdEngine::AppExit();
+		mdEngine::AppExit(true);
 	}
 
 	return textureID;
@@ -112,7 +112,7 @@ GLuint mdLoadTexture(void* data, mdEngine::u32 size)
 		std::cout << "Texture failed to load." << std::endl;
 		
 		stbi_image_free(dataUC);
-		mdEngine::AppExit();
+		mdEngine::AppExit(true);
 	}
 
 	return textureID;
@@ -139,7 +139,7 @@ GLuint mdLoadTexture(unsigned char* data, mdEngine::s32 width, mdEngine::s32 hei
 	{
 		std::cout << "Texture failed to load." << std::endl;
 		
-		mdEngine::AppExit();
+		mdEngine::AppExit(true);
 	}
 
 	return textureID;

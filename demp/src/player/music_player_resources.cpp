@@ -46,9 +46,12 @@ namespace mdEngine
 
 	void Resources::Init()
 	{
-		// TODO: ADD ERROR HANDLING WHEN FILE DOESN'T EXISTS
-
 		std::string dir = Strings::_CURRENT_DIRECTORY_PATH + textureEnding;
+		if (fs::exists(dir) == false || fs::exists(L"7z.dll") == false)
+		{
+			mdEngine::AppExit(true);
+			return;
+		}
 
 		bit7z::Bit7zLibrary lib(L"7z.dll");
 		bit7z::BitArchiveInfo info(lib, utf8_to_utf16(dir), bit7z::BitFormat::Zip);
@@ -165,11 +168,7 @@ namespace mdEngine
 
 		if (CheckTextureError() == true)
 		{
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-				"Missing file",
-				"File is missing. Please reinstall the program.",
-				NULL);
-			mdEngine::AppExit();
+			mdEngine::AppExit(true);
 			return;
 		}
 	}
