@@ -1,5 +1,7 @@
 # demp
 
+<img src="http://www.debson.cc/screenshots/demp/demp-1.png" width="300" height="413" alt="demp">
+
 **demp** is a simplistic audio file player fully written in ***C++*** and ***OpenGL***.  
 No framework were used, only audio file streaming and processing libraries, such as BASS and TagLib.
 
